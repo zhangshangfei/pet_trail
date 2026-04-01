@@ -1,7 +1,15 @@
 import request from '@/utils/request'
 
 /**
- * 用户注册
+ * 微信登录（使用 code 换取 token）
+ * @param {string} code - 微信登录 code
+ */
+export const loginByCode = (code) => {
+  return request.post('/api/users/login', { code })
+}
+
+/**
+ * 用户注册（备用接口）
  * @param {string} openid - 微信 OpenID
  * @param {string} unionid - 微信 UnionID（可选）
  * @param {string} nickname - 用户昵称（可选）
@@ -14,18 +22,6 @@ export const register = (openid, unionid = '', nickname = '', avatar = '') => {
       unionid,
       nickname,
       avatar
-    }
-  })
-}
-
-/**
- * 用户登录
- * @param {string} openid - 微信 OpenID
- */
-export const login = (openid) => {
-  return request.post('/api/users/login', null, {
-    params: {
-      openid
     }
   })
 }
@@ -49,4 +45,15 @@ export const updateProfile = (data) => {
   return request.put('/api/users/profile', null, {
     params: data
   })
+}
+
+/**
+ * 退出登录
+ */
+export const logout = () => {
+  // 清除本地存储
+  uni.removeStorageSync('token')
+  uni.removeStorageSync('tokenExpireTime')
+  uni.removeStorageSync('userInfo')
+  return Promise.resolve()
 }

@@ -57,7 +57,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:8080"));
+        // 允许的源地址（前端开发服务器）
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:8080",           // uni-app H5 开发
+            "https://localhost:8080",          // uni-app H5 HTTPS
+            "http://127.0.0.1:8080"            // 本地 IP
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

@@ -6,7 +6,7 @@
       <view class="health-nav-inner">
         <view class="health-user">
           <image class="health-user-avatar" :src="userAvatar" mode="aspectFill" />
-          <text class="health-user-name">小萌宠主人</text>
+          <text class="health-user-name">{{ userName }}</text>
         </view>
         <view class="health-nav-actions">
           <text class="health-nav-icon" @tap="goBackToBoard">‹</text>
@@ -232,6 +232,7 @@ export default {
     return {
       statusBarHeight: 20,
       userAvatar: "https://ai-public.mastergo.com/ai/img_res/1774575365924a3K9mP2xQ7vN4rT8wY.jpg",
+      userName: "小萌宠主人",
       fallbackPetAvatar: "https://ai-public.mastergo.com/ai/img_res/1774575365924b4L8nQ3xR6vM9wP2yZ.jpg",
       pets: [],
       currentPet: null,
@@ -306,6 +307,7 @@ export default {
   onShow() {
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: true });
+    this.loadUserInfo();
   },
   onHide() {
     const tabBar = this.getTabBar && this.getTabBar();
@@ -323,8 +325,38 @@ export default {
       this.statusBarHeight = 20;
     }
     this.loadPets();
+    this.loadUserInfo();
   },
   methods: {
+    // 加载用户信息
+    async loadUserInfo() {
+      // 先从本地缓存读取
+      const userInfo = uni.getStorageSync('userInfo');
+      if (userInfo && userInfo.avatar) {
+        this.userAvatar = userInfo.avatar;
+        this.userName = userInfo.nickname || '小萌宠主人';
+      }
+      // 如果有 token，从后端获取最新数据
+      const token = uni.getStorageSync('token');
+      if (token) {
+        try {
+          const res = await uni.request({
+            url: "http://localhost:8080/api/users/profile",
+            method: "GET",
+            header: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.statusCode === 200 && res.data.success) {
+            const userData = res.data.data;
+            this.userAvatar = userData.avatar || this.userAvatar;
+            this.userName = userData.nickname || this.userName;
+            // 更新缓存
+            uni.setStorageSync('userInfo', userData);
+          }
+        } catch (e) {
+          console.error('获取用户信息失败:', e);
+        }
+      }
+    },
     async loadPets() {
       const token = uni.getStorageSync('token');
       try {

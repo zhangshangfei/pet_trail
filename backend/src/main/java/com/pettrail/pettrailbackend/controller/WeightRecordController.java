@@ -1,19 +1,21 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Pet;
 import com.pettrail.pettrailbackend.entity.WeightRecord;
+import com.pettrail.pettrailbackend.exception.ForbiddenException;
+import com.pettrail.pettrailbackend.exception.NotFoundException;
 import com.pettrail.pettrailbackend.service.PetService;
 import com.pettrail.pettrailbackend.service.WeightRecordService;
 import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -28,138 +30,79 @@ public class WeightRecordController {
      * 获取宠物的体重记录
      */
     @GetMapping
-    public Map<String, Object> listRecords(@PathVariable Long petId) {
-        log.info("获取体重记录: petId={}", petId);
-        Map<String, Object> result = new HashMap<>();
-        try {
-            validatePetOwnership(petId);
-            List<WeightRecord> records = weightRecordService.listByPetId(petId);
-            result.put("success", true);
-            result.put("data", records);
-            result.put("message", "获取成功");
-        } catch (Exception e) {
-            log.error("获取体重记录失败: petId={}, error={}", petId, e.getMessage(), e);
-            result.put("success", false);
-            result.put("message", "获取失败: " + e.getMessage());
-        }
-        return result;
+    public Result<List<WeightRecord>> listRecords(@PathVariable Long petId) {
+        log.info("获取体重记录：petId={}", petId);
+        validatePetOwnership(petId);
+        List<WeightRecord> records = weightRecordService.listByPetId(petId);
+        return Result.success(records);
     }
 
     /**
      * 获取指定时间范围的体重记录
      */
     @GetMapping("/range")
-    public Map<String, Object> listByDateRange(
+    public Result<List<WeightRecord>> listByDateRange(
             @PathVariable Long petId,
-            @RequestParam LocalDate startDate,
-            @RequestParam LocalDate endDate) {
-        log.info("获取时间范围内的体重记录: petId={}, startDate={}, endDate={}", petId, startDate, endDate);
-        Map<String, Object> result = new HashMap<>();
-        try {
-            validatePetOwnership(petId);
-            List<WeightRecord> records = weightRecordService.listByPetIdAndDateRange(petId, startDate, endDate);
-            result.put("success", true);
-            result.put("data", records);
-            result.put("message", "获取成功");
-        } catch (Exception e) {
-            log.error("获取时间范围内的体重记录失败: petId={}, error={}", petId, e.getMessage(), e);
-            result.put("success", false);
-            result.put("message", "获取失败: " + e.getMessage());
-        }
-        return result;
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+        log.info("获取时间范围内的体重记录：petId={}, startDate={}, endDate={}", petId, startDate, endDate);
+        validatePetOwnership(petId);
+        List<WeightRecord> records = weightRecordService.listByPetIdAndDateRange(petId, startDate, endDate);
+        return Result.success(records);
     }
 
     /**
      * 获取最后一次体重记录
      */
     @GetMapping("/last")
-    public Map<String, Object> getLastRecord(@PathVariable Long petId) {
-        log.info("获取最后一次体重记录: petId={}", petId);
-        Map<String, Object> result = new HashMap<>();
-        try {
-            validatePetOwnership(petId);
-            WeightRecord record = weightRecordService.getLastRecord(petId);
-            result.put("success", true);
-            result.put("data", record);
-            result.put("message", "获取成功");
-        } catch (Exception e) {
-            log.error("获取最后一次体重记录失败: petId={}, error={}", petId, e.getMessage(), e);
-            result.put("success", false);
-            result.put("message", "获取失败: " + e.getMessage());
-        }
-        return result;
+    public Result<WeightRecord> getLastRecord(@PathVariable Long petId) {
+        log.info("获取最后一次体重记录：petId={}", petId);
+        validatePetOwnership(petId);
+        WeightRecord record = weightRecordService.getLastRecord(petId);
+        return record != null ? Result.success(record) : Result.error(404, "暂无记录");
     }
 
     /**
      * 获取体重趋势
      */
     @GetMapping("/trend")
-    public Map<String, Object> getTrend(
+    public Result<List<WeightRecord>> getTrend(
             @PathVariable Long petId,
             @RequestParam(defaultValue = "7") int days) {
-        log.info("获取体重趋势: petId={}, days={}", petId, days);
-        Map<String, Object> result = new HashMap<>();
-        try {
-            validatePetOwnership(petId);
-            List<WeightRecord> records = weightRecordService.getTrend(petId, days);
-            result.put("success", true);
-            result.put("data", records);
-            result.put("message", "获取成功");
-        } catch (Exception e) {
-            log.error("获取体重趋势失败: petId={}, error={}", petId, e.getMessage(), e);
-            result.put("success", false);
-            result.put("message", "获取失败: " + e.getMessage());
-        }
-        return result;
+        log.info("获取体重趋势：petId={}, days={}", petId, days);
+        validatePetOwnership(petId);
+        List<WeightRecord> records = weightRecordService.getTrend(petId, days);
+        return Result.success(records);
     }
 
     /**
      * 创建体重记录
      */
     @PostMapping
-    public Map<String, Object> createRecord(
+    public Result<WeightRecord> createRecord(
             @PathVariable Long petId,
             @RequestParam BigDecimal weight,
-            @RequestParam(required = false) LocalDate recordDate) {
-        log.info("创建体重记录: petId={}, weight={}, recordDate={}", petId, weight, recordDate);
-        Map<String, Object> result = new HashMap<>();
-        try {
-            validatePetOwnership(petId);
-            LocalDate date = recordDate != null ? recordDate : LocalDate.now();
-            WeightRecord record = weightRecordService.createRecord(petId, weight, date);
-            // 同步更新 pets 表中的当前体重
-            petService.updatePetWeight(petId, weight);
-            result.put("success", true);
-            result.put("data", record);
-            result.put("message", "创建成功");
-        } catch (Exception e) {
-            log.error("创建体重记录失败: petId={}, error={}", petId, e.getMessage(), e);
-            result.put("success", false);
-            result.put("message", "创建失败: " + e.getMessage());
-        }
-        return result;
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate recordDate) {
+        log.info("创建体重记录：petId={}, weight={}, recordDate={}", petId, weight, recordDate);
+        validatePetOwnership(petId);
+        LocalDate date = recordDate != null ? recordDate : LocalDate.now();
+        WeightRecord record = weightRecordService.createRecord(petId, weight, date);
+        // 同步更新 pets 表中的当前体重
+        petService.updatePetWeight(petId, weight);
+        return Result.success(record);
     }
 
     /**
      * 删除体重记录
      */
     @DeleteMapping("/{id}")
-    public Map<String, Object> deleteRecord(
+    public Result<Void> deleteRecord(
             @PathVariable Long petId,
             @PathVariable Long id) {
-        log.info("删除体重记录: id={}", id);
-        Map<String, Object> result = new HashMap<>();
-        try {
-            validatePetOwnership(petId);
-            weightRecordService.deleteRecord(id);
-            result.put("success", true);
-            result.put("message", "删除成功");
-        } catch (Exception e) {
-            log.error("删除体重记录失败: id={}, error={}", id, e.getMessage(), e);
-            result.put("success", false);
-            result.put("message", "删除失败: " + e.getMessage());
-        }
-        return result;
+        log.info("删除体重记录：id={}", id);
+        validatePetOwnership(petId);
+        weightRecordService.deleteRecord(id);
+        return Result.success();
     }
 
     /**
@@ -167,9 +110,15 @@ public class WeightRecordController {
      */
     private void validatePetOwnership(Long petId) {
         Long currentUserId = UserContext.getCurrentUserId();
+        if (currentUserId == null) {
+            throw new IllegalStateException("用户未登录");
+        }
         Pet pet = petService.getPetDetail(petId);
+        if (pet == null) {
+            throw new NotFoundException("宠物不存在");
+        }
         if (!currentUserId.equals(pet.getUserId())) {
-            throw new RuntimeException("无权限操作该宠物");
+            throw new ForbiddenException("无权限操作该宠物");
         }
     }
 }

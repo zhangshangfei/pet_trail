@@ -6,7 +6,7 @@
       <view class="me-nav-inner">
         <view class="me-nav-left">
           <image class="me-avatar" :src="avatarUrl" mode="aspectFill" />
-          <text class="me-title">宠物管家</text>
+          <text class="me-title">{{ userName }}</text>
         </view>
         <view class="me-nav-right" @click="onBellTap">
           <text class="me-bell">🔔</text>
@@ -146,6 +146,7 @@ export default {
       statusBarHeight: 20,
       scrollHeight: 0,
       avatarUrl: "https://ai-public.mastergo.com/ai/img_res/1774537096721a3K9mP2xQ7vN4rT8wY.jpg",
+      userName: "宠物管家",
       pets: [],
       showAddPetModal: false,
       addPetForm: {
@@ -173,19 +174,51 @@ export default {
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: false });
     this.loadPets();
+    this.loadUserInfo();
   },
   onLoad() {
     try {
       const sys = uni.getSystemInfoSync();
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
-      // 给 scroll-view 设置精确高度，避免在一些机型/多次渲染后 `100vh` 导致滚动异常
       this.scrollHeight = sys && sys.windowHeight ? sys.windowHeight : 0;
     } catch (e) {
       this.statusBarHeight = 20;
       this.scrollHeight = 0;
     }
+    this.loadUserInfo();
   },
   methods: {
+    // 加载用户信息
+    async loadUserInfo() {
+      // 先从本地缓存读取
+      const userInfo = uni.getStorageSync('userInfo');
+      if (userInfo && userInfo.avatar) {
+        this.avatarUrl = userInfo.avatar;
+        this.userName = userInfo.nickname || '宠物管家';
+      }
+      // 如果有 token，从后端获取最新数据
+      const token = uni.getStorageSync('token');
+      if (token) {
+        try {
+          const res = await uni.request({
+            url: "http://localhost:8080/api/users/profile",
+            method: "GET",
+            header: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (res.statusCode === 200 && res.data.success) {
+            const userData = res.data.data;
+            this.avatarUrl = userData.avatar || this.avatarUrl;
+            this.userName = userData.nickname || this.userName;
+            // 更新缓存
+            uni.setStorageSync('userInfo', userData);
+          }
+        } catch (e) {
+          console.error('获取用户信息失败:', e);
+        }
+      }
+    },
     async loadPets() {
       const token = uni.getStorageSync('token');
       try {

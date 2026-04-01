@@ -10,9 +10,9 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/pet_trail?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: root123654
+    password: ${MYSQL_PASSWORD:root123654}
 
-  # Redis配置
+  # Redis 配置
   data:
     redis:
       host: localhost
@@ -33,7 +33,7 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
-# MyBatis-Plus配置
+# MyBatis-Plus 配置
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
@@ -56,8 +56,14 @@ aliyun:
 
 # JWT 配置
 jwt:
-  secret: ${JWT_SECRET:your-secret-key-at-least-256-bits-long}
-  expiration: 604800  # 7天 (秒)
+  secret: ${JWT_SECRET:pet-trail-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256}
+  expiration: 604800  # 7 天 (秒)
+
+# 微信配置
+wechat:
+  miniapp:
+    app-id: ${WECHAT_MINIAPP_APP_ID:wxb210d75568abe1f7}
+    app-secret: ${WECHAT_MINIAPP_APP_SECRET:3279099fe5b8e0ad126fc4b8a4797ede}
 
 # 日志配置
 logging:

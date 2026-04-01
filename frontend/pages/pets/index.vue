@@ -8,7 +8,7 @@
 
     <!-- 宠物列表 -->
     <view class="pet-list-container" v-if="pets.length > 0">
-      <view class="pet-item" v-for="(pet, index) in pets" :key="pet.id" @click="goToDetail(pet.id)">
+      <view class="pet-item" v-for="pet in pets" :key="pet.id" @click="goToDetail(pet.id)">
         <view class="pet-avatar">
           <image v-if="pet.avatar" :src="pet.avatar" mode="aspectFill"></image>
           <view v-else class="avatar-placeholder">
@@ -19,8 +19,8 @@
           <view class="pet-name">{{ pet.name }}</view>
           <view class="pet-breed">{{ pet.breed || '未填写品种' }}</view>
           <view class="pet-meta">
-            <text class="pet-gender" v-if="pet.gender">
-              {{ pet.gender === 1 ? '♂' : pet.gender === 2 ? '♀' : '' }}
+            <text class="pet-gender" v-if="pet.gender !== undefined && pet.gender !== null">
+              {{ getGenderText(pet.gender) }}
             </text>
             <text class="pet-weight" v-if="pet.weight">
               {{ pet.weight }} kg
@@ -38,7 +38,7 @@
 
     <!-- 空状态 -->
     <view class="empty-state" v-else>
-      <image class="empty-icon" src="/static/images/empty-pets.png" mode="aspectFit"></image>
+      <view class="empty-icon">🐾</view>
       <text class="empty-text">还没有宠物哦</text>
       <button class="add-btn-large" type="primary" @click="showAddModal">添加第一只宠物</button>
     </view>
@@ -104,6 +104,9 @@
 </template>
 
 <script>
+import { pet as petApi } from '@/api'
+import { formatDate, getGenderText } from '@/utils'
+
 export default {
   data() {
     return {
@@ -118,42 +121,29 @@ export default {
         color: '',
         avatar: ''
       }
-    };
+    }
   },
   onLoad() {
-    this.loadPets();
+    this.loadPets()
   },
   methods: {
+    formatDate,
+    getGenderText,
+
     // 加载宠物列表
     async loadPets() {
       try {
-        const res = await uni.request({
-          url: 'http://localhost:8080/api/pets',
-          method: 'GET',
-          header: {
-            'Authorization': uni.getStorageSync('token') || ''
-          }
-        });
-        if (res.data.success) {
-          this.pets = res.data.data;
-        } else {
-          uni.showToast({
-            title: res.data.message || '加载失败',
-            icon: 'none'
-          });
-        }
+        const res = await petApi.getPetList()
+        this.pets = res.data || []
       } catch (error) {
-        console.error('加载宠物列表失败:', error);
-        uni.showToast({
-          title: '网络错误',
-          icon: 'none'
-        });
+        console.error('加载宠物列表失败:', error)
+        // 错误提示由 request 拦截器处理
       }
     },
 
     // 显示添加弹窗
     showAddModal() {
-      this.showModal = true;
+      this.showModal = true
       this.form = {
         name: '',
         breed: '',
@@ -162,71 +152,57 @@ export default {
         weight: '',
         color: '',
         avatar: ''
-      };
+      }
     },
 
     // 隐藏添加弹窗
     hideAddModal() {
-      this.showModal = false;
+      this.showModal = false
     },
 
     // 性别选择
     onGenderChange(e) {
-      this.form.gender = parseInt(e.detail.value);
+      this.form.gender = parseInt(e.detail.value)
     },
 
     // 生日选择
     onBirthdayChange(e) {
-      this.form.birthday = e.detail.value;
-    },
-
-    // 格式化日期
-    formatDate(date) {
-      if (!date) return '';
-      const d = new Date(date);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      this.form.birthday = e.detail.value
     },
 
     // 提交表单
     async submitForm() {
-      if (!this.form.name) {
+      if (!this.form.name || !this.form.name.trim()) {
         uni.showToast({
           title: '请输入宠物名称',
           icon: 'none'
-        });
-        return;
+        })
+        return
       }
 
       try {
-        const res = await uni.request({
-          url: 'http://localhost:8080/api/pets',
-          method: 'POST',
-          header: {
-            'Authorization': uni.getStorageSync('token') || '',
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          data: this.form
-        });
-
-        if (res.data.success) {
-          uni.showToast({
-            title: '添加成功',
-            icon: 'success'
-          });
-          this.hideAddModal();
-          this.loadPets();
-        } else {
-          uni.showToast({
-            title: res.data.message || '添加失败',
-            icon: 'none'
-          });
+        const submitData = {
+          name: this.form.name.trim(),
+          breed: this.form.breed?.trim() || undefined,
+          gender: this.form.gender,
+          birthday: this.form.birthday || undefined,
+          weight: this.form.weight ? parseFloat(this.form.weight) : undefined,
+          color: this.form.color?.trim() || undefined,
+          avatar: this.form.avatar || undefined
         }
-      } catch (error) {
-        console.error('添加宠物失败:', error);
+
+        const res = await petApi.createPet(submitData)
+        
         uni.showToast({
-          title: '网络错误',
-          icon: 'none'
-        });
+          title: '添加成功',
+          icon: 'success'
+        })
+        
+        this.hideAddModal()
+        this.loadPets()
+      } catch (error) {
+        console.error('添加宠物失败:', error)
+        // 错误提示由 request 拦截器处理
       }
     },
 
@@ -234,10 +210,10 @@ export default {
     goToDetail(petId) {
       uni.navigateTo({
         url: `/pages/pets/detail?id=${petId}`
-      });
+      })
     }
   }
-};
+}
 </script>
 
 <style lang="scss" scoped>
@@ -367,8 +343,7 @@ export default {
 }
 
 .empty-icon {
-  width: 300rpx;
-  height: 300rpx;
+  font-size: 120rpx;
   margin-bottom: 40rpx;
 }
 

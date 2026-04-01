@@ -261,6 +261,7 @@ export default {
   onShow() {
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: false });
+    this.loadUserInfo();
   },
   onLoad() {
     try {
@@ -270,8 +271,38 @@ export default {
       this.statusBarHeight = 20;
     }
     this.loadPets();
+    this.loadUserInfo();
   },
   methods: {
+    // 加载用户信息
+    async loadUserInfo() {
+      // 先从本地缓存读取
+      const userInfo = uni.getStorageSync('userInfo');
+      if (userInfo && userInfo.avatar) {
+        this.userAvatar = userInfo.avatar;
+        this.userName = userInfo.nickname || '小萌宠主人';
+      }
+      // 如果有 token，从后端获取最新数据
+      const token = uni.getStorageSync('token');
+      if (token) {
+        try {
+          const res = await uni.request({
+            url: "http://localhost:8080/api/users/profile",
+            method: "GET",
+            header: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.statusCode === 200 && res.data.success) {
+            const userData = res.data.data;
+            this.userAvatar = userData.avatar || this.userAvatar;
+            this.userName = userData.nickname || '小萌宠主人';
+            // 更新缓存
+            uni.setStorageSync('userInfo', userData);
+          }
+        } catch (e) {
+          console.error('获取用户信息失败:', e);
+        }
+      }
+    },
     async loadPets() {
       const token = uni.getStorageSync('token');
       try {

@@ -10,13 +10,6 @@ export const getPetList = () => {
 /**
  * 创建宠物
  * @param {object} data - 宠物信息
- * @param {string} data.name - 宠物名称
- * @param {string} data.breed - 宠物品种
- * @param {number} data.gender - 性别（1-男，2-女）
- * @param {string} data.birthday - 出生日期
- * @param {string} data.avatar - 宠物头像
- * @param {number} data.weight - 体重
- * @param {string} data.color - 颜色
  */
 export const createPet = (data) => {
   return request.post('/api/pets', null, {
@@ -58,8 +51,6 @@ export const deletePet = (petId) => {
  */
 export const updatePetWeight = (petId, weight) => {
   return request.put(`/api/pets/${petId}/weight`, null, {
-    params: {
-      weight
-    }
+    params: { weight }
   })
 }

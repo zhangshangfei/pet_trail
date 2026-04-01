@@ -1,7 +1,10 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.*;
 import com.pettrail.pettrailbackend.service.*;
+import com.pettrail.pettrailbackend.util.JwtUtil;
+import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -22,14 +25,14 @@ public class DashboardController {
     private final VaccineReminderService vaccineReminderService;
     private final ParasiteReminderService parasiteReminderService;
     private final WeightRecordService weightRecordService;
+    private final JwtUtil jwtUtil;
 
     /**
      * 获取数据看板概览
      */
     @GetMapping("/overview")
-    public Map<String, Object> getOverview(@RequestHeader("Authorization") String token) {
+    public Result<Map<String, Object>> getOverview(@RequestHeader("Authorization") String token) {
         log.info("获取数据看板概览");
-        Map<String, Object> result = new HashMap<>();
         try {
             Long userId = getUserIdFromToken(token);
             List<Pet> pets = petService.listByUserId(userId);
@@ -40,26 +43,21 @@ public class DashboardController {
             overview.put("upcomingParasiteCount", getUpcomingParasiteCount(userId));
             overview.put("weightRecordCount", getWeightRecordCount(userId));
 
-            result.put("success", true);
-            result.put("data", overview);
-            result.put("message", "获取成功");
+            return Result.success(overview);
         } catch (Exception e) {
-            log.error("获取数据看板概览失败: {}", e.getMessage(), e);
-            result.put("success", false);
-            result.put("message", "获取失败: " + e.getMessage());
+            log.error("获取数据看板概览失败：{}", e.getMessage(), e);
+            return Result.error(e.getMessage());
         }
-        return result;
     }
 
     /**
-     * 获取宠物健康趋势（最近30天）
+     * 获取宠物健康趋势（最近 30 天）
      */
     @GetMapping("/health-trend")
-    public Map<String, Object> getHealthTrend(
+    public Result<Map<Long, List<WeightRecord>>> getHealthTrend(
             @RequestHeader("Authorization") String token,
             @RequestParam(defaultValue = "30") int days) {
-        log.info("获取宠物健康趋势: days={}", days);
-        Map<String, Object> result = new HashMap<>();
+        log.info("获取宠物健康趋势：days={}", days);
         try {
             Long userId = getUserIdFromToken(token);
             List<Pet> pets = petService.listByUserId(userId);
@@ -70,24 +68,19 @@ public class DashboardController {
                 petRecords.put(pet.getId(), records);
             }
 
-            result.put("success", true);
-            result.put("data", petRecords);
-            result.put("message", "获取成功");
+            return Result.success(petRecords);
         } catch (Exception e) {
-            log.error("获取宠物健康趋势失败: {}", e.getMessage(), e);
-            result.put("success", false);
-            result.put("message", "获取失败: " + e.getMessage());
+            log.error("获取宠物健康趋势失败：{}", e.getMessage(), e);
+            return Result.error(e.getMessage());
         }
-        return result;
     }
 
     /**
      * 获取所有即将到期的提醒
      */
     @GetMapping("/upcoming-reminders")
-    public Map<String, Object> getUpcomingReminders(@RequestHeader("Authorization") String token) {
+    public Result<List<Map<String, Object>>> getUpcomingReminders(@RequestHeader("Authorization") String token) {
         log.info("获取所有即将到期的提醒");
-        Map<String, Object> result = new HashMap<>();
         try {
             Long userId = getUserIdFromToken(token);
             List<Pet> pets = petService.listByUserId(userId);
@@ -124,26 +117,21 @@ public class DashboardController {
             // 按日期排序
             reminders.sort(Comparator.comparing(item -> (LocalDate) item.get("date")));
 
-            result.put("success", true);
-            result.put("data", reminders);
-            result.put("message", "获取成功");
+            return Result.success(reminders);
         } catch (Exception e) {
-            log.error("获取所有即将到期的提醒失败: {}", e.getMessage(), e);
-            result.put("success", false);
-            result.put("message", "获取失败: " + e.getMessage());
+            log.error("获取所有即将到期的提醒失败：{}", e.getMessage(), e);
+            return Result.error(e.getMessage());
         }
-        return result;
     }
 
     /**
      * 获取宠物体重统计
      */
     @GetMapping("/weight-stats")
-    public Map<String, Object> getWeightStats(
+    public Result<Map<Long, Map<String, Object>>> getWeightStats(
             @RequestHeader("Authorization") String token,
             @RequestParam(defaultValue = "30") int days) {
-        log.info("获取宠物体重统计: days={}", days);
-        Map<String, Object> result = new HashMap<>();
+        log.info("获取宠物体重统计：days={}", days);
         try {
             Long userId = getUserIdFromToken(token);
             List<Pet> pets = petService.listByUserId(userId);
@@ -169,7 +157,6 @@ public class DashboardController {
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                         // 2. 计算平均值 (使用 divide，必须指定精度和舍入模式)
-                        // 这里假设保留 4 位小数，四舍五入。根据业务需求调整 4 和 RoundingMode
                         BigDecimal avgWeight = sum.divide(
                                 BigDecimal.valueOf(weights.size()),
                                 2,
@@ -180,7 +167,7 @@ public class DashboardController {
                         BigDecimal maxWeight = Collections.max(weights);
                         BigDecimal minWeight = Collections.min(weights);
 
-                        // 4. 计算变化量 (修复：使用 .subtract() 代替 -)
+                        // 4. 计算变化量
                         BigDecimal firstWeight = weights.get(0);
                         BigDecimal lastWeight = weights.get(weights.size() - 1);
                         BigDecimal totalWeightChange = lastWeight.subtract(firstWeight);
@@ -197,25 +184,22 @@ public class DashboardController {
                 }
             }
 
-            result.put("success", true);
-            result.put("data", stats);
-            result.put("message", "获取成功");
+            return Result.success(stats);
         } catch (Exception e) {
-            log.error("获取宠物体重统计失败: {}", e.getMessage(), e);
-            result.put("success", false);
-            result.put("message", "获取失败: " + e.getMessage());
+            log.error("获取宠物体重统计失败：{}", e.getMessage(), e);
+            return Result.error(e.getMessage());
         }
-        return result;
     }
 
     /**
-     * 获取用户ID
+     * 获取用户 ID（从 Token 解析）
      */
     private Long getUserIdFromToken(String token) {
-        // TODO: 实现 JWT 解析逻辑
-        // return jwtUtil.getUserIdFromToken(token);
-        // 暂时返回 1 作为测试
-        return 1L;
+        if (token == null || !token.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Token 格式不正确");
+        }
+        String tokenValue = token.substring(7);
+        return jwtUtil.getUserIdFromToken(tokenValue);
     }
 
     /**

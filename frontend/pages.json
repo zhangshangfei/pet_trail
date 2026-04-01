@@ -1,6 +1,13 @@
 {
   "pages": [
     {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/pets/index",
       "style": {
         "navigationBarTitleText": "我的宠物",
@@ -12,6 +19,14 @@
       "path": "pages/pets/detail",
       "style": {
         "navigationBarTitleText": "宠物详情",
+        "navigationBarBackgroundColor": "#667eea",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/pets/edit/index",
+      "style": {
+        "navigationBarTitleText": "编辑宠物",
         "navigationBarBackgroundColor": "#667eea",
         "navigationBarTextStyle": "white"
       }
@@ -63,15 +78,21 @@
     "list": [
       {
         "pagePath": "pages/dashboard/index",
-        "text": "看板"
+        "text": "健康",
+        "iconPath": "static/tabbar/dashboard.png",
+        "selectedIconPath": "static/tabbar/dashboard-active.png"
       },
       {
         "pagePath": "pages/pets/index",
-        "text": "宠物"
+        "text": "宠物",
+        "iconPath": "static/tabbar/pets.png",
+        "selectedIconPath": "static/tabbar/pets-active.png"
       },
       {
         "pagePath": "pages/health/record",
-        "text": "记录"
+        "text": "体重",
+        "iconPath": "static/tabbar/record.png",
+        "selectedIconPath": "static/tabbar/record-active.png"
       }
     ]
   }
