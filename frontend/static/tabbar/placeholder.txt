@@ -1,0 +1,12 @@
+# Tabbar 图标占位符
+
+这些是临时占位文件，后续需要替换为实际的图标：
+
+- dashboard.png
+- dashboard-active.png
+- pets.png
+- pets-active.png
+- record.png
+- record-active.png
+
+建议规格：81x81 像素

@@ -1,0 +1,21 @@
+# === 编译产物 ===
+*.class
+/target/
+/out/
+*.jar
+*.war
+
+# === IDEA 配置 ===
+.idea/
+*.iml
+*.iws
+
+# === 操作系统文件 ===
+.DS_Store
+Thumbs.db
+
+# === 日志和临时文件 ===
+*.log
+*.tmp
+*.bak
+*.agents

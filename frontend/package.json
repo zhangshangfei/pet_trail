@@ -1,0 +1,32 @@
+{
+  "name": "pet-trail-frontend",
+  "description": "宠迹 - 宠物生活伴侣前端",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "uni",
+    "build": "uni build",
+    "dev:mp-weixin": "uni -p mp-weixin",
+    "build:mp-weixin": "uni build -p mp-weixin && node scripts/postbuild-mp-weixin.mjs"
+  },
+  "dependencies": {
+    "vue": "^3.4.27",
+    "pinia": "^2.1.7",
+    "vue-i18n": "^9.14.5",
+    "uview-plus": "^3.1.31",
+    "echarts": "^5.5.0",
+    "@dcloudio/uni-app": "3.0.0-alpha-5000520260323001",
+    "@dcloudio/uni-app-plus": "3.0.0-alpha-5000520260323001",
+    "@dcloudio/uni-components": "3.0.0-alpha-5000520260323001",
+    "@dcloudio/uni-h5": "3.0.0-alpha-5000520260323001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-alpha-5000520260323001"
+  },
+  "devDependencies": {
+    "@dcloudio/uni-automator": "3.0.0-alpha-5000520260323001",
+    "@dcloudio/uni-cli-shared": "3.0.0-alpha-5000520260323001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-alpha-5000520260323001",
+    "vite": "5.2.8",
+    "sass": "^1.70.0",
+    "typescript": "^5.3.3"
+  }
+}

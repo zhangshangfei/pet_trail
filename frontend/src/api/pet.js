@@ -1,0 +1,65 @@
+import request from '@/utils/request'
+
+/**
+ * 获取宠物列表
+ */
+export const getPetList = () => {
+  return request.get('/api/pets')
+}
+
+/**
+ * 创建宠物
+ * @param {object} data - 宠物信息
+ * @param {string} data.name - 宠物名称
+ * @param {string} data.breed - 宠物品种
+ * @param {number} data.gender - 性别（1-男，2-女）
+ * @param {string} data.birthday - 出生日期
+ * @param {string} data.avatar - 宠物头像
+ * @param {number} data.weight - 体重
+ * @param {string} data.color - 颜色
+ */
+export const createPet = (data) => {
+  return request.post('/api/pets', null, {
+    params: data
+  })
+}
+
+/**
+ * 获取宠物详情
+ * @param {number} petId - 宠物 ID
+ */
+export const getPetDetail = (petId) => {
+  return request.get(`/api/pets/${petId}`)
+}
+
+/**
+ * 更新宠物信息
+ * @param {number} petId - 宠物 ID
+ * @param {object} data - 更新的宠物信息
+ */
+export const updatePet = (petId, data) => {
+  return request.put(`/api/pets/${petId}`, null, {
+    params: data
+  })
+}
+
+/**
+ * 删除宠物
+ * @param {number} petId - 宠物 ID
+ */
+export const deletePet = (petId) => {
+  return request.delete(`/api/pets/${petId}`)
+}
+
+/**
+ * 更新宠物体重
+ * @param {number} petId - 宠物 ID
+ * @param {number} weight - 体重
+ */
+export const updatePetWeight = (petId, weight) => {
+  return request.put(`/api/pets/${petId}/weight`, null, {
+    params: {
+      weight
+    }
+  })
+}

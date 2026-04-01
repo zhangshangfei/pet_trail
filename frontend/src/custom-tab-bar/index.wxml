@@ -1,0 +1,27 @@
+<view class="tabbar-safe" wx:if="{{!hidden}}">
+  <view class="tabbar">
+    <view class="tabbar-items">
+      <view class="tabbar-item {{selected === 0 ? 'active' : ''}}" data-index="0" bindtap="onSwitch">
+        <view class="tabbar-icon">⌂</view>
+        <view class="tabbar-text">首页</view>
+      </view>
+
+      <view class="tabbar-item {{selected === 1 ? 'active' : ''}}" data-index="1" bindtap="onSwitch">
+        <view class="tabbar-icon">📈</view>
+        <view class="tabbar-text">健康</view>
+      </view>
+
+      <view class="tabbar-item {{selected === 2 ? 'active' : ''}}" data-index="2" bindtap="onSwitch">
+        <view class="tabbar-icon">🐾</view>
+        <view class="tabbar-text">社区</view>
+      </view>
+
+      <view class="tabbar-item {{selected === 3 ? 'active' : ''}}" data-index="3" bindtap="onSwitch">
+        <view class="tabbar-icon">👤</view>
+        <view class="tabbar-text">我的</view>
+      </view>
+    </view>
+
+  </view>
+</view>
+
