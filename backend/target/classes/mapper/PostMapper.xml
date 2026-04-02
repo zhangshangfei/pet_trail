@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pettrail.pettrailbackend.mapper.PostMapper">
+
+    <resultMap id="BaseResultMap" type="com.pettrail.pettrailbackend.entity.Post">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="pet_id" property="petId"/>
+        <result column="content" property="content"/>
+        <result column="images" property="images"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="comment_count" property="commentCount"/>
+        <result column="share_count" property="shareCount"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- 根据用户 ID 查询动态列表 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT * FROM posts_00
+        WHERE user_id = #{userId}
+        AND status = 1
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 查询动态列表（按时间倒序） -->
+    <select id="selectFeed" resultMap="BaseResultMap">
+        SELECT * FROM posts_00
+        WHERE status = 1
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 根据日期范围查询动态 -->
+    <select id="selectByDateRange" resultMap="BaseResultMap">
+        SELECT * FROM posts_00
+        WHERE user_id = #{userId}
+        AND DATE(created_at) BETWEEN #{startDate} AND #{endDate}
+        AND status = 1
+        ORDER BY created_at DESC
+    </select>
+
+</mapper>

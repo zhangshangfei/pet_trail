@@ -8,17 +8,35 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * 驱虫提醒实体
+ */
 @Data
 @TableName("parasite_reminders")
 public class ParasiteReminder {
+
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private Long petId;           // 宠物ID
-    private String type;          // 类型: 体内, 体外
-    private LocalDate nextDate;   // 下次驱虫日期
-    private Integer status;       // 状态: 0-未完成, 1-已完成
+    private Long petId;
+
+    private Long userId;
+
+    private Integer type;
+
+    private String productName;
+
+    private LocalDate nextDate;
+
+    private Integer intervalDays;
+
+    private Integer status;
+
+    private Integer isNotified;
+
+    private String note;
 
     private LocalDateTime createdAt;
+
     private LocalDateTime updatedAt;
 }

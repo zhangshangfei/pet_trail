@@ -44,7 +44,7 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
      * 创建寄生虫提醒
      */
     @Transactional(rollbackFor = Exception.class)
-    public ParasiteReminder createReminder(Long petId, String type, LocalDate nextDate) {
+    public ParasiteReminder createReminder(Long petId, Integer type, LocalDate nextDate) {
         ParasiteReminder reminder = new ParasiteReminder();
         reminder.setPetId(petId);
         reminder.setType(type);

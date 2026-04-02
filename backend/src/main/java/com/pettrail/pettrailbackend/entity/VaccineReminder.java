@@ -8,17 +8,35 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * 疫苗提醒实体
+ */
 @Data
 @TableName("vaccine_reminders")
 public class VaccineReminder {
+
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private Long petId;           // 宠物ID
-    private String vaccineName;   // 疫苗名称
-    private LocalDate nextDate;   // 下次接种日期
-    private Integer status;       // 状态: 0-未接种, 1-已接种
+    private Long petId;
+
+    private Long userId;
+
+    private String vaccineName;
+
+    private Integer vaccineType;
+
+    private LocalDate nextDate;
+
+    private Integer status;
+
+    private Integer reminderDays;
+
+    private Integer isNotified;
+
+    private String note;
 
     private LocalDateTime createdAt;
+
     private LocalDateTime updatedAt;
 }

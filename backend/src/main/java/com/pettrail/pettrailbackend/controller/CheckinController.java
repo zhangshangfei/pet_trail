@@ -1,0 +1,104 @@
+package com.pettrail.pettrailbackend.controller;
+
+import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.entity.CheckinItem;
+import com.pettrail.pettrailbackend.entity.CheckinRecord;
+import com.pettrail.pettrailbackend.service.CheckinService;
+import com.pettrail.pettrailbackend.util.UserContext;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 打卡控制器
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api/checkin")
+@RequiredArgsConstructor
+public class CheckinController {
+
+    private final CheckinService checkinService;
+
+    /**
+     * 获取打卡项列表
+     */
+    @GetMapping("/items")
+    public Result<List<CheckinItem>> getCheckinItems() {
+        List<CheckinItem> items = checkinService.getCheckinItems();
+        return Result.success(items);
+    }
+
+    /**
+     * 打卡
+     */
+    @PostMapping
+    public Result<CheckinRecord> checkin(
+            @RequestParam Long itemId,
+            @RequestParam(required = false) Long petId,
+            @RequestParam(required = false) String note,
+            @RequestParam(required = false) List<String> images) {
+        
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+
+        CheckinRecord record = checkinService.checkin(userId, petId, itemId, note, images);
+        return Result.success(record);
+    }
+
+    /**
+     * 获取打卡日历
+     */
+    @GetMapping("/calendar")
+    public Result<List<CheckinRecord>> getCalendar(
+            @RequestParam int year,
+            @RequestParam int month) {
+        
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+
+        List<CheckinRecord> records = checkinService.getCalendar(userId, year, month);
+        return Result.success(records);
+    }
+
+    /**
+     * 取消打卡
+     */
+    @PostMapping("/{id}/cancel")
+    public Result<Void> cancelCheckin(@PathVariable Long id) {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+
+        checkinService.cancelCheckin(userId, id);
+        return Result.success();
+    }
+
+    /**
+     * 获取用户打卡统计
+     */
+    @GetMapping("/stats")
+    public Result<Map<String, Object>> getStats() {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+
+        // TODO: 实现统计接口
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalCount", 0);
+        stats.put("currentStreak", 0);
+        stats.put("maxStreak", 0);
+        
+        return Result.success(stats);
+    }
+}

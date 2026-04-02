@@ -45,7 +45,7 @@ public class ParasiteReminderController {
     @PostMapping
     public Result<ParasiteReminder> createReminder(
             @PathVariable Long petId,
-            @RequestParam String type,
+            @RequestParam Integer type,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate nextDate) {
         log.info("创建寄生虫提醒：petId={}, type={}, nextDate={}", petId, type, nextDate);
         ParasiteReminder reminder = parasiteReminderService.createReminder(petId, type, nextDate);

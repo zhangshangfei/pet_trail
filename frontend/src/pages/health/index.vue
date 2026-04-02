@@ -16,11 +16,11 @@
       </view>
     </view>
 
-    <scroll-view scroll-y class="health-scroll" @tap="petSelectorOpen = false">
+    <scroll-view scroll-y class="health-scroll" :style="{ paddingTop: headerHeight + 'px' }">
       <view class="health-content">
         <!-- Pet selector -->
         <view class="pet-selector">
-          <view class="pet-selector-card" @tap.stop="togglePetSelector">
+          <view class="pet-selector-card" @touchstart.stop="togglePetSelector">
             <view class="pet-selector-left">
               <image
                 class="pet-selector-avatar"
@@ -35,16 +35,17 @@
             <text class="pet-selector-arrow">{{ petSelectorOpen ? "⌃" : "⌄" }}</text>
           </view>
 
-          <view v-if="petSelectorOpen" class="pet-selector-pop" @tap.stop>
+          <view v-show="petSelectorOpen" class="pet-selector-pop" @touchstart.stop="closePetSelector">
             <view class="pet-selector-search">
               <input class="pet-selector-input" v-model="searchQuery" placeholder="搜索宠物..." />
             </view>
             <scroll-view scroll-y class="pet-selector-list">
               <view
-                v-for="pet in filteredPets"
+                v-for="pet in pets"
                 :key="pet.id"
                 class="pet-selector-item"
-                @tap="selectPet(pet)"
+                @touchstart.stop="selectPet(pet)"
+                v-show="!searchQuery || (pet.name && pet.name.toLowerCase().includes(searchQuery.toLowerCase())) || (pet.breed && pet.breed.toLowerCase().includes(searchQuery.toLowerCase()))"
               >
                 <image
                   class="pet-selector-item-avatar"
@@ -231,6 +232,7 @@ export default {
   data() {
     return {
       statusBarHeight: 20,
+      headerHeight: 0,
       userAvatar: "https://ai-public.mastergo.com/ai/img_res/1774575365924a3K9mP2xQ7vN4rT8wY.jpg",
       userName: "小萌宠主人",
       fallbackPetAvatar: "https://ai-public.mastergo.com/ai/img_res/1774575365924b4L8nQ3xR6vM9wP2yZ.jpg",
@@ -260,15 +262,6 @@ export default {
     };
   },
   computed: {
-    filteredPets() {
-      const q = (this.searchQuery || "").trim().toLowerCase();
-      if (!q) return this.pets;
-      return this.pets.filter(
-        (p) =>
-          (p.name || "").toLowerCase().includes(q) ||
-          (p.breed || "").toLowerCase().includes(q)
-      );
-    },
     petAgeText() {
       // 当前项目没 age 字段：用 birthday 推算；没有就 "-"
       const b = this.currentPet && this.currentPet.birthday;
@@ -321,8 +314,12 @@ export default {
     try {
       const sys = uni.getSystemInfoSync();
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
+      // 顶部导航高度 = 状态栏高度 + 导航栏内容高度 (约 50px: padding 16rpx*2 + 内容)
+      const headerHeight = this.statusBarHeight + 50;
+      this.headerHeight = headerHeight;
     } catch (e) {
       this.statusBarHeight = 20;
+      this.headerHeight = 70;
     }
     this.loadPets();
     this.loadUserInfo();
@@ -332,12 +329,18 @@ export default {
     async loadUserInfo() {
       // 先从本地缓存读取
       const userInfo = uni.getStorageSync('userInfo');
+      const token = uni.getStorageSync('token');
+      
       if (userInfo && userInfo.avatar) {
         this.userAvatar = userInfo.avatar;
         this.userName = userInfo.nickname || '小萌宠主人';
+      } else if (!token) {
+        // 没有 token 且没有缓存，使用默认值
+        this.userAvatar = "https://ai-public.mastergo.com/ai/img_res/1774575365924a3K9mP2xQ7vN4rT8wY.jpg";
+        this.userName = "小萌宠主人";
       }
+      
       // 如果有 token，从后端获取最新数据
-      const token = uni.getStorageSync('token');
       if (token) {
         try {
           const res = await uni.request({
@@ -370,15 +373,23 @@ export default {
           this.currentPet = this.currentPet || this.pets[0] || null;
         } else {
           this.pets = [];
+          if (this.pets.length === 0) {
+            this.currentPet = null;
+          }
+        }
+      } catch (e) {
+        console.error('加载宠物列表失败:', e);
+        this.pets = [];
+        if (this.pets.length === 0) {
           this.currentPet = null;
         }
-      } catch {
-        this.pets = [];
-        this.currentPet = null;
       }
     },
     togglePetSelector() {
       this.petSelectorOpen = !this.petSelectorOpen;
+    },
+    closePetSelector() {
+      this.petSelectorOpen = false;
     },
     selectPet(pet) {
       this.currentPet = pet;
@@ -467,8 +478,13 @@ export default {
 .health-nav-actions { display:flex; gap: 18rpx; }
 .health-nav-icon { font-size: 34rpx; color:#6b7280; padding: 6rpx 10rpx; }
 
-.health-scroll { height: 100vh; }
-.health-content { padding: 170rpx 20rpx 180rpx; }
+.health-scroll {
+  height: 100vh;
+  /* padding-top 改为动态设置 */
+}
+.health-content {
+  padding: 20rpx 20rpx 180rpx;
+}
 
 .pet-selector { position: relative; margin-bottom: 24rpx; }
 .pet-selector-card {

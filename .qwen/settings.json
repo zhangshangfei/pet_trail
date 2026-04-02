@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn *)",
+      "Bash(npm run *)",
+      "Bash(mvnw.cmd *)",
+      "Bash(del *)",
+      "Bash(findstr *)",
+      "Bash(g:\\apache-maven-3.9.11\\bin\\mvn.cmd *)",
+      "Bash(g:\\openclaw_project\\pet-trail\\backend\\mvnw.cmd *)",
+      "Bash(select-string *)",
+      "Bash(select-object *)",
+      "Bash(timeout *)",
+      "Bash(tasklist *)",
+      "Bash(powershell *)",
+      "Bash(set *)",
+      "Bash(do *)",
+      "Bash(npm *)",
+      "Bash(dir *)",
+      "Bash(rmdir *)"
+    ]
+  },
+  "$version": 3
+}

@@ -3,40 +3,38 @@ import config from '@/config/env'
 
 const BASE_URL = config.VITE_API_BASE_URL
 
-// Token 过期时间（毫秒）
-const TOKEN_EXPIRED_TIME = 7 * 24 * 60 * 60 * 1000 // 7 天
+// 将对象编码为 application/x-www-form-urlencoded 格式
+const encodeFormData = (data) => {
+  if (!data) return ''
+  const params = []
+  for (const key in data) {
+    if (data.hasOwnProperty(key)) {
+      const value = data[key]
+      if (Array.isArray(value)) {
+        // 数组参数
+        value.forEach(v => {
+          params.push(encodeURIComponent(key) + '=' + encodeURIComponent(v))
+        })
+      } else {
+        params.push(encodeURIComponent(key) + '=' + encodeURIComponent(value))
+      }
+    }
+  }
+  return params.join('&')
+}
 
 // 请求拦截器
 const request = (options = {}) => {
   return new Promise((resolve, reject) => {
     // 获取 Token
     const token = uni.getStorageSync('token') || ''
-    const tokenExpireTime = uni.getStorageSync('tokenExpireTime') || 0
 
-    // 检查 Token 是否过期
-    if (token && Date.now() > tokenExpireTime) {
-      console.warn('Token 已过期，请重新登录')
-      uni.removeStorageSync('token')
-      uni.removeStorageSync('tokenExpireTime')
-      uni.removeStorageSync('userInfo')
-      
-      // 跳转到登录页（如果存在）
-      const pages = getCurrentPages()
-      const currentPage = pages[pages.length - 1]
-      if (currentPage && currentPage.route !== 'pages/login/index') {
-        uni.reLaunch({
-          url: '/pages/login/index'
-        })
-      }
-      
-      reject({ statusCode: 401, data: { message: 'Token 已过期' } })
-      return
-    }
-
-    // 构建请求头
-    const header = {
-      'Content-Type': 'application/json',
-      ...options.header
+    // 构建请求头 - 先设置默认值，再合并用户传入的 header
+    const header = {}
+    if (options.header && options.header['Content-Type']) {
+      header['Content-Type'] = options.header['Content-Type']
+    } else {
+      header['Content-Type'] = 'application/json'
     }
 
     // 如果有 Token，添加到请求头
@@ -44,15 +42,19 @@ const request = (options = {}) => {
       header['Authorization'] = `Bearer ${token}`
     }
 
+    // 处理数据编码
+    let requestData = options.data || {}
+    if (header['Content-Type'] === 'application/x-www-form-urlencoded') {
+      requestData = encodeFormData(requestData)
+    }
+
     // 发起请求
     uni.request({
       url: BASE_URL + options.url,
       method: options.method || 'GET',
-      data: options.data || {},
+      data: requestData,
       header: header,
       success: (res) => {
-        console.log('请求响应:', res)
-
         // 检查 HTTP 状态码
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const data = res.data
@@ -71,25 +73,25 @@ const request = (options = {}) => {
             reject(data)
           }
         } else if (res.statusCode === 401) {
-          // Token 无效或过期
-          console.warn('Token 无效，清除本地存储')
+          // Token 无效或过期 - 由后端校验
+          console.warn('Token 无效或已过期，清除本地存储')
           uni.removeStorageSync('token')
           uni.removeStorageSync('tokenExpireTime')
           uni.removeStorageSync('userInfo')
-          
+
           uni.showToast({
             title: '登录已过期，请重新登录',
             icon: 'none',
             duration: 2000
           })
-          
+
           // 延迟跳转到登录页
           setTimeout(() => {
             uni.reLaunch({
               url: '/pages/login/index'
             })
           }, 1500)
-          
+
           reject(res)
         } else if (res.statusCode === 403) {
           // 无权限
@@ -119,7 +121,7 @@ const request = (options = {}) => {
       },
       fail: (err) => {
         console.error('网络请求失败:', err)
-        
+
         // 判断错误类型
         let errorMessage = '网络请求失败'
         if (err.errMsg && err.errMsg.includes('timeout')) {
@@ -127,7 +129,7 @@ const request = (options = {}) => {
         } else if (err.errMsg && err.errMsg.includes('fail')) {
           errorMessage = '网络连接失败，请检查网络'
         }
-        
+
         uni.showToast({
           title: errorMessage,
           icon: 'none',

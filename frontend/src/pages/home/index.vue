@@ -4,11 +4,11 @@
     <view class="home-nav">
       <view class="home-statusbar" :style="{ height: statusBarHeight + 'px' }"></view>
       <view class="home-nav-inner">
-        <view v-if="isLoggedIn">
+        <view v-if="isLoggedIn" class="home-user-info">
           <image class="home-avatar" :src="avatarUrl" mode="aspectFill" />
           <text class="home-name">{{ userName }}</text>
         </view>
-        <view v-else @click="onWechatLogin" class="home-avatar">
+        <view v-else @click="onWechatLogin" class="wechat-login-btn-wrap">
           <text class="wechat-login-btn">微信登录</text>
         </view>
         <view class="home-nav-right" @click="onBellTap">
@@ -17,7 +17,7 @@
       </view>
     </view>
 
-    <scroll-view scroll-y class="home-scroll">
+    <scroll-view scroll-y class="home-scroll" :style="{ paddingTop: headerHeight + 'px' }">
       <view class="home-content">
         <!-- Quick action buttons -->
         <view class="quick-actions">
@@ -133,6 +133,7 @@ export default {
   data() {
     return {
       statusBarHeight: 20,
+      headerHeight: 0,
       userName: '',
       avatarUrl: '',
       isLoggedIn: false,
@@ -209,8 +210,12 @@ export default {
     try {
       const sys = uni.getSystemInfoSync();
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
+      // 顶部导航高度 = 状态栏高度 + 导航栏内容高度 (约 50px: padding 16rpx*2 + 内容)
+      const headerHeight = this.statusBarHeight + 50;
+      this.headerHeight = headerHeight;
     } catch (e) {
       this.statusBarHeight = 20;
+      this.headerHeight = 70;
     }
 
     // 检查登录状态
@@ -406,11 +411,42 @@ export default {
   justify-content: space-between;
 }
 
+/* 未登录时的微信登录按钮 */
+.wechat-login-btn-wrap {
+  width: 64rpx;
+  height: 64rpx;
+  background: linear-gradient(135deg, #42b983, #339c7a);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24rpx;
+  font-weight: 800;
+  margin-right: 18rpx;
+  cursor: pointer;
+}
+
+.wechat-login-btn {
+  font-size: 20rpx;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* 登录后的头像 */
 .home-avatar {
   width: 64rpx;
   height: 64rpx;
   border-radius: 50%;
   margin-right: 18rpx;
+  background: #e5e7eb;
+}
+
+.home-user-info {
+  display: flex;
+  align-items: center;
 }
 
 .home-name {
@@ -431,36 +467,13 @@ export default {
   color: #6b7280;
 }
 
-/* 微信登录按钮 */
-.home-avatar {
-  width: 64rpx;
-  height: 64rpx;
-  background: linear-gradient(135deg, #42b983, #339c7a);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24rpx;
-  font-weight: 800;
-  margin-right: 18rpx;
-  cursor: pointer;
-}
-
-/* 登录状态下的头像 */
-.home-avatar image {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
 .home-scroll {
   height: 100vh;
+  /* padding-top 改为动态设置 */
 }
 
 .home-content {
-  padding: 170rpx 20rpx 220rpx;
+  padding: 20rpx 20rpx 220rpx;
 }
 
 .quick-actions {

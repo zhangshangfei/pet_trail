@@ -11,10 +11,10 @@
       </view>
     </view>
 
-    <scroll-view scroll-y class="board-scroll" @tap="petSelectorOpen = false">
+    <scroll-view scroll-y class="board-scroll" :style="{ paddingTop: headerHeight + 'px' }">
       <view class="board-content">
         <view class="pet-selector">
-          <view class="pet-selector-card" @tap.stop="togglePetSelector">
+          <view class="pet-selector-card" @touchstart.stop="togglePetSelector">
             <view class="pet-selector-left">
               <image
                 class="pet-selector-avatar"
@@ -29,16 +29,17 @@
             <text class="pet-selector-arrow">{{ petSelectorOpen ? "⌃" : "⌄" }}</text>
           </view>
 
-          <view v-if="petSelectorOpen" class="pet-selector-pop" @tap.stop>
+          <view v-show="petSelectorOpen" class="pet-selector-pop" @touchstart.stop="closePetSelector">
             <view class="pet-selector-search">
               <input class="pet-selector-input" v-model="searchQuery" placeholder="搜索宠物..." />
             </view>
             <scroll-view scroll-y class="pet-selector-list">
               <view
-                v-for="pet in filteredPets"
+                v-for="pet in pets"
                 :key="pet.id"
                 class="pet-selector-item"
-                @tap="selectPet(pet)"
+                @touchstart.stop="selectPet(pet)"
+                v-show="!searchQuery || (pet.name && pet.name.toLowerCase().includes(searchQuery.toLowerCase())) || (pet.breed && pet.breed.toLowerCase().includes(searchQuery.toLowerCase()))"
               >
                 <image
                   class="pet-selector-item-avatar"
@@ -173,6 +174,7 @@ export default {
   data() {
     return {
       statusBarHeight: 20,
+      headerHeight: 0,
       userName: "小萌宠主人",
       userAvatar: "https://ai-public.mastergo.com/ai/img_res/1774575365924a3K9mP2xQ7vN4rT8wY.jpg",
       fallbackPetAvatar: "https://ai-public.mastergo.com/ai/img_res/1774575365924b4L8nQ3xR6vM9wP2yZ.jpg",
@@ -189,7 +191,13 @@ export default {
         "饮水分析": [1.1, 1.3, 1.2, 1.35, 1.18, 1.25, 1.2],
         "体重变化": [28.5, 28.4, 28.3, 28.2, 28.4, 28.3, 28.3]
       },
-      detailRecords: [],
+      detailRecords: [
+        { date: "今天", steps: "3,450", water: "280", weight: "28.3" },
+        { date: "昨天", steps: "2,980", water: "320", weight: "28.5" },
+        { date: "前天", steps: "4,120", water: "250", weight: "28.4" },
+        { date: "4 月 26 日", steps: "3,760", water: "290", weight: "28.3" },
+        { date: "4 月 25 日", steps: "5,230", water: "310", weight: "28.6" }
+      ],
       overview: {
         steps: "21.5k",
         water: "1.2L",
@@ -199,15 +207,6 @@ export default {
     };
   },
   computed: {
-    filteredPets() {
-      const q = (this.searchQuery || "").trim().toLowerCase();
-      if (!q) return this.pets;
-      return this.pets.filter(
-        (p) =>
-          (p.name || "").toLowerCase().includes(q) ||
-          (p.breed || "").toLowerCase().includes(q)
-      );
-    },
     activeSeries() {
       return this.chartDataMap[this.selectedChartTab] || [];
     },
@@ -267,23 +266,28 @@ export default {
     try {
       const sys = uni.getSystemInfoSync();
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
+      const headerHeight = this.statusBarHeight + 46;
+      this.headerHeight = headerHeight;
     } catch (e) {
       this.statusBarHeight = 20;
+      this.headerHeight = 66;
     }
     this.loadPets();
     this.loadUserInfo();
   },
   methods: {
-    // 加载用户信息
     async loadUserInfo() {
-      // 先从本地缓存读取
       const userInfo = uni.getStorageSync('userInfo');
+      const token = uni.getStorageSync('token');
+
       if (userInfo && userInfo.avatar) {
         this.userAvatar = userInfo.avatar;
         this.userName = userInfo.nickname || '小萌宠主人';
+      } else if (!token) {
+        this.userAvatar = "https://ai-public.mastergo.com/ai/img_res/1774575365924a3K9mP2xQ7vN4rT8wY.jpg";
+        this.userName = "小萌宠主人";
       }
-      // 如果有 token，从后端获取最新数据
-      const token = uni.getStorageSync('token');
+
       if (token) {
         try {
           const res = await uni.request({
@@ -294,8 +298,7 @@ export default {
           if (res.statusCode === 200 && res.data.success) {
             const userData = res.data.data;
             this.userAvatar = userData.avatar || this.userAvatar;
-            this.userName = userData.nickname || '小萌宠主人';
-            // 更新缓存
+            this.userName = userData.nickname || this.userName;
             uni.setStorageSync('userInfo', userData);
           }
         } catch (e) {
@@ -313,32 +316,24 @@ export default {
         });
         if (res.data && res.data.success && Array.isArray(res.data.data)) {
           this.pets = res.data.data;
-          this.selectedPet = this.pets[0] || null;
-          this.buildRecords();
+          if (!this.selectedPet && this.pets.length > 0) {
+            this.selectedPet = this.pets[0];
+          }
         }
       } catch (e) {
-        this.pets = [];
-        this.selectedPet = null;
-        this.buildRecords();
+        console.error('加载宠物列表失败:', e);
       }
-    },
-    buildRecords() {
-      this.detailRecords = [
-        { date: "今天", steps: "3,450", water: "280", weight: "28.3" },
-        { date: "昨天", steps: "2,980", water: "320", weight: "28.5" },
-        { date: "前天", steps: "4,120", water: "250", weight: "28.4" },
-        { date: "4月26日", steps: "3,760", water: "290", weight: "28.3" },
-        { date: "4月25日", steps: "5,230", water: "310", weight: "28.6" }
-      ];
     },
     selectPet(pet) {
       this.selectedPet = pet;
       this.petSelectorOpen = false;
       this.searchQuery = "";
-      this.buildRecords();
     },
     togglePetSelector() {
       this.petSelectorOpen = !this.petSelectorOpen;
+    },
+    closePetSelector() {
+      this.petSelectorOpen = false;
     },
     selectChartTab(tab) {
       this.selectedChartTab = tab;
@@ -377,8 +372,12 @@ export default {
 .board-user-name { font-size: 30rpx; font-weight: 800; color:#111827; }
 .board-filter { font-size: 30rpx; color:#6b7280; }
 
-.board-scroll { height: 100vh; }
-.board-content { padding: 150rpx 20rpx 220rpx; }
+.board-scroll {
+  height: 100vh;
+}
+.board-content {
+  padding: 20rpx 20rpx 220rpx;
+}
 
 .pet-selector { position: relative; margin-bottom: 20rpx; }
 .pet-selector-card {
