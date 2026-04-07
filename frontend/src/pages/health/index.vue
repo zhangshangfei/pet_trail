@@ -331,7 +331,7 @@ export default {
       // 先从本地缓存读取
       const userInfo = uni.getStorageSync('userInfo');
       const token = uni.getStorageSync('token');
-      
+
       if (userInfo && userInfo.avatar) {
         this.userAvatar = userInfo.avatar;
         this.userName = userInfo.nickname || '小萌宠主人';
@@ -340,15 +340,13 @@ export default {
         this.userAvatar = "https://ai-public.mastergo.com/ai/img_res/1774575365924a3K9mP2xQ7vN4rT8wY.jpg";
         this.userName = "小萌宠主人";
       }
-      
+
       // 如果有 token，从后端获取最新数据
       if (token) {
         try {
-          const res = await uni.$request.get('/api/users/profile', {
-            header: { 'Authorization': `Bearer ${token}` }
-          });
-          if (res.data && res.data.success) {
-            const userData = res.data.data;
+          const res = await uni.$request.get('/api/users/profile');
+          if (res && res.success) {
+            const userData = res.data;
             this.userAvatar = userData.avatar || this.userAvatar;
             this.userName = userData.nickname || this.userName;
             // 更新缓存
@@ -360,13 +358,10 @@ export default {
       }
     },
     async loadPets() {
-      const token = uni.getStorageSync('token');
       try {
-        const res = await uni.$request.get('/api/pets', {
-          header: { 'Authorization': `Bearer ${token}` || "" }
-        });
-        if (res.data && res.data.success && Array.isArray(res.data.data)) {
-          this.pets = res.data.data;
+        const res = await uni.$request.get('/api/pets');
+        if (res && res.success && Array.isArray(res.data)) {
+          this.pets = res.data;
           this.currentPet = this.currentPet || this.pets[0] || null;
         } else {
           this.pets = [];
@@ -416,7 +411,6 @@ export default {
       this.waterData.unit = this.waterData.unit === "ml" ? "L" : "ml";
     },
     async saveRecord() {
-      const token = uni.getStorageSync('token');
       if (!this.currentPet || !this.currentPet.id) {
         uni.showToast({ title: "请先选择宠物", icon: "none" });
         return;
@@ -430,17 +424,12 @@ export default {
           const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/weight-records`, {
             weight: this.weightData.value,
             recordDate: `${this.weightData.date}`
-          }, {
-            header: {
-              'Authorization': `Bearer ${token}` || "",
-              "Content-Type": "application/x-www-form-urlencoded"
-            }
           });
-          if (res.data && res.data.success) {
+          if (res && res.success) {
             uni.showToast({ title: "保存成功", icon: "success" });
             this.weightData.value = "";
           } else {
-            uni.showToast({ title: (res.data && res.data.message) || "保存失败", icon: "none" });
+            uni.showToast({ title: (res && res.message) || "保存失败", icon: "none" });
           }
         } catch {
           uni.showToast({ title: "网络错误", icon: "none" });

@@ -33,6 +33,7 @@ public class PetController {
             throw new IllegalStateException("用户未登录");
         }
         List<Pet> pets = petService.listByUserId(userId);
+        log.info("获取宠物列表pets：{}",pets);
         return Result.success(pets);
     }
 

@@ -293,11 +293,9 @@ export default {
 
       if (token) {
         try {
-          const res = await uni.$request.get('/api/users/profile', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (res.data.success) {
-            const userData = res.data.data;
+          const res = await uni.$request.get('/api/users/profile');
+          if (res.success) {
+            const userData = res.data;
             this.userAvatar = userData.avatar || this.userAvatar;
             this.userName = userData.nickname || this.userName;
             uni.setStorageSync('userInfo', userData);
@@ -308,13 +306,10 @@ export default {
       }
     },
     async loadPets() {
-      const token = uni.getStorageSync('token');
       try {
-        const res = await uni.$request.get('/api/pets', {
-          headers: { 'Authorization': `Bearer ${token}` || "" }
-        });
-        if (res.data && res.data.success && Array.isArray(res.data.data)) {
-          this.pets = res.data.data;
+        const res = await uni.$request.get('/api/pets');
+        if (res && res.success && Array.isArray(res.data)) {
+          this.pets = res.data;
           if (!this.selectedPet && this.pets.length > 0) {
             this.selectedPet = this.pets[0];
           }

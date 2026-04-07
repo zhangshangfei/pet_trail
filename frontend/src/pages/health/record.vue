@@ -134,8 +134,8 @@ export default {
     async loadPets() {
       try {
         const res = await uni.$request.get('/api/pets');
-        if (res.data && res.data.success && Array.isArray(res.data.data)) {
-          this.pets = res.data.data;
+        if (res && res.success && Array.isArray(res.data)) {
+          this.pets = res.data;
           if (!this.pets.length) {
             this.pet = null;
             this.records = [];
@@ -156,8 +156,8 @@ export default {
       if (!this.petId) return;
       try {
         const res = await uni.$request.get(`/api/pets/${this.petId}`);
-        if (res.data.success) {
-          this.pet = res.data.data;
+        if (res.success) {
+          this.pet = res.data;
           this.currentWeight = this.pet.weight;
         }
       } catch (error) {
@@ -170,8 +170,8 @@ export default {
       if (!this.petId) return;
       try {
         const res = await uni.$request.get(`/api/pets/${this.petId}/weight-records`);
-        if (res.data.success) {
-          this.records = res.data.data;
+        if (res.success) {
+          this.records = res.data;
           this.calculateChanges();
         }
       } catch (error) {
@@ -240,7 +240,7 @@ export default {
           recordDate: this.form.recordDate
         });
 
-        if (res.data.success) {
+        if (res.success) {
           uni.showToast({
             title: '记录成功',
             icon: 'success'
@@ -250,7 +250,7 @@ export default {
           this.loadPetInfo(); // 刷新宠物信息
         } else {
           uni.showToast({
-            title: res.data.message || '记录失败',
+            title: res.message || '记录失败',
             icon: 'none'
           });
         }

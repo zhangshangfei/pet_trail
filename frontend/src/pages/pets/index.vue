@@ -83,18 +83,13 @@ export default {
   methods: {
     // 加载宠物列表
     async loadPets() {
-      const token = uni.getStorageSync('token');
       try {
-        const res = await uni.$request.get('/api/pets', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (res.data.success) {
-          this.pets = res.data.data;
+        const res = await uni.$request.get('/api/pets');
+        if (res.success) {
+          this.pets = res.data || [];
         } else {
           uni.showToast({
-            title: res.data.message || '加载失败',
+            title: res.message || '加载失败',
             icon: 'none'
           });
         }
@@ -135,8 +130,6 @@ export default {
 
     // 提交表单
     async submitForm(payload) {
-      const token = uni.getStorageSync('token');
-      console.log('token11111111:', token);
       const data = payload || this.form;
       this.form = data;
       if (!data.name) {
@@ -148,14 +141,9 @@ export default {
       }
 
       try {
-        const res = await uni.$request.post('/api/pets', data, {
-          headers: {
-            'Authorization': `Bearer ${token}` || '',
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        });
+        const res = await uni.$request.post('/api/pets', data);
 
-        if (res.data.success) {
+        if (res.success) {
           uni.showToast({
             title: '添加成功',
             icon: 'success'
@@ -164,7 +152,7 @@ export default {
           this.loadPets();
         } else {
           uni.showToast({
-            title: res.data.message || '添加失败',
+            title: res.message || '添加失败',
             icon: 'none'
           });
         }

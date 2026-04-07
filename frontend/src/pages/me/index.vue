@@ -203,8 +203,8 @@ export default {
       if (token) {
         try {
           const res = await uni.$request.get('/api/users/profile');
-          if (res.data && res.data.success) {
-            const userData = res.data.data;
+          if (res && res.success) {
+            const userData = res.data;
             this.avatarUrl = userData.avatar || this.avatarUrl;
             this.userName = userData.nickname || this.userName;
             // 更新缓存
@@ -216,11 +216,10 @@ export default {
       }
     },
     async loadPets() {
-      const token = uni.getStorageSync('token');
       try {
         const res = await uni.$request.get('/api/pets');
-        if (res.data && res.data.success) {
-          this.pets = Array.isArray(res.data.data) ? res.data.data : [];
+        if (res && res.success) {
+          this.pets = Array.isArray(res.data) ? res.data : [];
         } else {
           this.pets = [];
         }
@@ -270,15 +269,14 @@ export default {
       });
     },
     async submitAddPet(payload) {
-      const token = uni.getStorageSync('token');
       try {
         const res = await uni.$request.post('/api/pets', payload);
-        if (res.data && res.data.success) {
+        if (res && res.success) {
           uni.showToast({ title: "添加成功", icon: "success" });
           this.showAddPetModal = false;
           this.loadPets();
         } else {
-          uni.showToast({ title: (res.data && res.data.message) || "添加失败", icon: "none" });
+          uni.showToast({ title: (res && res.message) || "添加失败", icon: "none" });
         }
       } catch (e) {
         uni.showToast({ title: "网络错误", icon: "none" });

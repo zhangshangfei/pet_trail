@@ -171,8 +171,8 @@ export default {
     async loadPetInfo() {
       try {
         const res = await uni.$request.get(`/api/pets/${this.petId}`);
-        if (res.data.success) {
-          this.pet = res.data.data;
+        if (res.success) {
+          this.pet = res.data;
         }
       } catch (error) {
         console.error('加载宠物信息失败:', error);
@@ -183,9 +183,9 @@ export default {
     async loadReminders() {
       try {
         const res = await uni.$request.get(`/api/pets/${this.petId}/vaccine-reminders`);
-        if (res.data.success) {
-          this.upcomingReminders = res.data.data.filter(r => r.status === 0);
-          this.completedReminders = res.data.data.filter(r => r.status === 1);
+        if (res.success) {
+          this.upcomingReminders = res.data.filter(r => r.status === 0);
+          this.completedReminders = res.data.filter(r => r.status === 1);
           this.calculateDays();
         }
       } catch (error) {
@@ -270,7 +270,7 @@ export default {
           ? await uni.$request.put(`/api/pets/${this.petId}/vaccine-reminders/${this.currentReminder.id}`, this.form)
           : await uni.$request.post(`/api/pets/${this.petId}/vaccine-reminders`, this.form);
 
-        if (res.data.success) {
+        if (res.success) {
           uni.showToast({
             title: this.isEditing ? '修改成功' : '添加成功',
             icon: 'success'
@@ -279,7 +279,7 @@ export default {
           this.loadReminders();
         } else {
           uni.showToast({
-            title: res.data.message || '操作失败',
+            title: res.message || '操作失败',
             icon: 'none'
           });
         }
@@ -299,7 +299,7 @@ export default {
           status: this.tempStatus
         });
 
-        if (res.data.success) {
+        if (res.success) {
           uni.showToast({
             title: '状态修改成功',
             icon: 'success'
@@ -308,7 +308,7 @@ export default {
           this.loadReminders();
         } else {
           uni.showToast({
-            title: res.data.message || '修改失败',
+            title: res.message || '修改失败',
             icon: 'none'
           });
         }
