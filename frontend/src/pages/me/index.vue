@@ -68,22 +68,30 @@
               <text class="feature-text">宠物社区</text>
             </view>
             -->
+            <!-- 商城功能暂时隐藏
             <view class="feature-item" @tap="goToShop">
               <view class="feature-icon feature-icon-orange"><text>🛒</text></view>
               <text class="feature-text">商城</text>
             </view>
+            -->
+            <!-- 训练功能暂时隐藏
             <view class="feature-item" @tap="goToTraining">
               <view class="feature-icon feature-icon-purple"><text>🎓</text></view>
               <text class="feature-text">训练</text>
             </view>
+            -->
+            <!-- 兽医功能暂时隐藏
             <view class="feature-item" @tap="goToVet">
               <view class="feature-icon feature-icon-red"><text>🩺</text></view>
               <text class="feature-text">兽医</text>
             </view>
+            -->
+            <!-- 相册功能暂时隐藏
             <view class="feature-item" @tap="goToGallery">
               <view class="feature-icon feature-icon-pink"><text>🖼️</text></view>
               <text class="feature-text">相册</text>
             </view>
+            -->
           </view>
         </view>
       </view>
