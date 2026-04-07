@@ -45,8 +45,11 @@ public class ParasiteReminderController {
     @PostMapping
     public Result<ParasiteReminder> createReminder(
             @PathVariable Long petId,
-            @RequestParam Integer type,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate nextDate) {
+            @RequestBody java.util.Map<String, Object> requestBody) {
+        Integer type = (Integer) requestBody.get("type");
+        String nextDateStr = (String) requestBody.get("nextDate");
+        LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
+        
         log.info("创建寄生虫提醒：petId={}, type={}, nextDate={}", petId, type, nextDate);
         ParasiteReminder reminder = parasiteReminderService.createReminder(petId, type, nextDate);
         return Result.success(reminder);
@@ -71,7 +74,8 @@ public class ParasiteReminderController {
     public Result<ParasiteReminder> updateStatus(
             @PathVariable Long petId,
             @PathVariable Long id,
-            @RequestParam Integer status) {
+            @RequestBody java.util.Map<String, Integer> requestBody) {
+        Integer status = requestBody.get("status");
         log.info("更新提醒状态：id={}, status={}", id, status);
         ParasiteReminder reminder = parasiteReminderService.updateStatus(id, status);
         return Result.success(reminder);

@@ -45,8 +45,11 @@ public class VaccineReminderController {
     @PostMapping
     public Result<VaccineReminder> createReminder(
             @PathVariable Long petId,
-            @RequestParam String vaccineName,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate nextDate) {
+            @RequestBody java.util.Map<String, Object> requestBody) {
+        String vaccineName = (String) requestBody.get("vaccineName");
+        String nextDateStr = (String) requestBody.get("nextDate");
+        LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
+        
         log.info("创建疫苗提醒：petId={}, vaccineName={}, nextDate={}", petId, vaccineName, nextDate);
         VaccineReminder reminder = vaccineReminderService.createReminder(petId, vaccineName, nextDate);
         return Result.success(reminder);
@@ -71,7 +74,8 @@ public class VaccineReminderController {
     public Result<VaccineReminder> updateStatus(
             @PathVariable Long petId,
             @PathVariable Long id,
-            @RequestParam Integer status) {
+            @RequestBody java.util.Map<String, Integer> requestBody) {
+        Integer status = requestBody.get("status");
         log.info("更新提醒状态：id={}, status={}", id, status);
         VaccineReminder reminder = vaccineReminderService.updateStatus(id, status);
         return Result.success(reminder);

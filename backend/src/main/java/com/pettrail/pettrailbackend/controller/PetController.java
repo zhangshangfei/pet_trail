@@ -40,23 +40,25 @@ public class PetController {
      * 创建宠物
      */
     @PostMapping
-    public Result<Pet> createPet(
-            @RequestParam String name,
-            @RequestParam(required = false) String breed,
-            @RequestParam(required = false) Integer gender,
-            @RequestParam(required = false) Integer sterilized,
-            @RequestParam(required = false) Integer category,
-            @RequestParam(required = false) LocalDate birthday,
-            @RequestParam(required = false) String avatar,
-            @RequestParam(required = false) BigDecimal weight,
-            @RequestParam(required = false) String color) {
-        log.info("创建宠物：name={}", name);
+    public Result<Pet> createPet(@RequestBody Pet pet) {
+        log.info("创建宠物：name={}", pet.getName());
         Long userId = UserContext.getCurrentUserId();
         if (userId == null) {
             throw new IllegalStateException("用户未登录");
         }
-        Pet pet = petService.createPet(userId, name, breed, gender, sterilized, category, birthday, avatar, weight, color);
-        return Result.success(pet);
+        Pet createdPet = petService.createPet(
+            userId, 
+            pet.getName(), 
+            pet.getBreed(), 
+            pet.getGender(), 
+            pet.getSterilized(), 
+            pet.getCategory(), 
+            pet.getBirthday(), 
+            pet.getAvatar(), 
+            pet.getWeight(), 
+            pet.getColor()
+        );
+        return Result.success(createdPet);
     }
 
     /**
@@ -76,19 +78,22 @@ public class PetController {
     @PutMapping("/{id}")
     public Result<Pet> updatePet(
             @PathVariable Long id,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String breed,
-            @RequestParam(required = false) Integer gender,
-            @RequestParam(required = false) Integer sterilized,
-            @RequestParam(required = false) Integer category,
-            @RequestParam(required = false) LocalDate birthday,
-            @RequestParam(required = false) String avatar,
-            @RequestParam(required = false) BigDecimal weight,
-            @RequestParam(required = false) String color) {
+            @RequestBody Pet pet) {
         log.info("更新宠物信息：id={}", id);
         validatePetOwnership(id);
-        Pet pet = petService.updatePet(id, name, breed, gender, sterilized, category, birthday, avatar, weight, color);
-        return Result.success(pet);
+        Pet updatedPet = petService.updatePet(
+            id, 
+            pet.getName(), 
+            pet.getBreed(), 
+            pet.getGender(), 
+            pet.getSterilized(), 
+            pet.getCategory(), 
+            pet.getBirthday(), 
+            pet.getAvatar(), 
+            pet.getWeight(), 
+            pet.getColor()
+        );
+        return Result.success(updatedPet);
     }
 
     /**
@@ -108,9 +113,13 @@ public class PetController {
     @PutMapping("/{id}/weight")
     public Result<Pet> updatePetWeight(
             @PathVariable Long id,
-            @RequestParam BigDecimal weight) {
-        log.info("更新宠物体重：id={}, weight={}", id, weight);
+            @RequestBody java.util.Map<String, BigDecimal> requestBody) {
+        log.info("更新宠物体重：id={}, weight={}", id, requestBody.get("weight"));
         validatePetOwnership(id);
+        BigDecimal weight = requestBody.get("weight");
+        if (weight == null) {
+            throw new IllegalArgumentException("体重参数不能为空");
+        }
         Pet pet = petService.updatePetWeight(id, weight);
         return Result.success(pet);
     }
