@@ -4,6 +4,16 @@ import config from '@/config/env'
 const BASE_URL = config.VITE_API_BASE_URL
 const CLOUD_CONFIG = config.VITE_CLOUD_CONFIG
 
+// 错误码映射（前端根据错误码做不同处理）
+const ERROR_CODE_MESSAGES = {
+  3001: '当天已记录体重',
+  3002: '体重记录不存在',
+  1001: '用户未登录',
+  1005: '登录已过期，请重新登录',
+  2001: '宠物不存在',
+  2002: '无权限操作该宠物'
+}
+
 // 将对象编码为 application/x-www-form-urlencoded 格式
 const encodeFormData = (data) => {
   if (!data) return ''
@@ -236,11 +246,15 @@ const httpRequest = (options = {}) => {
           })
           reject(res)
         } else {
-          // 其他 HTTP 错误
+          // 其他 HTTP 错误 - 尝试提取后端返回的错误信息
+          const errorCode = res.data && res.data.code;
+          const errorMessage = (res.data && res.data.message) || ERROR_CODE_MESSAGES[errorCode] || `请求失败：${res.statusCode}`;
+          console.error('HTTP 错误响应:', res.data);
+          console.error('错误码:', errorCode);
           uni.showToast({
-            title: `请求失败：${res.statusCode}`,
+            title: errorMessage,
             icon: 'none',
-            duration: 2000
+            duration: 3000
           })
           reject(res)
         }

@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.dto;
 
+import com.pettrail.pettrailbackend.enums.ErrorCodeEnum;
 import com.pettrail.pettrailbackend.exception.BusinessException;
 import lombok.Data;
 
@@ -66,6 +67,20 @@ public class Result<T> implements Serializable {
      */
     public static <T> Result<T> error(Integer code, String message) {
         return new Result<>(false, code, null, message);
+    }
+
+    /**
+     * 失败响应（使用错误码枚举）
+     */
+    public static <T> Result<T> error(ErrorCodeEnum errorCode) {
+        return new Result<>(false, errorCode.getCode(), null, errorCode.getMessage());
+    }
+
+    /**
+     * 失败响应（使用错误码枚举，自定义消息）
+     */
+    public static <T> Result<T> error(ErrorCodeEnum errorCode, String customMessage) {
+        return new Result<>(false, errorCode.getCode(), null, customMessage);
     }
 
     /**

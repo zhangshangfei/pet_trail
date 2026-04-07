@@ -3,6 +3,8 @@ package com.pettrail.pettrailbackend.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pettrail.pettrailbackend.entity.WeightRecord;
+import com.pettrail.pettrailbackend.enums.ErrorCodeEnum;
+import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.mapper.WeightRecordMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +53,7 @@ public class WeightRecordService extends ServiceImpl<WeightRecordMapper, WeightR
         queryWrapper.eq(WeightRecord::getPetId, petId);
         queryWrapper.eq(WeightRecord::getRecordDate, recordDate);
         if (this.count(queryWrapper) > 0) {
-            throw new RuntimeException("当天已记录体重");
+            throw new BusinessException(ErrorCodeEnum.WEIGHT_RECORD_DUPLICATE.getCode(), ErrorCodeEnum.WEIGHT_RECORD_DUPLICATE.getMessage());
         }
 
         WeightRecord record = new WeightRecord();
@@ -74,7 +76,7 @@ public class WeightRecordService extends ServiceImpl<WeightRecordMapper, WeightR
     public WeightRecord updateRecord(Long recordId, BigDecimal weight, LocalDate recordDate) {
         WeightRecord record = this.getById(recordId);
         if (record == null) {
-            throw new RuntimeException("记录不存在");
+            throw new BusinessException(ErrorCodeEnum.WEIGHT_RECORD_NOT_FOUND.getCode(), ErrorCodeEnum.WEIGHT_RECORD_NOT_FOUND.getMessage());
         }
 
         // 检查是否已存在其他记录的当天记录
@@ -83,7 +85,7 @@ public class WeightRecordService extends ServiceImpl<WeightRecordMapper, WeightR
         queryWrapper.eq(WeightRecord::getRecordDate, recordDate);
         queryWrapper.ne(WeightRecord::getId, recordId); // 排除当前记录
         if (this.count(queryWrapper) > 0) {
-            throw new RuntimeException("当天已存在其他体重记录");
+            throw new BusinessException(ErrorCodeEnum.WEIGHT_RECORD_DUPLICATE.getCode(), ErrorCodeEnum.WEIGHT_RECORD_DUPLICATE.getMessage());
         }
 
         record.setWeight(weight);
