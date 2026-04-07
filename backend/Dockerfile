@@ -18,8 +18,13 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-# 安装必要的工具
-RUN apk add --no-cache curl bash
+# 安装必要工具并更新系统CA证书
+RUN apk add --no-cache curl bash ca-certificates && \
+    update-ca-certificates
+
+# 可选：将系统证书同步到Java的cacerts（通常不需要，但确保万无一失）
+# 如果上面步骤后仍有问题，可取消下面一行的注释
+# RUN keytool -import -alias alpine-ca -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit -noprompt -file /etc/ssl/certs/ca-certificates.crt || true
 
 # 从构建阶段复制JAR文件（使用通配符避免硬编码版本号）
 COPY --from=builder /app/target/*.jar app.jar
