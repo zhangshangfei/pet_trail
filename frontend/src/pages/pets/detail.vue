@@ -122,6 +122,7 @@
 </template>
 
 <script>
+
 export default {
   data() {
     return {
@@ -142,10 +143,8 @@ export default {
       const token = uni.getStorageSync('token');
       console.log('token44444:', token);
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${petId}`,
-          method: 'GET',
-          header: {
+        const res = await uni.$request.get(`/pets/${petId}`, {
+          headers: {
             'Authorization': `Bearer ${token}`
           }
         });
@@ -171,10 +170,8 @@ export default {
     // 加载最近体重记录
     async loadRecentRecords() {
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.pet.id}/weight-records`,
-          method: 'GET',
-          header: {
+        const res = await uni.$request.get(`/pets/${this.pet.id}/weight-records`, {
+          headers: {
             'Authorization': uni.getStorageSync('token') || ''
           }
         });
@@ -191,17 +188,13 @@ export default {
     async loadUpcomingReminders() {
       try {
         const [vaccineRes, parasiteRes] = await Promise.all([
-          uni.request({
-            url: `http://localhost:8080/api/pets/${this.pet.id}/vaccine-reminders/upcoming`,
-            method: 'GET',
-            header: {
+          uni.$request.get(`/pets/${this.pet.id}/vaccine-reminders/upcoming`, {
+            headers: {
               'Authorization': uni.getStorageSync('token') || ''
             }
           }),
-          uni.request({
-            url: `http://localhost:8080/api/pets/${this.pet.id}/parasite-reminders/upcoming`,
-            method: 'GET',
-            header: {
+          uni.$request.get(`/pets/${this.pet.id}/parasite-reminders/upcoming`, {
+            headers: {
               'Authorization': uni.getStorageSync('token') || ''
             }
           })
@@ -304,10 +297,8 @@ export default {
     // 删除宠物
     async deletePet() {
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.pet.id}`,
-          method: 'DELETE',
-          header: {
+        const res = await uni.$request.delete(`/pets/${this.pet.id}`, {
+          headers: {
             'Authorization': uni.getStorageSync('token') || ''
           }
         });

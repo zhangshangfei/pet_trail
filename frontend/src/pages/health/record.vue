@@ -98,6 +98,7 @@
 </template>
 
 <script>
+
 export default {
   data() {
     return {
@@ -131,15 +132,8 @@ export default {
   },
   methods: {
     async loadPets() {
-      const token = uni.getStorageSync('token');
       try {
-        const res = await uni.request({
-          url: "http://localhost:8080/api/pets",
-          method: "GET",
-          header: {
-            'Authorization': `Bearer ${token}` || ""
-          }
-        });
+        const res = await uni.$request.get('/api/pets');
         if (res.data && res.data.success && Array.isArray(res.data.data)) {
           this.pets = res.data.data;
           if (!this.pets.length) {
@@ -159,16 +153,9 @@ export default {
     },
     // 加载宠物信息
     async loadPetInfo() {
-      const token = uni.getStorageSync('token');
       if (!this.petId) return;
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.petId}`,
-          method: 'GET',
-          header: {
-            'Authorization': `Bearer ${token}` || ""
-          }
-        });
+        const res = await uni.$request.get(`/api/pets/${this.petId}`);
         if (res.data.success) {
           this.pet = res.data.data;
           this.currentWeight = this.pet.weight;
@@ -180,16 +167,9 @@ export default {
 
     // 加载记录
     async loadRecords() {
-      const token = uni.getStorageSync('token');
       if (!this.petId) return;
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.petId}/weight-records`,
-          method: 'GET',
-          header: {
-            'Authorization': `Bearer ${token}` || ""
-          }
-        });
+        const res = await uni.$request.get(`/api/pets/${this.petId}/weight-records`);
         if (res.data.success) {
           this.records = res.data.data;
           this.calculateChanges();
@@ -246,7 +226,6 @@ export default {
 
     // 提交记录
     async submitRecord() {
-      const token = uni.getStorageSync('token');
       if (!this.form.weight) {
         uni.showToast({
           title: '请输入体重',
@@ -256,17 +235,9 @@ export default {
       }
 
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.petId}/weight-records`,
-          method: 'POST',
-          header: {
-            'Authorization': `Bearer ${token}` || "",
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          data: {
-            weight: this.form.weight,
-            recordDate: this.form.recordDate
-          }
+        const res = await uni.$request.post(`/api/pets/${this.petId}/weight-records`, {
+          weight: this.form.weight,
+          recordDate: this.form.recordDate
         });
 
         if (res.data.success) {

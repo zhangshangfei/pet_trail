@@ -214,6 +214,7 @@
 </template>
 
 <script>
+
 function todayStr() {
   const d = new Date();
   const y = d.getFullYear();
@@ -343,12 +344,10 @@ export default {
       // 如果有 token，从后端获取最新数据
       if (token) {
         try {
-          const res = await uni.request({
-            url: "http://localhost:8080/api/users/profile",
-            method: "GET",
+          const res = await uni.$request.get('/api/users/profile', {
             header: { 'Authorization': `Bearer ${token}` }
           });
-          if (res.statusCode === 200 && res.data.success) {
+          if (res.data && res.data.success) {
             const userData = res.data.data;
             this.userAvatar = userData.avatar || this.userAvatar;
             this.userName = userData.nickname || this.userName;
@@ -363,10 +362,8 @@ export default {
     async loadPets() {
       const token = uni.getStorageSync('token');
       try {
-        const res = await uni.request({
-          url: "http://localhost:8080/api/pets",
-          method: "GET",
-          header: { 'Authorization': `Bearer ${token}` || "", }
+        const res = await uni.$request.get('/api/pets', {
+          header: { 'Authorization': `Bearer ${token}` || "" }
         });
         if (res.data && res.data.success && Array.isArray(res.data.data)) {
           this.pets = res.data.data;
@@ -430,16 +427,13 @@ export default {
           return;
         }
         try {
-          const res = await uni.request({
-            url: `http://localhost:8080/api/pets/${this.currentPet.id}/weight-records`,
-            method: "POST",
+          const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/weight-records`, {
+            weight: this.weightData.value,
+            recordDate: `${this.weightData.date}`
+          }, {
             header: {
               'Authorization': `Bearer ${token}` || "",
               "Content-Type": "application/x-www-form-urlencoded"
-            },
-            data: {
-              weight: this.weightData.value,
-              recordDate: `${this.weightData.date}`
             }
           });
           if (res.data && res.data.success) {

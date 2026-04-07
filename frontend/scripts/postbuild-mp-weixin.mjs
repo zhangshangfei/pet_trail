@@ -26,10 +26,11 @@ async function copyDir(src, dest) {
 }
 
 async function main() {
+  // 不再复制 pages/home 和 pages/me 到根目录
+  // 所有页面都保持在 pages 目录下，避免路径问题
   const mapping = [
-    { src: path.join(root, "pages", "home"), dest: path.join(root, "home") },
-    // { src: path.join(root, "pages", "community"), dest: path.join(root, "community") }, // 社区功能暂时隐藏
-    { src: path.join(root, "pages", "me"), dest: path.join(root, "me") }
+    // { src: path.join(root, "pages", "home"), dest: path.join(root, "home") },
+    // { src: path.join(root, "pages", "me"), dest: path.join(root, "me") }
   ];
 
   for (const m of mapping) {

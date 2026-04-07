@@ -85,10 +85,8 @@ export default {
     async loadPets() {
       const token = uni.getStorageSync('token');
       try {
-        const res = await uni.request({
-          url: 'http://localhost:8080/api/pets',
-          method: 'GET',
-          header: {
+        const res = await uni.$request.get('/api/pets', {
+          headers: {
             'Authorization': `Bearer ${token}`
           }
         });
@@ -150,14 +148,11 @@ export default {
       }
 
       try {
-        const res = await uni.request({
-          url: 'http://localhost:8080/api/pets',
-          method: 'POST',
-          header: {
+        const res = await uni.$request.post('/api/pets', data, {
+          headers: {
             'Authorization': `Bearer ${token}` || '',
             'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          data
+          }
         });
 
         if (res.data.success) {

@@ -172,6 +172,7 @@
 </template>
 
 <script>
+
 export default {
   data() {
     return {
@@ -292,12 +293,10 @@ export default {
 
       if (token) {
         try {
-          const res = await uni.request({
-            url: "http://localhost:8080/api/users/profile",
-            method: "GET",
-            header: { 'Authorization': `Bearer ${token}` }
+          const res = await uni.$request.get('/api/users/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (res.statusCode === 200 && res.data.success) {
+          if (res.data.success) {
             const userData = res.data.data;
             this.userAvatar = userData.avatar || this.userAvatar;
             this.userName = userData.nickname || this.userName;
@@ -311,10 +310,8 @@ export default {
     async loadPets() {
       const token = uni.getStorageSync('token');
       try {
-        const res = await uni.request({
-          url: "http://localhost:8080/api/pets",
-          method: "GET",
-          header: { 'Authorization': `Bearer ${token}` || "" }
+        const res = await uni.$request.get('/api/pets', {
+          headers: { 'Authorization': `Bearer ${token}` || "" }
         });
         if (res.data && res.data.success && Array.isArray(res.data.data)) {
           this.pets = res.data.data;

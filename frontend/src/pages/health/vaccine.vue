@@ -140,6 +140,7 @@
 </template>
 
 <script>
+
 export default {
   data() {
     return {
@@ -169,13 +170,7 @@ export default {
     // 加载宠物信息
     async loadPetInfo() {
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.petId}`,
-          method: 'GET',
-          header: {
-            'Authorization': uni.getStorageSync('token') || ''
-          }
-        });
+        const res = await uni.$request.get(`/api/pets/${this.petId}`);
         if (res.data.success) {
           this.pet = res.data.data;
         }
@@ -187,13 +182,7 @@ export default {
     // 加载提醒
     async loadReminders() {
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.petId}/vaccine-reminders`,
-          method: 'GET',
-          header: {
-            'Authorization': uni.getStorageSync('token') || ''
-          }
-        });
+        const res = await uni.$request.get(`/api/pets/${this.petId}/vaccine-reminders`);
         if (res.data.success) {
           this.upcomingReminders = res.data.data.filter(r => r.status === 0);
           this.completedReminders = res.data.data.filter(r => r.status === 1);
@@ -277,19 +266,9 @@ export default {
       }
 
       try {
-        const url = this.isEditing
-          ? `http://localhost:8080/api/pets/${this.petId}/vaccine-reminders/${this.currentReminder.id}`
-          : `http://localhost:8080/api/pets/${this.petId}/vaccine-reminders`;
-
-        const res = await uni.request({
-          url: url,
-          method: this.isEditing ? 'PUT' : 'POST',
-          header: {
-            'Authorization': uni.getStorageSync('token') || '',
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          data: this.form
-        });
+        const res = this.isEditing
+          ? await uni.$request.put(`/api/pets/${this.petId}/vaccine-reminders/${this.currentReminder.id}`, this.form)
+          : await uni.$request.post(`/api/pets/${this.petId}/vaccine-reminders`, this.form);
 
         if (res.data.success) {
           uni.showToast({
@@ -316,16 +295,8 @@ export default {
     // 更新状态
     async updateStatus() {
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.petId}/vaccine-reminders/${this.currentReminder.id}/status`,
-          method: 'PUT',
-          header: {
-            'Authorization': uni.getStorageSync('token') || '',
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          data: {
-            status: this.tempStatus
-          }
+        const res = await uni.$request.put(`/api/pets/${this.petId}/vaccine-reminders/${this.currentReminder.id}/status`, {
+          status: this.tempStatus
         });
 
         if (res.data.success) {

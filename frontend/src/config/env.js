@@ -9,8 +9,8 @@
 // 获取 API 基础地址
 const getApiBaseUrl = () => {
   // #ifdef MP-WEIXIN
-  // 微信小程序环境 - 开发环境使用本地地址
-  return 'http://localhost:8080'
+  // 微信小程序环境 - 使用云托管
+  return 'cloud' // 标记使用云托管
   // #endif
 
   // #ifdef H5
@@ -26,9 +26,22 @@ const getApiBaseUrl = () => {
   return 'http://localhost:8080'
 }
 
+// 云托管配置
+const getCloudConfig = () => {
+  return {
+    // 云托管环境 ID
+    env: 'prod-3gyc3tpg28270da6',
+    // 云托管服务名称
+    service: 'springboot-4fyd'
+  }
+}
+
 export default {
-  // API 基础地址
+  // API 基础地址（'cloud' 表示使用云托管）
   VITE_API_BASE_URL: getApiBaseUrl(),
+
+  // 云托管配置
+  VITE_CLOUD_CONFIG: getCloudConfig(),
 
   // 应用标题
   VITE_APP_TITLE: '宠迹 - 宠物生活伴侣',

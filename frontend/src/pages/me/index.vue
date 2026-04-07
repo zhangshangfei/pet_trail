@@ -202,14 +202,8 @@ export default {
       const token = uni.getStorageSync('token');
       if (token) {
         try {
-          const res = await uni.request({
-            url: "http://localhost:8080/api/users/profile",
-            method: "GET",
-            header: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          if (res.statusCode === 200 && res.data.success) {
+          const res = await uni.$request.get('/api/users/profile');
+          if (res.data && res.data.success) {
             const userData = res.data.data;
             this.avatarUrl = userData.avatar || this.avatarUrl;
             this.userName = userData.nickname || this.userName;
@@ -224,13 +218,7 @@ export default {
     async loadPets() {
       const token = uni.getStorageSync('token');
       try {
-        const res = await uni.request({
-          url: "http://localhost:8080/api/pets",
-          method: "GET",
-          header: {
-            'Authorization': `Bearer ${token}` || ""
-          }
-        });
+        const res = await uni.$request.get('/api/pets');
         if (res.data && res.data.success) {
           this.pets = Array.isArray(res.data.data) ? res.data.data : [];
         } else {
@@ -284,15 +272,7 @@ export default {
     async submitAddPet(payload) {
       const token = uni.getStorageSync('token');
       try {
-        const res = await uni.request({
-          url: "http://localhost:8080/api/pets",
-          method: "POST",
-          header: {
-            'Authorization': `Bearer ${token}` || "",
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-          data: payload
-        });
+        const res = await uni.$request.post('/api/pets', payload);
         if (res.data && res.data.success) {
           uni.showToast({ title: "添加成功", icon: "success" });
           this.showAddPetModal = false;

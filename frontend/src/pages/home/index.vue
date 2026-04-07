@@ -235,15 +235,9 @@ export default {
         return;
       }
       try {
-        const res = await uni.request({
-          url: 'http://localhost:8080/api/users/profile',
-          method: 'GET',
-          header: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (res.statusCode === 200 && res.data.success) {
-          const userData = res.data.data;
+        const res = await uni.$request.get('/api/users/profile');
+        if (res.success) {
+          const userData = res.data;
           this.isLoggedIn = true;
           this.userName = userData.nickname || '萌宠主人';
           this.avatarUrl = userData.avatar || 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg';
@@ -276,67 +270,56 @@ export default {
 
       // 1. 获取微信登录 code
       wx.login({
-        success: (res) => {
+        success: async (res) => {
           if (res.code) {
-            // 2. 将 code 发送到后端
-            uni.request({
-              url: 'http://localhost:8080/api/users/login',
-              method: 'POST',
-              header: {
-                'Content-Type': 'application/json'
-              },
-              data: {
-                code: res.code
-              },
-              success: (loginRes) => {
-                uni.hideLoading();
-                console.log('登录响应 statusCode:', loginRes.statusCode);
-                console.log('登录响应 data:', loginRes.data);
-                
-                if (loginRes.statusCode === 200 && loginRes.data.success) {
-                  // 3. 保存 token 和用户信息
-                  // 注意：uni.request 返回的 data 已经是解析后的 JSON
-                  // 后端返回结构：{ success: true, code: 200, data: { user: {...}, token: "..." }, message: "..." }
-                  const responseData = loginRes.data.data;
-                  const token = responseData.token;
-                  const userInfo = responseData.user;
-                  
-                  uni.setStorageSync('token', token);
-                  uni.setStorageSync('userInfo', userInfo);
-                  console.log('token 已保存:', token);
-                  console.log('用户信息:', userInfo);
-                  console.log('用户昵称:', userInfo?.nickname);
-                  console.log('用户头像:', userInfo?.avatar);
+            try {
+              // 2. 将 code 发送到后端
+              const loginRes = await uni.$request.post('/api/users/login', { code: res.code });
+              
+              uni.hideLoading();
+              console.log('登录响应:', loginRes);
 
-                  // 4. 直接更新页面数据
-                  self.isLoggedIn = true;
-                  self.userName = userInfo?.nickname || '萌宠主人';
-                  self.avatarUrl = userInfo?.avatar || 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg';
-                  console.log('页面数据已更新 - isLoggedIn:', self.isLoggedIn, 'userName:', self.userName, 'avatarUrl:', self.avatarUrl);
+              if (loginRes.success) {
+                // 3. 保存 token 和用户信息
+                // 后端返回结构：{ success: true, code: 200, data: { user: {...}, token: "..." }, message: "..." }
+                const responseData = loginRes.data;
+                const token = responseData.token;
+                const userInfo = responseData.user;
 
-                  uni.showToast({
-                    title: '登录成功',
-                    icon: 'success',
-                    duration: 2000
-                  });
-                } else {
-                  uni.showToast({
-                    title: loginRes.data.message || '登录失败',
-                    icon: 'none',
-                    duration: 2000
-                  });
-                }
-              },
-              fail: (err) => {
-                uni.hideLoading();
-                console.error('网络请求失败:', err);
+                uni.setStorageSync('token', token);
+                uni.setStorageSync('userInfo', userInfo);
+                console.log('token 已保存:', token);
+                console.log('用户信息:', userInfo);
+                console.log('用户昵称:', userInfo?.nickname);
+                console.log('用户头像:', userInfo?.avatar);
+
+                // 4. 直接更新页面数据
+                self.isLoggedIn = true;
+                self.userName = userInfo?.nickname || '萌宠主人';
+                self.avatarUrl = userInfo?.avatar || 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg';
+                console.log('页面数据已更新 - isLoggedIn:', self.isLoggedIn, 'userName:', self.userName, 'avatarUrl:', self.avatarUrl);
+
                 uni.showToast({
-                  title: '网络错误，请重试',
+                  title: '登录成功',
+                  icon: 'success',
+                  duration: 2000
+                });
+              } else {
+                uni.showToast({
+                  title: loginRes.message || '登录失败',
                   icon: 'none',
                   duration: 2000
                 });
               }
-            });
+            } catch (err) {
+              uni.hideLoading();
+              console.error('网络请求失败:', err);
+              uni.showToast({
+                title: '网络错误，请重试',
+                icon: 'none',
+                duration: 2000
+              });
+            }
           } else {
             uni.hideLoading();
             uni.showToast({
