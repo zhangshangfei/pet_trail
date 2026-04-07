@@ -121,11 +121,13 @@
             <artifactId>spring-cloud-starter</artifactId>
         </dependency>
 
-        <!-- RabbitMQ Starter -->
+        <!-- RabbitMQ Starter (已注释，改用 Spring Event + 定时任务兜底) -->
+        <!--
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
+        -->
 
         <!-- Sentinel (限流熔断) -->
         <dependency>

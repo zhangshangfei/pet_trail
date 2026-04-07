@@ -28,19 +28,20 @@ services:
     networks:
       - pet-trail-network
 
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: pet-trail-rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-    networks:
-      - pet-trail-network
+  # RabbitMQ 服务（已注释，改用 Spring Event + 定时任务兜底）
+  # rabbitmq:
+  #   image: rabbitmq:3-management-alpine
+  #   container_name: pet-trail-rabbitmq
+  #   ports:
+  #     - "5672:5672"
+  #     - "15672:15672"
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: guest
+  #     RABBITMQ_DEFAULT_PASS: guest
+  #   volumes:
+  #     - rabbitmq-data:/var/lib/rabbitmq
+  #   networks:
+  #     - pet-trail-network
 
   backend:
     build:
@@ -53,10 +54,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: pettrail123
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: guest
-      RABBITMQ_PASSWORD: guest
+      # RABBITMQ_HOST: rabbitmq  # 已注释
+      # RABBITMQ_PORT: 5672
+      # RABBITMQ_USERNAME: guest
+      # RABBITMQ_PASSWORD: guest
       ALIYUN_OSS_ACCESS_KEY_ID: ${ALIYUN_OSS_ACCESS_KEY_ID}
       ALIYUN_OSS_ACCESS_KEY_SECRET: ${ALIYUN_OSS_ACCESS_KEY_SECRET}
       JWT_SECRET: ${JWT_SECRET}
@@ -65,7 +66,7 @@ services:
     depends_on:
       - mysql
       - redis
-      - rabbitmq
+      # - rabbitmq  # 已注释
     networks:
       - pet-trail-network
 
@@ -86,7 +87,7 @@ services:
 volumes:
   mysql-data:
   redis-data:
-  rabbitmq-data:
+  # rabbitmq-data:  # 已注释
 
 networks:
   pet-trail-network:

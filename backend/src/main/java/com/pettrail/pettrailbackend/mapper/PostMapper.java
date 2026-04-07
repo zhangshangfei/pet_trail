@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -32,4 +33,10 @@ public interface PostMapper extends BaseMapper<Post> {
     List<Post> selectByDateRange(@Param("userId") Long userId,
                                  @Param("startDate") LocalDate startDate,
                                  @Param("endDate") LocalDate endDate);
+
+    /**
+     * 查询待审核的动态（创建时间早于指定时间）
+     * 用于定时任务兜底处理
+     */
+    List<Post> selectPendingForAudit(@Param("beforeTime") LocalDateTime beforeTime);
 }

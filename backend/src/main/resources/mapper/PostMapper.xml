@@ -42,4 +42,12 @@
         ORDER BY created_at DESC
     </select>
 
+    <!-- 查询待审核的动态（创建时间早于指定时间） -->
+    <select id="selectPendingForAudit" resultMap="BaseResultMap">
+        SELECT * FROM posts_00
+        WHERE status = 0
+        AND created_at &lt; #{beforeTime}
+        ORDER BY created_at ASC
+    </select>
+
 </mapper>

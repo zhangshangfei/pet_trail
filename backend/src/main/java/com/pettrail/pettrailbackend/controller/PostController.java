@@ -46,7 +46,7 @@ public class PostController {
         Post post = postService.createPost(userId, petId, content, images);
 
         // 异步发送消息（内容审核、推送粉丝等）
-        postService.sendPostCreateMessage(post);
+        postService.publishPostCreateEvent(post);
 
         return Result.success(post);
     }

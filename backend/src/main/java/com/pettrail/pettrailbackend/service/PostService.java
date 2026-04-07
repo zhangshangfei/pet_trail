@@ -1,16 +1,15 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.alibaba.fastjson.JSON;
-import com.pettrail.pettrailbackend.config.RabbitMQConfig;
-import com.pettrail.pettrailbackend.dto.PostCreateMessage;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.entity.PostLike;
+import com.pettrail.pettrailbackend.event.PostCreateEvent;
 import com.pettrail.pettrailbackend.exception.NotFoundException;
 import com.pettrail.pettrailbackend.mapper.PostLikeMapper;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +28,7 @@ public class PostService {
     private final PostMapper postMapper;
     private final PostLikeMapper postLikeMapper;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final RabbitTemplate rabbitTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 创建动态
@@ -134,24 +133,11 @@ public class PostService {
     }
 
     /**
-     * 发送动态创建消息（异步处理）
+     * 发布动态创建事件（异步处理）
      */
-    public void sendPostCreateMessage(Post post) {
-        PostCreateMessage message = PostCreateMessage.builder()
-            .postId(post.getId())
-            .userId(post.getUserId())
-            .petId(post.getPetId())
-            .content(post.getContent())
-            .images(post.getImages() != null ? JSON.parseArray(post.getImages(), String.class) : null)
-            .createTime(System.currentTimeMillis())
-            .build();
-
-        // 发送异步消息到 RabbitMQ
-        rabbitTemplate.convertAndSend(
-            RabbitMQConfig.POST_CREATE_EXCHANGE,
-            RabbitMQConfig.POST_CREATE_ROUTING_KEY,
-            message
-        );
-        log.info("发送动态创建消息：postId={}", post.getId());
+    public void publishPostCreateEvent(Post post) {
+        // 发布 Spring Event 事件
+        eventPublisher.publishEvent(new PostCreateEvent(this, post));
+        log.info("发布动态创建事件：postId={}", post.getId());
     }
 }
