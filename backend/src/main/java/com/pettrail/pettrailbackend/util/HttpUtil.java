@@ -1,19 +1,52 @@
 package com.pettrail.pettrailbackend.util;
 
+import javax.net.ssl.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.X509Certificate;
 
 /**
  * @program: pet-trail
- * @description:
+ * @description: HTTP 工具类
  * @author: zsf
  * @create: 2026-03-27 13:38
  **/
 public class HttpUtil {
+
+    // 静态初始化块，配置信任所有 SSL 证书
+    static {
+        trustAllCertificates();
+    }
+
+    /**
+     * 配置信任所有 SSL 证书
+     */
+    private static void trustAllCertificates() {
+        try {
+            TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    }
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    }
+                }
+            };
+
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+            HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
+        } catch (Exception e) {
+            System.err.println("警告: SSL 证书信任配置失败: " + e.getMessage());
+        }
+    }
 
     /**
      * 发送 GET 请求
