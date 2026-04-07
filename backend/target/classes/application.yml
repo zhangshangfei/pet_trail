@@ -10,7 +10,8 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/pet_trail?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: ${MYSQL_PASSWORD:root123654}
+    password: ${MYSQL_PASSWORD:CD2wkKmj}
+#    password: ${MYSQL_PASSWORD:root123654}
 
   # Redis 配置
   data:
@@ -33,17 +34,17 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
-  # RabbitMQ 配置
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
-    virtual-host: ${RABBITMQ_VHOST:/}
-    listener:
-      simple:
-        acknowledge-mode: manual
-        prefetch: 10
+  # RabbitMQ 配置（已注释，改用 Spring Event + 定时任务兜底）
+  # rabbitmq:
+  #   host: ${RABBITMQ_HOST:localhost}
+  #   port: ${RABBITMQ_PORT:5672}
+  #   username: ${RABBITMQ_USERNAME:guest}
+  #   password: ${RABBITMQ_PASSWORD:guest}
+  #   virtual-host: ${RABBITMQ_VHOST:/}
+  #   listener:
+  #     simple:
+  #       acknowledge-mode: manual
+  #       prefetch: 10
 
 # MyBatis-Plus 配置
 mybatis-plus:
@@ -75,8 +76,8 @@ jwt:
 # 微信配置
 wechat:
   miniapp:
-    app-id: ${WECHAT_MINIAPP_APP_ID:wxb210d75568abe1f7}
-    app-secret: ${WECHAT_MINIAPP_APP_SECRET:3279099fe5b8e0ad126fc4b8a4797ede}
+    app-id: ${WECHAT_MINIAPP_APP_ID:wx252292b9bfa1ccc6}
+    app-secret: ${WECHAT_MINIAPP_APP_SECRET:2e28c8aaf4ad6d437d3ec3b6de457170}
 
 # Sentinel 配置（可选，需要单独安装 Sentinel Dashboard）
 # spring.cloud:
@@ -90,6 +91,6 @@ logging:
   level:
     com.pettrail.pettrailbackend: debug
     com.pettrail.pettrailbackend.mapper: debug
-    org.springframework.amqp: info
+    # org.springframework.amqp: info  # 已注释 RabbitMQ
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
