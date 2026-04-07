@@ -17,7 +17,7 @@ spring:
   # Redis 配置
   data:
     redis:
-      host: localhost
+      host: mdaeiviu.redis.6f1dix0k.gah2912p.com
       port: 6379
       password:
       database: 0
