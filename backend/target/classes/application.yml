@@ -17,6 +17,7 @@ spring:
   # Redis 配置
   data:
     redis:
+#      host: mdaeiviu.redis.6f1dix0k.gah2912p.com
       host: localhost
       port: 6379
       password:
@@ -78,7 +79,7 @@ jwt:
 wechat:
   miniapp:
     app-id: ${WECHAT_MINIAPP_APP_ID:wx252292b9bfa1ccc6}
-    app-secret: ${WECHAT_MINIAPP_APP_SECRET:2e28c8aaf4ad6d437d3ec3b6de457170}
+    app-secret: ${WECHAT_MINIAPP_APP_SECRET:4f47d607e76de470089230ce90aa962a}
 
 # Sentinel 配置（可选，需要单独安装 Sentinel Dashboard）
 # spring.cloud:

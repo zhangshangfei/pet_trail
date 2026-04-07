@@ -10,7 +10,10 @@ import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * 用户控制器
@@ -23,6 +26,7 @@ public class UserController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private final StringRedisTemplate redisTemplate;
 
     @Value("${wechat.miniapp.app-id}")
     private String appId;
@@ -35,39 +39,72 @@ public class UserController {
      */
     @PostMapping("/login")
     public Result<?> login(@RequestBody JSONObject data) {
-        log.info("用户登录：data={}", data);
-        String code = data.getString("code");
+        log.info("========== 微信登录开始 ==========");
+        log.info("请求参数：data={}", data);
+        log.info("当前配置的 AppID: {}", appId);
         
+        String code = data.getString("code");
+
         if (code == null || code.isEmpty()) {
+            log.error("缺少 code 参数");
             return Result.error(400, "缺少 code 参数");
         }
 
+        // 防止 code 被重复使用（微信的 code 只能使用一次）
+        String codeKey = "wechat:login:code:" + code;
+        Boolean isFirstUse = redisTemplate.opsForValue().setIfAbsent(codeKey, "used", 5, TimeUnit.MINUTES);
+        if (Boolean.FALSE.equals(isFirstUse)) {
+            log.warn("⚠️ Code 已被使用，拒绝重复登录！code: {}", code);
+            return Result.error(400, "登录码已使用，请重新获取");
+        }
+
+        log.info("获取到的 code: {}", code);
+
         try {
-            // 1. 构建请求微信的 URL
+            // 1. 构建请求微信的 URL（隐藏 secret 用于日志安全）
+            String maskedSecret = appSecret.substring(0, Math.min(8, appSecret.length())) + "****";
+            log.info("调用微信接口，AppID: {}, Secret: {}", appId, maskedSecret);
+            
             String wxUrl = String.format(
                     "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code",
                     appId, appSecret, code
             );
 
             // 2. 调用微信接口
+            log.info("请求微信接口 URL: {}", wxUrl);
             String wxResponse = HttpUtil.doGet(wxUrl);
+            log.info("微信接口响应: {}", wxResponse);
+            
             JSONObject json = JSONObject.parseObject(wxResponse);
             String openid = json.getString("openid");
+            String errmsg = json.getString("errmsg");
+            Integer errcode = json.getInteger("errcode");
 
             // 3. 检查是否成功获取到 openid
-            if (openid == null) {
-                String errMsg = json.getString("errmsg");
-                log.warn("微信登录失败：{}", errMsg);
-                return Result.error(401, "微信登录失败：" + errMsg);
+            if (openid == null || openid.isEmpty()) {
+                log.error("微信登录失败 - errcode: {}, errmsg: {}", errcode, errmsg);
+                log.error("可能原因：1. AppID/AppSecret 不匹配  2. Code 已过期或已被使用  3. Code 无效");
+                
+                // 删除 code 标记，允许重新获取
+                redisTemplate.delete(codeKey);
+                
+                return Result.error(401, "微信登录失败：" + errmsg);
             }
+
+            log.info("成功获取 openid: {}", openid);
 
             // 4. 业务登录
             User user = userService.login(openid);
             String token = jwtUtil.generateToken(user.getId(), user.getOpenid());
 
+            log.info("登录成功，用户 ID: {}", user.getId());
+            log.info("========== 微信登录完成 ==========");
+
             return Result.success(new LoginResponse(user, token));
         } catch (Exception e) {
-            log.error("登录失败：{}", e.getMessage(), e);
+            log.error("登录异常：{}", e.getMessage(), e);
+            // 发生异常时删除 code 标记
+            redisTemplate.delete(codeKey);
             return Result.error("登录失败：" + e.getMessage());
         }
     }
