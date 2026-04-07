@@ -37,15 +37,27 @@ public class CheckinController {
      * 打卡
      */
     @PostMapping
-    public Result<CheckinRecord> checkin(
-            @RequestParam Long itemId,
-            @RequestParam(required = false) Long petId,
-            @RequestParam(required = false) String note,
-            @RequestParam(required = false) List<String> images) {
+    public Result<CheckinRecord> checkin(@RequestBody java.util.Map<String, Object> requestBody) {
+        Long itemId = requestBody.get("itemId") != null ? Long.parseLong(requestBody.get("itemId").toString()) : null;
         
+        Long petId = null;
+        if (requestBody.get("petId") != null) {
+            petId = Long.parseLong(requestBody.get("petId").toString());
+        }
+        
+        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
+        
+        @SuppressWarnings("unchecked")
+        List<String> images = requestBody.get("images") != null ? 
+            (List<String>) requestBody.get("images") : null;
+
         Long userId = UserContext.getCurrentUserId();
         if (userId == null) {
             return Result.error(401, "用户未登录");
+        }
+
+        if (itemId == null) {
+            return Result.error(400, "打卡项ID不能为空");
         }
 
         CheckinRecord record = checkinService.checkin(userId, petId, itemId, note, images);

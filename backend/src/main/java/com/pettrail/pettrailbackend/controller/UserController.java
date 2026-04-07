@@ -151,11 +151,12 @@ public class UserController {
      * 更新用户资料（需要认证）
      */
     @PutMapping("/profile")
-    public Result<User> updateProfile(
-            @RequestParam(required = false) String nickname,
-            @RequestParam(required = false) String avatar,
-            @RequestParam(required = false) String phone,
-            @RequestParam(required = false) Integer gender) {
+    public Result<User> updateProfile(@RequestBody java.util.Map<String, Object> requestBody) {
+        String nickname = (String) requestBody.get("nickname");
+        String avatar = (String) requestBody.get("avatar");
+        String phone = (String) requestBody.get("phone");
+        Integer gender = requestBody.get("gender") != null ? Integer.parseInt(requestBody.get("gender").toString()) : null;
+        
         log.info("更新用户资料");
         try {
             Long userId = UserContext.getCurrentUserId();

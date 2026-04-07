@@ -30,15 +30,31 @@ public class HealthRecordController {
      * 记录步数
      */
     @PostMapping("/steps")
-    public Result<StepRecord> recordStep(
-            @RequestParam Integer steps,
-            @RequestParam(required = false) BigDecimal distance,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate recordDate,
-            @RequestParam(required = false) Long petId) {
+    public Result<StepRecord> recordStep(@RequestBody java.util.Map<String, Object> requestBody) {
+        Integer steps = requestBody.get("steps") != null ? Integer.parseInt(requestBody.get("steps").toString()) : null;
         
+        BigDecimal distance = null;
+        if (requestBody.get("distance") != null) {
+            distance = new BigDecimal(requestBody.get("distance").toString());
+        }
+        
+        LocalDate recordDate = null;
+        if (requestBody.get("recordDate") != null) {
+            recordDate = LocalDate.parse(requestBody.get("recordDate").toString());
+        }
+        
+        Long petId = null;
+        if (requestBody.get("petId") != null) {
+            petId = Long.parseLong(requestBody.get("petId").toString());
+        }
+
         Long userId = UserContext.getCurrentUserId();
         if (userId == null) {
             return Result.error(401, "用户未登录");
+        }
+
+        if (steps == null) {
+            return Result.error(400, "步数参数不能为空");
         }
 
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();
@@ -50,24 +66,38 @@ public class HealthRecordController {
      * 记录饮水量
      */
     @PostMapping("/water")
-    public Result<WaterRecord> recordWater(
-            @RequestParam BigDecimal amount,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate recordDate,
-            @RequestParam(required = false) String recordTime,
-            @RequestParam(required = false) Long petId) {
+    public Result<WaterRecord> recordWater(@RequestBody java.util.Map<String, Object> requestBody) {
+        BigDecimal amount = null;
+        if (requestBody.get("amount") != null) {
+            amount = new BigDecimal(requestBody.get("amount").toString());
+        }
         
+        LocalDate recordDate = null;
+        if (requestBody.get("recordDate") != null) {
+            recordDate = LocalDate.parse(requestBody.get("recordDate").toString());
+        }
+        
+        LocalTime recordTime = null;
+        if (requestBody.get("recordTime") != null) {
+            recordTime = LocalTime.parse(requestBody.get("recordTime").toString());
+        }
+        
+        Long petId = null;
+        if (requestBody.get("petId") != null) {
+            petId = Long.parseLong(requestBody.get("petId").toString());
+        }
+
         Long userId = UserContext.getCurrentUserId();
         if (userId == null) {
             return Result.error(401, "用户未登录");
         }
 
-        LocalDate date = recordDate != null ? recordDate : LocalDate.now();
-        LocalTime time = null;
-        if (recordTime != null) {
-            time = LocalTime.parse(recordTime);
+        if (amount == null) {
+            return Result.error(400, "水量参数不能为空");
         }
 
-        WaterRecord record = healthRecordService.recordWater(userId, petId, amount, date, time);
+        LocalDate date = recordDate != null ? recordDate : LocalDate.now();
+        WaterRecord record = healthRecordService.recordWater(userId, petId, amount, date, recordTime);
         return Result.success(record);
     }
 

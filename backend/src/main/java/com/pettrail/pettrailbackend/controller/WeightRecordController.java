@@ -81,8 +81,12 @@ public class WeightRecordController {
     @PostMapping
     public Result<WeightRecord> createRecord(
             @PathVariable Long petId,
-            @RequestParam BigDecimal weight,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate recordDate) {
+            @RequestBody java.util.Map<String, Object> requestBody) {
+        BigDecimal weight = new BigDecimal(requestBody.get("weight").toString());
+        LocalDate recordDate = null;
+        if (requestBody.containsKey("recordDate") && requestBody.get("recordDate") != null) {
+            recordDate = LocalDate.parse(requestBody.get("recordDate").toString());
+        }
         log.info("创建体重记录：petId={}, weight={}, recordDate={}", petId, weight, recordDate);
         validatePetOwnership(petId);
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();

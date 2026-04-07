@@ -88,7 +88,9 @@ public class VaccineReminderController {
     public Result<VaccineReminder> updateNextDate(
             @PathVariable Long petId,
             @PathVariable Long id,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate nextDate) {
+            @RequestBody java.util.Map<String, String> requestBody) {
+        String nextDateStr = requestBody.get("nextDate");
+        LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
         log.info("更新提醒日期：id={}, nextDate={}", id, nextDate);
         VaccineReminder reminder = vaccineReminderService.updateNextDate(id, nextDate);
         return Result.success(reminder);
