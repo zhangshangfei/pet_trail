@@ -255,11 +255,7 @@ export default {
         { type: "bottle", name: "瓶子", amount: "500ml", emoji: "🧴", bg: "#dcfce7" },
         { type: "cup", name: "杯子", amount: "150ml", emoji: "☕", bg: "#ffedd5" }
       ],
-      weightHistory: [
-        { date: "12/1", h: 64, color: "#ef4444" },
-        { date: "12/3", h: 64, color: "#f59e0b" },
-        { date: "12/5", h: 64, color: "#10b981" }
-      ]
+      weightHistory: []
     };
   },
   computed: {
@@ -363,6 +359,9 @@ export default {
         if (res && res.success && Array.isArray(res.data)) {
           this.pets = res.data;
           this.currentPet = this.currentPet || this.pets[0] || null;
+          if (this.currentPet) {
+            this.loadWeightTrend();
+          }
         } else {
           this.pets = [];
           if (this.pets.length === 0) {
@@ -377,6 +376,46 @@ export default {
         }
       }
     },
+    // 加载体重趋势
+    async loadWeightTrend() {
+      if (!this.currentPet || !this.currentPet.id) return;
+      
+      try {
+        const res = await uni.$request.get(`/api/pets/${this.currentPet.id}/weight-records`);
+        if (res && res.success && Array.isArray(res.data)) {
+          const records = res.data.slice(0, 7).reverse(); // 取最近7条记录
+          
+          // 找出最大体重用于计算高度
+          const weights = records.map(r => r.weight);
+          const maxWeight = Math.max(...weights, 1);
+          
+          this.weightHistory = records.map((record, index) => {
+            const date = new Date(record.recordDate);
+            const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+            const height = Math.max(20, (record.weight / maxWeight) * 80); // 高度 20-80
+            
+            // 根据体重变化设置颜色
+            let color = '#10b981'; // 默认绿色
+            if (index > 0) {
+              const prev = records[index - 1];
+              if (record.weight > prev.weight) {
+                color = '#ef4444'; // 增加 - 红色
+              } else if (record.weight < prev.weight) {
+                color = '#3b82f6'; // 减少 - 蓝色
+              }
+            }
+            
+            return {
+              date: dateStr,
+              h: height,
+              color: color
+            };
+          });
+        }
+      } catch (e) {
+        console.error('加载体重趋势失败:', e);
+      }
+    },
     togglePetSelector() {
       this.petSelectorOpen = !this.petSelectorOpen;
     },
@@ -387,6 +426,7 @@ export default {
       this.currentPet = pet;
       this.petSelectorOpen = false;
       this.searchQuery = "";
+      this.loadWeightTrend();
     },
     onMore() {
       uni.showToast({ title: "未实现", icon: "none" });
@@ -428,6 +468,7 @@ export default {
           if (res && res.success) {
             uni.showToast({ title: "保存成功", icon: "success" });
             this.weightData.value = "";
+            this.loadWeightTrend(); // 重新加载体重趋势
           } else {
             uni.showToast({ title: (res && res.message) || "保存失败", icon: "none" });
           }

@@ -234,11 +234,48 @@ export default {
         return;
       }
 
+      // 检查当天是否已有记录
+      const todayRecord = this.records.find(r => {
+        const recordDate = new Date(r.recordDate);
+        const recordDateStr = `${recordDate.getFullYear()}-${String(recordDate.getMonth() + 1).padStart(2, '0')}-${String(recordDate.getDate()).padStart(2, '0')}`;
+        return recordDateStr === this.form.recordDate;
+      });
+
+      if (todayRecord) {
+        // 当天已有记录，提示用户是否修改
+        uni.showModal({
+          title: '提示',
+          content: `当天已有体重记录（${todayRecord.weight}kg），是否修改？`,
+          confirmText: '确认修改',
+          cancelText: '取消',
+          success: async (modalRes) => {
+            if (modalRes.confirm) {
+              await this.updateRecord(todayRecord.id);
+            }
+          }
+        });
+        return;
+      }
+
+      // 新增记录
+      await this.createNewRecord();
+    },
+
+    // 新增记录
+    async createNewRecord() {
+      console.log('=== 开始新增体重记录 ===');
+      console.log('宠物ID:', this.petId);
+      console.log('体重数据:', this.form.weight);
+      console.log('记录日期:', this.form.recordDate);
+
       try {
         const res = await uni.$request.post(`/api/pets/${this.petId}/weight-records`, {
           weight: this.form.weight,
           recordDate: this.form.recordDate
         });
+
+        console.log('=== 服务器响应 ===');
+        console.log('响应数据:', JSON.stringify(res, null, 2));
 
         if (res.success) {
           uni.showToast({
@@ -247,18 +284,63 @@ export default {
           });
           this.hideModal();
           this.loadRecords();
-          this.loadPetInfo(); // 刷新宠物信息
+          this.loadPetInfo();
         } else {
           uni.showToast({
             title: res.message || '记录失败',
-            icon: 'none'
+            icon: 'none',
+            duration: 3000
           });
         }
       } catch (error) {
-        console.error('提交记录失败:', error);
+        console.error('=== 新增记录失败 ===');
+        console.error('错误:', error);
         uni.showToast({
-          title: '网络错误',
-          icon: 'none'
+          title: `新增失败: ${error.message || '网络错误'}`,
+          icon: 'none',
+          duration: 3000
+        });
+      }
+    },
+
+    // 修改记录
+    async updateRecord(recordId) {
+      console.log('=== 开始修改体重记录 ===');
+      console.log('记录ID:', recordId);
+      console.log('体重数据:', this.form.weight);
+      console.log('记录日期:', this.form.recordDate);
+
+      try {
+        const res = await uni.$request.put(`/api/pets/${this.petId}/weight-records/${recordId}`, {
+          weight: this.form.weight,
+          recordDate: this.form.recordDate
+        });
+
+        console.log('=== 服务器响应 ===');
+        console.log('响应数据:', JSON.stringify(res, null, 2));
+
+        if (res.success) {
+          uni.showToast({
+            title: '修改成功',
+            icon: 'success'
+          });
+          this.hideModal();
+          this.loadRecords();
+          this.loadPetInfo();
+        } else {
+          uni.showToast({
+            title: res.message || '修改失败',
+            icon: 'none',
+            duration: 3000
+          });
+        }
+      } catch (error) {
+        console.error('=== 修改记录失败 ===');
+        console.error('错误:', error);
+        uni.showToast({
+          title: `修改失败: ${error.message || '网络错误'}`,
+          icon: 'none',
+          duration: 3000
         });
       }
     },

@@ -188,24 +188,18 @@ export default {
       selectedTimeRange: "近七天",
       selectedChartTab: "步数趋势",
       chartTabs: ["步数趋势", "饮水分析", "体重变化"],
-      chartDates: ["4/21", "4/22", "4/23", "4/24", "4/25", "4/26", "今天"],
+      chartDates: [],
       chartDataMap: {
-        "步数趋势": [18.5, 21.2, 19.8, 22.5, 20.3, 21.8, 21.5],
-        "饮水分析": [1.1, 1.3, 1.2, 1.35, 1.18, 1.25, 1.2],
-        "体重变化": [28.5, 28.4, 28.3, 28.2, 28.4, 28.3, 28.3]
+        "步数趋势": [],
+        "饮水分析": [],
+        "体重变化": []
       },
-      detailRecords: [
-        { date: "今天", steps: "3,450", water: "280", weight: "28.3" },
-        { date: "昨天", steps: "2,980", water: "320", weight: "28.5" },
-        { date: "前天", steps: "4,120", water: "250", weight: "28.4" },
-        { date: "4 月 26 日", steps: "3,760", water: "290", weight: "28.3" },
-        { date: "4 月 25 日", steps: "5,230", water: "310", weight: "28.6" }
-      ],
+      detailRecords: [],
       overview: {
-        steps: "21.5k",
-        water: "1.2L",
-        weight: "28.3kg",
-        deltaWeight: "-0.5kg"
+        steps: "0",
+        water: "0ml",
+        weight: "0kg",
+        deltaWeight: "0kg"
       }
     };
   },
@@ -312,16 +306,96 @@ export default {
           this.pets = res.data;
           if (!this.selectedPet && this.pets.length > 0) {
             this.selectedPet = this.pets[0];
+            this.loadDashboardData();
           }
         }
       } catch (e) {
         console.error('加载宠物列表失败:', e);
       }
     },
+    // 加载健康数据看板
+    async loadDashboardData() {
+      if (!this.selectedPet || !this.selectedPet.id) return;
+      
+      try {
+        const petId = this.selectedPet.id;
+        
+        // 并行加载体重、步数、饮水数据
+        const [weightRes] = await Promise.all([
+          uni.$request.get(`/api/pets/${petId}/weight-records`)
+        ]);
+        
+        // 处理体重数据
+        if (weightRes && weightRes.success && Array.isArray(weightRes.data)) {
+          const weightRecords = weightRes.data;
+          
+          // 生成最近7天的日期
+          const dates = [];
+          const values = [];
+          const today = new Date();
+          
+          for (let i = 6; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            
+            // 格式化日期显示
+            if (i === 0) {
+              dates.push('今天');
+            } else if (i === 1) {
+              dates.push('昨天');
+            } else {
+              dates.push(`${date.getMonth() + 1}/${date.getDate()}`);
+            }
+            
+            // 查找该日期的体重记录
+            const record = weightRecords.find(r => {
+              const recordDate = new Date(r.recordDate);
+              return recordDate.toISOString().split('T')[0] === dateStr;
+            });
+            
+            values.push(record ? record.weight : null);
+          }
+          
+          this.chartDates = dates;
+          this.$set(this.chartDataMap, '体重变化', values.filter(v => v !== null));
+          
+          // 更新体重概览
+          if (weightRecords.length > 0) {
+            const latestWeight = weightRecords[0];
+            this.overview.weight = `${latestWeight.weight}kg`;
+            
+            if (weightRecords.length > 1) {
+              const prevWeight = weightRecords[1];
+              const delta = (latestWeight.weight - prevWeight.weight).toFixed(1);
+              this.overview.deltaWeight = `${delta > 0 ? '+' : ''}${delta}kg`;
+            }
+          }
+        }
+        
+        // 生成详细记录
+        if (weightRes && weightRes.success && Array.isArray(weightRes.data)) {
+          this.detailRecords = weightRes.data.slice(0, 5).map(record => {
+            const date = new Date(record.recordDate);
+            const dateStr = `${date.getMonth() + 1}月${date.getDate()}日`;
+            return {
+              date: dateStr,
+              steps: '-',
+              water: '-',
+              weight: record.weight
+            };
+          });
+        }
+        
+      } catch (e) {
+        console.error('加载健康数据失败:', e);
+      }
+    },
     selectPet(pet) {
       this.selectedPet = pet;
       this.petSelectorOpen = false;
       this.searchQuery = "";
+      this.loadDashboardData();
     },
     togglePetSelector() {
       this.petSelectorOpen = !this.petSelectorOpen;

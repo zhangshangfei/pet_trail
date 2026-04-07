@@ -97,6 +97,28 @@ public class WeightRecordController {
     }
 
     /**
+     * 更新体重记录
+     */
+    @PutMapping("/{id}")
+    public Result<WeightRecord> updateRecord(
+            @PathVariable Long petId,
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Object> requestBody) {
+        BigDecimal weight = new BigDecimal(requestBody.get("weight").toString());
+        LocalDate recordDate = null;
+        if (requestBody.containsKey("recordDate") && requestBody.get("recordDate") != null) {
+            recordDate = LocalDate.parse(requestBody.get("recordDate").toString());
+        }
+        log.info("更新体重记录：petId={}, id={}, weight={}, recordDate={}", petId, id, weight, recordDate);
+        validatePetOwnership(petId);
+        LocalDate date = recordDate != null ? recordDate : LocalDate.now();
+        WeightRecord record = weightRecordService.updateRecord(id, weight, date);
+        // 同步更新 pets 表中的当前体重
+        petService.updatePetWeight(petId, weight);
+        return Result.success(record);
+    }
+
+    /**
      * 删除体重记录
      */
     @DeleteMapping("/{id}")

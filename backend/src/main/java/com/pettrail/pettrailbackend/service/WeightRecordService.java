@@ -62,8 +62,37 @@ public class WeightRecordService extends ServiceImpl<WeightRecordMapper, WeightR
         record.setUpdatedAt(LocalDateTime.now());
 
         this.save(record);
-        log.info("创建体重记录成功: id={}, petId={}, weight={}, recordDate={}", 
+        log.info("创建体重记录成功: id={}, petId={}, weight={}, recordDate={}",
                 record.getId(), petId, weight, recordDate);
+        return record;
+    }
+
+    /**
+     * 更新体重记录
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public WeightRecord updateRecord(Long recordId, BigDecimal weight, LocalDate recordDate) {
+        WeightRecord record = this.getById(recordId);
+        if (record == null) {
+            throw new RuntimeException("记录不存在");
+        }
+
+        // 检查是否已存在其他记录的当天记录
+        LambdaQueryWrapper<WeightRecord> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(WeightRecord::getPetId, record.getPetId());
+        queryWrapper.eq(WeightRecord::getRecordDate, recordDate);
+        queryWrapper.ne(WeightRecord::getId, recordId); // 排除当前记录
+        if (this.count(queryWrapper) > 0) {
+            throw new RuntimeException("当天已存在其他体重记录");
+        }
+
+        record.setWeight(weight);
+        record.setRecordDate(recordDate);
+        record.setUpdatedAt(LocalDateTime.now());
+
+        this.updateById(record);
+        log.info("更新体重记录成功: id={}, petId={}, weight={}, recordDate={}",
+                record.getId(), record.getPetId(), weight, recordDate);
         return record;
     }
 
