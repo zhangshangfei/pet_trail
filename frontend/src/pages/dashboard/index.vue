@@ -156,10 +156,12 @@
           <text class="board-tab-icon">📈</text>
           <text class="board-tab-text">健康</text>
         </view>
+        <!-- 社区功能暂时隐藏
         <view class="board-tab-item" @tap="goTab('/pages/community/index', true)">
           <text class="board-tab-icon">🐾</text>
           <text class="board-tab-text">社区</text>
         </view>
+        -->
         <view class="board-tab-item" @tap="goTab('/pages/me/index', true)">
           <text class="board-tab-icon">👤</text>
           <text class="board-tab-text">我的</text>

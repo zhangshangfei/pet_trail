@@ -25,10 +25,12 @@
             <text class="quick-icon">🩺</text>
             <text class="quick-text" >一键记录健康</text>
           </view>
+          <!-- 发布动态功能暂时隐藏
           <view class="quick-btn quick-btn-2" @click="onQuickAction2">
             <text class="quick-icon">📷</text>
             <text class="quick-text">发布动态</text>
           </view>
+          -->
         </view>
 
         <!-- Health dashboard card -->
@@ -74,13 +76,12 @@
           </view>
         </view>
 
-        <!-- Dynamic feed title -->
+        <!-- 宠物动态标题行暂时隐藏
         <view class="feed-title-row">
           <text class="feed-title">宠物动态</text>
           <text class="feed-filter" @click="onFilterTap">⏷</text>
         </view>
 
-        <!-- Pet posts feed -->
         <view class="feed-list">
           <view
             v-for="post in posts"
@@ -123,6 +124,7 @@
             </view>
           </view>
         </view>
+        -->
       </view>
     </scroll-view>
   </view>
@@ -139,7 +141,8 @@ export default {
       isLoggedIn: false,
       patternUrl: 'https://ai-public.mastergo.com/ai/img_res/1774535762852vN4rT8wY3zA6bC9dE2.jpg',
       weightChartUrl: 'https://ai-public.mastergo.com/ai/img_res/1774535762852wY3zA6bC9dE2fG5hJ8.jpg',
-      posts: [
+      // 宠物动态数据暂时隐藏
+      /* posts: [
         {
           id: 1,
           avatar: 'https://ai-public.mastergo.com/ai/img_res/1774535762852xA6bC9dE2fG5hJ8kL3.jpg',
@@ -182,7 +185,7 @@ export default {
           comments: 5,
           tags: '#腊肠 #训练'
         }
-      ]
+      ] */
     };
   },
   computed: {
@@ -362,21 +365,23 @@ export default {
       // uni.showToast({ title: '一键记录健康', icon: 'none' });
       uni.navigateTo({ url: "/pages/health/index" });
     },
-    onQuickAction2() {
-      uni.showToast({ title: '发布动态', icon: 'none' });
-    },
+    // 发布动态功能暂时隐藏
+    // onQuickAction2() {
+    //   uni.showToast({ title: '发布动态', icon: 'none' });
+    // },
     onViewDetail() {
       uni.switchTab({ url: '/pages/dashboard/index' });
     },
     onFilterTap() {
       uni.showToast({ title: '筛选未实现', icon: 'none' });
     },
-    onLikeTap(post) {
-      uni.showToast({ title: `点赞 ${post.likes}`, icon: 'none' });
-    },
-    onCommentTap(post) {
-      uni.showToast({ title: `评论 ${post.comments}`, icon: 'none' });
-    }
+    // 宠物动态相关事件暂时隐藏
+    // onLikeTap(post) {
+    //   uni.showToast({ title: `点赞 ${post.likes}`, icon: 'none' });
+    // },
+    // onCommentTap(post) {
+    //   uni.showToast({ title: `评论 ${post.comments}`, icon: 'none' });
+    // }
   },
   addRecord() {
     uni.navigateTo({ url: "/pages/health/index" });

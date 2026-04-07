@@ -62,10 +62,12 @@
               <view class="feature-icon feature-icon-blue"><text>📈</text></view>
               <text class="feature-text">健康监测</text>
             </view>
+            <!-- 社区功能暂时隐藏
             <view class="feature-item" @tap="goToCommunity">
               <view class="feature-icon feature-icon-green"><text>👥</text></view>
               <text class="feature-text">宠物社区</text>
             </view>
+            -->
             <view class="feature-item" @tap="goToShop">
               <view class="feature-icon feature-icon-orange"><text>🛒</text></view>
               <text class="feature-text">商城</text>
@@ -315,9 +317,10 @@ export default {
     goToHealth() {
       uni.navigateTo({ url: "/pages/health/index" });
     },
-    goToCommunity() {
-      uni.switchTab({ url: "/pages/community/index" });
-    },
+    // 社区功能暂时隐藏
+    // goToCommunity() {
+    //   uni.switchTab({ url: "/pages/community/index" });
+    // },
     goToShop() {
       uni.showToast({ title: "商城未实现", icon: "none" });
     },

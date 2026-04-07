@@ -11,12 +11,14 @@
         <view class="tabbar-text">健康</view>
       </view>
 
+      <!-- 社区功能暂时隐藏
       <view class="tabbar-item {{selected === 2 ? 'active' : ''}}" data-index="2" bindtap="onSwitch">
         <view class="tabbar-icon">🐾</view>
         <view class="tabbar-text">社区</view>
       </view>
+      -->
 
-      <view class="tabbar-item {{selected === 3 ? 'active' : ''}}" data-index="3" bindtap="onSwitch">
+      <view class="tabbar-item {{selected === 2 ? 'active' : ''}}" data-index="2" bindtap="onSwitch">
         <view class="tabbar-icon">👤</view>
         <view class="tabbar-text">我的</view>
       </view>

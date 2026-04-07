@@ -75,8 +75,8 @@ jwt:
 # 微信配置
 wechat:
   miniapp:
-    app-id: ${WECHAT_MINIAPP_APP_ID:wxb210d75568abe1f7}
-    app-secret: ${WECHAT_MINIAPP_APP_SECRET:3279099fe5b8e0ad126fc4b8a4797ede}
+    app-id: ${WECHAT_MINIAPP_APP_ID:wx252292b9bfa1ccc6}
+    app-secret: ${WECHAT_MINIAPP_APP_SECRET:2e28c8aaf4ad6d437d3ec3b6de457170}
 
 # Sentinel 配置（可选，需要单独安装 Sentinel Dashboard）
 # spring.cloud:

@@ -14,13 +14,14 @@
         "navigationStyle": "custom"
       }
     },
-    {
-      "path": "pages/community/index",
-      "style": {
-        "navigationBarTitleText": "社区",
-        "navigationStyle": "custom"
-      }
-    },
+    // 社区功能暂时隐藏
+    // {
+    //   "path": "pages/community/index",
+    //   "style": {
+    //     "navigationBarTitleText": "社区",
+    //     "navigationStyle": "custom"
+    //   }
+    // },
     {
       "path": "pages/me/index",
       "style": {
@@ -98,10 +99,10 @@
         "pagePath": "pages/dashboard/index",
         "text": "健康"
       },
-      {
-        "pagePath": "pages/community/index",
-        "text": "社区"
-      },
+      // {
+      //   "pagePath": "pages/community/index",
+      //   "text": "社区"
+      // },
       {
         "pagePath": "pages/me/index",
         "text": "我的"

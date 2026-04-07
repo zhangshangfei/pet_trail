@@ -28,7 +28,7 @@ async function copyDir(src, dest) {
 async function main() {
   const mapping = [
     { src: path.join(root, "pages", "home"), dest: path.join(root, "home") },
-    { src: path.join(root, "pages", "community"), dest: path.join(root, "community") },
+    // { src: path.join(root, "pages", "community"), dest: path.join(root, "community") }, // 社区功能暂时隐藏
     { src: path.join(root, "pages", "me"), dest: path.join(root, "me") }
   ];
 
