@@ -17,7 +17,7 @@ spring:
   # Redis 配置
   data:
     redis:
-      host: mdaeiviu.redis.6f1dix0k.gah2912p.com
+      host: redis-243081-4-1419682950.sh.run.tcloudbase.com
       port: 6379
       password:
       database: 0
