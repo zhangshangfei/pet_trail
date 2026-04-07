@@ -30,10 +30,7 @@
               class="pet-avatar-item"
               @tap="goPetDetail(pet.id)"
             >
-              <image v-if="pet.avatar" class="pet-avatar" :src="pet.avatar" mode="aspectFill" />
-              <view v-else class="pet-avatar pet-avatar-fallback">
-                <text class="pet-avatar-fallback-text">{{ pet.name ? pet.name[0] : "宠" }}</text>
-              </view>
+              <image class="pet-avatar" :src="pet.avatar || defaultPetAvatar" mode="aspectFill" />
               <view class="pet-index-badge">{{ index + 1 }}</view>
             </view>
 
@@ -156,6 +153,7 @@ export default {
       statusBarHeight: 20,
       scrollHeight: 0,
       avatarUrl: "https://ai-public.mastergo.com/ai/img_res/1774537096721a3K9mP2xQ7vN4rT8wY.jpg",
+      defaultPetAvatar: "https://ai-public.mastergo.com/ai/img_res/1774575365924b4L8nQ3xR6vM9wP2yZ.jpg",
       userName: "宠物管家",
       pets: [],
       showAddPetModal: false,

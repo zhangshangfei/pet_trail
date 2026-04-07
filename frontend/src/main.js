@@ -44,7 +44,7 @@ function cloudRequest(options = {}) {
     const header = {
       'X-WX-SERVICE': CLOUD_CONFIG.service
     }
-    
+
     if (options.header && options.header['Content-Type']) {
       header['Content-Type'] = options.header['Content-Type']
     } else {
@@ -72,12 +72,9 @@ function cloudRequest(options = {}) {
           if (data.success) {
             resolve(data)
           } else {
-            const message = data.message || '请求失败'
-            uni.showToast({ title: message, icon: 'none', duration: 2000 })
-            reject(data)
+            resolve(data)
           }
         } else if (res.statusCode === 401) {
-          console.warn('Token 无效或已过期')
           uni.removeStorageSync('token')
           uni.removeStorageSync('tokenExpireTime')
           uni.removeStorageSync('userInfo')
@@ -93,12 +90,13 @@ function cloudRequest(options = {}) {
           uni.showToast({ title: '请求的资源不存在', icon: 'none', duration: 2000 })
           reject(res)
         } else {
-          uni.showToast({ title: `请求失败：${res.statusCode}`, icon: 'none', duration: 2000 })
+          const errorCode = res.data && res.data.code;
+          const errorMessage = (res.data && res.data.message) || `请求失败：${res.statusCode}`;
+          uni.showToast({ title: errorMessage, icon: 'none', duration: 3000 })
           reject(res)
         }
       },
       fail: (err) => {
-        console.error('云托管请求失败:', err)
         let errorMessage = '网络请求失败'
         if (err.errMsg && err.errMsg.includes('timeout')) {
           errorMessage = '请求超时，请检查网络连接'
@@ -117,7 +115,7 @@ function httpRequest(options = {}) {
   return new Promise((resolve, reject) => {
     const token = uni.getStorageSync('token') || ''
     const header = {}
-    
+
     if (options.header && options.header['Content-Type']) {
       header['Content-Type'] = options.header['Content-Type']
     } else {
@@ -144,12 +142,9 @@ function httpRequest(options = {}) {
           if (data.success) {
             resolve(data)
           } else {
-            const message = data.message || '请求失败'
-            uni.showToast({ title: message, icon: 'none', duration: 2000 })
-            reject(data)
+            resolve(data)
           }
         } else if (res.statusCode === 401) {
-          console.warn('Token 无效或已过期')
           uni.removeStorageSync('token')
           uni.removeStorageSync('tokenExpireTime')
           uni.removeStorageSync('userInfo')
@@ -165,12 +160,13 @@ function httpRequest(options = {}) {
           uni.showToast({ title: '请求的资源不存在', icon: 'none', duration: 2000 })
           reject(res)
         } else {
-          uni.showToast({ title: `请求失败：${res.statusCode}`, icon: 'none', duration: 2000 })
+          const errorCode = res.data && res.data.code;
+          const errorMessage = (res.data && res.data.message) || `请求失败：${res.statusCode}`;
+          uni.showToast({ title: errorMessage, icon: 'none', duration: 3000 })
           reject(res)
         }
       },
       fail: (err) => {
-        console.error('网络请求失败:', err)
         let errorMessage = '网络请求失败'
         if (err.errMsg && err.errMsg.includes('timeout')) {
           errorMessage = '请求超时，请检查网络连接'

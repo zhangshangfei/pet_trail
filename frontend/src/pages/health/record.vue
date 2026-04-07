@@ -263,21 +263,13 @@ export default {
 
     // 新增记录
     async createNewRecord() {
-      console.log('=== 开始新增体重记录 ===');
-      console.log('宠物ID:', this.petId);
-      console.log('体重数据:', this.form.weight);
-      console.log('记录日期:', this.form.recordDate);
-
       try {
         const res = await uni.$request.post(`/api/pets/${this.petId}/weight-records`, {
           weight: this.form.weight,
           recordDate: this.form.recordDate
         });
 
-        console.log('=== 服务器响应 ===');
-        console.log('响应数据:', JSON.stringify(res, null, 2));
-
-        if (res.success) {
+        if (res && res.success) {
           uni.showToast({
             title: '记录成功',
             icon: 'success'
@@ -286,17 +278,17 @@ export default {
           this.loadRecords();
           this.loadPetInfo();
         } else {
+          const errorMsg = (res && res.message) || '记录失败';
           uni.showToast({
-            title: res.message || '记录失败',
+            title: errorMsg,
             icon: 'none',
             duration: 3000
           });
         }
       } catch (error) {
-        console.error('=== 新增记录失败 ===');
-        console.error('错误:', error);
+        const errorMsg = (error && error.message) || '网络错误';
         uni.showToast({
-          title: `新增失败: ${error.message || '网络错误'}`,
+          title: errorMsg,
           icon: 'none',
           duration: 3000
         });
@@ -305,21 +297,13 @@ export default {
 
     // 修改记录
     async updateRecord(recordId) {
-      console.log('=== 开始修改体重记录 ===');
-      console.log('记录ID:', recordId);
-      console.log('体重数据:', this.form.weight);
-      console.log('记录日期:', this.form.recordDate);
-
       try {
         const res = await uni.$request.put(`/api/pets/${this.petId}/weight-records/${recordId}`, {
           weight: this.form.weight,
           recordDate: this.form.recordDate
         });
 
-        console.log('=== 服务器响应 ===');
-        console.log('响应数据:', JSON.stringify(res, null, 2));
-
-        if (res.success) {
+        if (res && res.success) {
           uni.showToast({
             title: '修改成功',
             icon: 'success'
@@ -328,17 +312,17 @@ export default {
           this.loadRecords();
           this.loadPetInfo();
         } else {
+          const errorMsg = (res && res.message) || '修改失败';
           uni.showToast({
-            title: res.message || '修改失败',
+            title: errorMsg,
             icon: 'none',
             duration: 3000
           });
         }
       } catch (error) {
-        console.error('=== 修改记录失败 ===');
-        console.error('错误:', error);
+        const errorMsg = (error && error.message) || '网络错误';
         uni.showToast({
-          title: `修改失败: ${error.message || '网络错误'}`,
+          title: errorMsg,
           icon: 'none',
           duration: 3000
         });

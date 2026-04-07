@@ -4,16 +4,6 @@ import config from '@/config/env'
 const BASE_URL = config.VITE_API_BASE_URL
 const CLOUD_CONFIG = config.VITE_CLOUD_CONFIG
 
-// 错误码映射（前端根据错误码做不同处理）
-const ERROR_CODE_MESSAGES = {
-  3001: '当天已记录体重',
-  3002: '体重记录不存在',
-  1001: '用户未登录',
-  1005: '登录已过期，请重新登录',
-  2001: '宠物不存在',
-  2002: '无权限操作该宠物'
-}
-
 // 将对象编码为 application/x-www-form-urlencoded 格式
 const encodeFormData = (data) => {
   if (!data) return ''
@@ -191,21 +181,11 @@ const httpRequest = (options = {}) => {
       data: requestData,
       header: header,
       success: (res) => {
-        // 检查 HTTP 状态码
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const data = res.data
-
-          // 检查业务状态
           if (data.success) {
             resolve(data)
           } else {
-            // 业务失败
-            const message = data.message || '请求失败'
-            uni.showToast({
-              title: message,
-              icon: 'none',
-              duration: 2000
-            })
             reject(data)
           }
         } else if (res.statusCode === 401) {
@@ -246,11 +226,7 @@ const httpRequest = (options = {}) => {
           })
           reject(res)
         } else {
-          // 其他 HTTP 错误 - 尝试提取后端返回的错误信息
-          const errorCode = res.data && res.data.code;
-          const errorMessage = (res.data && res.data.message) || ERROR_CODE_MESSAGES[errorCode] || `请求失败：${res.statusCode}`;
-          console.error('HTTP 错误响应:', res.data);
-          console.error('错误码:', errorCode);
+          const errorMessage = (res.data && res.data.message) || `请求失败：${res.statusCode}`;
           uni.showToast({
             title: errorMessage,
             icon: 'none',
