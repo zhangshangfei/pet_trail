@@ -166,6 +166,12 @@ export default {
       this.loadReminders();
     }
   },
+  onShow() {
+    // 每次显示页面时重新加载提醒数据
+    if (this.petId) {
+      this.loadReminders();
+    }
+  },
   methods: {
     // 加载宠物信息
     async loadPetInfo() {

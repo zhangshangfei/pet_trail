@@ -258,6 +258,8 @@ export default {
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: false });
     this.loadUserInfo();
+    // 每次显示页面时重新加载宠物列表和看板数据
+    this.loadPets();
   },
   onLoad() {
     try {

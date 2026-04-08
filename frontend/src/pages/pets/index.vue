@@ -75,7 +75,8 @@ export default {
     };
   },
   onShow() {
-    // Keep custom tabbar state route-driven.
+    // 每次显示页面时重新加载宠物列表
+    this.loadPets();
   },
   onLoad() {
     this.loadPets();

@@ -130,6 +130,15 @@ export default {
     }
     this.loadPets();
   },
+  onShow() {
+    // 每次显示页面时重新加载数据
+    if (this.petId) {
+      this.loadPetInfo();
+      this.loadRecords();
+    } else {
+      this.loadPets();
+    }
+  },
   methods: {
     async loadPets() {
       try {

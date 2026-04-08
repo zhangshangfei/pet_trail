@@ -134,7 +134,14 @@ export default {
   },
   onLoad(options) {
     if (options.id) {
+      this.petId = options.id;
       this.loadPetDetail(options.id);
+    }
+  },
+  onShow() {
+    // 每次显示页面时重新加载宠物详情
+    if (this.petId) {
+      this.loadPetDetail(this.petId);
     }
   },
   methods: {
