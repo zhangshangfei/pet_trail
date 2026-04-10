@@ -87,7 +87,7 @@ public class WeightRecordController {
         if (requestBody.containsKey("recordDate") && requestBody.get("recordDate") != null) {
             recordDate = LocalDate.parse(requestBody.get("recordDate").toString());
         }
-        String note = requestBody.containsKey("note") ? requestBody.get("note").toString() : null;
+        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
         log.info("创建体重记录：petId={}, weight={}, recordDate={}, note={}", petId, weight, recordDate, note);
         validatePetOwnership(petId);
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();
@@ -110,7 +110,7 @@ public class WeightRecordController {
         if (requestBody.containsKey("recordDate") && requestBody.get("recordDate") != null) {
             recordDate = LocalDate.parse(requestBody.get("recordDate").toString());
         }
-        String note = requestBody.containsKey("note") ? requestBody.get("note").toString() : null;
+        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
         log.info("更新体重记录：petId={}, id={}, weight={}, recordDate={}, note={}", petId, id, weight, recordDate, note);
         validatePetOwnership(petId);
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();

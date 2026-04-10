@@ -49,7 +49,7 @@ public class ParasiteReminderController {
         Integer type = requestBody.get("type") != null ? ((Number) requestBody.get("type")).intValue() : null;
         String nextDateStr = (String) requestBody.get("nextDate");
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
-        String note = requestBody.containsKey("note") ? requestBody.get("note").toString() : null;
+        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
 
         log.info("创建寄生虫提醒：petId={}, type={}, nextDate={}, note={}", petId, type, nextDate, note);
         ParasiteReminder reminder = parasiteReminderService.createReminder(petId, type, nextDate, note);
@@ -79,7 +79,7 @@ public class ParasiteReminderController {
         Integer type = requestBody.get("type") != null ? ((Number) requestBody.get("type")).intValue() : null;
         String nextDateStr = (String) requestBody.get("nextDate");
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
-        String note = requestBody.containsKey("note") ? requestBody.get("note").toString() : null;
+        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
 
         log.info("更新寄生虫提醒：petId={}, id={}, type={}, nextDate={}, note={}", petId, id, type, nextDate, note);
         ParasiteReminder reminder = parasiteReminderService.updateReminder(id, type, nextDate, note);
