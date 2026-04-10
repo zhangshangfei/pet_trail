@@ -49,9 +49,10 @@ public class VaccineReminderController {
         String vaccineName = (String) requestBody.get("vaccineName");
         String nextDateStr = (String) requestBody.get("nextDate");
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
-        
-        log.info("创建疫苗提醒：petId={}, vaccineName={}, nextDate={}", petId, vaccineName, nextDate);
-        VaccineReminder reminder = vaccineReminderService.createReminder(petId, vaccineName, nextDate);
+        String note = requestBody.containsKey("note") ? requestBody.get("note").toString() : null;
+
+        log.info("创建疫苗提醒：petId={}, vaccineName={}, nextDate={}, note={}", petId, vaccineName, nextDate, note);
+        VaccineReminder reminder = vaccineReminderService.createReminder(petId, vaccineName, nextDate, note);
         return Result.success(reminder);
     }
 
@@ -78,9 +79,10 @@ public class VaccineReminderController {
         String vaccineName = (String) requestBody.get("vaccineName");
         String nextDateStr = (String) requestBody.get("nextDate");
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
+        String note = requestBody.containsKey("note") ? requestBody.get("note").toString() : null;
 
-        log.info("更新疫苗提醒：petId={}, id={}, vaccineName={}, nextDate={}", petId, id, vaccineName, nextDate);
-        VaccineReminder reminder = vaccineReminderService.updateReminder(id, vaccineName, nextDate);
+        log.info("更新疫苗提醒：petId={}, id={}, vaccineName={}, nextDate={}, note={}", petId, id, vaccineName, nextDate, note);
+        VaccineReminder reminder = vaccineReminderService.updateReminder(id, vaccineName, nextDate, note);
         return Result.success(reminder);
     }
 

@@ -87,10 +87,11 @@ public class WeightRecordController {
         if (requestBody.containsKey("recordDate") && requestBody.get("recordDate") != null) {
             recordDate = LocalDate.parse(requestBody.get("recordDate").toString());
         }
-        log.info("创建体重记录：petId={}, weight={}, recordDate={}", petId, weight, recordDate);
+        String note = requestBody.containsKey("note") ? requestBody.get("note").toString() : null;
+        log.info("创建体重记录：petId={}, weight={}, recordDate={}, note={}", petId, weight, recordDate, note);
         validatePetOwnership(petId);
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();
-        WeightRecord record = weightRecordService.createRecord(petId, weight, date);
+        WeightRecord record = weightRecordService.createRecord(petId, weight, date, note);
         // 同步更新 pets 表中的当前体重
         petService.updatePetWeight(petId, weight);
         return Result.success(record);
@@ -109,10 +110,11 @@ public class WeightRecordController {
         if (requestBody.containsKey("recordDate") && requestBody.get("recordDate") != null) {
             recordDate = LocalDate.parse(requestBody.get("recordDate").toString());
         }
-        log.info("更新体重记录：petId={}, id={}, weight={}, recordDate={}", petId, id, weight, recordDate);
+        String note = requestBody.containsKey("note") ? requestBody.get("note").toString() : null;
+        log.info("更新体重记录：petId={}, id={}, weight={}, recordDate={}, note={}", petId, id, weight, recordDate, note);
         validatePetOwnership(petId);
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();
-        WeightRecord record = weightRecordService.updateRecord(id, weight, date);
+        WeightRecord record = weightRecordService.updateRecord(id, weight, date, note);
         // 同步更新 pets 表中的当前体重
         petService.updatePetWeight(petId, weight);
         return Result.success(record);

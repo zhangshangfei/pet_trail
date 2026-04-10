@@ -18,6 +18,7 @@ public class WeightRecord {
     private Long petId;           // 宠物ID
     private BigDecimal weight;    // 体重(kg)
     private LocalDate recordDate; // 记录日期
+    private String note;          // 备注
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

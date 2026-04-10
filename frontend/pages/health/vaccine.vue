@@ -3,67 +3,75 @@
     <!-- 页面标题 -->
     <view class="page-header">
       <text class="page-title">疫苗提醒</text>
-      <text class="page-subtitle">{{ pet.name }}</text>
+      <text class="page-subtitle">{{ pet ? pet.name : '' }}</text>
     </view>
 
-    <!-- 即将到期提醒 -->
-    <view class="section" v-if="upcomingReminders.length > 0">
-      <view class="section-header">
-        <text class="section-title">即将到期</text>
-        <view class="badge">
-          <text class="badge-text">{{ upcomingReminders.length }}</text>
-        </view>
-      </view>
-      <view class="reminder-list">
-        <view class="reminder-item" v-for="reminder in upcomingReminders" :key="reminder.id">
-          <view class="reminder-icon">💉</view>
-          <view class="reminder-content">
-            <text class="reminder-name">{{ reminder.vaccineName }}</text>
-            <text class="reminder-date">{{ formatDate(reminder.nextDate) }}</text>
-            <text class="reminder-days">{{ reminder.daysUntil }} 天后</text>
-          </view>
-          <view class="reminder-actions">
-            <button class="action-btn" size="mini" @click="showStatusModal(reminder, 1)">完成</button>
-            <button class="action-btn" size="mini" type="primary" @click="showEditModal(reminder)">编辑</button>
-          </view>
-        </view>
-      </view>
+    <!-- 加载中 -->
+    <view class="loading-section" v-if="loading">
+      <text class="loading-text">加载中...</text>
     </view>
 
-    <!-- 已完成提醒 -->
-    <view class="section" v-if="completedReminders.length > 0">
-      <view class="section-header">
-        <text class="section-title">已完成</text>
-        <view class="badge completed">
-          <text class="badge-text">{{ completedReminders.length }}</text>
-        </view>
-      </view>
-      <view class="reminder-list">
-        <view class="reminder-item" v-for="reminder in completedReminders" :key="reminder.id">
-          <view class="reminder-icon completed">✅</view>
-          <view class="reminder-content">
-            <text class="reminder-name completed">{{ reminder.vaccineName }}</text>
-            <text class="reminder-date completed">{{ formatDate(reminder.nextDate) }}</text>
-          </view>
-          <view class="reminder-actions">
-            <button class="action-btn" size="mini" @click="showStatusModal(reminder, 0)">重置</button>
+    <!-- 有数据时显示提醒列表 -->
+    <template v-else-if="pet && (upcomingReminders.length > 0 || completedReminders.length > 0)">
+      <!-- 即将到期提醒 -->
+      <view class="section" v-if="upcomingReminders.length > 0">
+        <view class="section-header">
+          <text class="section-title">即将到期</text>
+          <view class="badge">
+            <text class="badge-text">{{ upcomingReminders.length }}</text>
           </view>
         </view>
+        <view class="reminder-list">
+          <view class="reminder-item" v-for="reminder in upcomingReminders" :key="reminder.id">
+            <view class="reminder-icon">💉</view>
+            <view class="reminder-content">
+              <text class="reminder-name">{{ reminder.vaccineName }}</text>
+              <text class="reminder-date">{{ formatDate(reminder.nextDate) }}</text>
+              <text class="reminder-days">{{ reminder.daysUntil }} 天后</text>
+            </view>
+            <view class="reminder-actions">
+              <button class="action-btn" size="mini" @click="showStatusModal(reminder, 1)">完成</button>
+              <button class="action-btn" size="mini" type="primary" @click="showEditModal(reminder)">编辑</button>
+            </view>
+          </view>
+        </view>
       </view>
+
+      <!-- 已完成提醒 -->
+      <view class="section" v-if="completedReminders.length > 0">
+        <view class="section-header">
+          <text class="section-title">已完成</text>
+          <view class="badge completed">
+            <text class="badge-text">{{ completedReminders.length }}</text>
+          </view>
+        </view>
+        <view class="reminder-list">
+          <view class="reminder-item" v-for="reminder in completedReminders" :key="reminder.id">
+            <view class="reminder-icon completed">✅</view>
+            <view class="reminder-content">
+              <text class="reminder-name completed">{{ reminder.vaccineName }}</text>
+              <text class="reminder-date completed">{{ formatDate(reminder.nextDate) }}</text>
+            </view>
+            <view class="reminder-actions">
+              <button class="action-btn" size="mini" @click="showStatusModal(reminder, 0)">重置</button>
+            </view>
+          </view>
+        </view>
+      </view>
+    </template>
+
+    <!-- 空状态（没有数据时显示） -->
+    <view class="empty-section" v-if="pet && upcomingReminders.length === 0 && completedReminders.length === 0">
+      <text class="empty-text">暂无疫苗提醒</text>
+      <button class="add-btn" type="primary" @click="showAddModal">添加第一个提醒</button>
     </view>
 
-    <!-- 添加提醒 -->
-    <view class="add-section">
+    <!-- 添加提醒按钮（有数据时显示） -->
+    <view class="add-section" v-if="pet && (upcomingReminders.length > 0 || completedReminders.length > 0)">
       <view class="add-item" @click="showAddModal">
         <view class="add-icon">➕</view>
         <text class="add-text">添加疫苗提醒</text>
       </view>
-    </view>
-
-    <!-- 空状态 -->
-    <view class="empty-section" v-if="upcomingReminders.length === 0 && completedReminders.length === 0">
-      <text class="empty-text">暂无疫苗提醒</text>
-      <button class="add-btn" type="primary" @click="showAddModal">添加第一个提醒</button>
     </view>
 
     <!-- 添加/编辑弹窗 -->
@@ -147,6 +155,7 @@ export default {
       pet: null,
       upcomingReminders: [],
       completedReminders: [],
+      loading: true,
       showModal: false,
       showStatusModal: false,
       isEditing: false,
@@ -161,12 +170,56 @@ export default {
   onLoad(options) {
     if (options.petId) {
       this.petId = options.petId;
-      this.loadPetInfo();
-      this.loadReminders();
+      this.loadData();
+    }
+  },
+  onShow() {
+    if (this.petId) {
+      this.loadData();
     }
   },
   methods: {
-    // 加载宠物信息
+    // 统一加载所有数据
+    async loadData() {
+      this.loading = true;
+      try {
+        // 并行加载宠物信息和提醒数据
+        const [petRes, reminderRes] = await Promise.all([
+          uni.request({
+            url: `http://localhost:8080/api/pets/${this.petId}`,
+            method: 'GET',
+            header: {
+              'Authorization': uni.getStorageSync('token') || ''
+            }
+          }),
+          uni.request({
+            url: `http://localhost:8080/api/pets/${this.petId}/vaccine-reminders`,
+            method: 'GET',
+            header: {
+              'Authorization': uni.getStorageSync('token') || ''
+            }
+          })
+        ]);
+
+        // 一次性更新所有数据，避免多次渲染
+        if (petRes.data.success) {
+          this.pet = petRes.data.data;
+        }
+        
+        if (reminderRes.data.success) {
+          const data = reminderRes.data.data;
+          this.upcomingReminders = data.filter(r => r.status === 0);
+          this.completedReminders = data.filter(r => r.status === 1);
+          this.calculateDays();
+        }
+      } catch (error) {
+        console.error('加载数据失败:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // 加载宠物信息（保留但不再单独使用）
     async loadPetInfo() {
       try {
         const res = await uni.request({
@@ -184,7 +237,7 @@ export default {
       }
     },
 
-    // 加载提醒
+    // 加载提醒（保留但不再单独使用）
     async loadReminders() {
       try {
         const res = await uni.request({
@@ -379,6 +432,17 @@ export default {
   margin-top: 8rpx;
 }
 
+.loading-section {
+  padding: 100rpx 0;
+  text-align: center;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #999999;
+  display: block;
+}
+
 .section {
   margin: 20rpx;
   padding: 30rpx;
@@ -488,6 +552,9 @@ export default {
 
 .add-section {
   margin: 20rpx;
+  margin-bottom: 120rpx;
+  position: relative;
+  z-index: 1;
 }
 
 .add-item {

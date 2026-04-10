@@ -44,17 +44,18 @@ public class VaccineReminderService extends ServiceImpl<VaccineReminderMapper, V
      * 创建疫苗提醒
      */
     @Transactional(rollbackFor = Exception.class)
-    public VaccineReminder createReminder(Long petId, String vaccineName, LocalDate nextDate) {
+    public VaccineReminder createReminder(Long petId, String vaccineName, LocalDate nextDate, String note) {
         VaccineReminder reminder = new VaccineReminder();
         reminder.setPetId(petId);
         reminder.setVaccineName(vaccineName);
         reminder.setNextDate(nextDate);
+        reminder.setNote(note);
         reminder.setStatus(0); // 未接种
         reminder.setCreatedAt(LocalDateTime.now());
         reminder.setUpdatedAt(LocalDateTime.now());
 
         this.save(reminder);
-        log.info("创建疫苗提醒成功: id={}, petId={}, vaccineName={}", reminder.getId(), petId, vaccineName);
+        log.info("创建疫苗提醒成功: id={}, petId={}, vaccineName={}, note={}", reminder.getId(), petId, vaccineName, note);
         return reminder;
     }
 
@@ -73,7 +74,7 @@ public class VaccineReminderService extends ServiceImpl<VaccineReminderMapper, V
      * 更新提醒信息（通用编辑接口）
      */
     @Transactional(rollbackFor = Exception.class)
-    public VaccineReminder updateReminder(Long reminderId, String vaccineName, LocalDate nextDate) {
+    public VaccineReminder updateReminder(Long reminderId, String vaccineName, LocalDate nextDate, String note) {
         VaccineReminder reminder = this.getById(reminderId);
         if (reminder == null) {
             throw new RuntimeException("提醒不存在");
@@ -84,9 +85,12 @@ public class VaccineReminderService extends ServiceImpl<VaccineReminderMapper, V
         if (nextDate != null) {
             reminder.setNextDate(nextDate);
         }
+        if (note != null) {
+            reminder.setNote(note);
+        }
         reminder.setUpdatedAt(LocalDateTime.now());
         this.updateById(reminder);
-        log.info("更新提醒信息成功: reminderId={}, vaccineName={}, nextDate={}", reminderId, vaccineName, nextDate);
+        log.info("更新提醒信息成功: reminderId={}, vaccineName={}, nextDate={}, note={}", reminderId, vaccineName, nextDate, note);
         return reminder;
     }
 

@@ -44,17 +44,18 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
      * 创建寄生虫提醒
      */
     @Transactional(rollbackFor = Exception.class)
-    public ParasiteReminder createReminder(Long petId, Integer type, LocalDate nextDate) {
+    public ParasiteReminder createReminder(Long petId, Integer type, LocalDate nextDate, String note) {
         ParasiteReminder reminder = new ParasiteReminder();
         reminder.setPetId(petId);
         reminder.setType(type);
         reminder.setNextDate(nextDate);
+        reminder.setNote(note);
         reminder.setStatus(0); // 未完成
         reminder.setCreatedAt(LocalDateTime.now());
         reminder.setUpdatedAt(LocalDateTime.now());
 
         this.save(reminder);
-        log.info("创建寄生虫提醒成功: id={}, petId={}, type={}", reminder.getId(), petId, type);
+        log.info("创建寄生虫提醒成功: id={}, petId={}, type={}, note={}", reminder.getId(), petId, type, note);
         return reminder;
     }
 
@@ -73,7 +74,7 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
      * 更新提醒信息（通用编辑接口）
      */
     @Transactional(rollbackFor = Exception.class)
-    public ParasiteReminder updateReminder(Long reminderId, Integer type, LocalDate nextDate) {
+    public ParasiteReminder updateReminder(Long reminderId, Integer type, LocalDate nextDate, String note) {
         ParasiteReminder reminder = this.getById(reminderId);
         if (reminder == null) {
             throw new RuntimeException("提醒不存在");
@@ -84,9 +85,12 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
         if (nextDate != null) {
             reminder.setNextDate(nextDate);
         }
+        if (note != null) {
+            reminder.setNote(note);
+        }
         reminder.setUpdatedAt(LocalDateTime.now());
         this.updateById(reminder);
-        log.info("更新提醒信息成功: reminderId={}, type={}, nextDate={}", reminderId, type, nextDate);
+        log.info("更新提醒信息成功: reminderId={}, type={}, nextDate={}, note={}", reminderId, type, nextDate, note);
         return reminder;
     }
 

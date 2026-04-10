@@ -47,7 +47,7 @@ public class WeightRecordService extends ServiceImpl<WeightRecordMapper, WeightR
      * 创建体重记录
      */
     @Transactional(rollbackFor = Exception.class)
-    public WeightRecord createRecord(Long petId, BigDecimal weight, LocalDate recordDate) {
+    public WeightRecord createRecord(Long petId, BigDecimal weight, LocalDate recordDate, String note) {
         // 检查是否已存在当天记录
         LambdaQueryWrapper<WeightRecord> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WeightRecord::getPetId, petId);
@@ -60,12 +60,13 @@ public class WeightRecordService extends ServiceImpl<WeightRecordMapper, WeightR
         record.setPetId(petId);
         record.setWeight(weight);
         record.setRecordDate(recordDate);
+        record.setNote(note);
         record.setCreatedAt(LocalDateTime.now());
         record.setUpdatedAt(LocalDateTime.now());
 
         this.save(record);
-        log.info("创建体重记录成功: id={}, petId={}, weight={}, recordDate={}",
-                record.getId(), petId, weight, recordDate);
+        log.info("创建体重记录成功: id={}, petId={}, weight={}, recordDate={}, note={}",
+                record.getId(), petId, weight, recordDate, note);
         return record;
     }
 
@@ -73,7 +74,7 @@ public class WeightRecordService extends ServiceImpl<WeightRecordMapper, WeightR
      * 更新体重记录
      */
     @Transactional(rollbackFor = Exception.class)
-    public WeightRecord updateRecord(Long recordId, BigDecimal weight, LocalDate recordDate) {
+    public WeightRecord updateRecord(Long recordId, BigDecimal weight, LocalDate recordDate, String note) {
         WeightRecord record = this.getById(recordId);
         if (record == null) {
             throw new BusinessException(ErrorCodeEnum.WEIGHT_RECORD_NOT_FOUND.getCode(), ErrorCodeEnum.WEIGHT_RECORD_NOT_FOUND.getMessage());
@@ -90,11 +91,14 @@ public class WeightRecordService extends ServiceImpl<WeightRecordMapper, WeightR
 
         record.setWeight(weight);
         record.setRecordDate(recordDate);
+        if (note != null) {
+            record.setNote(note);
+        }
         record.setUpdatedAt(LocalDateTime.now());
 
         this.updateById(record);
-        log.info("更新体重记录成功: id={}, petId={}, weight={}, recordDate={}",
-                record.getId(), record.getPetId(), weight, recordDate);
+        log.info("更新体重记录成功: id={}, petId={}, weight={}, recordDate={}, note={}",
+                record.getId(), record.getPetId(), weight, recordDate, note);
         return record;
     }
 

@@ -34,7 +34,7 @@
             <text class="pet-selector-arrow">{{ petSelectorOpen ? "⌃" : "⌄" }}</text>
           </view>
 
-          <view v-show="petSelectorOpen" class="pet-selector-pop" @touchstart.stop>
+          <view v-if="petSelectorOpen" class="pet-selector-pop" @touchstart.stop>
             <view class="pet-selector-search">
               <input class="pet-selector-input" v-model="searchQuery" placeholder="搜索宠物..." />
             </view>
@@ -497,13 +497,24 @@ export default {
       }
     },
     togglePetSelector() {
-      this.petSelectorOpen = !this.petSelectorOpen;
+      // 使用防抖，避免快速点击导致多次渲染
+      if (this._toggleTimer) {
+        clearTimeout(this._toggleTimer);
+      }
+      this._toggleTimer = setTimeout(() => {
+        this.petSelectorOpen = !this.petSelectorOpen;
+      }, 50);
     },
     selectPet(pet) {
-      this.currentPet = pet;
+      // 批量更新状态，避免多次渲染导致闪屏
       this.petSelectorOpen = false;
       this.searchQuery = "";
-      this.loadLastWeightRecord();
+      
+      // 使用 $nextTick 确保 DOM 更新后再加载数据
+      this.$nextTick(() => {
+        this.currentPet = pet;
+        this.loadLastWeightRecord();
+      });
     },
     onMore() {
       uni.showToast({ title: "未实现", icon: "none" });
@@ -536,7 +547,8 @@ export default {
       try {
         const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/weight-records`, {
           weight: this.weightForm.weight,
-          recordDate: this.weightForm.date
+          recordDate: this.weightForm.date,
+          note: this.weightForm.remark || null
         });
         if (res && res.success) {
           uni.showToast({ title: "保存成功", icon: "success" });
@@ -559,7 +571,8 @@ export default {
       try {
         const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/vaccine-reminders`, {
           vaccineName,
-          nextDate: this.vaccineForm.date
+          nextDate: this.vaccineForm.date,
+          note: this.vaccineForm.remark || null
         });
         if (res && res.success && res.data && res.data.id) {
           try {
@@ -596,7 +609,8 @@ export default {
       try {
         const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/parasite-reminders`, {
           type,
-          nextDate: this.dewormForm.date
+          nextDate: this.dewormForm.date,
+          note: this.dewormForm.remark || null
         });
         if (res && res.success && res.data && res.data.id) {
           try {
@@ -684,6 +698,7 @@ export default {
 .pet-selector {
   position: relative;
   margin-bottom: 24rpx;
+  z-index: 50;
 }
 .pet-selector-card {
   background: rgba(255, 255, 255, 0.98);
@@ -726,15 +741,26 @@ export default {
 
 .pet-selector-pop {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 12rpx);
   left: 0;
   right: 0;
-  margin-top: 12rpx;
   background: #fff;
   border-radius: 22rpx;
   box-shadow: 0 18rpx 44rpx rgba(0, 0, 0, 0.12);
   z-index: 50;
   overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .pet-selector-search {
   padding: 16rpx;
