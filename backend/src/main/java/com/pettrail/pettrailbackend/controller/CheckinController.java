@@ -38,30 +38,42 @@ public class CheckinController {
      */
     @PostMapping
     public Result<CheckinRecord> checkin(@RequestBody java.util.Map<String, Object> requestBody) {
+        log.info("打卡接口请求参数: {}", requestBody);
+
         Long itemId = requestBody.get("itemId") != null ? Long.parseLong(requestBody.get("itemId").toString()) : null;
-        
+
         Long petId = null;
         if (requestBody.get("petId") != null) {
             petId = Long.parseLong(requestBody.get("petId").toString());
         }
-        
+
         String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
-        
+
         @SuppressWarnings("unchecked")
-        List<String> images = requestBody.get("images") != null ? 
+        List<String> images = requestBody.get("images") != null ?
             (List<String>) requestBody.get("images") : null;
 
         Long userId = UserContext.getCurrentUserId();
+        log.info("打卡接口解析参数: userId={}, petId={}, itemId={}, note={}", userId, petId, itemId, note);
+
         if (userId == null) {
+            log.warn("打卡失败: 用户未登录");
             return Result.error(401, "用户未登录");
         }
 
         if (itemId == null) {
+            log.warn("打卡失败: 打卡项ID为空, userId={}", userId);
             return Result.error(400, "打卡项ID不能为空");
         }
 
-        CheckinRecord record = checkinService.checkin(userId, petId, itemId, note, images);
-        return Result.success(record);
+        try {
+            CheckinRecord record = checkinService.checkin(userId, petId, itemId, note, images);
+            log.info("打卡成功: userId={}, itemId={}, recordId={}", userId, itemId, record.getId());
+            return Result.success(record);
+        } catch (Exception e) {
+            log.error("打卡异常: userId={}, petId={}, itemId={}, error={}", userId, petId, itemId, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
