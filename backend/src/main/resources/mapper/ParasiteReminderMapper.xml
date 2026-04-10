@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pettrail.pettrailbackend.mapper.ParasiteReminderMapper">
+
+    <resultMap id="BaseResultMap" type="com.pettrail.pettrailbackend.entity.ParasiteReminder">
+        <id column="id" property="id"/>
+        <result column="pet_id" property="petId"/>
+        <result column="user_id" property="userId"/>
+        <result column="type" property="type"/>
+        <result column="product_name" property="productName"/>
+        <result column="next_date" property="nextDate"/>
+        <result column="interval_days" property="intervalDays"/>
+        <result column="status" property="status"/>
+        <result column="is_notified" property="isNotified"/>
+        <result column="note" property="note"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- 查询即将到期的驱虫提醒 -->
+    <select id="selectDueReminders" resultMap="BaseResultMap">
+        SELECT * FROM parasite_reminders
+        WHERE user_id = #{userId}
+        AND next_date BETWEEN #{startDate} AND #{endDate}
+        AND status = 1
+        ORDER BY next_date ASC
+    </select>
+
+    <!-- 查询宠物的驱虫提醒 -->
+    <select id="selectByPetId" resultMap="BaseResultMap">
+        SELECT * FROM parasite_reminders
+        WHERE pet_id = #{petId}
+        ORDER BY next_date ASC
+    </select>
+
+</mapper>
