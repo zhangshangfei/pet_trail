@@ -76,6 +76,13 @@
         "navigationBarBackgroundColor": "#ff6a3d",
         "navigationBarTextStyle": "white"
       }
+    },
+    {
+      "path": "pages/checkin/index",
+      "style": {
+        "navigationBarTitleText": "每日打卡",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {
@@ -98,6 +105,10 @@
       {
         "pagePath": "pages/dashboard/index",
         "text": "健康"
+      },
+      {
+        "pagePath": "pages/checkin/index",
+        "text": "打卡"
       },
       // {
       //   "pagePath": "pages/community/index",
