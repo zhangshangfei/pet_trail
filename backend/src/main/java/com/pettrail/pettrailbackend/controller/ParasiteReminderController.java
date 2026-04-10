@@ -51,8 +51,13 @@ public class ParasiteReminderController {
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
         String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
 
-        log.info("创建寄生虫提醒：petId={}, type={}, nextDate={}, note={}", petId, type, nextDate, note);
-        ParasiteReminder reminder = parasiteReminderService.createReminder(petId, type, nextDate, note);
+        Long userId = com.pettrail.pettrailbackend.util.UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+
+        log.info("创建寄生虫提醒：petId={}, userId={}, type={}, nextDate={}, note={}", petId, userId, type, nextDate, note);
+        ParasiteReminder reminder = parasiteReminderService.createReminder(petId, userId, type, nextDate, note);
         return Result.success(reminder);
     }
 

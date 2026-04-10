@@ -51,8 +51,13 @@ public class VaccineReminderController {
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
         String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
 
-        log.info("创建疫苗提醒：petId={}, vaccineName={}, nextDate={}, note={}", petId, vaccineName, nextDate, note);
-        VaccineReminder reminder = vaccineReminderService.createReminder(petId, vaccineName, nextDate, note);
+        Long userId = com.pettrail.pettrailbackend.util.UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+
+        log.info("创建疫苗提醒：petId={}, userId={}, vaccineName={}, nextDate={}, note={}", petId, userId, vaccineName, nextDate, note);
+        VaccineReminder reminder = vaccineReminderService.createReminder(petId, userId, vaccineName, nextDate, note);
         return Result.success(reminder);
     }
 

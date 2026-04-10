@@ -44,18 +44,19 @@ public class VaccineReminderService extends ServiceImpl<VaccineReminderMapper, V
      * 创建疫苗提醒
      */
     @Transactional(rollbackFor = Exception.class)
-    public VaccineReminder createReminder(Long petId, String vaccineName, LocalDate nextDate, String note) {
+    public VaccineReminder createReminder(Long petId, Long userId, String vaccineName, LocalDate nextDate, String note) {
         VaccineReminder reminder = new VaccineReminder();
         reminder.setPetId(petId);
+        reminder.setUserId(userId);
         reminder.setVaccineName(vaccineName);
         reminder.setNextDate(nextDate);
         reminder.setNote(note);
-        reminder.setStatus(0); // 未接种
+        reminder.setStatus(0); // 0-待接种
         reminder.setCreatedAt(LocalDateTime.now());
         reminder.setUpdatedAt(LocalDateTime.now());
 
         this.save(reminder);
-        log.info("创建疫苗提醒成功: id={}, petId={}, vaccineName={}, note={}", reminder.getId(), petId, vaccineName, note);
+        log.info("创建疫苗提醒成功: id={}, petId={}, userId={}, vaccineName={}, note={}", reminder.getId(), petId, userId, vaccineName, note);
         return reminder;
     }
 

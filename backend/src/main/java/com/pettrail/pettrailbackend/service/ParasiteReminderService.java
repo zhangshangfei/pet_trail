@@ -44,18 +44,19 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
      * 创建寄生虫提醒
      */
     @Transactional(rollbackFor = Exception.class)
-    public ParasiteReminder createReminder(Long petId, Integer type, LocalDate nextDate, String note) {
+    public ParasiteReminder createReminder(Long petId, Long userId, Integer type, LocalDate nextDate, String note) {
         ParasiteReminder reminder = new ParasiteReminder();
         reminder.setPetId(petId);
+        reminder.setUserId(userId);
         reminder.setType(type);
         reminder.setNextDate(nextDate);
         reminder.setNote(note);
-        reminder.setStatus(0); // 未完成
+        reminder.setStatus(0); // 0-待驱虫
         reminder.setCreatedAt(LocalDateTime.now());
         reminder.setUpdatedAt(LocalDateTime.now());
 
         this.save(reminder);
-        log.info("创建寄生虫提醒成功: id={}, petId={}, type={}, note={}", reminder.getId(), petId, type, note);
+        log.info("创建寄生虫提醒成功: id={}, petId={}, userId={}, type={}, note={}", reminder.getId(), petId, userId, type, note);
         return reminder;
     }
 
