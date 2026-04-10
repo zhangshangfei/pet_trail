@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * 打卡记录实体
  */
 @Data
-@TableName("checkin_records_202401")
+@TableName("checkin_records")
 public class CheckinRecord {
 
     @TableId(type = IdType.AUTO)

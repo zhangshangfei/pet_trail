@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 动态点赞实体
  */
 @Data
-@TableName("post_likes_00")
+@TableName("post_likes")
 public class PostLike {
 
     @TableId(type = IdType.AUTO)

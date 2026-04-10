@@ -16,7 +16,7 @@
 
     <!-- 根据用户 ID 和日期范围查询打卡记录 -->
     <select id="selectByUserIdAndDateRange" resultMap="BaseResultMap">
-        SELECT * FROM checkin_records_202401
+        SELECT * FROM checkin_records
         WHERE user_id = #{userId}
         AND record_date BETWEEN #{startDate} AND #{endDate}
         ORDER BY record_date DESC, created_at DESC
@@ -24,7 +24,7 @@
 
     <!-- 查询用户某日的打卡记录 -->
     <select id="selectByUserIdAndDate" resultMap="BaseResultMap">
-        SELECT * FROM checkin_records_202401
+        SELECT * FROM checkin_records
         WHERE user_id = #{userId}
         AND record_date = #{date}
         ORDER BY created_at DESC
@@ -32,7 +32,7 @@
 
     <!-- 检查用户某日是否已打卡 -->
     <select id="selectByUserIdItemIdAndDate" resultMap="BaseResultMap">
-        SELECT * FROM checkin_records_202401
+        SELECT * FROM checkin_records
         WHERE user_id = #{userId}
         AND item_id = #{itemId}
         AND record_date = #{date}

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 动态实体
  */
 @Data
-@TableName("posts_00")
+@TableName("posts")
 public class Post {
 
     @TableId(type = IdType.AUTO)

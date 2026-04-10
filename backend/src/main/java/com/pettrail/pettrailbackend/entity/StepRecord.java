@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * 步数记录实体
  */
 @Data
-@TableName("step_records_202401")
+@TableName("step_records")
 public class StepRecord {
 
     @TableId(type = IdType.AUTO)

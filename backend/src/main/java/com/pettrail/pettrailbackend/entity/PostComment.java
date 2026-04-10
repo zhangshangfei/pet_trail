@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 动态评论实体
  */
 @Data
-@TableName("post_comments_00")
+@TableName("post_comments")
 public class PostComment {
 
     @TableId(type = IdType.AUTO)

@@ -14,7 +14,7 @@ import java.time.LocalTime;
  * 饮水记录实体
  */
 @Data
-@TableName("water_records_202401")
+@TableName("water_records")
 public class WaterRecord {
 
     @TableId(type = IdType.AUTO)
