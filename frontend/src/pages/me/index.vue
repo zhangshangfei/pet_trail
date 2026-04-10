@@ -1,20 +1,14 @@
 <template>
   <view class="me-page">
-    <!-- Custom top navigation -->
-    <view class="me-nav">
-      <view class="me-statusbar" :style="{ height: statusBarHeight + 'px' }"></view>
-      <view class="me-nav-inner">
-        <view class="me-nav-left">
-          <image class="me-avatar" :src="avatarUrl" mode="aspectFill" />
-          <text class="me-title">{{ userName }}</text>
-        </view>
-        <view class="me-nav-right" @click="onBellTap">
-          <text class="me-bell">🔔</text>
-        </view>
-      </view>
-    </view>
+    <user-top-bar
+      :status-bar-height="statusBarHeight"
+      :avatar="avatarUrl"
+      :name="userName"
+      right-icon="🔔"
+      @rightTap="onBellTap"
+    />
 
-    <scroll-view scroll-y class="me-scroll" :style="{ height: scrollHeight + 'px' }">
+    <scroll-view scroll-y class="me-scroll" :style="{ height: scrollHeight + 'px', paddingTop: headerHeight + 'px' }">
       <view class="me-content">
         <!-- Pet management card -->
         <view class="card pet-card">
@@ -147,10 +141,16 @@
 </template>
 
 <script>
+import UserTopBar from '@/components/UserTopBar.vue'
+
 export default {
+  components: {
+    UserTopBar
+  },
   data() {
     return {
       statusBarHeight: 20,
+      headerHeight: 70,
       scrollHeight: 0,
       avatarUrl: "https://ai-public.mastergo.com/ai/img_res/1774537096721a3K9mP2xQ7vN4rT8wY.jpg",
       defaultPetAvatar: "https://ai-public.mastergo.com/ai/img_res/1774575365924b4L8nQ3xR6vM9wP2yZ.jpg",
@@ -188,9 +188,11 @@ export default {
     try {
       const sys = uni.getSystemInfoSync();
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
+      this.headerHeight = this.statusBarHeight + 50;
       this.scrollHeight = sys && sys.windowHeight ? sys.windowHeight : 0;
     } catch (e) {
       this.statusBarHeight = 20;
+      this.headerHeight = 70;
       this.scrollHeight = 0;
     }
     this.loadUserInfo();
@@ -384,7 +386,7 @@ export default {
 }
 
 .me-content {
-  padding: 170rpx 20rpx 220rpx;
+  padding: 80rpx 20rpx 220rpx;
 }
 
 .card {

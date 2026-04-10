@@ -1,21 +1,13 @@
 <template>
   <view class="home-page">
-    <!-- Custom top navigation -->
-    <view class="home-nav">
-      <view class="home-statusbar" :style="{ height: statusBarHeight + 'px' }"></view>
-      <view class="home-nav-inner">
-        <view v-if="isLoggedIn" class="home-user-info">
-          <image class="home-avatar" :src="avatarUrl" mode="aspectFill" />
-          <text class="home-name">{{ userName }}</text>
-        </view>
-        <view v-else @click="onWechatLogin" class="wechat-login-btn-wrap">
-          <text class="wechat-login-btn">微信登录</text>
-        </view>
-        <view class="home-nav-right" @click="onBellTap">
-          <text class="home-bell">🔔</text>
-        </view>
-      </view>
-    </view>
+    <user-top-bar
+      :status-bar-height="statusBarHeight"
+      :avatar="avatarUrl"
+      :name="isLoggedIn ? (userName || '萌宠主人') : '请登录'"
+      right-icon="🔔"
+      @rightTap="onBellTap"
+      @userTap="onTopUserTap"
+    />
 
     <scroll-view scroll-y class="home-scroll" :style="{ paddingTop: headerHeight + 'px' }">
       <view class="home-content">
@@ -131,7 +123,12 @@
 </template>
 
 <script>
+import UserTopBar from '@/components/UserTopBar.vue'
+
 export default {
+  components: {
+    UserTopBar
+  },
   data() {
     return {
       statusBarHeight: 20,
@@ -213,7 +210,6 @@ export default {
     try {
       const sys = uni.getSystemInfoSync();
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
-      // 顶部导航高度 = 状态栏高度 + 导航栏内容高度 (约 50px: padding 16rpx*2 + 内容)
       const headerHeight = this.statusBarHeight + 50;
       this.headerHeight = headerHeight;
     } catch (e) {
@@ -230,7 +226,7 @@ export default {
       const token = uni.getStorageSync('token');
       if (!token) {
         this.isLoggedIn = false;
-        this.userName = '小萌宠主人';
+        this.userName = '请登录';
         this.avatarUrl = 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg';
         return;
       }
@@ -245,13 +241,13 @@ export default {
           uni.setStorageSync('userInfo', userData);
         } else {
           this.isLoggedIn = false;
-          this.userName = '小萌宠主人';
+          this.userName = '请登录';
           this.avatarUrl = 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg';
         }
       } catch (error) {
         console.error('获取用户资料失败:', error);
         this.isLoggedIn = false;
-        this.userName = '小萌宠主人';
+        this.userName = '请登录';
         this.avatarUrl = 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg';
       }
     },
@@ -339,6 +335,11 @@ export default {
           });
         }
       });
+    },
+    onTopUserTap() {
+      if (!this.isLoggedIn) {
+        this.onWechatLogin();
+      }
     },
 
     onBellTap() {

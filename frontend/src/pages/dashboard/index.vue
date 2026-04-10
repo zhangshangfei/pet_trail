@@ -1,15 +1,12 @@
 <template>
   <view class="board-page">
-    <view class="board-nav">
-      <view class="board-statusbar" :style="{ height: statusBarHeight + 'px' }"></view>
-      <view class="board-nav-inner">
-        <view class="board-user">
-          <image class="board-user-avatar" :src="userAvatar" mode="aspectFill" />
-          <text class="board-user-name">{{ userName }}</text>
-        </view>
-        <text class="board-filter" @tap="onFilter">⏷</text>
-      </view>
-    </view>
+    <user-top-bar
+      :status-bar-height="statusBarHeight"
+      :avatar="userAvatar"
+      :name="userName"
+      right-icon="⏷"
+      @rightTap="onFilter"
+    />
 
     <scroll-view scroll-y class="board-scroll" :style="{ paddingTop: headerHeight + 'px' }">
       <view class="board-content">
@@ -238,7 +235,12 @@
 </template>
 
 <script>
+import UserTopBar from '@/components/UserTopBar.vue'
+
 export default {
+  components: {
+    UserTopBar
+  },
   data() {
     return {
       statusBarHeight: 20,

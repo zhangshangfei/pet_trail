@@ -1,19 +1,12 @@
 <template>
   <view class="health-page">
-    <view class="health-nav">
-      <view class="health-statusbar" :style="{ height: statusBarHeight + 'px' }"></view>
-      <view class="health-nav-inner">
-        <view class="health-user">
-          <image class="health-user-avatar" :src="userAvatar" mode="aspectFill" />
-          <text class="health-user-name">{{ userName }}</text>
-        </view>
-        <view class="health-nav-actions">
-          <text class="health-nav-icon" @tap="goBackToBoard">‹</text>
-          <text class="health-nav-icon" @tap="onMore">⋯</text>
-          <text class="health-nav-icon" @tap="onSettings">⚙</text>
-        </view>
-      </view>
-    </view>
+    <user-top-bar
+      :status-bar-height="statusBarHeight"
+      :avatar="userAvatar"
+      :name="userName"
+      right-icon="⋯"
+      @rightTap="onMore"
+    />
 
     <scroll-view scroll-y class="health-scroll" :style="{ paddingTop: headerHeight + 'px' }">
       <view class="health-content">
@@ -281,6 +274,8 @@
 </template>
 
 <script>
+import UserTopBar from '@/components/UserTopBar.vue'
+
 function todayStr() {
   const d = new Date();
   const y = d.getFullYear();
@@ -290,6 +285,9 @@ function todayStr() {
 }
 
 export default {
+  components: {
+    UserTopBar
+  },
   data() {
     return {
       statusBarHeight: 20,

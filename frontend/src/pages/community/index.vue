@@ -1,15 +1,12 @@
 <template>
   <view class="community-page">
-    <!-- 顶部导航 -->
-    <view class="community-header" :style="{ paddingTop: statusBarHeight + 'px' }">
-      <view class="community-header-left">
-        <image v-if="userAvatar" class="community-avatar" :src="userAvatar" mode="aspectFill" />
-        <text class="community-title">{{ userName }}</text>
-      </view>
-      <view class="community-header-right">
-        <text class="community-icon">🔔</text>
-      </view>
-    </view>
+    <user-top-bar
+      :status-bar-height="statusBarHeight"
+      :avatar="userAvatar"
+      :name="userName"
+      right-icon="🔔"
+      @rightTap="onBellTap"
+    />
 
     <!-- 动态列表 -->
     <scroll-view scroll-y class="post-scroll" :style="{ height: scrollHeight + 'px', paddingTop: headerHeight + 'px' }">
@@ -114,10 +111,14 @@
 
 <script>
 import * as postApi from '@/api/post'
+import UserTopBar from '@/components/UserTopBar.vue'
 
 const defaultAvatar = 'https://ai-public.mastergo.com/ai/img_res/1774537096721a3K9mP2xQ7vN4rT8wY.jpg'
 
 export default {
+  components: {
+    UserTopBar
+  },
   data() {
     return {
       statusBarHeight: 20,
@@ -125,6 +126,7 @@ export default {
       scrollHeight: 0,
       defaultAvatar,
       userAvatar: defaultAvatar,
+      userName: '萌宠主人',
       postList: [],
       page: 1,
       size: 10,
@@ -149,14 +151,13 @@ export default {
     try {
       const sys = uni.getSystemInfoSync()
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20
-      // 顶部导航高度 = 状态栏高度 + 导航栏高度 (约 44px)
-      const headerHeight = this.statusBarHeight + 44
+      const headerHeight = this.statusBarHeight + 92
       // scroll-view 高度 = 窗口高度 - 顶部导航高度
       this.scrollHeight = (sys && sys.windowHeight) ? sys.windowHeight : 0
       this.headerHeight = headerHeight
     } catch (e) {
       this.statusBarHeight = 20
-      this.headerHeight = 64
+      this.headerHeight = 112
       this.scrollHeight = 0
     }
     this.loadUserInfo()
@@ -168,6 +169,12 @@ export default {
       if (userInfo && userInfo.avatar) {
         this.userAvatar = userInfo.avatar
       }
+      if (userInfo && userInfo.nickname) {
+        this.userName = userInfo.nickname
+      }
+    },
+    onBellTap() {
+      uni.showToast({ title: '通知未实现', icon: 'none' })
     },
 
     // 加载动态列表
