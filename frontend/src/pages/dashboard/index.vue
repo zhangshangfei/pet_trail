@@ -163,6 +163,54 @@
             <text class="vaccine-empty-text">暂无疫苗提醒</text>
           </view>
         </view>
+
+        <!-- 驱虫提醒（对齐 pages/test/health 布局） -->
+        <view class="dash-section">
+          <view class="section-header">
+            <text class="section-title">💊 驱虫提醒</text>
+          </view>
+
+          <view v-if="parasiteCards.length" class="vaccine-list">
+            <view
+              v-for="item in parasiteCards"
+              :key="item.id"
+              class="dash-card vaccine-card"
+              :class="{ urgent: item.isUrgent }"
+            >
+              <view class="vaccine-header">
+                <view class="vaccine-info">
+                  <text class="vaccine-name">{{ item.name }}</text>
+                  <text class="vaccine-date">计划日期: {{ item.date }}</text>
+                </view>
+                <view class="vaccine-countdown">
+                  <text class="countdown-number">{{ item.daysLeft }}</text>
+                  <text class="countdown-unit">天</text>
+                </view>
+              </view>
+
+              <view class="vaccine-progress">
+                <view class="progress-bar">
+                  <view class="progress-fill" :style="{ width: item.progressPercent + '%' }"></view>
+                </view>
+                <text class="progress-text">{{ item.progressPercent }}%</text>
+              </view>
+
+              <view class="vaccine-actions">
+                <button
+                  class="btn-vaccine"
+                  :class="{ completed: item.isCompleted }"
+                  :disabled="item.isCompleted"
+                  @tap="onMarkParasiteDone(item)"
+                >
+                  <text class="btn-text">{{ item.isCompleted ? "已完成" : "标记完成" }}</text>
+                </button>
+              </view>
+            </view>
+          </view>
+          <view v-else class="dash-card vaccine-empty">
+            <text class="vaccine-empty-text">暂无驱虫提醒</text>
+          </view>
+        </view>
       </view>
     </scroll-view>
 
@@ -211,7 +259,8 @@ export default {
         delta: "--",
         deltaNum: 0
       },
-      vaccineReminders: []
+      vaccineReminders: [],
+      parasiteReminders: []
     };
   },
   computed: {
@@ -300,6 +349,28 @@ export default {
           isUrgent: !done && rawDays <= 7
         };
       });
+    },
+    parasiteCards() {
+      const petId = this.selectedPet && this.selectedPet.id;
+      if (!petId || !Array.isArray(this.parasiteReminders)) return [];
+      const now = new Date();
+      const typeMap = { 1: "体内驱虫", 2: "体外驱虫", 3: "内外同驱" };
+      return this.parasiteReminders.map((r) => {
+        const next = r.nextDate ? new Date(r.nextDate) : null;
+        const rawDays = next && !Number.isNaN(next.getTime())
+          ? Math.ceil((next - now) / (86400000))
+          : 0;
+        const done = Number(r.status) === 1;
+        return {
+          id: r.id,
+          name: typeMap[r.type] || "驱虫",
+          date: this.formatDateYMD(r.nextDate),
+          daysLeft: Math.max(0, rawDays),
+          progressPercent: done ? 100 : 0,
+          isCompleted: done,
+          isUrgent: !done && rawDays <= 7
+        };
+      });
     }
   },
   onShow() {
@@ -377,6 +448,7 @@ export default {
       this.weightSeriesFilled = [];
       this.weightStats = { current: "--", avg: "--", delta: "--", deltaNum: 0 };
       this.vaccineReminders = [];
+      this.parasiteReminders = [];
     },
     async loadDashboardData() {
       if (!this.selectedPet || !this.selectedPet.id) {
@@ -386,15 +458,22 @@ export default {
       const petId = this.selectedPet.id;
 
       try {
-        const [weightRes, vaccineRes] = await Promise.all([
+        const [weightRes, vaccineRes, parasiteRes] = await Promise.all([
           uni.$request.get(`/api/pets/${petId}/weight-records`),
-          uni.$request.get(`/api/pets/${petId}/vaccine-reminders`)
+          uni.$request.get(`/api/pets/${petId}/vaccine-reminders`),
+          uni.$request.get(`/api/pets/${petId}/parasite-reminders`)
         ]);
 
         if (vaccineRes && vaccineRes.success && Array.isArray(vaccineRes.data)) {
           this.vaccineReminders = vaccineRes.data;
         } else {
           this.vaccineReminders = [];
+        }
+
+        if (parasiteRes && parasiteRes.success && Array.isArray(parasiteRes.data)) {
+          this.parasiteReminders = parasiteRes.data;
+        } else {
+          this.parasiteReminders = [];
         }
 
         if (!weightRes || !weightRes.success || !Array.isArray(weightRes.data)) {
@@ -475,19 +554,59 @@ export default {
     },
     async onMarkVaccineDone(item) {
       if (!item || item.isCompleted || !this.selectedPet) return;
-      try {
-        const res = await uni.$request.put(
-          `/api/pets/${this.selectedPet.id}/vaccine-reminders/${item.id}/status`,
-          { status: 1 }
-        );
-        if (res.success) {
-          uni.showToast({ title: "已标记完成", icon: "success" });
-          this.loadDashboardData();
+      
+      // 二次确认弹窗
+      uni.showModal({
+        title: "确认完成",
+        content: `确定要将"${item.name}"标记为已完成吗？`,
+        confirmText: "确定",
+        cancelText: "取消",
+        success: async (res) => {
+          if (res.confirm) {
+            try {
+              const result = await uni.$request.put(
+                `/api/pets/${this.selectedPet.id}/vaccine-reminders/${item.id}/status`,
+                { status: 1 }
+              );
+              if (result.success) {
+                uni.showToast({ title: "已标记完成", icon: "success" });
+                this.loadDashboardData();
+              }
+            } catch (e) {
+              console.error("更新疫苗状态失败:", e);
+              uni.showToast({ title: "操作失败", icon: "none" });
+            }
+          }
         }
-      } catch (e) {
-        console.error("更新疫苗状态失败:", e);
-        uni.showToast({ title: "操作失败", icon: "none" });
-      }
+      });
+    },
+    async onMarkParasiteDone(item) {
+      if (!item || item.isCompleted || !this.selectedPet) return;
+      
+      // 二次确认弹窗
+      uni.showModal({
+        title: "确认完成",
+        content: `确定要将"${item.name}"标记为已完成吗？`,
+        confirmText: "确定",
+        cancelText: "取消",
+        success: async (res) => {
+          if (res.confirm) {
+            try {
+              const result = await uni.$request.put(
+                `/api/pets/${this.selectedPet.id}/parasite-reminders/${item.id}/status`,
+                { status: 1 }
+              );
+              if (result.success) {
+                uni.showToast({ title: "已标记完成", icon: "success" });
+                this.loadDashboardData();
+              }
+            } catch (e) {
+              console.error("更新驱虫状态失败:", e);
+              uni.showToast({ title: "操作失败", icon: "none" });
+            }
+          }
+        }
+      });
     },
     selectPet(pet) {
       this.selectedPet = pet;

@@ -574,15 +574,7 @@ export default {
           nextDate: this.vaccineForm.date,
           note: this.vaccineForm.remark || null
         });
-        if (res && res.success && res.data && res.data.id) {
-          try {
-            await uni.$request.put(
-              `/api/pets/${this.currentPet.id}/vaccine-reminders/${res.data.id}/status`,
-              { status: 1 }
-            );
-          } catch (e2) {
-            console.error("标记疫苗完成失败:", e2);
-          }
+        if (res && res.success) {
           uni.showToast({ title: "保存成功", icon: "success" });
           this.vaccineForm.typeIndex = 0;
           this.vaccineForm.hospital = "";
@@ -612,15 +604,7 @@ export default {
           nextDate: this.dewormForm.date,
           note: this.dewormForm.remark || null
         });
-        if (res && res.success && res.data && res.data.id) {
-          try {
-            await uni.$request.put(
-              `/api/pets/${this.currentPet.id}/parasite-reminders/${res.data.id}/status`,
-              { status: 1 }
-            );
-          } catch (e2) {
-            console.error("标记驱虫完成失败:", e2);
-          }
+        if (res && res.success) {
           uni.showToast({ title: "保存成功", icon: "success" });
           this.dewormForm.typeIndex = 0;
           this.dewormForm.medicine = "";
