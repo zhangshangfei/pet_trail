@@ -62,10 +62,10 @@ public class CheckinService {
         // redisTemplate.expire(redisKey, 2, TimeUnit.DAYS);
 
         // 2. 检查是否已打卡
-        log.info("检查是否已打卡: userId={}, itemId={}, date={}", userId, itemId, todayStr);
-        CheckinRecord existing = checkinRecordMapper.selectByUserIdItemIdAndDate(userId, itemId, today);
+        log.info("检查是否已打卡: userId={}, petId={}, itemId={}, date={}", userId, petId, itemId, todayStr);
+        CheckinRecord existing = checkinRecordMapper.selectByUserIdItemIdAndDate(userId, petId, itemId, today);
         if (existing != null) {
-            log.warn("重复打卡: userId={}, itemId={}, date={}, existingId={}", userId, itemId, todayStr, existing.getId());
+            log.warn("重复打卡: userId={}, petId={}, itemId={}, date={}, existingId={}", userId, petId, itemId, todayStr, existing.getId());
             throw new BusinessException("今日已完成该打卡项");
         }
 

@@ -34,6 +34,7 @@
     <select id="selectByUserIdItemIdAndDate" resultMap="BaseResultMap">
         SELECT * FROM checkin_records
         WHERE user_id = #{userId}
+        AND pet_id = #{petId}
         AND item_id = #{itemId}
         AND record_date = #{date}
         LIMIT 1

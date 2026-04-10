@@ -31,6 +31,7 @@ public interface CheckinRecordMapper extends BaseMapper<CheckinRecord> {
      * 检查用户某日是否已打卡
      */
     CheckinRecord selectByUserIdItemIdAndDate(@Param("userId") Long userId,
+                                               @Param("petId") Long petId,
                                                @Param("itemId") Long itemId,
                                                @Param("date") LocalDate date);
 }
