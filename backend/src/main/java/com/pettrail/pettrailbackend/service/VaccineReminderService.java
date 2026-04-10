@@ -70,6 +70,27 @@ public class VaccineReminderService extends ServiceImpl<VaccineReminderMapper, V
     }
 
     /**
+     * 更新提醒信息（通用编辑接口）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public VaccineReminder updateReminder(Long reminderId, String vaccineName, LocalDate nextDate) {
+        VaccineReminder reminder = this.getById(reminderId);
+        if (reminder == null) {
+            throw new RuntimeException("提醒不存在");
+        }
+        if (vaccineName != null) {
+            reminder.setVaccineName(vaccineName);
+        }
+        if (nextDate != null) {
+            reminder.setNextDate(nextDate);
+        }
+        reminder.setUpdatedAt(LocalDateTime.now());
+        this.updateById(reminder);
+        log.info("更新提醒信息成功: reminderId={}, vaccineName={}, nextDate={}", reminderId, vaccineName, nextDate);
+        return reminder;
+    }
+
+    /**
      * 更新提醒状态
      */
     @Transactional(rollbackFor = Exception.class)

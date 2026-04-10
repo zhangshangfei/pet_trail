@@ -372,20 +372,23 @@ export default {
   display: inline-flex;
   align-items: center;
   margin-bottom: 10rpx;
-  padding: 8rpx 12rpx 8rpx 0;
+  padding: 12rpx 24rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999rpx;
+  backdrop-filter: blur(10px);
 }
 
 .header-back-icon {
-  font-size: 42rpx;
+  font-size: 36rpx;
   line-height: 32rpx;
   color: #ffffff;
-  margin-right: 6rpx;
+  margin-right: 4rpx;
 }
 
 .header-back-text {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.95);
-  font-weight: 700;
+  font-size: 26rpx;
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .pet-picker {
@@ -653,7 +656,8 @@ export default {
   flex: 1;
   padding: 24rpx;
   font-size: 28rpx;
-  border-radius: 12rpx;
+  border-radius: 999rpx;
+  font-weight: 600;
 }
 
 .modal-btn.cancel {
@@ -662,7 +666,7 @@ export default {
 }
 
 .modal-btn.confirm {
-  background-color: #667eea;
+  background: linear-gradient(180deg, var(--pt-primary-2) 0%, var(--pt-primary) 100%);
   color: #ffffff;
 }
 </style>

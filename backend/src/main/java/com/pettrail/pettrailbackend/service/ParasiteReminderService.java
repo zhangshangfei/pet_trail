@@ -70,6 +70,27 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
     }
 
     /**
+     * 更新提醒信息（通用编辑接口）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ParasiteReminder updateReminder(Long reminderId, Integer type, LocalDate nextDate) {
+        ParasiteReminder reminder = this.getById(reminderId);
+        if (reminder == null) {
+            throw new RuntimeException("提醒不存在");
+        }
+        if (type != null) {
+            reminder.setType(type);
+        }
+        if (nextDate != null) {
+            reminder.setNextDate(nextDate);
+        }
+        reminder.setUpdatedAt(LocalDateTime.now());
+        this.updateById(reminder);
+        log.info("更新提醒信息成功: reminderId={}, type={}, nextDate={}", reminderId, type, nextDate);
+        return reminder;
+    }
+
+    /**
      * 更新提醒状态
      */
     @Transactional(rollbackFor = Exception.class)

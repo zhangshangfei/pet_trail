@@ -1,6 +1,5 @@
 <template>
   <view class="health-page">
-    <!-- Top nav (keep this) -->
     <view class="health-nav">
       <view class="health-statusbar" :style="{ height: statusBarHeight + 'px' }"></view>
       <view class="health-nav-inner">
@@ -18,7 +17,7 @@
 
     <scroll-view scroll-y class="health-scroll" :style="{ paddingTop: headerHeight + 'px' }">
       <view class="health-content">
-        <!-- Pet selector -->
+        <!-- 宠物切换（保留原逻辑） -->
         <view class="pet-selector">
           <view class="pet-selector-card" @touchstart.stop="togglePetSelector">
             <view class="pet-selector-left">
@@ -35,7 +34,7 @@
             <text class="pet-selector-arrow">{{ petSelectorOpen ? "⌃" : "⌄" }}</text>
           </view>
 
-          <view v-show="petSelectorOpen" class="pet-selector-pop" @touchstart.stop="closePetSelector">
+          <view v-show="petSelectorOpen" class="pet-selector-pop" @touchstart.stop>
             <view class="pet-selector-search">
               <input class="pet-selector-input" v-model="searchQuery" placeholder="搜索宠物..." />
             </view>
@@ -61,7 +60,7 @@
           </view>
         </view>
 
-        <!-- Core info row -->
+        <!-- 核心信息（保留原展示） -->
         <scroll-view scroll-x class="core-row" show-scrollbar="false">
           <view class="core-row-inner">
             <view class="core-card">
@@ -85,148 +84,209 @@
           </view>
         </scroll-view>
 
-        <!-- Tabs -->
-        <view class="seg">
-          <view
-            v-for="tab in tabs"
-            :key="tab.key"
-            class="seg-item"
-            :class="{ active: activeTab === tab.key }"
-            @tap="activeTab = tab.key"
-          >
-            <text>{{ tab.label }}</text>
-          </view>
-        </view>
-
-        <!-- Panels -->
-        <view class="panel" v-if="activeTab === 'steps'">
-          <text class="panel-label">今日步数</text>
-          <view class="panel-input-row">
-            <input class="panel-input-big" type="number" v-model="stepData.value" placeholder="请输入步数" />
-            <text class="panel-unit">步</text>
-          </view>
-
-          <text class="panel-label">距离</text>
-          <view class="panel-input-row panel-input-row-sm">
-            <input class="panel-input" type="digit" v-model="stepData.distance" placeholder="请输入距离(km)" />
-            <text class="panel-unit">km</text>
-          </view>
-
-          <text class="panel-label">记录时间</text>
-          <view class="dt-row">
-            <picker mode="date" :value="stepData.date" @change="(e) => (stepData.date = e.detail.value)">
-              <view class="dt-pill">{{ stepData.date }}</view>
-            </picker>
-            <picker mode="time" :value="stepData.time" @change="(e) => (stepData.time = e.detail.value)">
-              <view class="dt-pill">{{ stepData.time }}</view>
-            </picker>
-          </view>
-
-          <view class="ghost-btn" @tap="syncDevice">
-            <text class="ghost-icon">⟳</text>
-            <text>同步运动设备</text>
-          </view>
-        </view>
-
-        <view class="panel" v-if="activeTab === 'water'">
-          <text class="section-title">快速选择</text>
-          <view class="quick-row">
+        <!-- Tab：对齐 pages/test/add -->
+        <view class="tab-container">
+          <view class="tab-wrapper">
             <view
-              v-for="opt in waterOptions"
-              :key="opt.type"
-              class="quick-card"
-              @tap="selectWaterAmount(opt)"
+              v-for="(tab, index) in entryTabs"
+              :key="tab.type"
+              class="tab-item"
+              :class="{ active: currentTab === index }"
+              @tap="onTabChange(index)"
             >
-              <view class="quick-icon" :style="{ background: opt.bg }">
-                <text>{{ opt.emoji }}</text>
-              </view>
-              <text class="quick-name">{{ opt.name }}</text>
-              <text class="quick-amount">{{ opt.amount }}</text>
+              <text class="tab-emoji">{{ tab.emoji }}</text>
+              <text class="tab-text">{{ tab.name }}</text>
             </view>
-          </view>
-
-          <text class="section-title section-title-gap">自定义水量</text>
-          <view class="input-box">
-            <input
-              class="input-box-value"
-              type="number"
-              v-model="waterData.value"
-              placeholder="0"
-            />
-            <view class="input-box-unit" @tap="toggleWaterUnit">
-              <text>{{ waterData.unit }}</text>
-              <text class="unit-chevron">⌄</text>
-            </view>
-          </view>
-
-          <text class="section-title section-title-gap">记录时间</text>
-          <view class="time-box">
-            <picker mode="date" :value="waterData.date" @change="(e) => (waterData.date = e.detail.value)">
-              <view class="time-pill">{{ waterData.date }}</view>
-            </picker>
-            <picker mode="time" :value="waterData.time" @change="(e) => (waterData.time = e.detail.value)">
-              <view class="time-pill">{{ waterData.time }}</view>
-            </picker>
-            <text class="time-icon">📅</text>
           </view>
         </view>
 
-        <view class="panel" v-if="activeTab === 'weight'">
-          <text class="panel-label">当前体重</text>
-          <view class="panel-input-row">
-            <input class="panel-input-big" type="digit" v-model="weightData.value" placeholder="0.0" />
-            <text class="panel-unit">kg</text>
-          </view>
+        <!-- 体重 -->
+        <view v-show="currentTab === 0" class="form-section">
+          <view class="form-card">
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">📅</text>
+                <text class="label-text">记录日期</text>
+              </view>
+              <picker mode="date" :value="weightForm.date" @change="onWeightDateChange">
+                <view class="picker-value">
+                  <text class="value-text">{{ weightForm.date }}</text>
+                  <text class="picker-arrow">▼</text>
+                </view>
+              </picker>
+            </view>
 
-          <text class="panel-label">记录时间</text>
-          <view class="dt-row">
-            <picker mode="date" :value="weightData.date" @change="(e) => (weightData.date = e.detail.value)">
-              <view class="dt-pill">{{ weightData.date }}</view>
-            </picker>
-            <picker mode="time" :value="weightData.time" @change="(e) => (weightData.time = e.detail.value)">
-              <view class="dt-pill">{{ weightData.time }}</view>
-            </picker>
-          </view>
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">⚖️</text>
+                <text class="label-text">体重 (kg)</text>
+              </view>
+              <input
+                class="form-input"
+                type="digit"
+                v-model="weightForm.weight"
+                placeholder="请输入体重"
+              />
+            </view>
 
-          <text class="panel-label">近期趋势</text>
-          <view class="trend-row">
-            <view v-for="p in weightHistory" :key="p.date" class="trend-item">
-              <view class="trend-bar" :style="{ height: p.h + 'rpx', background: p.color }"></view>
-              <text class="trend-date">{{ p.date }}</text>
+            <view v-if="lastWeightRecord" class="form-group">
+              <view class="last-record">
+                <text class="last-label">上次记录</text>
+                <view class="last-details">
+                  <text class="last-value">{{ lastWeightRecord.weight }} kg</text>
+                  <text class="last-date">({{ lastWeightRecord.date }})</text>
+                  <text
+                    v-if="weightInputDelta !== null"
+                    class="weight-change"
+                    :class="weightInputDelta >= 0 ? 'up' : 'down'"
+                  >
+                    {{ weightInputDelta >= 0 ? "+" : "" }}{{ weightInputDelta }} kg {{ weightInputDelta >= 0 ? "↑" : "↓" }}
+                  </text>
+                </view>
+              </view>
+            </view>
+
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">📝</text>
+                <text class="label-text">备注 (可选)</text>
+              </view>
+              <textarea
+                class="form-textarea"
+                v-model="weightForm.remark"
+                placeholder="记录饮食、运动等情况..."
+                maxlength="200"
+              />
+            </view>
+          </view>
+        </view>
+
+        <!-- 疫苗 -->
+        <view v-show="currentTab === 1" class="form-section">
+          <view class="form-card">
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">💉</text>
+                <text class="label-text">疫苗名称</text>
+              </view>
+              <picker mode="selector" :range="vaccineTypes" :value="vaccineForm.typeIndex" @change="onVaccineTypeChange">
+                <view class="picker-value selected">
+                  <text class="value-text">{{ vaccineTypes[vaccineForm.typeIndex] }}</text>
+                  <text class="picker-arrow">▼</text>
+                </view>
+              </picker>
+            </view>
+
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">📅</text>
+                <text class="label-text">接种日期</text>
+              </view>
+              <picker mode="date" :value="vaccineForm.date" @change="onVaccineDateChange">
+                <view class="picker-value">
+                  <text class="value-text">{{ vaccineForm.date }}</text>
+                  <text class="picker-arrow">▼</text>
+                </view>
+              </picker>
+            </view>
+
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">🏥</text>
+                <text class="label-text">接种医院 (可选)</text>
+              </view>
+              <input class="form-input" type="text" v-model="vaccineForm.hospital" placeholder="请输入医院名称" />
+            </view>
+
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">📝</text>
+                <text class="label-text">备注 (可选)</text>
+              </view>
+              <textarea
+                class="form-textarea"
+                v-model="vaccineForm.remark"
+                placeholder="记录疫苗批次、反应情况等..."
+                maxlength="200"
+              />
+            </view>
+          </view>
+        </view>
+
+        <!-- 驱虫 -->
+        <view v-show="currentTab === 2" class="form-section">
+          <view class="form-card">
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">💊</text>
+                <text class="label-text">驱虫类型</text>
+              </view>
+              <picker mode="selector" :range="dewormTypes" :value="dewormForm.typeIndex" @change="onDewormTypeChange">
+                <view class="picker-value selected">
+                  <text class="value-text">{{ dewormTypes[dewormForm.typeIndex] }}</text>
+                  <text class="picker-arrow">▼</text>
+                </view>
+              </picker>
+            </view>
+
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">📅</text>
+                <text class="label-text">执行日期</text>
+              </view>
+              <picker mode="date" :value="dewormForm.date" @change="onDewormDateChange">
+                <view class="picker-value">
+                  <text class="value-text">{{ dewormForm.date }}</text>
+                  <text class="picker-arrow">▼</text>
+                </view>
+              </picker>
+            </view>
+
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">💊</text>
+                <text class="label-text">药品名称 (可选)</text>
+              </view>
+              <input class="form-input" type="text" v-model="dewormForm.medicine" placeholder="请输入药品名称" />
+            </view>
+
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">📝</text>
+                <text class="label-text">备注 (可选)</text>
+              </view>
+              <textarea
+                class="form-textarea"
+                v-model="dewormForm.remark"
+                placeholder="记录用药反应、下次计划时间等..."
+                maxlength="200"
+              />
             </view>
           </view>
         </view>
       </view>
     </scroll-view>
 
-    <!-- Bottom CTA -->
-    <view class="cta">
-      <view class="cta-row">
-        <view class="cta-btn cta-back" @tap="goBackToBoard">
-          <text class="cta-text cta-text-dark">返回看板</text>
-        </view>
-        <view class="cta-btn cta-main" :class="ctaClass" @tap="saveRecord">
-          <text class="cta-text">{{ ctaText }}</text>
-        </view>
+    <view class="cta-footer">
+      <view class="btn-row">
+        <button class="btn-back-board" hover-class="btn-back-board-hover" @tap="goBackToBoard">
+          <text class="btn-back-board-text">返回看板</text>
+        </button>
+        <button class="btn-submit" hover-class="btn-submit-hover" @tap="onSubmitCurrent">
+          <text class="btn-submit-text">{{ submitButtonText }}</text>
+        </button>
       </view>
     </view>
   </view>
 </template>
 
 <script>
-
 function todayStr() {
   const d = new Date();
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
-}
-function timeStr() {
-  const d = new Date();
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${hh}:${mm}`;
 }
 
 export default {
@@ -241,26 +301,36 @@ export default {
       currentPet: null,
       petSelectorOpen: false,
       searchQuery: "",
-      activeTab: "weight",
-      tabs: [
-        { key: "steps", label: "步数" },
-        { key: "water", label: "饮水量" },
-        { key: "weight", label: "体重" }
+      currentTab: 0,
+      entryTabs: [
+        { type: "weight", name: "体重", emoji: "⚖️" },
+        { type: "vaccine", name: "疫苗", emoji: "💉" },
+        { type: "deworm", name: "驱虫", emoji: "💊" }
       ],
-      stepData: { value: "", distance: "", date: todayStr(), time: timeStr() },
-      waterData: { value: "", unit: "ml", date: todayStr(), time: timeStr() },
-      weightData: { value: "", date: todayStr(), time: timeStr() },
-      waterOptions: [
-        { type: "bowl", name: "狗碗", amount: "200ml", emoji: "🥣", bg: "#dbeafe" },
-        { type: "bottle", name: "瓶子", amount: "500ml", emoji: "🧴", bg: "#dcfce7" },
-        { type: "cup", name: "杯子", amount: "150ml", emoji: "☕", bg: "#ffedd5" }
-      ],
-      weightHistory: []
+      weightForm: {
+        date: todayStr(),
+        weight: "",
+        remark: ""
+      },
+      lastWeightRecord: null,
+      vaccineTypes: ["狂犬疫苗", "猫三联", "犬五联", "犬八联", "猫瘟疫苗", "犬瘟热疫苗"],
+      vaccineForm: {
+        typeIndex: 0,
+        date: todayStr(),
+        hospital: "",
+        remark: ""
+      },
+      dewormTypes: ["体内驱虫", "体外驱虫", "内外同驱"],
+      dewormForm: {
+        typeIndex: 0,
+        date: todayStr(),
+        medicine: "",
+        remark: ""
+      }
     };
   },
   computed: {
     petAgeText() {
-      // 当前项目没 age 字段：用 birthday 推算；没有就 "-"
       const b = this.currentPet && this.currentPet.birthday;
       if (!b) return "-";
       const bd = new Date(b);
@@ -276,28 +346,29 @@ export default {
       return g === 1 ? "♂" : g === 2 ? "♀" : "❓";
     },
     petSpayedText() {
-      // 当前项目没 spayed 字段：先占位
       return "-";
     },
     petHealthScore() {
-      // 当前项目没 healthScore：先用固定值占位
       return 86;
     },
-    ctaText() {
-      if (this.activeTab === "steps") return "记录步数";
-      if (this.activeTab === "water") return "添加记录";
-      return "保存记录";
+    weightInputDelta() {
+      const w = parseFloat(this.weightForm.weight);
+      if (!this.lastWeightRecord || Number.isNaN(w)) return null;
+      const prev = parseFloat(this.lastWeightRecord.weight);
+      if (Number.isNaN(prev)) return null;
+      return Math.round((w - prev) * 100) / 100;
     },
-    ctaClass() {
-      if (this.activeTab === "steps") return "cta-blue";
-      if (this.activeTab === "water") return "cta-green";
-      return "cta-purple";
+    submitButtonText() {
+      if (this.currentTab === 0) return "保存体重记录 🐾";
+      if (this.currentTab === 1) return "保存疫苗记录 🐾";
+      return "保存驱虫记录 🐾";
     }
   },
   onShow() {
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: true });
     this.loadUserInfo();
+    this.loadPets();
   },
   onHide() {
     const tabBar = this.getTabBar && this.getTabBar();
@@ -311,122 +382,128 @@ export default {
     try {
       const sys = uni.getSystemInfoSync();
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
-      // 顶部导航高度 = 状态栏高度 + 导航栏内容高度 (约 50px: padding 16rpx*2 + 内容)
-      const headerHeight = this.statusBarHeight + 50;
-      this.headerHeight = headerHeight;
+      this.headerHeight = this.statusBarHeight + 50;
     } catch (e) {
       this.statusBarHeight = 20;
       this.headerHeight = 70;
     }
+    this.resetFormDates();
     this.loadPets();
     this.loadUserInfo();
   },
   methods: {
-    // 加载用户信息
+    formatDateYMD(d) {
+      if (!d) return "-";
+      const x = new Date(d);
+      if (Number.isNaN(x.getTime())) return "-";
+      return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
+    },
+    resetFormDates() {
+      const t = todayStr();
+      this.weightForm.date = t;
+      this.vaccineForm.date = t;
+      this.dewormForm.date = t;
+    },
+    onTabChange(index) {
+      this.currentTab = index;
+    },
+    onWeightDateChange(e) {
+      this.weightForm.date = e.detail.value;
+    },
+    onVaccineTypeChange(e) {
+      const v = parseInt(e.detail.value, 10);
+      this.vaccineForm.typeIndex = Number.isNaN(v) ? 0 : v;
+    },
+    onVaccineDateChange(e) {
+      this.vaccineForm.date = e.detail.value;
+    },
+    onDewormTypeChange(e) {
+      const v = parseInt(e.detail.value, 10);
+      this.dewormForm.typeIndex = Number.isNaN(v) ? 0 : v;
+    },
+    onDewormDateChange(e) {
+      this.dewormForm.date = e.detail.value;
+    },
     async loadUserInfo() {
-      // 先从本地缓存读取
-      const userInfo = uni.getStorageSync('userInfo');
-      const token = uni.getStorageSync('token');
+      const userInfo = uni.getStorageSync("userInfo");
+      const token = uni.getStorageSync("token");
 
       if (userInfo && userInfo.avatar) {
         this.userAvatar = userInfo.avatar;
-        this.userName = userInfo.nickname || '小萌宠主人';
+        this.userName = userInfo.nickname || "小萌宠主人";
       } else if (!token) {
-        // 没有 token 且没有缓存，使用默认值
         this.userAvatar = "https://ai-public.mastergo.com/ai/img_res/1774575365924a3K9mP2xQ7vN4rT8wY.jpg";
         this.userName = "小萌宠主人";
       }
 
-      // 如果有 token，从后端获取最新数据
       if (token) {
         try {
-          const res = await uni.$request.get('/api/users/profile');
+          const res = await uni.$request.get("/api/users/profile");
           if (res && res.success) {
             const userData = res.data;
             this.userAvatar = userData.avatar || this.userAvatar;
             this.userName = userData.nickname || this.userName;
-            // 更新缓存
-            uni.setStorageSync('userInfo', userData);
+            uni.setStorageSync("userInfo", userData);
           }
         } catch (e) {
-          console.error('获取用户信息失败:', e);
+          console.error("获取用户信息失败:", e);
         }
       }
     },
     async loadPets() {
       try {
-        const res = await uni.$request.get('/api/pets');
+        const res = await uni.$request.get("/api/pets");
         if (res && res.success && Array.isArray(res.data)) {
           this.pets = res.data;
-          this.currentPet = this.currentPet || this.pets[0] || null;
-          if (this.currentPet) {
-            this.loadWeightTrend();
+          if (!this.pets.length) {
+            this.currentPet = null;
+            this.lastWeightRecord = null;
+            return;
           }
+          const still = this.currentPet && this.pets.find((p) => p.id === this.currentPet.id);
+          this.currentPet = still || this.pets[0];
+          await this.loadLastWeightRecord();
         } else {
           this.pets = [];
-          if (this.pets.length === 0) {
-            this.currentPet = null;
-          }
+          this.currentPet = null;
+          this.lastWeightRecord = null;
         }
       } catch (e) {
-        console.error('加载宠物列表失败:', e);
+        console.error("加载宠物列表失败:", e);
         this.pets = [];
-        if (this.pets.length === 0) {
-          this.currentPet = null;
-        }
+        this.currentPet = null;
+        this.lastWeightRecord = null;
       }
     },
-    // 加载体重趋势
-    async loadWeightTrend() {
-      if (!this.currentPet || !this.currentPet.id) return;
-      
+    async loadLastWeightRecord() {
+      if (!this.currentPet || !this.currentPet.id) {
+        this.lastWeightRecord = null;
+        return;
+      }
       try {
         const res = await uni.$request.get(`/api/pets/${this.currentPet.id}/weight-records`);
-        if (res && res.success && Array.isArray(res.data)) {
-          const records = res.data.slice(0, 7).reverse(); // 取最近7条记录
-          
-          // 找出最大体重用于计算高度
-          const weights = records.map(r => r.weight);
-          const maxWeight = Math.max(...weights, 1);
-          
-          this.weightHistory = records.map((record, index) => {
-            const date = new Date(record.recordDate);
-            const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-            const height = Math.max(20, (record.weight / maxWeight) * 80); // 高度 20-80
-            
-            // 根据体重变化设置颜色
-            let color = '#10b981'; // 默认绿色
-            if (index > 0) {
-              const prev = records[index - 1];
-              if (record.weight > prev.weight) {
-                color = '#ef4444'; // 增加 - 红色
-              } else if (record.weight < prev.weight) {
-                color = '#3b82f6'; // 减少 - 蓝色
-              }
-            }
-            
-            return {
-              date: dateStr,
-              h: height,
-              color: color
-            };
-          });
+        if (res && res.success && Array.isArray(res.data) && res.data.length) {
+          const r = res.data[0];
+          this.lastWeightRecord = {
+            weight: r.weight,
+            date: this.formatDateYMD(r.recordDate)
+          };
+        } else {
+          this.lastWeightRecord = null;
         }
       } catch (e) {
-        console.error('加载体重趋势失败:', e);
+        console.error("加载上次体重失败:", e);
+        this.lastWeightRecord = null;
       }
     },
     togglePetSelector() {
       this.petSelectorOpen = !this.petSelectorOpen;
     },
-    closePetSelector() {
-      this.petSelectorOpen = false;
-    },
     selectPet(pet) {
       this.currentPet = pet;
       this.petSelectorOpen = false;
       this.searchQuery = "";
-      this.loadWeightTrend();
+      this.loadLastWeightRecord();
     },
     onMore() {
       uni.showToast({ title: "未实现", icon: "none" });
@@ -437,348 +514,571 @@ export default {
     onSettings() {
       uni.showToast({ title: "未实现", icon: "none" });
     },
-    syncDevice() {
-      uni.showToast({ title: "未实现", icon: "none" });
+    onSubmitCurrent() {
+      if (this.currentTab === 0) return this.submitWeight();
+      if (this.currentTab === 1) return this.submitVaccine();
+      return this.submitDeworm();
     },
-    selectWaterAmount(opt) {
-      if (!opt) return;
-      const m = String(opt.amount || "");
-      const value = m.replace(/[^0-9.]/g, "");
-      this.waterData.value = value;
-      this.waterData.unit = m.toLowerCase().includes("l") && !m.toLowerCase().includes("ml") ? "L" : "ml";
-    },
-    toggleWaterUnit() {
-      this.waterData.unit = this.waterData.unit === "ml" ? "L" : "ml";
-    },
-    async saveRecord() {
+    async submitWeight() {
       if (!this.currentPet || !this.currentPet.id) {
         uni.showToast({ title: "请先选择宠物", icon: "none" });
         return;
       }
-      if (this.activeTab === "weight") {
-        if (!this.weightData.value) {
-          uni.showToast({ title: "请输入体重", icon: "none" });
-          return;
-        }
-        try {
-          const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/weight-records`, {
-            weight: this.weightData.value,
-            recordDate: `${this.weightData.date}`
-          });
-          if (res && res.success) {
-            uni.showToast({ title: "保存成功", icon: "success" });
-            this.weightData.value = "";
-            this.loadWeightTrend(); // 重新加载体重趋势
-          } else {
-            uni.showToast({ title: (res && res.message) || "保存失败", icon: "none" });
-          }
-        } catch {
-          uni.showToast({ title: "网络错误", icon: "none" });
-        }
+      if (!this.weightForm.weight) {
+        uni.showToast({ title: "请输入体重", icon: "none" });
         return;
       }
-      // steps/water: 后端未接入，先提示
-      uni.showToast({ title: "已记录（占位）", icon: "none" });
+      const w = parseFloat(this.weightForm.weight);
+      if (Number.isNaN(w) || w <= 0) {
+        uni.showToast({ title: "请输入有效体重", icon: "none" });
+        return;
+      }
+      try {
+        const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/weight-records`, {
+          weight: this.weightForm.weight,
+          recordDate: this.weightForm.date
+        });
+        if (res && res.success) {
+          uni.showToast({ title: "保存成功", icon: "success" });
+          this.weightForm.weight = "";
+          this.weightForm.remark = "";
+          await this.loadLastWeightRecord();
+        } else {
+          uni.showToast({ title: (res && res.message) || "保存失败", icon: "none" });
+        }
+      } catch (e) {
+        uni.showToast({ title: "网络错误", icon: "none" });
+      }
+    },
+    async submitVaccine() {
+      if (!this.currentPet || !this.currentPet.id) {
+        uni.showToast({ title: "请先选择宠物", icon: "none" });
+        return;
+      }
+      const vaccineName = this.vaccineTypes[this.vaccineForm.typeIndex];
+      try {
+        const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/vaccine-reminders`, {
+          vaccineName,
+          nextDate: this.vaccineForm.date
+        });
+        if (res && res.success && res.data && res.data.id) {
+          try {
+            await uni.$request.put(
+              `/api/pets/${this.currentPet.id}/vaccine-reminders/${res.data.id}/status`,
+              { status: 1 }
+            );
+          } catch (e2) {
+            console.error("标记疫苗完成失败:", e2);
+          }
+          uni.showToast({ title: "保存成功", icon: "success" });
+          this.vaccineForm.typeIndex = 0;
+          this.vaccineForm.hospital = "";
+          this.vaccineForm.remark = "";
+          this.vaccineForm.date = todayStr();
+        } else {
+          uni.showToast({ title: (res && res.message) || "保存失败", icon: "none" });
+        }
+      } catch (e) {
+        uni.showToast({ title: "网络错误", icon: "none" });
+      }
+    },
+    dewormTypeToApiType(index) {
+      if (index === 0) return 1;
+      if (index === 1) return 2;
+      return 3;
+    },
+    async submitDeworm() {
+      if (!this.currentPet || !this.currentPet.id) {
+        uni.showToast({ title: "请先选择宠物", icon: "none" });
+        return;
+      }
+      const type = this.dewormTypeToApiType(this.dewormForm.typeIndex);
+      try {
+        const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/parasite-reminders`, {
+          type,
+          nextDate: this.dewormForm.date
+        });
+        if (res && res.success && res.data && res.data.id) {
+          try {
+            await uni.$request.put(
+              `/api/pets/${this.currentPet.id}/parasite-reminders/${res.data.id}/status`,
+              { status: 1 }
+            );
+          } catch (e2) {
+            console.error("标记驱虫完成失败:", e2);
+          }
+          uni.showToast({ title: "保存成功", icon: "success" });
+          this.dewormForm.typeIndex = 0;
+          this.dewormForm.medicine = "";
+          this.dewormForm.remark = "";
+          this.dewormForm.date = todayStr();
+        } else {
+          uni.showToast({ title: (res && res.message) || "保存失败", icon: "none" });
+        }
+      } catch (e) {
+        uni.showToast({ title: "网络错误", icon: "none" });
+      }
     }
   }
 };
 </script>
 
 <style lang="scss" scoped>
-.health-page { min-height: 100vh; background: var(--pt-bg); }
-.health-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 30;
-  background: rgba(255,255,255,0.96);
-  box-shadow: 0 10rpx 30rpx rgba(17,24,39,0.06);
+.health-page {
+  min-height: 100vh;
+  background: var(--pt-bg, #f7f3ef);
 }
-.health-statusbar { width: 100%; }
+
+.health-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10rpx 30rpx rgba(17, 24, 39, 0.06);
+}
+.health-statusbar {
+  width: 100%;
+}
 .health-nav-inner {
   padding: 16rpx 20rpx 14rpx;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-.health-user { display:flex; align-items:center; gap: 14rpx; }
-.health-user-avatar { width: 56rpx; height: 56rpx; border-radius: 28rpx; background:#e5e7eb; }
-.health-user-name { font-size: 28rpx; font-weight: 800; color:#111827; }
-.health-nav-actions { display:flex; gap: 18rpx; }
-.health-nav-icon { font-size: 34rpx; color:#6b7280; padding: 6rpx 10rpx; }
+.health-user {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+.health-user-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 28rpx;
+  background: #e5e7eb;
+}
+.health-user-name {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #111827;
+}
+.health-nav-actions {
+  display: flex;
+  gap: 18rpx;
+}
+.health-nav-icon {
+  font-size: 34rpx;
+  color: #6b7280;
+  padding: 6rpx 10rpx;
+}
 
 .health-scroll {
   height: 100vh;
-  /* padding-top 改为动态设置 */
+  box-sizing: border-box;
 }
 .health-content {
-  padding: 20rpx 20rpx 180rpx;
+  padding: 20rpx 24rpx calc(200rpx + env(safe-area-inset-bottom));
 }
 
-.pet-selector { position: relative; margin-bottom: 24rpx; }
+.pet-selector {
+  position: relative;
+  margin-bottom: 24rpx;
+}
 .pet-selector-card {
-  background: rgba(255,255,255,0.98);
+  background: rgba(255, 255, 255, 0.98);
   border-radius: 22rpx;
   box-shadow: var(--pt-shadow-soft);
   padding: 22rpx 20rpx;
-  display:flex; align-items:center; justify-content:space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-.pet-selector-left { display:flex; align-items:center; gap: 16rpx; }
-.pet-selector-avatar { width: 72rpx; height: 72rpx; border-radius: 36rpx; background:#e5e7eb; }
-.pet-selector-meta { display:flex; flex-direction:column; }
-.pet-selector-name { font-size: 30rpx; font-weight: 900; color:#111827; }
-.pet-selector-breed { margin-top: 6rpx; font-size: 22rpx; color:#6b7280; }
-.pet-selector-arrow { font-size: 30rpx; color:#6b7280; }
+.pet-selector-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.pet-selector-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 36rpx;
+  background: #e5e7eb;
+}
+.pet-selector-meta {
+  display: flex;
+  flex-direction: column;
+}
+.pet-selector-name {
+  font-size: 30rpx;
+  font-weight: 900;
+  color: #111827;
+}
+.pet-selector-breed {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #6b7280;
+}
+.pet-selector-arrow {
+  font-size: 30rpx;
+  color: #6b7280;
+}
 
 .pet-selector-pop {
-  position: absolute; top: 100%; left: 0; right: 0;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
   margin-top: 12rpx;
   background: #fff;
   border-radius: 22rpx;
-  box-shadow: 0 18rpx 44rpx rgba(0,0,0,0.12);
+  box-shadow: 0 18rpx 44rpx rgba(0, 0, 0, 0.12);
   z-index: 50;
   overflow: hidden;
 }
-.pet-selector-search { padding: 16rpx; border-bottom: 1rpx solid rgba(17,24,39,0.08); }
+.pet-selector-search {
+  padding: 16rpx;
+  border-bottom: 1rpx solid rgba(17, 24, 39, 0.08);
+}
 .pet-selector-input {
   background: #f9fafb;
   border-radius: 16rpx;
   padding: 18rpx 16rpx;
   font-size: 26rpx;
 }
-.pet-selector-list { max-height: 360rpx; }
-.pet-selector-item { display:flex; align-items:center; gap: 14rpx; padding: 16rpx; }
-.pet-selector-item-avatar { width: 56rpx; height: 56rpx; border-radius: 28rpx; background:#e5e7eb; }
-.pet-selector-item-meta { display:flex; flex-direction:column; }
-.pet-selector-item-name { font-size: 28rpx; font-weight: 800; color:#111827; }
-.pet-selector-item-breed { margin-top: 4rpx; font-size: 22rpx; color:#6b7280; }
+.pet-selector-list {
+  max-height: 360rpx;
+}
+.pet-selector-item {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  padding: 16rpx;
+}
+.pet-selector-item-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 28rpx;
+  background: #e5e7eb;
+}
+.pet-selector-item-meta {
+  display: flex;
+  flex-direction: column;
+}
+.pet-selector-item-name {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #111827;
+}
+.pet-selector-item-breed {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #6b7280;
+}
 
-.core-row { margin-bottom: 22rpx; }
-.core-row-inner { display:flex; gap: 14rpx; padding-bottom: 10rpx; }
+.core-row {
+  margin-bottom: 22rpx;
+}
+.core-row-inner {
+  display: flex;
+  gap: 14rpx;
+  padding-bottom: 10rpx;
+}
 .core-card {
   flex-shrink: 0;
   width: 168rpx;
-  background: rgba(255,255,255,0.98);
+  background: rgba(255, 255, 255, 0.98);
   border-radius: 22rpx;
   box-shadow: var(--pt-shadow-soft);
   padding: 20rpx 16rpx;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-}
-.core-card-wide { width: 210rpx; }
-.core-value { font-size: 40rpx; font-weight: 900; }
-.core-label { margin-top: 8rpx; font-size: 22rpx; color:#6b7280; }
-.core-blue { color:#3b82f6; }
-.core-green { color:#10b981; }
-.core-orange { color:#f59e0b; }
-.score-circle {
-  width: 96rpx; height: 96rpx; border-radius: 48rpx;
-  border: 6rpx solid rgba(59,130,246,0.35);
-  display:flex; align-items:center; justify-content:center;
-  margin-bottom: 8rpx;
-}
-.score-text { font-size: 24rpx; font-weight: 900; color:#2563eb; }
-
-.seg {
-  background: rgba(243,244,246,1);
-  border-radius: 16rpx;
-  padding: 6rpx;
-  display:flex;
-  margin-bottom: 18rpx;
-}
-.seg-item {
-  flex: 1;
-  text-align: center;
-  padding: 14rpx 0;
-  border-radius: 14rpx;
-  font-size: 24rpx;
-  font-weight: 800;
-  color:#6b7280;
-}
-.seg-item.active {
-  background: #3b82f6;
-  color: #fff;
-  box-shadow: 0 10rpx 20rpx rgba(59,130,246,0.25);
-}
-
-.panel {
-  background: rgba(255,255,255,0.98);
-  border-radius: 22rpx;
-  box-shadow: var(--pt-shadow-soft);
-  padding: 26rpx 22rpx;
-}
-.panel-label { display:block; font-size: 24rpx; font-weight: 800; color:#374151; margin-bottom: 12rpx; margin-top: 10rpx; }
-
-.section-title {
-  display: block;
-  font-size: 24rpx;
-  font-weight: 900;
-  color: #374151;
-  margin-bottom: 14rpx;
-}
-
-.section-title-gap {
-  margin-top: 18rpx;
-}
-
-.quick-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14rpx;
-}
-
-.quick-card {
-  border: 2rpx solid rgba(229,231,235,0.9);
-  border-radius: 18rpx;
-  padding: 16rpx 10rpx 14rpx;
-  background: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
 }
-
-.quick-icon {
-  width: 74rpx;
-  height: 74rpx;
-  border-radius: 18rpx;
+.core-card-wide {
+  width: 210rpx;
+}
+.core-value {
+  font-size: 40rpx;
+  font-weight: 900;
+}
+.core-label {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #6b7280;
+}
+.core-blue {
+  color: #3b82f6;
+}
+.core-green {
+  color: #10b981;
+}
+.core-orange {
+  color: #f59e0b;
+}
+.score-circle {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 48rpx;
+  border: 6rpx solid rgba(59, 130, 246, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 10rpx;
-  font-size: 34rpx;
+  margin-bottom: 8rpx;
 }
-
-.quick-name {
-  font-size: 22rpx;
-  font-weight: 800;
-  color: #374151;
-  margin-bottom: 6rpx;
-}
-
-.quick-amount {
-  font-size: 22rpx;
-  color: #111827;
+.score-text {
+  font-size: 24rpx;
   font-weight: 900;
+  color: #2563eb;
 }
 
-.input-box {
-  border: 2rpx solid rgba(229,231,235,0.9);
-  border-radius: 18rpx;
-  padding: 10rpx 16rpx;
+/* —— pages/test/add 风格 —— */
+$tab-accent: #c4a574;
+$tab-accent-light: #d4b896;
+
+.tab-container {
+  margin-bottom: 28rpx;
+}
+
+.tab-wrapper {
   display: flex;
+  flex-direction: row;
+  background: #fff;
+  border-radius: 20rpx;
+  box-shadow: var(--pt-shadow-soft);
+  padding: 8rpx;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 12rpx;
+  border-radius: 16rpx;
+}
+
+.tab-item.active {
+  background: linear-gradient(135deg, $tab-accent 0%, $tab-accent-light 100%);
+  box-shadow: 0 4rpx 14rpx rgba(196, 165, 116, 0.35);
+}
+
+.tab-emoji {
+  font-size: 30rpx;
+  margin-right: 8rpx;
+}
+
+.tab-text {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.tab-item.active .tab-text {
+  color: #fff;
+  font-weight: 600;
+}
+
+.form-section {
+  margin-bottom: 24rpx;
+}
+
+.form-card {
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: var(--pt-shadow-soft);
+  padding: 32rpx 24rpx;
+}
+
+.form-group {
+  margin-bottom: 32rpx;
+}
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.label-emoji {
+  font-size: 32rpx;
+  margin-right: 12rpx;
+}
+
+.label-text {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #111827;
+}
+
+.form-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #faf6f0;
+  border: 2rpx solid rgba(17, 24, 39, 0.08);
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  min-height: 80rpx;
+  font-size: 28rpx;
+  color: #111827;
+}
+
+.picker-value {
+  display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  background: #faf6f0;
+  border: 2rpx solid rgba(17, 24, 39, 0.08);
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
 }
 
-.input-box-value {
-  flex: 1;
-  text-align: center;
-  font-size: 44rpx;
-  font-weight: 900;
+.picker-value.selected {
+  background: #fff;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.value-text {
+  font-size: 28rpx;
   color: #111827;
 }
 
-.input-box-unit {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-  color: #6b7280;
-  font-size: 24rpx;
-  font-weight: 800;
-  padding-left: 10rpx;
-}
-
-.unit-chevron {
-  font-size: 22rpx;
+.value-text.placeholder {
   color: #9ca3af;
 }
 
-.time-box {
-  border: 2rpx solid rgba(229,231,235,0.9);
-  border-radius: 18rpx;
-  padding: 14rpx 16rpx;
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.time-pill {
-  background: transparent;
-  border-radius: 14rpx;
-  padding: 8rpx 10rpx;
-  font-size: 24rpx;
-  color: #111827;
-  font-weight: 800;
-}
-
-.time-icon {
-  margin-left: auto;
-  font-size: 26rpx;
+.picker-arrow {
+  font-size: 20rpx;
   color: #6b7280;
 }
-.panel-input-row { position: relative; display:flex; align-items:center; justify-content:center; border-bottom: 2rpx solid rgba(209,213,219,0.9); padding: 10rpx 0 12rpx; }
-.panel-input-row-sm { border: 2rpx solid rgba(209,213,219,0.7); border-radius: 16rpx; padding: 8rpx 12rpx; margin-top: 6rpx; }
-.panel-input-big { width: 100%; text-align: center; font-size: 56rpx; font-weight: 900; color:#111827; }
-.panel-input { width: 100%; text-align: center; font-size: 30rpx; font-weight: 800; color:#111827; }
-.panel-unit { position: absolute; right: 0; font-size: 24rpx; color:#6b7280; }
-.dt-row { display:flex; gap: 12rpx; margin-top: 8rpx; }
-.dt-pill {
-  background: #f9fafb;
-  border: 2rpx solid rgba(209,213,219,0.7);
+
+.form-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #faf6f0;
+  border: 2rpx solid rgba(17, 24, 39, 0.08);
   border-radius: 16rpx;
-  padding: 14rpx 16rpx;
-  font-size: 24rpx;
-  color:#374151;
-  min-width: 240rpx;
-  text-align: center;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: #111827;
+  min-height: 160rpx;
+  line-height: 1.6;
 }
-.ghost-btn {
-  margin-top: 18rpx;
-  background: #f3f4f6;
+
+.last-record {
+  background: #fff4e6;
   border-radius: 16rpx;
-  padding: 18rpx 0;
-  display:flex; align-items:center; justify-content:center; gap: 10rpx;
-  color:#374151;
-  font-weight: 800;
+  padding: 20rpx 24rpx;
 }
-.ghost-icon { font-size: 28rpx; }
-.unit-row { display:flex; gap: 12rpx; margin-top: 12rpx; justify-content:flex-end; }
-.unit-pill {
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  border: 2rpx solid rgba(209,213,219,0.7);
-  color:#6b7280;
+
+.last-label {
+  display: block;
   font-size: 22rpx;
+  color: #6b7280;
+  margin-bottom: 12rpx;
+}
+
+.last-details {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.last-value {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #111827;
+}
+
+.last-date {
+  font-size: 22rpx;
+  color: #6b7280;
+}
+
+.weight-change {
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.weight-change.up {
+  color: #10b981;
+}
+
+.weight-change.down {
+  color: #ff6b6b;
+}
+
+.cta-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1rpx solid rgba(17, 24, 39, 0.06);
+  box-shadow: 0 -8rpx 24rpx rgba(17, 24, 39, 0.06);
+}
+
+.btn-row {
+  display: flex;
+  gap: 16rpx;
+  align-items: center;
+}
+
+.btn-submit {
+  flex: 1;
+  height: 96rpx;
+  line-height: 96rpx;
+  border-radius: 999rpx;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: linear-gradient(180deg, var(--pt-primary-2, #8b9cf7) 0%, var(--pt-primary, #667eea) 100%);
+  box-shadow: 0 12rpx 28rpx rgba(196, 165, 116, 0.35);
+}
+
+.btn-submit::after {
+  border: none;
+}
+
+.btn-submit-hover {
+  opacity: 0.92;
+}
+
+.btn-submit-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #fff;
+}
+
+.btn-back-board {
+  flex: 1;
+  height: 96rpx;
+  line-height: 96rpx;
+  padding: 0;
+  margin: 0;
+  background: #f5f5f5;
+  border-radius: 999rpx;
+}
+
+.btn-back-board-hover {
+  opacity: 0.85;
+  background: rgba(240, 240, 240, 0.95);
+}
+
+.btn-back-board-text {
+  font-size: 28rpx;
+  color: #666666;
   font-weight: 800;
 }
-.unit-pill.active { background:#10b981; border-color:#10b981; color:#fff; }
-
-.trend-row { display:flex; align-items:flex-end; gap: 12rpx; margin-top: 8rpx; }
-.trend-item { flex: 1; display:flex; flex-direction:column; align-items:center; }
-.trend-bar { width: 100%; border-radius: 6rpx; background:#e5e7eb; }
-.trend-date { margin-top: 8rpx; font-size: 20rpx; color:#6b7280; }
-
-.cta {
-  position: fixed; left: 0; right: 0; bottom: 0;
-  padding: 18rpx 20rpx calc(18rpx + env(safe-area-inset-bottom));
-  background: rgba(255,255,255,0.98);
-  border-top: 1rpx solid rgba(17,24,39,0.08);
-  z-index: 40;
-}
-.cta-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16rpx;
-}
-.cta-btn {
-  height: 96rpx;
-  border-radius: 22rpx;
-  display:flex; align-items:center; justify-content:center;
-  box-shadow: 0 18rpx 40rpx rgba(0,0,0,0.12);
-}
-.cta-main { min-width: 0; }
-.cta-back {
-  background: #f3f4f6;
-  border: 2rpx solid rgba(209,213,219,0.8);
-}
-.cta-text { color:#fff; font-size: 30rpx; font-weight: 900; }
-.cta-text-dark { color:#374151; }
-.cta-blue { background: linear-gradient(180deg, #3b82f6 0%, #4f46e5 100%); }
-.cta-green { background: linear-gradient(180deg, #10b981 0%, #059669 100%); }
-.cta-purple { background: linear-gradient(180deg, #8b5cf6 0%, #ec4899 100%); }
 </style>
-

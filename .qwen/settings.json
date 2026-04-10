@@ -19,7 +19,8 @@
       "Bash(dir *)",
       "Bash(rmdir *)",
       "Bash(type *)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(cmd *)"
     ]
   },
   "$version": 3

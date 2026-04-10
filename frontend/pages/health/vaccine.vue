@@ -286,7 +286,7 @@ export default {
           method: this.isEditing ? 'PUT' : 'POST',
           header: {
             'Authorization': uni.getStorageSync('token') || '',
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'Content-Type': 'application/json'
           },
           data: this.form
         });

@@ -55,88 +55,112 @@
           </view>
         </view>
 
-        <view class="time-row">
-          <text class="time-label">统计时间</text>
-          <view class="time-right">
-            <text class="time-range">{{ selectedTimeRange }}</text>
-            <text class="time-cal">📅</text>
-          </view>
-        </view>
-
-        <view class="overview-grid">
-          <view class="ov-card">
-            <view class="ov-head">
-              <text class="ov-ico">🐾</text>
-              <text class="ov-up">+12%</text>
-            </view>
-            <text class="ov-value">{{ overview.steps }}</text>
-            <text class="ov-label">总步数</text>
-          </view>
-          <view class="ov-card">
-            <view class="ov-head">
-              <text class="ov-ico">💧</text>
-              <text class="ov-down">-8%</text>
-            </view>
-            <text class="ov-value">{{ overview.water }}</text>
-            <text class="ov-label">饮水量</text>
-          </view>
-          <view class="ov-card">
-            <view class="ov-head">
-              <text class="ov-ico">⚖️</text>
-              <text class="ov-up">{{ overview.deltaWeight }}</text>
-            </view>
-            <text class="ov-value">{{ overview.weight }}</text>
-            <text class="ov-label">当前体重</text>
-          </view>
-        </view>
-
-        <view class="chart-card">
-          <view class="chart-tabs">
-            <view
-              v-for="tab in chartTabs"
-              :key="tab"
-              class="chart-tab"
-              :class="{ active: selectedChartTab === tab }"
-              @tap="selectChartTab(tab)"
-            >
-              <text>{{ tab }}</text>
+        <!-- 体重趋势（对齐 pages/test/health 布局） -->
+        <view class="dash-section">
+          <view class="section-header">
+            <text class="section-title">⚖️ 体重趋势</text>
+            <view class="chart-switch">
+              <text class="switch-text">近7天</text>
             </view>
           </view>
 
-          <view class="chart-wrap">
-            <view class="grid-lines">
-              <view v-for="n in 5" :key="n" class="grid-line"></view>
-            </view>
-            <view
-              v-for="(seg, idx) in chartSegments"
-              :key="'s'+idx"
-              class="line-seg"
-              :style="seg"
-            ></view>
-            <view
-              v-for="(pt, idx) in chartPoints"
-              :key="'p'+idx"
-              class="line-dot"
-              :style="pt"
-            ></view>
-            <view class="x-axis">
-              <text v-for="d in chartDates" :key="d" class="x-item">{{ d }}</text>
-            </view>
-          </view>
-        </view>
-
-        <view class="record-title">详细记录</view>
-        <view class="record-list">
-          <view class="record-item" v-for="r in detailRecords" :key="r.date">
-            <view class="record-left">
-              <text class="record-date">{{ r.date }}</text>
-              <view class="record-meta">
-                <text class="meta-item">🐾 {{ r.steps }} 步</text>
-                <text class="meta-item">💧 {{ r.water }} ml</text>
-                <text class="meta-item">⚖️ {{ r.weight }} kg</text>
+          <view class="dash-card chart-card-inner">
+            <view v-if="weightChartHasData" class="chart-wrap chart-wrap--weight">
+              <view class="y-axis">
+                <text v-for="(t, i) in weightYLabels" :key="'y'+i" class="y-tick">{{ t }}</text>
+              </view>
+              <view class="chart-plot">
+                <view class="grid-lines">
+                  <view v-for="n in 5" :key="n" class="grid-line"></view>
+                </view>
+                <view
+                  v-for="(seg, idx) in weightChartSegments"
+                  :key="'s'+idx"
+                  class="line-seg line-seg--weight"
+                  :style="seg"
+                ></view>
+                <view
+                  v-for="(pt, idx) in weightChartPoints"
+                  :key="'p'+idx"
+                  class="line-dot line-dot--hollow"
+                  :style="pt"
+                ></view>
+                <view class="x-axis">
+                  <text v-for="d in chartDates" :key="d" class="x-item">{{ d }}</text>
+                </view>
               </view>
             </view>
-            <text class="record-arrow">›</text>
+            <view v-else class="chart-empty">
+              <text class="chart-empty-text">近7天暂无体重记录</text>
+            </view>
+
+            <view class="chart-stats">
+              <view class="stat-item">
+                <text class="stat-label">当前体重</text>
+                <text class="stat-value">{{ weightStats.current }}</text>
+              </view>
+              <view class="stat-divider"></view>
+              <view class="stat-item">
+                <text class="stat-label">平均体重</text>
+                <text class="stat-value">{{ weightStats.avg }}</text>
+              </view>
+              <view class="stat-divider"></view>
+              <view class="stat-item">
+                <text class="stat-label">变化</text>
+                <text
+                  class="stat-value"
+                  :class="weightStats.deltaNum >= 0 ? 'up' : 'down'"
+                >{{ weightStats.delta }}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 疫苗提醒（对齐 pages/test/health 布局） -->
+        <view class="dash-section">
+          <view class="section-header">
+            <text class="section-title">💉 疫苗提醒</text>
+          </view>
+
+          <view v-if="vaccineCards.length" class="vaccine-list">
+            <view
+              v-for="item in vaccineCards"
+              :key="item.id"
+              class="dash-card vaccine-card"
+              :class="{ urgent: item.isUrgent }"
+            >
+              <view class="vaccine-header">
+                <view class="vaccine-info">
+                  <text class="vaccine-name">{{ item.name }}</text>
+                  <text class="vaccine-date">计划日期: {{ item.date }}</text>
+                </view>
+                <view class="vaccine-countdown">
+                  <text class="countdown-number">{{ item.daysLeft }}</text>
+                  <text class="countdown-unit">天</text>
+                </view>
+              </view>
+
+              <view class="vaccine-progress">
+                <view class="progress-bar">
+                  <view class="progress-fill" :style="{ width: item.progressPercent + '%' }"></view>
+                </view>
+                <text class="progress-text">{{ item.progressPercent }}%</text>
+              </view>
+
+              <view class="vaccine-actions">
+                <button
+                  class="btn-vaccine"
+                  :class="{ completed: item.isCompleted }"
+                  :disabled="item.isCompleted"
+                  @tap="onMarkVaccineDone(item)"
+                >
+                  <text class="btn-text">{{ item.isCompleted ? "已完成" : "标记完成" }}</text>
+                </button>
+              </view>
+            </view>
+          </view>
+          <view v-else class="dash-card vaccine-empty">
+            <text class="vaccine-empty-text">暂无疫苗提醒</text>
           </view>
         </view>
       </view>
@@ -156,12 +180,6 @@
           <text class="board-tab-icon">📈</text>
           <text class="board-tab-text">健康</text>
         </view>
-        <!-- 社区功能暂时隐藏
-        <view class="board-tab-item" @tap="goTab('/pages/community/index', true)">
-          <text class="board-tab-icon">🐾</text>
-          <text class="board-tab-text">社区</text>
-        </view>
-        -->
         <view class="board-tab-item" @tap="goTab('/pages/me/index', true)">
           <text class="board-tab-icon">👤</text>
           <text class="board-tab-text">我的</text>
@@ -172,7 +190,6 @@
 </template>
 
 <script>
-
 export default {
   data() {
     return {
@@ -185,54 +202,49 @@ export default {
       selectedPet: null,
       petSelectorOpen: false,
       searchQuery: "",
-      selectedTimeRange: "近七天",
-      selectedChartTab: "步数趋势",
-      chartTabs: ["步数趋势", "饮水分析", "体重变化"],
       chartDates: [],
-      chartDataMap: {
-        "步数趋势": [],
-        "饮水分析": [],
-        "体重变化": []
+      weightSeriesRaw: [],
+      weightSeriesFilled: [],
+      weightStats: {
+        current: "--",
+        avg: "--",
+        delta: "--",
+        deltaNum: 0
       },
-      detailRecords: [],
-      overview: {
-        steps: "0",
-        water: "0ml",
-        weight: "0kg",
-        deltaWeight: "0kg"
-      }
+      vaccineReminders: []
     };
   },
   computed: {
-    activeSeries() {
-      return this.chartDataMap[this.selectedChartTab] || [];
+    weightChartHasData() {
+      return (this.weightSeriesFilled || []).some((v) => v != null && !Number.isNaN(v));
     },
-    chartColor() {
-      if (this.selectedChartTab === "饮水分析") return "#10B981";
-      if (this.selectedChartTab === "体重变化") return "#F59E0B";
-      return "#3B82F6";
-    },
-    chartPoints() {
-      const values = this.activeSeries;
+    weightChartPoints() {
+      const values = this.weightSeriesFilled.filter((v) => v != null && !Number.isNaN(v));
       if (!values.length) return [];
       const min = Math.min(...values);
       const max = Math.max(...values);
-      const diff = max - min || 1;
-      const leftStart = 16;
-      const step = 88;
+      const pad = (max - min) * 0.08 || 0.2;
+      const lo = min - pad;
+      const hi = max + pad;
+      const diff = hi - lo || 1;
+      const leftStart = 8;
+      const n = this.weightSeriesFilled.length;
+      const step = n > 1 ? 520 / (n - 1) : 0;
       const h = 180;
-      return values.map((v, i) => {
-        const y = 24 + (1 - (v - min) / diff) * h;
+      return this.weightSeriesFilled.map((v, i) => {
+        if (v == null || Number.isNaN(v)) return null;
+        const y = 24 + (1 - (v - lo) / diff) * h;
         const x = leftStart + i * step;
         return {
           left: `${x}rpx`,
           top: `${y}rpx`,
-          background: this.chartColor
+          borderColor: "#10B981",
+          background: "#fff"
         };
-      });
+      }).filter(Boolean);
     },
-    chartSegments() {
-      const pts = this.chartPoints;
+    weightChartSegments() {
+      const pts = this.weightChartPoints;
       const list = [];
       for (let i = 0; i < pts.length - 1; i++) {
         const x1 = parseFloat(pts[i].left);
@@ -248,25 +260,59 @@ export default {
           top: `${y1 + 4}rpx`,
           width: `${len}rpx`,
           transform: `rotate(${deg}deg)`,
-          background: this.chartColor
+          background: "#10B981"
         });
       }
       return list;
+    },
+    weightYLabels() {
+      const values = this.weightSeriesFilled.filter((v) => v != null && !Number.isNaN(v));
+      if (!values.length) return ["", "", "", "", ""];
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const pad = (max - min) * 0.08 || 0.2;
+      const lo = min - pad;
+      const hi = max + pad;
+      const step = (hi - lo) / 4;
+      const labels = [];
+      for (let i = 4; i >= 0; i--) {
+        labels.push((lo + step * i).toFixed(1));
+      }
+      return labels;
+    },
+    vaccineCards() {
+      const petId = this.selectedPet && this.selectedPet.id;
+      if (!petId || !Array.isArray(this.vaccineReminders)) return [];
+      const now = new Date();
+      return this.vaccineReminders.map((r) => {
+        const next = r.nextDate ? new Date(r.nextDate) : null;
+        const rawDays = next && !Number.isNaN(next.getTime())
+          ? Math.ceil((next - now) / (86400000))
+          : 0;
+        const done = Number(r.status) === 1;
+        return {
+          id: r.id,
+          name: r.vaccineName || "疫苗",
+          date: this.formatDateYMD(r.nextDate),
+          daysLeft: Math.max(0, rawDays),
+          progressPercent: done ? 100 : 0,
+          isCompleted: done,
+          isUrgent: !done && rawDays <= 7
+        };
+      });
     }
   },
   onShow() {
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: false });
     this.loadUserInfo();
-    // 每次显示页面时重新加载宠物列表和看板数据
     this.loadPets();
   },
   onLoad() {
     try {
       const sys = uni.getSystemInfoSync();
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
-      const headerHeight = this.statusBarHeight + 46;
-      this.headerHeight = headerHeight;
+      this.headerHeight = this.statusBarHeight + 46;
     } catch (e) {
       this.statusBarHeight = 20;
       this.headerHeight = 66;
@@ -275,13 +321,19 @@ export default {
     this.loadUserInfo();
   },
   methods: {
+    formatDateYMD(date) {
+      if (!date) return "-";
+      const d = new Date(date);
+      if (Number.isNaN(d.getTime())) return "-";
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    },
     async loadUserInfo() {
-      const userInfo = uni.getStorageSync('userInfo');
-      const token = uni.getStorageSync('token');
+      const userInfo = uni.getStorageSync("userInfo");
+      const token = uni.getStorageSync("token");
 
       if (userInfo && userInfo.avatar) {
         this.userAvatar = userInfo.avatar;
-        this.userName = userInfo.nickname || '小萌宠主人';
+        this.userName = userInfo.nickname || "小萌宠主人";
       } else if (!token) {
         this.userAvatar = "https://ai-public.mastergo.com/ai/img_res/1774575365924a3K9mP2xQ7vN4rT8wY.jpg";
         this.userName = "小萌宠主人";
@@ -289,108 +341,152 @@ export default {
 
       if (token) {
         try {
-          const res = await uni.$request.get('/api/users/profile');
+          const res = await uni.$request.get("/api/users/profile");
           if (res.success) {
             const userData = res.data;
             this.userAvatar = userData.avatar || this.userAvatar;
             this.userName = userData.nickname || this.userName;
-            uni.setStorageSync('userInfo', userData);
+            uni.setStorageSync("userInfo", userData);
           }
         } catch (e) {
-          console.error('获取用户信息失败:', e);
+          console.error("获取用户信息失败:", e);
         }
       }
     },
     async loadPets() {
       try {
-        const res = await uni.$request.get('/api/pets');
+        const res = await uni.$request.get("/api/pets");
         if (res && res.success && Array.isArray(res.data)) {
           this.pets = res.data;
-          if (!this.selectedPet && this.pets.length > 0) {
-            this.selectedPet = this.pets[0];
-            this.loadDashboardData();
+          if (!this.pets.length) {
+            this.selectedPet = null;
+            this.clearBoardData();
+            return;
           }
+          const still = this.selectedPet && this.pets.find((p) => p.id === this.selectedPet.id);
+          this.selectedPet = still || this.pets[0];
+          this.loadDashboardData();
         }
       } catch (e) {
-        console.error('加载宠物列表失败:', e);
+        console.error("加载宠物列表失败:", e);
       }
     },
-    // 加载健康数据看板
+    clearBoardData() {
+      this.chartDates = [];
+      this.weightSeriesRaw = [];
+      this.weightSeriesFilled = [];
+      this.weightStats = { current: "--", avg: "--", delta: "--", deltaNum: 0 };
+      this.vaccineReminders = [];
+    },
     async loadDashboardData() {
-      if (!this.selectedPet || !this.selectedPet.id) return;
-      
+      if (!this.selectedPet || !this.selectedPet.id) {
+        this.clearBoardData();
+        return;
+      }
+      const petId = this.selectedPet.id;
+
       try {
-        const petId = this.selectedPet.id;
-        
-        // 并行加载体重、步数、饮水数据
-        const [weightRes] = await Promise.all([
-          uni.$request.get(`/api/pets/${petId}/weight-records`)
+        const [weightRes, vaccineRes] = await Promise.all([
+          uni.$request.get(`/api/pets/${petId}/weight-records`),
+          uni.$request.get(`/api/pets/${petId}/vaccine-reminders`)
         ]);
-        
-        // 处理体重数据
-        if (weightRes && weightRes.success && Array.isArray(weightRes.data)) {
-          const weightRecords = weightRes.data;
-          
-          // 生成最近7天的日期
-          const dates = [];
-          const values = [];
-          const today = new Date();
-          
-          for (let i = 6; i >= 0; i--) {
-            const date = new Date(today);
-            date.setDate(date.getDate() - i);
-            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-            
-            // 格式化日期显示
-            if (i === 0) {
-              dates.push('今天');
-            } else if (i === 1) {
-              dates.push('昨天');
-            } else {
-              dates.push(`${date.getMonth() + 1}/${date.getDate()}`);
-            }
-            
-            // 查找该日期的体重记录
-            const record = weightRecords.find(r => {
-              const recordDate = new Date(r.recordDate);
-              return recordDate.toISOString().split('T')[0] === dateStr;
-            });
-            
-            values.push(record ? record.weight : null);
-          }
-          
-          this.chartDates = dates;
-          this.$set(this.chartDataMap, '体重变化', values.filter(v => v !== null));
-          
-          // 更新体重概览
-          if (weightRecords.length > 0) {
-            const latestWeight = weightRecords[0];
-            this.overview.weight = `${latestWeight.weight}kg`;
-            
-            if (weightRecords.length > 1) {
-              const prevWeight = weightRecords[1];
-              const delta = (latestWeight.weight - prevWeight.weight).toFixed(1);
-              this.overview.deltaWeight = `${delta > 0 ? '+' : ''}${delta}kg`;
-            }
-          }
+
+        if (vaccineRes && vaccineRes.success && Array.isArray(vaccineRes.data)) {
+          this.vaccineReminders = vaccineRes.data;
+        } else {
+          this.vaccineReminders = [];
         }
-        
-        // 生成详细记录
-        if (weightRes && weightRes.success && Array.isArray(weightRes.data)) {
-          this.detailRecords = weightRes.data.slice(0, 5).map(record => {
-            const date = new Date(record.recordDate);
-            const dateStr = `${date.getMonth() + 1}月${date.getDate()}日`;
-            return {
-              date: dateStr,
-              steps: '-',
-              water: '-',
-              weight: record.weight
-            };
+
+        if (!weightRes || !weightRes.success || !Array.isArray(weightRes.data)) {
+          this.chartDates = [];
+          this.weightSeriesRaw = [];
+          this.weightSeriesFilled = [];
+          this.weightStats = { current: "--", avg: "--", delta: "--", deltaNum: 0 };
+          return;
+        }
+
+        const weightRecords = [...weightRes.data].sort((a, b) => {
+          const da = new Date(a.recordDate).getTime();
+          const db = new Date(b.recordDate).getTime();
+          return db - da;
+        });
+
+        const dates = [];
+        const raw = [];
+        const today = new Date();
+
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(date.getDate() - i);
+          const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+          if (i === 0) dates.push("今天");
+          else if (i === 1) dates.push("昨天");
+          else dates.push(`${date.getMonth() + 1}/${date.getDate()}`);
+
+          const record = weightRecords.find((r) => {
+            const recordDate = new Date(r.recordDate);
+            return recordDate.toISOString().split("T")[0] === dateStr;
           });
+          raw.push(record ? Number(record.weight) : null);
         }
-        
+
+        let last = null;
+        const filled = raw.map((v) => {
+          if (v != null && !Number.isNaN(v)) {
+            last = v;
+            return v;
+          }
+          return last;
+        });
+
+        this.chartDates = dates;
+        this.weightSeriesRaw = raw;
+        this.weightSeriesFilled = filled;
+
+        const nums = raw.filter((v) => v != null && !Number.isNaN(v));
+        if (weightRecords.length > 0) {
+          const latest = weightRecords[0];
+          this.weightStats.current = `${latest.weight} kg`;
+        } else {
+          this.weightStats.current = "--";
+        }
+
+        if (nums.length) {
+          const sum = nums.reduce((a, b) => a + b, 0);
+          this.weightStats.avg = `${(sum / nums.length).toFixed(2)} kg`;
+        } else {
+          this.weightStats.avg = "--";
+        }
+
+        if (weightRecords.length > 1) {
+          const latest = Number(weightRecords[0].weight);
+          const prev = Number(weightRecords[1].weight);
+          const d = latest - prev;
+          this.weightStats.deltaNum = d;
+          this.weightStats.delta = `${d > 0 ? "+" : ""}${d.toFixed(1)} kg`;
+        } else {
+          this.weightStats.deltaNum = 0;
+          this.weightStats.delta = "--";
+        }
       } catch (e) {
-        console.error('加载健康数据失败:', e);
+        console.error("加载看板数据失败:", e);
+      }
+    },
+    async onMarkVaccineDone(item) {
+      if (!item || item.isCompleted || !this.selectedPet) return;
+      try {
+        const res = await uni.$request.put(
+          `/api/pets/${this.selectedPet.id}/vaccine-reminders/${item.id}/status`,
+          { status: 1 }
+        );
+        if (res.success) {
+          uni.showToast({ title: "已标记完成", icon: "success" });
+          this.loadDashboardData();
+        }
+      } catch (e) {
+        console.error("更新疫苗状态失败:", e);
+        uni.showToast({ title: "操作失败", icon: "none" });
       }
     },
     selectPet(pet) {
@@ -404,9 +500,6 @@ export default {
     },
     closePetSelector() {
       this.petSelectorOpen = false;
-    },
-    selectChartTab(tab) {
-      this.selectedChartTab = tab;
     },
     onFilter() {
       uni.showToast({ title: "筛选未实现", icon: "none" });
@@ -426,153 +519,468 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.board-page { min-height: 100vh; background: #f8fafc; }
-.board-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 40;
-  background: rgba(255,255,255,0.98);
-  box-shadow: 0 8rpx 24rpx rgba(17,24,39,0.08);
+.board-page {
+  min-height: 100vh;
+  background: var(--pt-bg, #f7f3ef);
 }
-.board-statusbar { width: 100%; }
+
+.board-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 8rpx 24rpx rgba(17, 24, 39, 0.08);
+}
+.board-statusbar {
+  width: 100%;
+}
 .board-nav-inner {
   padding: 12rpx 20rpx 14rpx;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-.board-user { display:flex; align-items:center; gap: 14rpx; }
-.board-user-avatar { width: 56rpx; height: 56rpx; border-radius: 28rpx; background:#e5e7eb; }
-.board-user-name { font-size: 30rpx; font-weight: 800; color:#111827; }
-.board-filter { font-size: 30rpx; color:#6b7280; }
+.board-user {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+.board-user-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 28rpx;
+  background: #e5e7eb;
+}
+.board-user-name {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #111827;
+}
+.board-filter {
+  font-size: 30rpx;
+  color: #6b7280;
+}
 
 .board-scroll {
   height: 100vh;
+  box-sizing: border-box;
 }
 .board-content {
   padding: 20rpx 20rpx 220rpx;
 }
 
-.pet-selector { position: relative; margin-bottom: 20rpx; }
+.pet-selector {
+  position: relative;
+  margin-bottom: 24rpx;
+}
 .pet-selector-card {
-  background: rgba(255,255,255,0.98);
+  background: rgba(255, 255, 255, 0.98);
   border-radius: 22rpx;
   box-shadow: var(--pt-shadow-soft);
   padding: 22rpx 20rpx;
-  display:flex; align-items:center; justify-content:space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-.pet-selector-left { display:flex; align-items:center; gap: 16rpx; }
-.pet-selector-avatar { width: 72rpx; height: 72rpx; border-radius: 36rpx; background:#e5e7eb; }
-.pet-selector-meta { display:flex; flex-direction:column; }
-.pet-selector-name { font-size: 30rpx; font-weight: 900; color:#111827; }
-.pet-selector-breed { margin-top: 6rpx; font-size: 22rpx; color:#6b7280; }
-.pet-selector-arrow { font-size: 30rpx; color:#6b7280; }
+.pet-selector-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.pet-selector-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 36rpx;
+  background: #e5e7eb;
+}
+.pet-selector-meta {
+  display: flex;
+  flex-direction: column;
+}
+.pet-selector-name {
+  font-size: 30rpx;
+  font-weight: 900;
+  color: #111827;
+}
+.pet-selector-breed {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #6b7280;
+}
+.pet-selector-arrow {
+  font-size: 30rpx;
+  color: #6b7280;
+}
 
 .pet-selector-pop {
-  position: absolute; top: 100%; left: 0; right: 0;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
   margin-top: 12rpx;
   background: #fff;
   border-radius: 22rpx;
-  box-shadow: 0 18rpx 44rpx rgba(0,0,0,0.12);
+  box-shadow: 0 18rpx 44rpx rgba(0, 0, 0, 0.12);
   z-index: 50;
   overflow: hidden;
 }
-.pet-selector-search { padding: 16rpx; border-bottom: 1rpx solid rgba(17,24,39,0.08); }
+.pet-selector-search {
+  padding: 16rpx;
+  border-bottom: 1rpx solid rgba(17, 24, 39, 0.08);
+}
 .pet-selector-input {
   background: #f9fafb;
   border-radius: 16rpx;
   padding: 18rpx 16rpx;
   font-size: 26rpx;
 }
-.pet-selector-list { max-height: 360rpx; }
-.pet-selector-item { display:flex; align-items:center; gap: 14rpx; padding: 16rpx; }
-.pet-selector-item-avatar { width: 56rpx; height: 56rpx; border-radius: 28rpx; background:#e5e7eb; }
-.pet-selector-item-meta { display:flex; flex-direction:column; }
-.pet-selector-item-name { font-size: 28rpx; font-weight: 800; color:#111827; }
-.pet-selector-item-breed { margin-top: 4rpx; font-size: 22rpx; color:#6b7280; }
-
-.time-row { display:flex; justify-content:space-between; align-items:center; margin-bottom: 18rpx; }
-.time-label { font-size: 24rpx; color:#6b7280; }
-.time-right { display:flex; align-items:center; gap: 8rpx; }
-.time-range { font-size: 24rpx; color:#3b82f6; font-weight: 700; }
-.time-cal { font-size: 22rpx; }
-
-.overview-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12rpx;
-  margin-bottom: 18rpx;
+.pet-selector-list {
+  max-height: 360rpx;
 }
-.ov-card {
-  background: #fff;
-  border-radius: 16rpx;
-  border: 1rpx solid rgba(229,231,235,0.9);
-  padding: 14rpx 12rpx;
-}
-.ov-head { display:flex; justify-content:space-between; align-items:center; margin-bottom: 8rpx; }
-.ov-ico { font-size: 20rpx; color:#3b82f6; }
-.ov-up { font-size: 20rpx; color:#16a34a; }
-.ov-down { font-size: 20rpx; color:#dc2626; }
-.ov-value { display:block; font-size: 38rpx; font-weight: 900; color:#111827; line-height: 44rpx; }
-.ov-label { display:block; margin-top: 2rpx; font-size: 22rpx; color:#6b7280; }
-
-.chart-card {
-  background: #fff;
-  border-radius: 20rpx;
-  border: 1rpx solid rgba(229,231,235,0.9);
-  padding: 16rpx;
-  margin-bottom: 20rpx;
-}
-.chart-tabs {
-  background: #f3f4f6;
-  border-radius: 14rpx;
-  padding: 6rpx;
+.pet-selector-item {
   display: flex;
-  gap: 6rpx;
-  margin-bottom: 10rpx;
+  align-items: center;
+  gap: 14rpx;
+  padding: 16rpx;
 }
-.chart-tab {
-  flex: 1;
-  text-align: center;
-  padding: 10rpx 6rpx;
-  border-radius: 10rpx;
+.pet-selector-item-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 28rpx;
+  background: #e5e7eb;
+}
+.pet-selector-item-meta {
+  display: flex;
+  flex-direction: column;
+}
+.pet-selector-item-name {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #111827;
+}
+.pet-selector-item-breed {
+  margin-top: 4rpx;
   font-size: 22rpx;
   color: #6b7280;
-  font-weight: 700;
 }
-.chart-tab.active { background:#fff; color:#2563eb; }
 
-.chart-wrap {
+/* —— pages/test/health 风格区块 —— */
+.dash-section {
+  margin-bottom: 32rpx;
+}
+
+.section-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+  padding: 0 8rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #111827;
+}
+
+.chart-switch {
+  background: #fff4e6;
+  padding: 8rpx 20rpx;
+  border-radius: 30rpx;
+}
+
+.switch-text {
+  font-size: 24rpx;
+  color: #ea580c;
+  font-weight: 500;
+}
+
+.dash-card {
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: var(--pt-shadow-soft);
+}
+
+.chart-card-inner {
+  padding: 24rpx;
+}
+
+.chart-wrap--weight {
+  display: flex;
+  flex-direction: row;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.y-axis {
+  width: 56rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16rpx 0 38rpx;
+}
+
+.y-tick {
+  font-size: 18rpx;
+  color: #9ca3af;
+  text-align: right;
+}
+
+.chart-plot {
   position: relative;
+  flex: 1;
   height: 280rpx;
   border-radius: 12rpx;
-  padding: 16rpx 14rpx 38rpx;
+  padding: 16rpx 8rpx 38rpx;
   overflow: hidden;
+  background: #fafafa;
 }
-.grid-lines { position:absolute; left:14rpx; right:14rpx; top:16rpx; bottom:38rpx; display:flex; flex-direction:column; justify-content:space-between; }
-.grid-line { height: 1rpx; background: rgba(209,213,219,0.65); }
-.line-seg { position:absolute; height: 4rpx; border-radius: 4rpx; transform-origin: left center; }
-.line-dot { position:absolute; width: 10rpx; height: 10rpx; border-radius: 5rpx; transform: translate(-5rpx,-5rpx); }
+
+.chart-empty {
+  height: 280rpx;
+  border-radius: 12rpx;
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24rpx;
+}
+
+.chart-empty-text {
+  font-size: 26rpx;
+  color: #9ca3af;
+}
+
+.grid-lines {
+  position: absolute;
+  left: 8rpx;
+  right: 8rpx;
+  top: 16rpx;
+  bottom: 38rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.grid-line {
+  height: 1rpx;
+  background: rgba(209, 213, 219, 0.65);
+}
+
+.line-seg {
+  position: absolute;
+  height: 4rpx;
+  border-radius: 4rpx;
+  transform-origin: left center;
+}
+
+.line-dot {
+  position: absolute;
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 7rpx;
+  transform: translate(-7rpx, -7rpx);
+  box-sizing: border-box;
+}
+
+.line-dot--hollow {
+  border-width: 3rpx;
+  border-style: solid;
+}
+
 .x-axis {
   position: absolute;
-  left: 16rpx;
-  right: 16rpx;
+  left: 8rpx;
+  right: 8rpx;
   bottom: 8rpx;
   display: flex;
   justify-content: space-between;
 }
-.x-item { font-size: 20rpx; color:#6b7280; }
-
-.record-title { font-size: 28rpx; font-weight: 900; color:#111827; margin-bottom: 12rpx; }
-.record-list { display:flex; flex-direction:column; gap: 10rpx; }
-.record-item {
-  background:#fff;
-  border: 1rpx solid rgba(229,231,235,0.9);
-  border-radius: 14rpx;
-  padding: 14rpx;
-  display:flex; align-items:center; justify-content:space-between;
+.x-item {
+  font-size: 20rpx;
+  color: #6b7280;
 }
-.record-left { flex: 1; }
-.record-date { display:block; font-size: 26rpx; color:#111827; font-weight: 800; margin-bottom: 8rpx; }
-.record-meta { display:flex; gap: 12rpx; flex-wrap: wrap; }
-.meta-item { font-size: 22rpx; color:#4b5563; }
-.record-arrow { font-size: 30rpx; color:#9ca3af; padding-left: 12rpx; }
+
+.chart-stats {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  padding-top: 24rpx;
+  border-top: 1rpx solid rgba(17, 24, 39, 0.08);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 22rpx;
+  color: #6b7280;
+  margin-bottom: 8rpx;
+}
+
+.stat-value {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #111827;
+}
+
+.stat-value.up {
+  color: #10b981;
+}
+
+.stat-value.down {
+  color: #ff6b6b;
+}
+
+.stat-divider {
+  width: 1rpx;
+  height: 60rpx;
+  background: rgba(17, 24, 39, 0.08);
+}
+
+.vaccine-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.vaccine-card {
+  padding: 24rpx;
+}
+
+.vaccine-card.urgent {
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+  border: 2rpx solid #ffd0d0;
+}
+
+.vaccine-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.vaccine-info {
+  flex: 1;
+  padding-right: 16rpx;
+}
+
+.vaccine-name {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8rpx;
+}
+
+.vaccine-date {
+  display: block;
+  font-size: 22rpx;
+  color: #6b7280;
+}
+
+.vaccine-countdown {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  background: #d1fae5;
+  padding: 12rpx 20rpx;
+  border-radius: 30rpx;
+  flex-shrink: 0;
+}
+
+.vaccine-card.urgent .vaccine-countdown {
+  background: #ff6b6b;
+}
+
+.countdown-number {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #111827;
+  margin-right: 4rpx;
+}
+
+.vaccine-card.urgent .countdown-number,
+.vaccine-card.urgent .countdown-unit {
+  color: #ffffff;
+}
+
+.countdown-unit {
+  font-size: 22rpx;
+  color: #6b7280;
+}
+
+.vaccine-progress {
+  margin-bottom: 20rpx;
+}
+
+.progress-bar {
+  height: 12rpx;
+  background: #fff4e6;
+  border-radius: 6rpx;
+  overflow: hidden;
+  margin-bottom: 8rpx;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #d1fae5 0%, #10b981 100%);
+  border-radius: 6rpx;
+}
+
+.progress-text {
+  font-size: 20rpx;
+  color: #9ca3af;
+  text-align: right;
+  display: block;
+}
+
+.vaccine-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-vaccine {
+  background: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 999rpx;
+  padding: 16rpx 48rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.btn-vaccine.completed {
+  background: #d1fae5;
+  opacity: 0.9;
+}
+
+.btn-text {
+  color: #ffffff;
+}
+
+.btn-vaccine.completed .btn-text {
+  color: #047857;
+}
+
+.vaccine-empty {
+  padding: 48rpx 24rpx;
+  text-align: center;
+}
+
+.vaccine-empty-text {
+  font-size: 26rpx;
+  color: #9ca3af;
+}
 
 .fab {
   position: fixed;
@@ -587,7 +995,7 @@ export default {
   align-items: center;
   justify-content: center;
   font-size: 56rpx;
-  box-shadow: 0 16rpx 34rpx rgba(59,130,246,0.35);
+  box-shadow: 0 16rpx 34rpx rgba(59, 130, 246, 0.35);
   z-index: 45;
 }
 
@@ -619,7 +1027,9 @@ export default {
   justify-content: center;
   color: #8b93a6;
 }
-.board-tab-item.active { color: #ff6a3d; }
+.board-tab-item.active {
+  color: #ff6a3d;
+}
 .board-tab-icon {
   font-size: 40rpx;
   line-height: 40rpx;

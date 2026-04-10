@@ -68,6 +68,23 @@ public class VaccineReminderController {
     }
 
     /**
+     * 更新提醒信息（通用编辑接口）
+     */
+    @PutMapping("/{id}")
+    public Result<VaccineReminder> updateReminder(
+            @PathVariable Long petId,
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Object> requestBody) {
+        String vaccineName = (String) requestBody.get("vaccineName");
+        String nextDateStr = (String) requestBody.get("nextDate");
+        LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
+
+        log.info("更新疫苗提醒：petId={}, id={}, vaccineName={}, nextDate={}", petId, id, vaccineName, nextDate);
+        VaccineReminder reminder = vaccineReminderService.updateReminder(id, vaccineName, nextDate);
+        return Result.success(reminder);
+    }
+
+    /**
      * 更新提醒状态
      */
     @PutMapping("/{id}/status")

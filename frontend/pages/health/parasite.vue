@@ -231,6 +231,20 @@ export default {
       this.form.type = e.detail.value;
     },
 
+    // 类型转换为整数
+    typeToInt(typeStr) {
+      if (typeStr === '体内') return 1;
+      if (typeStr === '体外') return 2;
+      return typeof typeStr === 'number' ? typeStr : 1;
+    },
+
+    // 整数转换为类型字符串
+    intToType(typeInt) {
+      if (typeInt === 1) return '体内';
+      if (typeInt === 2) return '体外';
+      return '体内';
+    },
+
     // 显示添加弹窗
     showAddModal() {
       this.showModal = true;
@@ -247,7 +261,7 @@ export default {
       this.isEditing = true;
       this.currentReminder = reminder;
       this.form = {
-        type: reminder.type,
+        type: this.intToType(reminder.type),
         nextDate: reminder.nextDate
       };
     },
@@ -291,14 +305,27 @@ export default {
           ? `http://localhost:8080/api/pets/${this.petId}/parasite-reminders/${this.currentReminder.id}`
           : `http://localhost:8080/api/pets/${this.petId}/parasite-reminders`;
 
+        // 准备提交数据，将 type 字符串转换为整数
+        const submitData = {
+          nextDate: this.form.nextDate
+        };
+        
+        if (this.isEditing) {
+          // 编辑模式：传递 type 整数
+          submitData.type = this.typeToInt(this.form.type);
+        } else {
+          // 创建模式：传递 type 整数
+          submitData.type = this.typeToInt(this.form.type);
+        }
+
         const res = await uni.request({
           url: url,
           method: this.isEditing ? 'PUT' : 'POST',
           header: {
             'Authorization': uni.getStorageSync('token') || '',
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'Content-Type': 'application/json'
           },
-          data: this.form
+          data: submitData
         });
 
         if (res.data.success) {

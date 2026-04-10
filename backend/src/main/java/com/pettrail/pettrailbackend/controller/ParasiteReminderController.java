@@ -68,6 +68,23 @@ public class ParasiteReminderController {
     }
 
     /**
+     * 更新提醒信息（通用编辑接口）
+     */
+    @PutMapping("/{id}")
+    public Result<ParasiteReminder> updateReminder(
+            @PathVariable Long petId,
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Object> requestBody) {
+        Integer type = requestBody.get("type") != null ? ((Number) requestBody.get("type")).intValue() : null;
+        String nextDateStr = (String) requestBody.get("nextDate");
+        LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
+
+        log.info("更新寄生虫提醒：petId={}, id={}, type={}, nextDate={}", petId, id, type, nextDate);
+        ParasiteReminder reminder = parasiteReminderService.updateReminder(id, type, nextDate);
+        return Result.success(reminder);
+    }
+
+    /**
      * 更新提醒状态
      */
     @PutMapping("/{id}/status")
