@@ -1,7 +1,7 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.pettrail.pettrailbackend.dto.Result;
-import com.pettrail.pettrailbackend.service.OssService;
+import com.pettrail.pettrailbackend.service.CosService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UploadController {
 
-    private final OssService ossService;
+    private final CosService cosService;
 
     /**
      * 上传文件
@@ -31,7 +31,7 @@ public class UploadController {
                 return Result.error(400, "文件不能为空");
             }
 
-            String fileUrl = ossService.uploadFile(file);
+            String fileUrl = cosService.uploadFile(file);
 
             Map<String, Object> data = new HashMap<>();
             data.put("url", fileUrl);
@@ -64,7 +64,7 @@ public class UploadController {
 
             for (MultipartFile file : files) {
                 if (!file.isEmpty()) {
-                    String url = ossService.uploadFile(file);
+                    String url = cosService.uploadFile(file);
                     urls.add(url);
                     totalSize += file.getSize();
                 }

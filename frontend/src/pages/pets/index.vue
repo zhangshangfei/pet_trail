@@ -65,8 +65,10 @@ export default {
       showModal: false,
       form: {
         name: '',
+        category: 0,
         breed: '',
         gender: 0,
+        sterilized: 0,
         birthday: '',
         weight: '',
         color: '',
@@ -108,8 +110,10 @@ export default {
       this.showModal = true;
       this.form = {
         name: '',
+        category: 0,
         breed: '',
         gender: 0,
+        sterilized: 0,
         birthday: '',
         weight: '',
         color: '',

@@ -18,7 +18,7 @@
 
     <!-- 根据用户 ID 查询动态列表 -->
     <select id="selectByUserId" resultMap="BaseResultMap">
-        SELECT * FROM posts_00
+        SELECT * FROM posts
         WHERE user_id = #{userId}
         AND status = 1
         ORDER BY created_at DESC
@@ -27,7 +27,7 @@
 
     <!-- 查询动态列表（按时间倒序） -->
     <select id="selectFeed" resultMap="BaseResultMap">
-        SELECT * FROM posts_00
+        SELECT * FROM posts
         WHERE status = 1
         ORDER BY created_at DESC
         LIMIT #{offset}, #{limit}
@@ -35,7 +35,7 @@
 
     <!-- 根据日期范围查询动态 -->
     <select id="selectByDateRange" resultMap="BaseResultMap">
-        SELECT * FROM posts_00
+        SELECT * FROM posts
         WHERE user_id = #{userId}
         AND DATE(created_at) BETWEEN #{startDate} AND #{endDate}
         AND status = 1
@@ -44,7 +44,7 @@
 
     <!-- 查询待审核的动态（创建时间早于指定时间） -->
     <select id="selectPendingForAudit" resultMap="BaseResultMap">
-        SELECT * FROM posts_00
+        SELECT * FROM posts
         WHERE status = 0
         AND created_at &lt; #{beforeTime}
         ORDER BY created_at ASC

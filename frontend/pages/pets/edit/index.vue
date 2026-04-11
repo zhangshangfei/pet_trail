@@ -144,13 +144,14 @@
 </template>
 
 <script>
-import { pet as petApi } from '@/api'
+import * as petApi from '@/api/pet'
 
 export default {
   data() {
     return {
       petId: null,
       loading: false,
+      uploading: false,
       form: {
         name: '',
         breed: '',
@@ -212,12 +213,30 @@ export default {
         sourceType: ['album', 'camera'],
         success: (res) => {
           const tempFilePath = res.tempFilePaths[0]
-          this.form.avatar = tempFilePath
-          
-          // TODO: 上传图片到服务器
-          // this.uploadAvatar(tempFilePath)
+          this.uploadAvatar(tempFilePath)
         }
       })
+    },
+
+    // 上传图片
+    async uploadAvatar(filePath) {
+      this.uploading = true
+      uni.showLoading({ title: '上传中...' })
+      try {
+        const res = await petApi.uploadImage(filePath)
+        if (res.success && res.data && res.data.url) {
+          this.form.avatar = res.data.url
+          uni.showToast({ title: '上传成功', icon: 'success' })
+        } else {
+          throw new Error(res.message || '上传失败')
+        }
+      } catch (error) {
+        console.error('图片上传失败:', error)
+        uni.showToast({ title: error.message || '上传失败', icon: 'none' })
+      } finally {
+        this.uploading = false
+        uni.hideLoading()
+      }
     },
 
     // 性别选择

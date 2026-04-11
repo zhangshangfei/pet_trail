@@ -8,6 +8,34 @@ export const getPetList = () => {
 }
 
 /**
+ * 上传图片
+ * @param {string} filePath - 图片本地路径
+ */
+export const uploadImage = (filePath) => {
+  return new Promise((resolve, reject) => {
+    uni.uploadFile({
+      url: request.defaults.baseURL + '/api/upload',
+      filePath: filePath,
+      name: 'file',
+      header: {
+        'Authorization': uni.getStorageSync('token')
+      },
+      success: (res) => {
+        const data = JSON.parse(res.data)
+        if (data.success) {
+          resolve(data)
+        } else {
+          reject(new Error(data.message || '上传失败'))
+        }
+      },
+      fail: (err) => {
+        reject(new Error('上传失败'))
+      }
+    })
+  })
+}
+
+/**
  * 创建宠物
  * @param {object} data - 宠物信息
  */

@@ -16,7 +16,7 @@
       </view>
 
       <!-- Form -->
-      <view class="apm-body">
+      <scroll-view class="apm-body" scroll-y="true" @tap.stop>
         <view class="apm-grid">
           <view class="apm-field apm-field-full">
             <text class="apm-label">宠物昵称</text>
@@ -59,13 +59,35 @@
             <text class="apm-label">毛色</text>
             <input class="apm-input" v-model="localForm.color" placeholder="请输入毛色" />
           </view>
+
+          <view class="apm-field">
+            <text class="apm-label">宠物类别</text>
+            <picker :range="categoryOptions" range-key="label" :value="categoryIndex" @change="onCategoryPick">
+              <view class="apm-select">
+                <text v-if="categoryIndex >= 0">{{ categoryOptions[categoryIndex].label }}</text>
+                <text v-else class="apm-placeholder">请选择</text>
+                <text class="apm-chevron">⌄</text>
+              </view>
+            </picker>
+          </view>
+
+          <view class="apm-field">
+            <text class="apm-label">是否绝育</text>
+            <picker :range="sterilizedOptions" range-key="label" :value="sterilizedIndex" @change="onSterilizedPick">
+              <view class="apm-select">
+                <text v-if="sterilizedIndex >= 0">{{ sterilizedOptions[sterilizedIndex].label }}</text>
+                <text v-else class="apm-placeholder">请选择</text>
+                <text class="apm-chevron">⌄</text>
+              </view>
+            </picker>
+          </view>
         </view>
 
         <view class="apm-actions">
           <button class="apm-btn apm-btn-cancel" @tap="emitClose">取消</button>
           <button class="apm-btn apm-btn-save" type="primary" @tap="emitSave">保存</button>
         </view>
-      </view>
+      </scroll-view>
     </view>
 
     <!-- Camera modal -->
@@ -91,6 +113,8 @@
 </template>
 
 <script>
+import * as petApi from '@/api/pet'
+
 export default {
   name: "AddPetModal",
   props: {
@@ -102,6 +126,7 @@ export default {
   data() {
     return {
       showCameraModal: false,
+      uploading: false,
       localForm: this.normalizeForm(this.initialForm)
     };
   },
@@ -114,8 +139,31 @@ export default {
         { label: "❓ 未知", value: 0 }
       ];
     },
+    categoryOptions() {
+      return [
+        { label: "请选择", value: -1 },
+        { label: "🐱 猫", value: 1 },
+        { label: "🐶 狗", value: 2 },
+        { label: "🐾 其他", value: 0 }
+      ];
+    },
+    sterilizedOptions() {
+      return [
+        { label: "请选择", value: -1 },
+        { label: "✅ 已绝育", value: 1 },
+        { label: "❌ 未绝育", value: 0 }
+      ];
+    },
     genderIndex() {
       const idx = this.genderOptions.findIndex((x) => x.value === this.localForm.gender);
+      return idx === -1 ? -1 : idx;
+    },
+    categoryIndex() {
+      const idx = this.categoryOptions.findIndex((x) => x.value === this.localForm.category);
+      return idx === -1 ? -1 : idx;
+    },
+    sterilizedIndex() {
+      const idx = this.sterilizedOptions.findIndex((x) => x.value === this.localForm.sterilized);
       return idx === -1 ? -1 : idx;
     }
   },
@@ -144,7 +192,9 @@ export default {
         birthday: src.birthday || "",
         weight: src.weight || "",
         color: src.color || "",
-        avatar: src.avatar || ""
+        avatar: src.avatar || "",
+        category: typeof src.category === "number" ? src.category : 0,
+        sterilized: typeof src.sterilized === "number" ? src.sterilized : 0
       };
     },
     emitClose() {
@@ -172,13 +222,27 @@ export default {
     onBirthdayPick(e) {
       this.localForm.birthday = e.detail.value;
     },
+    onCategoryPick(e) {
+      const idx = Number(e.detail.value);
+      const opt = this.categoryOptions[idx];
+      if (!opt || opt.value === -1) return;
+      this.localForm.category = opt.value;
+    },
+    onSterilizedPick(e) {
+      const idx = Number(e.detail.value);
+      const opt = this.sterilizedOptions[idx];
+      if (!opt || opt.value === -1) return;
+      this.localForm.sterilized = opt.value;
+    },
     chooseFromGallery() {
       uni.chooseImage({
         count: 1,
         sourceType: ["album"],
         success: (res) => {
           const file = res.tempFilePaths && res.tempFilePaths[0];
-          if (file) this.localForm.avatar = file;
+          if (file) {
+            this.uploadImageToServer(file);
+          }
           this.showCameraModal = false;
         },
         fail: () => {
@@ -192,13 +256,34 @@ export default {
         sourceType: ["camera"],
         success: (res) => {
           const file = res.tempFilePaths && res.tempFilePaths[0];
-          if (file) this.localForm.avatar = file;
+          if (file) {
+            this.uploadImageToServer(file);
+          }
           this.showCameraModal = false;
         },
         fail: () => {
           this.showCameraModal = false;
         }
       });
+    },
+    async uploadImageToServer(filePath) {
+      this.uploading = true;
+      uni.showLoading({ title: '上传中...' });
+      try {
+        const res = await petApi.uploadImage(filePath);
+        if (res.success && res.data && res.data.url) {
+          this.localForm.avatar = res.data.url;
+          uni.showToast({ title: '上传成功', icon: 'success' });
+        } else {
+          throw new Error(res.message || '上传失败');
+        }
+      } catch (error) {
+        console.error('图片上传失败:', error);
+        uni.showToast({ title: error.message || '上传失败', icon: 'none' });
+      } finally {
+        this.uploading = false;
+        uni.hideLoading();
+      }
     }
   }
 };
@@ -214,32 +299,36 @@ export default {
   background: rgba(0, 0, 0, 0.5);
   z-index: 20000;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 28rpx;
+  padding: 40rpx 28rpx;
+  overflow-y: auto;
 }
 
 .apm-sheet {
   width: 100%;
   max-width: 680rpx;
+  max-height: 85vh;
   background: rgba(255, 255, 255, 0.98);
   border-radius: 28rpx;
   overflow: hidden;
   box-shadow: 0 24rpx 60rpx rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
 }
 
 .apm-avatar-row {
-  padding: 36rpx 0 18rpx;
+  padding: 20rpx 0 10rpx;
   display: flex;
   justify-content: center;
   position: relative;
 }
 
 .apm-avatar-wrap {
-  width: 192rpx;
-  height: 192rpx;
-  border-radius: 96rpx;
-  border: 4rpx dashed rgba(59, 130, 246, 0.35);
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 70rpx;
+  border: 3rpx dashed rgba(59, 130, 246, 0.35);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -255,13 +344,13 @@ export default {
 }
 
 .apm-avatar-icon {
-  font-size: 44rpx;
-  margin-bottom: 6rpx;
+  font-size: 36rpx;
+  margin-bottom: 4rpx;
   color: #94a3b8;
 }
 
 .apm-avatar-tip {
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: #6b7280;
 }
 
@@ -291,13 +380,15 @@ export default {
 }
 
 .apm-body {
-  padding: 22rpx 26rpx 28rpx;
+  flex: 1;
+  padding: 16rpx 26rpx 24rpx;
+  overflow: hidden;
 }
 
 .apm-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18rpx;
+  gap: 14rpx;
 }
 
 .apm-field {
@@ -312,14 +403,14 @@ export default {
 .apm-label {
   font-size: 22rpx;
   color: #6b7280;
-  margin-bottom: 10rpx;
+  margin-bottom: 8rpx;
 }
 
 .apm-input {
   background: #fff;
   border: 2rpx solid rgba(209, 213, 219, 0.85);
   border-radius: 18rpx;
-  padding: 18rpx 18rpx;
+  padding: 14rpx 16rpx;
   font-size: 26rpx;
   color: #111827;
 }
@@ -328,7 +419,7 @@ export default {
   background: #fff;
   border: 2rpx solid rgba(209, 213, 219, 0.85);
   border-radius: 18rpx;
-  padding: 18rpx 18rpx;
+  padding: 14rpx 16rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -348,13 +439,13 @@ export default {
 .apm-actions {
   display: flex;
   gap: 16rpx;
-  margin-top: 18rpx;
+  margin-top: 14rpx;
 }
 
 .apm-btn {
   flex: 1;
   border-radius: 999rpx;
-  padding: 22rpx 0;
+  padding: 18rpx 0;
   font-size: 26rpx;
   font-weight: 800;
 }

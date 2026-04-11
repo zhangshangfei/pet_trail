@@ -60,14 +60,12 @@ mybatis-plus:
       logic-not-delete-value: 0
   mapper-locations: classpath*:/mapper/**/*.xml
 
-# 阿里云 OSS 配置
-aliyun:
-  oss:
-    endpoint: oss-cn-hangzhou.aliyuncs.com
-    accessKeyId: ${ALIYUN_OSS_ACCESS_KEY_ID:your-access-key-id}
-    accessKeySecret: ${ALIYUN_OSS_ACCESS_KEY_SECRET:your-access-key-secret}
-    bucketName: pet-trail-bucket
-    domain: https://pet-trail.oss-cn-hangzhou.aliyuncs.com
+# 腾讯云 COS 配置 (微信云托管推荐)
+tencent:
+  cos:
+    bucket-name: 7072-prod-3gyc3tpg28270da6-1419682950
+    # 你的地域，通常是 ap-guangzhou 或 ap-shanghai
+    region: ap-shanghai
 
 # JWT 配置
 jwt:

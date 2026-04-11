@@ -56,6 +56,23 @@
             <input class="form-input" v-model="form.name" placeholder="请输入宠物名称" />
           </view>
           <view class="form-item">
+            <text class="form-label">宠物类别 *</text>
+            <radio-group class="form-radio-group" @change="onCategoryChange">
+              <label class="radio-label">
+                <radio value="1" :checked="form.category === 1" />
+                <text>🐱 猫</text>
+              </label>
+              <label class="radio-label">
+                <radio value="2" :checked="form.category === 2" />
+                <text>🐶 狗</text>
+              </label>
+              <label class="radio-label">
+                <radio value="0" :checked="form.category === 0" />
+                <text>🐾 其他</text>
+              </label>
+            </radio-group>
+          </view>
+          <view class="form-item">
             <text class="form-label">品种</text>
             <input class="form-input" v-model="form.breed" placeholder="请输入品种" />
           </view>
@@ -64,15 +81,28 @@
             <radio-group class="form-radio-group" @change="onGenderChange">
               <label class="radio-label">
                 <radio value="1" :checked="form.gender === 1" />
-                <text>♂ 弟弟</text>
+                <text>♂ 公</text>
               </label>
               <label class="radio-label">
                 <radio value="2" :checked="form.gender === 2" />
-                <text>♀ 妹妹</text>
+                <text>♀ 母</text>
               </label>
               <label class="radio-label">
                 <radio value="0" :checked="form.gender === 0" />
                 <text>❓ 未知</text>
+              </label>
+            </radio-group>
+          </view>
+          <view class="form-item">
+            <text class="form-label">是否绝育</text>
+            <radio-group class="form-radio-group" @change="onSterilizedChange">
+              <label class="radio-label">
+                <radio value="1" :checked="form.sterilized === 1" />
+                <text>✅ 已绝育</text>
+              </label>
+              <label class="radio-label">
+                <radio value="0" :checked="form.sterilized === 0" />
+                <text>❌ 未绝育</text>
               </label>
             </radio-group>
           </view>
@@ -87,11 +117,11 @@
           </view>
           <view class="form-item">
             <text class="form-label">体重 (kg)</text>
-            <input class="form-input" type="number" v-model="form.weight" placeholder="请输入体重" />
+            <input class="form-input" type="digit" v-model="form.weight" placeholder="请输入体重" />
           </view>
           <view class="form-item">
             <text class="form-label">毛色</text>
-            <input class="form-input" v-model="form.color" placeholder="请输入毛色" />
+            <input class="form-input" v-model="form.color" placeholder="请输入毛色，如：白色、黑白相间" />
           </view>
         </view>
         <view class="modal-footer">
@@ -114,8 +144,10 @@ export default {
       showModal: false,
       form: {
         name: '',
+        category: 0,
         breed: '',
         gender: 0,
+        sterilized: 0,
         birthday: '',
         weight: '',
         color: '',
@@ -146,8 +178,10 @@ export default {
       this.showModal = true
       this.form = {
         name: '',
+        category: 0,
         breed: '',
         gender: 0,
+        sterilized: 0,
         birthday: '',
         weight: '',
         color: '',
@@ -163,6 +197,16 @@ export default {
     // 性别选择
     onGenderChange(e) {
       this.form.gender = parseInt(e.detail.value)
+    },
+
+    // 类别选择
+    onCategoryChange(e) {
+      this.form.category = parseInt(e.detail.value)
+    },
+
+    // 绝育选择
+    onSterilizedChange(e) {
+      this.form.sterilized = parseInt(e.detail.value)
     },
 
     // 生日选择
@@ -183,8 +227,10 @@ export default {
       try {
         const submitData = {
           name: this.form.name.trim(),
+          category: this.form.category,
           breed: this.form.breed?.trim() || undefined,
           gender: this.form.gender,
+          sterilized: this.form.sterilized,
           birthday: this.form.birthday || undefined,
           weight: this.form.weight ? parseFloat(this.form.weight) : undefined,
           color: this.form.color?.trim() || undefined,
@@ -192,12 +238,12 @@ export default {
         }
 
         const res = await petApi.createPet(submitData)
-        
+
         uni.showToast({
           title: '添加成功',
           icon: 'success'
         })
-        
+
         this.hideAddModal()
         this.loadPets()
       } catch (error) {
@@ -367,17 +413,19 @@ export default {
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 1000;
+  padding-top: 60rpx;
+  overflow-y: auto;
 }
 
 .modal-content {
-  width: 80%;
-  max-height: 80vh;
+  width: 85%;
   background-color: #ffffff;
   border-radius: 20rpx;
-  overflow: hidden;
+  overflow: visible;
+  margin-bottom: 40rpx;
 }
 
 .modal-header {
@@ -402,51 +450,56 @@ export default {
 
 .modal-body {
   padding: 30rpx;
-  max-height: 60vh;
-  overflow-y: auto;
 }
 
 .form-item {
-  margin-bottom: 30rpx;
+  margin-bottom: 20rpx;
 }
 
 .form-label {
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: #333333;
-  margin-bottom: 12rpx;
+  margin-bottom: 10rpx;
   display: block;
 }
 
 .form-input {
   width: 100%;
-  padding: 20rpx;
+  padding: 16rpx;
   border: 1rpx solid #e0e0e0;
   border-radius: 12rpx;
-  font-size: 28rpx;
+  font-size: 26rpx;
 }
 
 .form-radio-group {
   display: flex;
-  gap: 20rpx;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 8rpx;
 }
 
 .radio-label {
   display: flex;
   align-items: center;
-  font-size: 28rpx;
+  font-size: 24rpx;
   color: #666666;
+  padding: 10rpx 16rpx;
+  background-color: #f8f8f8;
+  border-radius: 8rpx;
+  border: 1rpx solid #e0e0e0;
 }
 
 .radio-label radio {
   margin-right: 8rpx;
+  transform: scale(0.85);
 }
 
 .picker {
   width: 100%;
-  padding: 20rpx;
+  padding: 16rpx;
   border: 1rpx solid #e0e0e0;
   border-radius: 12rpx;
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: #333333;
 }
 
@@ -457,14 +510,14 @@ export default {
 .modal-footer {
   display: flex;
   gap: 20rpx;
-  padding: 30rpx;
+  padding: 24rpx 30rpx;
   border-top: 1rpx solid #f0f0f0;
 }
 
 .modal-btn {
   flex: 1;
-  padding: 24rpx;
-  font-size: 28rpx;
+  padding: 20rpx;
+  font-size: 26rpx;
   border-radius: 12rpx;
 }
 
