@@ -113,7 +113,7 @@
 </template>
 
 <script>
-import * as petApi from '@/api/pet'
+import api from '@/api'
 
 export default {
   name: "AddPetModal",
@@ -270,7 +270,7 @@ export default {
       this.uploading = true;
       uni.showLoading({ title: '上传中...' });
       try {
-        const res = await petApi.uploadImage(filePath);
+        const res = await api.pet.uploadImage(filePath);
         if (res.success && res.data && res.data.url) {
           this.localForm.avatar = res.data.url;
           uni.showToast({ title: '上传成功', icon: 'success' });

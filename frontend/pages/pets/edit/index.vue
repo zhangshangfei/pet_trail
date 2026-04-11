@@ -144,7 +144,7 @@
 </template>
 
 <script>
-import * as petApi from '@/api/pet'
+import api from '@/api'
 
 export default {
   data() {
@@ -179,7 +179,7 @@ export default {
     // 加载宠物详情
     async loadPetDetail() {
       try {
-        const res = await petApi.getPetDetail(this.petId)
+        const res = await api.pet.getPetDetail(this.petId)
         if (res.success && res.data) {
           const pet = res.data
           this.form = {
@@ -223,7 +223,7 @@ export default {
       this.uploading = true
       uni.showLoading({ title: '上传中...' })
       try {
-        const res = await petApi.uploadImage(filePath)
+        const res = await api.pet.uploadImage(filePath)
         if (res.success && res.data && res.data.url) {
           this.form.avatar = res.data.url
           uni.showToast({ title: '上传成功', icon: 'success' })
@@ -288,7 +288,7 @@ export default {
           avatar: this.form.avatar || undefined
         }
 
-        const res = await petApi.updatePet(this.petId, submitData)
+        const res = await api.pet.updatePet(this.petId, submitData)
 
         if (res.success) {
           uni.showToast({
@@ -330,7 +330,7 @@ export default {
     // 删除宠物
     async deletePet() {
       try {
-        const res = await petApi.deletePet(this.petId)
+        const res = await api.pet.deletePet(this.petId)
 
         if (res.success) {
           uni.showToast({

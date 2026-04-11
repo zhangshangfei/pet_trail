@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -28,41 +29,52 @@ public class CosService {
      * 上传文件到微信云托管存储
      */
     public String uploadFile(MultipartFile file) throws IOException {
-        // 1. 生成唯一的文件名 (防止重名覆盖)
-        String originalFilename = file.getOriginalFilename();
-        String fileName = generateFileName(originalFilename);
+        String fileName = generateFileName(file.getOriginalFilename());
+        return uploadToCos(file.getInputStream(), fileName, file.getContentType(), (int) file.getSize());
+    }
 
-        // 2. 构建对象路径 (Key)
-        // 格式: images/2026-04-11/uuid.png
-        String datePath = LocalDate.now().format(DateTimeFormatter.ISO_DATE);
-        String objectName = "images/" + datePath + "/" + fileName;
+    /**
+     * 上传文件（base64/流方式）
+     * @param inputStream 文件流
+     * @param fileName 文件名
+     * @param contentType 文件类型
+     * @param size 文件大小
+     * @return 文件访问URL
+     */
+    public String uploadFileBase64(InputStream inputStream, String fileName, String contentType, int size) throws IOException {
+        if (fileName == null || fileName.isEmpty()) {
+            fileName = generateFileName("image.jpg");
+        }
+        return uploadToCos(inputStream, fileName, contentType, size);
+    }
 
-        // 3. 设置元数据
+    /**
+     * 实际上传到COS的私有方法
+     */
+    private String uploadToCos(InputStream inputStream, String fileName, String contentType, int size) throws IOException {
+        String objectName = "images/" + LocalDate.now().format(DateTimeFormatter.ISO_DATE) + "/" + fileName;
+
         ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentLength(file.getSize());
-        metadata.setContentType(file.getContentType());
+        metadata.setContentLength(size);
+        if (contentType != null) {
+            metadata.setContentType(contentType);
+        }
 
-        // 4. 创建上传请求
         PutObjectRequest request = new PutObjectRequest(
                 cosConfig.getBucketName(),
                 objectName,
-                file.getInputStream(),
+                inputStream,
                 metadata
         );
 
-        // 5. 执行上传
         PutObjectResult result = cosClient.putObject(request);
         log.info("文件上传成功: {} -> ETag: {}", objectName, result.getETag());
 
-        // 6. 拼接并返回默认访问 URL
-        // 格式: https://<BucketName>.cos.<Region>.myqcloud.com/<ObjectName>
         String defaultDomain = String.format("https://%s.cos.%s.myqcloud.com",
                 cosConfig.getBucketName(),
                 cosConfig.getRegion());
 
-        String fileUrl = defaultDomain + "/" + objectName;
-
-        return fileUrl;
+        return defaultDomain + "/" + objectName;
     }
 
     /**

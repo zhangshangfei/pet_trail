@@ -36,9 +36,33 @@ const getCloudConfig = () => {
   }
 }
 
+/**
+ * 文件上传使用的 HTTP 根地址。
+ * 微信小程序走云托管时，业务接口用 callContainer，但 uni.uploadFile 必须是完整 HTTPS URL，
+ * 因此需要单独配置公网可访问的上传入口（默认同 H5 生产域名）。
+ */
+const getUploadHttpBase = () => {
+  const api = getApiBaseUrl()
+  if (api !== 'cloud') {
+    return api.replace(/\/$/, '')
+  }
+  let fromEnv = ''
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_UPLOAD_HTTP_BASE) {
+      fromEnv = String(import.meta.env.VITE_UPLOAD_HTTP_BASE).trim()
+    }
+  } catch (e) {
+    fromEnv = ''
+  }
+  return (fromEnv || 'https://prod-3gyc3tpg28270da6-springboot-4fyd.tcb-api.net').replace(/\/$/, '')
+}
+
 export default {
   // API 基础地址（'cloud' 表示使用云托管）
   VITE_API_BASE_URL: getApiBaseUrl(),
+
+  /** 上传文件时使用的 HTTP 根地址（无尾部斜杠） */
+  VITE_UPLOAD_HTTP_BASE: getUploadHttpBase(),
 
   // 云托管配置
   VITE_CLOUD_CONFIG: getCloudConfig(),

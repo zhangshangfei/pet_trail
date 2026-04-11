@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pettrail.pettrailbackend.mapper.VaccineReminderMapper">
+
+    <resultMap id="BaseResultMap" type="com.pettrail.pettrailbackend.entity.VaccineReminder">
+        <id column="id" property="id"/>
+        <result column="pet_id" property="petId"/>
+        <result column="user_id" property="userId"/>
+        <result column="vaccine_name" property="vaccineName"/>
+        <result column="vaccine_type" property="vaccineType"/>
+        <result column="next_date" property="nextDate"/>
+        <result column="status" property="status"/>
+        <result column="reminder_days" property="reminderDays"/>
+        <result column="is_notified" property="isNotified"/>
+        <result column="note" property="note"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- 查询即将到期的疫苗提醒 -->
+    <select id="selectDueReminders" resultMap="BaseResultMap">
+        SELECT * FROM vaccine_reminders
+        WHERE user_id = #{userId}
+        AND next_date BETWEEN #{startDate} AND #{endDate}
+        AND status = 1
+        ORDER BY next_date ASC
+    </select>
+
+    <!-- 查询宠物的疫苗提醒 -->
+    <select id="selectByPetId" resultMap="BaseResultMap">
+        SELECT * FROM vaccine_reminders
+        WHERE pet_id = #{petId}
+        ORDER BY next_date ASC
+    </select>
+
+</mapper>

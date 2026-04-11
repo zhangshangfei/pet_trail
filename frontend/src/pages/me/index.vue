@@ -142,6 +142,7 @@
 
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
+import { uploadImage } from '@/api/pet'
 
 export default {
   components: {
@@ -268,9 +269,23 @@ export default {
           uni.chooseImage({
             count: 1,
             sourceType,
-            success: (imgRes) => {
+            success: async (imgRes) => {
               const path = imgRes.tempFilePaths && imgRes.tempFilePaths[0];
-              if (path) this.addPetForm.avatar = path;
+              if (!path) return;
+              uni.showLoading({ title: "上传中..." });
+              try {
+                const up = await uploadImage(path);
+                if (up && up.success && up.data && up.data.url) {
+                  this.addPetForm.avatar = up.data.url;
+                  uni.showToast({ title: "头像已上传", icon: "success" });
+                } else {
+                  throw new Error((up && up.message) || "上传失败");
+                }
+              } catch (e) {
+                uni.showToast({ title: (e && e.message) || "上传失败", icon: "none" });
+              } finally {
+                uni.hideLoading();
+              }
             }
           });
         }
