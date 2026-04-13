@@ -16,8 +16,7 @@ public class CosConfig {
 
 
     /**
-     * 存储桶名称 (从你的截图获取)
-     * 示例: 7072-prod-3gyc3tpg28270da6-1419682950
+     * 存储桶名称
      */
     private String bucketName;
 
