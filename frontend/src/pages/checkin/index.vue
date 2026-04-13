@@ -172,10 +172,10 @@ export default {
     this.today = this.getTodayString()
     this.initPage()
   },
-  onShow() {
-    if (this.petId || this.pets.length) {
-      this.refreshPageData()
-    }
+  async onShow() {
+    // 每次显示页面时都重新加载宠物列表和刷新数据
+    await this.loadPets()
+    await this.refreshPageData()
   },
   onUnload() {
     if (this.animationTimer) {
