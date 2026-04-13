@@ -70,9 +70,12 @@ public class CosService {
         PutObjectResult result = cosClient.putObject(request);
         log.info("文件上传成功: {} -> ETag: {}", objectName, result.getETag());
 
-        String defaultDomain = String.format("https://%s.cos.%s.myqcloud.com",
+        String defaultDomain = String.format("https://%s.tcb.qcloud.la",
                 cosConfig.getBucketName(),
                 cosConfig.getRegion());
+        // String defaultDomain = String.format("https://%s.cos.%s.myqcloud.com",
+        //         cosConfig.getBucketName(),
+        //         cosConfig.getRegion());
 
         return defaultDomain + "/" + objectName;
     }
