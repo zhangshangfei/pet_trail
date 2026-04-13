@@ -10,9 +10,21 @@ Component({
       { pagePath: "/pages/me/index" }
     ]
   },
+  lifetimes: {
+    attached() {
+      this.syncStateByRoute();
+    },
+    ready() {
+      this.syncStateByRoute();
+    }
+  },
   pageLifetimes: {
     show() {
-      this.syncStateByRoute();
+      const self = this;
+      // 使用 nextTick 确保 DOM 更新后再同步
+      setTimeout(() => {
+        self.syncStateByRoute();
+      }, 100);
     }
   },
   methods: {
@@ -24,10 +36,12 @@ Component({
         const shouldHide = route === "pages/health/index";
         const normalizedRoute = route ? `/${route}` : "";
         const selectedIndex = this.data.list.findIndex((item) => item.pagePath === normalizedRoute);
-        const nextSelected = selectedIndex >= 0 ? selectedIndex : this.data.selected;
-
-        if (this.data.hidden !== shouldHide || this.data.selected !== nextSelected) {
-          this.setData({ hidden: shouldHide, selected: nextSelected });
+        
+        if (selectedIndex >= 0 && this.data.selected !== selectedIndex) {
+          this.setData({ selected: selectedIndex });
+        }
+        if (this.data.hidden !== shouldHide) {
+          this.setData({ hidden: shouldHide });
         }
       } catch (e) {
         // ignore route detection errors
@@ -37,17 +51,9 @@ Component({
       const index = Number(e.currentTarget.dataset.index || 0);
       const item = this.data.list[index];
       if (!item) return;
-      this._switchSeq = (this._switchSeq || 0) + 1;
-      const seq = this._switchSeq;
-      this.setData({ hidden: false, selected: index });
+      
       wx.switchTab({
-        url: item.pagePath,
-        complete: () => {
-          // Only the latest tap can correct state.
-          setTimeout(() => {
-            if (seq === this._switchSeq) this.syncStateByRoute();
-          }, 80);
-        }
+        url: item.pagePath
       });
     }
   }
