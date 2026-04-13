@@ -20,56 +20,45 @@ export const getPetList = () => {
 }
 
 /**
- * 上传图片
+ * 上传图片（multipart/form-data，字段名 file，对应后端 POST /api/upload）
  * @param {string} filePath - 图片本地路径
  */
 export const uploadImage = (filePath) => {
   return new Promise((resolve, reject) => {
-    // 读取文件为 base64
-    const fs = wx.getFileSystemManager()
-    fs.readFile({
-      filePath: filePath,
-      encoding: 'base64',
-      success: (readRes) => {
-        // 获取文件扩展名
-        const ext = filePath.substring(filePath.lastIndexOf('.') + 1)
-        const fileName = `upload_${Date.now()}.${ext}`
+    const uploadUrl = resolveUploadUrl()
+    const token = uni.getStorageSync('token') || ''
+    const header = {}
+    if (token) {
+      header.Authorization = `Bearer ${token}`
+    }
 
-        // 通过云托管上传
-        wx.cloud.callContainer({
-          config: {
-            env: config.VITE_CLOUD_CONFIG.env
-          },
-          path: '/api/upload/base64',
-          method: 'POST',
-          header: {
-            'X-WX-SERVICE': config.VITE_CLOUD_CONFIG.service,
-            'Content-Type': 'application/json'
-          },
-          data: {
-            fileName: fileName,
-            fileBase64: readRes.data,
-            contentType: 'image/' + ext
-          },
-          success: (res) => {
-            if (res.statusCode >= 200 && res.statusCode < 300) {
-              const data = res.data
-              if (data && data.success) {
-                resolve(data)
-              } else {
-                reject(new Error((data && data.message) || '上传失败'))
-              }
-            } else {
-              reject(new Error(`上传失败：HTTP ${res.statusCode}`))
-            }
-          },
-          fail: (err) => {
-            reject(new Error((err && err.errMsg) || '上传失败'))
+    uni.uploadFile({
+      url: uploadUrl,
+      filePath,
+      name: 'file',
+      header,
+      success: (res) => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          reject(new Error(`上传失败：HTTP ${res.statusCode}`))
+          return
+        }
+        let data = res.data
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data)
+          } catch (e) {
+            reject(new Error('上传响应解析失败'))
+            return
           }
-        })
+        }
+        if (data && data.success) {
+          resolve(data)
+        } else {
+          reject(new Error((data && data.message) || '上传失败'))
+        }
       },
       fail: (err) => {
-        reject(new Error('读取文件失败'))
+        reject(new Error((err && err.errMsg) || '上传失败'))
       }
     })
   })

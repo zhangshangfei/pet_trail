@@ -22,7 +22,7 @@ public class CosConfig {
 
     /**
      * 地域 (Region)
-     * 示例: ap-guangzhou (请根据你实际开通的地域填写)
+     * 示例: ap-shanghai (请根据你实际开通的地域填写)
      */
     private String region;
 
