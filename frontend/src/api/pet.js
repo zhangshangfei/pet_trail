@@ -31,6 +31,14 @@ export const uploadImage = (filePath) => {
     if (token) {
       header.Authorization = `Bearer ${token}`
     }
+    
+    // 微信小程序云托管需要添加 X-WX-SERVICE header
+    if (BASE_URL === 'cloud') {
+      header['X-WX-SERVICE'] = config.VITE_CLOUD_CONFIG.service
+    }
+
+    console.log('[uploadImage] 上传地址:', uploadUrl)
+    console.log('[uploadImage] 请求头:', header)
 
     uni.uploadFile({
       url: uploadUrl,
@@ -38,26 +46,32 @@ export const uploadImage = (filePath) => {
       name: 'file',
       header,
       success: (res) => {
+        console.log('[uploadImage] 上传响应:', res)
         if (res.statusCode < 200 || res.statusCode >= 300) {
           reject(new Error(`上传失败：HTTP ${res.statusCode}`))
           return
         }
         let data = res.data
+        console.log('[uploadImage] 解析前数据:', res.data)
         if (typeof data === 'string') {
           try {
             data = JSON.parse(data)
+            console.log('[uploadImage] 解析后数据:', data)
           } catch (e) {
+            console.error('[uploadImage] JSON 解析失败:', e)
             reject(new Error('上传响应解析失败'))
             return
           }
         }
         if (data && data.success) {
+          console.log('[uploadImage] 上传成功, URL:', data.data?.url)
           resolve(data)
         } else {
           reject(new Error((data && data.message) || '上传失败'))
         }
       },
       fail: (err) => {
+        console.error('[uploadImage] 上传失败:', err)
         reject(new Error((err && err.errMsg) || '上传失败'))
       }
     })

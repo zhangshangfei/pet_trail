@@ -205,6 +205,7 @@ export default {
         uni.showToast({ title: "请输入宠物昵称", icon: "none" });
         return;
       }
+      console.log('[AddPetModal] emitSave 触发表单数据:', this.localForm);
       this.$emit("save", { ...this.localForm });
     },
     openCameraModal() {
@@ -270,15 +271,26 @@ export default {
       this.uploading = true;
       uni.showLoading({ title: '上传中...' });
       try {
+        console.log('[AddPetModal] 开始上传图片:', filePath);
         const res = await api.pet.uploadImage(filePath);
+        console.log('[AddPetModal] 上传响应:', res);
         if (res.success && res.data && res.data.url) {
-          this.localForm.avatar = res.data.url;
+          const newAvatar = res.data.url;
+          console.log('[AddPetModal] 准备设置头像 URL:', newAvatar);
+          console.log('[AddPetModal] 设置前 localForm.avatar:', this.localForm.avatar);
+          
+          // 使用 $set 确保响应式更新（Vue 3 中直接赋值也可以，但为了兼容性问题）
+          this.localForm.avatar = newAvatar;
+          
+          console.log('[AddPetModal] 设置后 localForm.avatar:', this.localForm.avatar);
+          console.log('[AddPetModal] 完整 localForm:', JSON.parse(JSON.stringify(this.localForm)));
+          
           uni.showToast({ title: '上传成功', icon: 'success' });
         } else {
           throw new Error(res.message || '上传失败');
         }
       } catch (error) {
-        console.error('图片上传失败:', error);
+        console.error('[AddPetModal] 图片上传失败:', error);
         uni.showToast({ title: error.message || '上传失败', icon: 'none' });
       } finally {
         this.uploading = false;

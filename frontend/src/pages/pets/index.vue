@@ -88,8 +88,14 @@ export default {
     async loadPets() {
       try {
         const res = await uni.$request.get('/api/pets');
+        console.log('[pet-list] 加载宠物列表响应:', res);
         if (res.success) {
           this.pets = res.data || [];
+          console.log('[pet-list] 宠物列表数据:', this.pets);
+          // 检查每个宠物的 avatar 字段
+          this.pets.forEach((pet, index) => {
+            console.log(`[pet-list] 宠物 ${index} - ID: ${pet.id}, 名称: ${pet.name}, avatar:`, pet.avatar);
+          });
         } else {
           uni.showToast({
             title: res.message || '加载失败',
@@ -97,7 +103,7 @@ export default {
           });
         }
       } catch (error) {
-        console.error('加载宠物列表失败:', error);
+        console.error('[pet-list] 加载宠物列表失败:', error);
         uni.showToast({
           title: '网络错误',
           icon: 'none'
@@ -136,6 +142,7 @@ export default {
     // 提交表单
     async submitForm(payload) {
       const data = payload || this.form;
+      console.log('[pet-list] 提交表单数据:', data);
       this.form = data;
       if (!data.name) {
         uni.showToast({
@@ -147,6 +154,7 @@ export default {
 
       try {
         const res = await uni.$request.post('/api/pets', data);
+        console.log('[pet-list] 创建宠物响应:', res);
 
         if (res.success) {
           uni.showToast({
@@ -162,7 +170,7 @@ export default {
           });
         }
       } catch (error) {
-        console.error('添加宠物失败:', error);
+        console.error('[pet-list] 添加宠物失败:', error);
         uni.showToast({
           title: '网络错误',
           icon: 'none'
