@@ -54,7 +54,7 @@ const getUploadHttpBase = () => {
   } catch (e) {
     fromEnv = ''
   }
-  return (fromEnv || 'https://prod-3gyc3tpg28270da6-springboot-4fyd.tcb-api.net').replace(/\/$/, '')
+  return (fromEnv || 'https://springboot-4fyd-243081-4-1419682950.sh.run.tcloudbase.com').replace(/\/$/, '')
 }
 
 export default {
