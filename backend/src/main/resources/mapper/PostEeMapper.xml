@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pettrail.pettrailbackend.mapper.PostEeMapper">
+
+    <!-- 根据动态 ID 和用户 ID 删除收藏 -->
+    <delete id="deleteByPostIdAndUserId">
+        DELETE FROM post_ee
+        WHERE post_id = #{postId} AND user_id = #{userId}
+    </delete>
+
+    <!-- 统计动态收藏数 -->
+    <select id="countByPostId" resultType="int">
+        SELECT COUNT(*) FROM post_ee
+        WHERE post_id = #{postId}
+    </select>
+
+</mapper>
