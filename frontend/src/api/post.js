@@ -10,10 +10,13 @@ export const createPost = (data) => {
 
 /**
  * 获取动态列表
+ * @param {number} page - 页码
+ * @param {number} size - 每页数量
+ * @param {string} tab - tab类型：all-全部, follow-关注, recommend-推荐
  */
-export const getFeed = (page = 1, size = 20) => {
+export const getFeed = (page = 1, size = 20, tab = 'all') => {
   return request.get('/api/posts/feed', {
-    params: { page, size }
+    params: { page, size, tab }
   })
 }
 

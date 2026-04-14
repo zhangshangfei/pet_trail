@@ -167,6 +167,7 @@
 <script>
 import * as postApi from '@/api/post'
 import * as petApi from '@/api/pet'
+import { compressImage } from '@/utils/imageCompress'
 
 export default {
   data() {
@@ -320,9 +321,9 @@ export default {
           this.mediaList = []
           this.selectedChallenge = ''
 
-          // 返回首页
+          // 跳转到首页并刷新
           setTimeout(() => {
-            uni.navigateBack()
+            uni.switchTab({ url: '/pages/home/index' })
           }, 1500)
         }
       } catch (error) {
@@ -374,19 +375,18 @@ export default {
         sourceType: ['album', 'camera'],
         success: async (res) => {
           uni.showLoading({ title: '处理图片...', mask: true })
-          
+
           for (const file of res.tempFiles) {
             if (file.fileType === 'image') {
               // 压缩图片
               try {
-                const { compressImage } = await import('@/utils/imageCompress')
                 const compressedPath = await compressImage({
                   filePath: file.tempFilePath,
                   quality: 75,
                   maxWidth: 1920,
                   maxHeight: 1920
                 })
-                
+
                 this.mediaList.push({
                   type: 'image',
                   path: compressedPath
@@ -405,7 +405,7 @@ export default {
               })
             }
           }
-          
+
           uni.hideLoading()
         }
       })

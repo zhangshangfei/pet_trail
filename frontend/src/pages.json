@@ -90,6 +90,13 @@
         "navigationBarTitleText": "发布动态",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/post/detail",
+      "style": {
+        "navigationBarTitleText": "动态详情",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

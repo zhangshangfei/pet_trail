@@ -102,13 +102,13 @@
                 <text class="action-icon" :class="{ 'action-icon--liked': post.liked }">{{ post.liked ? '❤️' : '🤍' }}</text>
                 <text class="action-count">{{ formatNumber(post.likes) }}</text>
               </view>
-              <view class="action-item" @click="openComments(post)">
-                <text class="action-icon">💬</text>
-                <text class="action-count">{{ formatNumber(post.comments) }}</text>
-              </view>
               <view class="action-item" @click="onEeTap(post)">
                 <text class="action-icon" :class="{ 'action-icon--liked': post.eeLiked }">{{ post.eeLiked ? '⭐' : '☆' }}</text>
                 <text class="action-count">{{ formatNumber(post.eeCount) }}</text>
+              </view>
+              <view class="action-item" @click="openComments(post)">
+                <text class="action-icon">💬</text>
+                <text class="action-count">{{ formatNumber(post.comments) }}</text>
               </view>
               <view class="action-item post-time-item">
                 <text class="action-time">{{ post.relativeTime }}</text>
@@ -148,44 +148,6 @@
     <view class="fab-button" @click="onPublishTap">
       <text class="fab-icon">+</text>
     </view>
-
-    <!-- 评论抽屉 -->
-    <view v-if="showComments" class="comment-drawer-mask" @click="closeComments">
-      <view class="comment-drawer" @click.stop>
-        <view class="drawer-header">
-          <text class="drawer-title">全部评论 ({{ currentPost?.comments || 0 }})</text>
-          <text class="drawer-close" @click="closeComments">✕</text>
-        </view>
-
-        <scroll-view scroll-y class="comment-list">
-          <view
-            v-for="comment in currentPost?.allComments || []"
-            :key="comment.id"
-            class="comment-item"
-          >
-            <image class="comment-avatar" :src="comment.userAvatar" mode="aspectFill" />
-            <view class="comment-info">
-              <text class="comment-username">{{ comment.userName }}</text>
-              <text class="comment-content">{{ comment.text }}</text>
-              <view class="comment-footer">
-                <text class="comment-time">{{ comment.time }}</text>
-                <text class="comment-reply">回复</text>
-              </view>
-            </view>
-          </view>
-        </scroll-view>
-
-        <view class="comment-input-wrap">
-          <input
-            class="comment-input"
-            v-model="newComment"
-            placeholder="写评论..."
-            @confirm="addComment"
-          />
-          <text class="send-btn" @click="addComment">发送</text>
-        </view>
-      </view>
-    </view>
   </view>
 </template>
 
@@ -214,11 +176,7 @@ export default {
       loading: false,
       hasMore: true,
 
-      expandedPosts: {},
-
-      showComments: false,
-      currentPost: null,
-      newComment: ''
+      expandedPosts: {}
     };
   },
   computed: {
@@ -231,7 +189,10 @@ export default {
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: false });
 
     this.checkLoginStatus();
-    // 未登录状态下也可以加载"全部"数据
+    // 每次进入首页都重置分页参数并刷新数据
+    this.page = 1;
+    this.postList = [];
+    this.hasMore = true;
     this.loadPosts();
   },
   onLoad() {
@@ -239,7 +200,6 @@ export default {
       const sys = uni.getSystemInfoSync();
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
       const userTopBarHeight = this.statusBarHeight + 92;
-      // 分段控制器与 UserTopBar 之间适当留白
       this.segmentBarTop = userTopBarHeight - 30;
       this.headerHeight = userTopBarHeight + 26;
     } catch (e) {
@@ -309,7 +269,6 @@ export default {
 
                 uni.showToast({ title: '登录成功', icon: 'success', duration: 2000 });
                 
-                // 登录成功后刷新数据
                 setTimeout(() => {
                   self.page = 1;
                   self.postList = [];
@@ -351,8 +310,7 @@ export default {
 
     switchTab(tab) {
       const token = uni.getStorageSync('token');
-      
-      // 未登录状态下只能查看"全部"，"关注"和"推荐"需要登录
+
       if (!token && tab !== 'all') {
         uni.showModal({
           title: '提示',
@@ -367,7 +325,7 @@ export default {
         })
         return;
       }
-      
+
       this.currentTab = tab;
       this.page = 1;
       this.postList = [];
@@ -376,12 +334,11 @@ export default {
     },
 
     getPetIcon(type) {
-      // 后端返回的是数字：1-猫，2-狗，0-其他
       switch(type) {
-        case 1: return '🐱';  // 猫
-        case 2: return '🐕';  // 狗
-        case 3: return '🐰';  // 兔
-        case 4: return '🐦';  // 鸟
+        case 1: return '🐱';
+        case 2: return '🐕';
+        case 3: return '🐰';
+        case 4: return '🐦';
         default: return '🐾';
       }
     },
@@ -422,9 +379,9 @@ export default {
     async onLikeTap(post) {
       const token = uni.getStorageSync('token');
       if (!token) {
-        uni.showModal({ 
-          title: '提示', 
-          content: '请先登录后再点赞', 
+        uni.showModal({
+          title: '提示',
+          content: '请先登录后再点赞',
           showCancel: true,
           confirmText: '去登录',
           success: (res) => {
@@ -439,11 +396,8 @@ export default {
       try {
         const res = await postApi.toggleLike(post.id);
         if (res.success) {
-          // 使用后端返回的真实状态
           this.$set(post, 'liked', res.data.liked);
           this.$set(post, 'likes', res.data.likeCount);
-          
-          console.log('[点赞] postId:', post.id, 'liked:', res.data.liked, 'likeCount:', res.data.likeCount);
         }
       } catch (error) {
         console.error('点赞失败:', error);
@@ -454,9 +408,9 @@ export default {
     async onEeTap(post) {
       const token = uni.getStorageSync('token');
       if (!token) {
-        uni.showModal({ 
-          title: '提示', 
-          content: '请先登录后再收藏', 
+        uni.showModal({
+          title: '提示',
+          content: '请先登录后再收藏',
           showCancel: true,
           confirmText: '去登录',
           success: (res) => {
@@ -468,21 +422,12 @@ export default {
         return;
       }
 
-      console.log('[收藏] 操作前 - postId:', post.id, 'eeLiked:', post.eeLiked, 'eeCount:', post.eeCount);
-
       try {
         const res = await postApi.toggleEe(post.id);
-        console.log('[收藏] 完整响应:', JSON.stringify(res));
-        console.log('[收藏] res.data:', JSON.stringify(res.data));
-        
         if (res.success && res.data) {
           const { eeLiked, eeCount } = res.data;
-          console.log('[收藏] 解析数据 - eeLiked:', eeLiked, 'eeCount:', eeCount);
-          
           this.$set(post, 'eeLiked', eeLiked);
           this.$set(post, 'eeCount', eeCount);
-          
-          console.log('[收藏] 更新后 - eeLiked:', post.eeLiked, 'eeCount:', post.eeCount);
         }
       } catch (error) {
         console.error('收藏失败:', error);
@@ -497,9 +442,9 @@ export default {
     openComments(post) {
       const token = uni.getStorageSync('token');
       if (!token) {
-        uni.showModal({ 
-          title: '提示', 
-          content: '请先登录后再评论', 
+        uni.showModal({
+          title: '提示',
+          content: '请先登录后再评论',
           showCancel: true,
           confirmText: '去登录',
           success: (res) => {
@@ -511,39 +456,9 @@ export default {
         return;
       }
       
-      this.currentPost = post;
-      this.showComments = true;
-      this.newComment = '';
-    },
-
-    closeComments() {
-      this.showComments = false;
-      this.currentPost = null;
-      this.newComment = '';
-    },
-
-    addComment() {
-      if (!this.newComment.trim()) return;
-
-      const post = this.currentPost;
-      if (!post) return;
-
-      const newComment = {
-        id: Date.now(),
-        userName: '我',
-        text: this.newComment,
-        time: '刚刚',
-        userAvatar: this.avatarUrl
-      };
-
-      if (!post.allComments) {
-        this.$set(post, 'allComments', []);
-      }
-      post.allComments.push(newComment);
-      this.$set(post, 'comments', (post.comments || 0) + 1);
-
-      this.newComment = '';
-      uni.showToast({ title: '评论成功', icon: 'success' });
+      uni.navigateTo({
+        url: `/pages/post/detail?id=${post.id}`
+      });
     },
 
     async loadPosts() {
@@ -551,7 +466,6 @@ export default {
 
       const token = uni.getStorageSync('token');
 
-      // 未登录状态下只能查看"全部"，"关注"和"推荐"需要登录
       if (!token && this.currentTab !== 'all') {
         uni.showModal({
           title: '提示',
@@ -563,43 +477,26 @@ export default {
 
       this.loading = true;
       try {
-        const res = await postApi.getFeed(this.page, this.size);
+        const res = await postApi.getFeed(this.page, this.size, this.currentTab);
         if (res.success && Array.isArray(res.data)) {
-          // 调试：查看第一条数据的时间
-          if (res.data.length > 0) {
-            console.log('[首页] 后端返回的时间数据示例:', res.data[0].createdAt);
-          }
-          
           const newPosts = res.data.map(post => ({
             ...post,
-            // 用户信息
             userName: post.userName || '未知用户',
             userAvatar: post.userAvatar || 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg',
             avatar: post.userAvatar || 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg',
-
-            // 宠物信息
             petName: post.petName || '',
             petType: post.petType || 0,
             petAge: post.petAge || 0,
             petAvatar: post.petAvatar || '',
-
-            // 时间（后端返回的是 createdAt 而不是 createTime）
             time: this.formatTime(post.createdAt),
             relativeTime: this.getRelativeTime(post.createdAt),
-
-            // 点赞和评论
             likes: post.likeCount || 0,
             comments: post.commentCount || 0,
             eeCount: post.eeCount || 0,
             liked: post.liked || false,
             eeLiked: post.eeLiked || false,
-
-            // 图片列表（使用后端解析好的 imageList）
             images: post.imageList || [],
-
-            // 评论
-            previewComments: post.previewComments || [],
-            allComments: post.allComments || []
+            previewComments: post.previewComments || []
           }));
 
           if (newPosts.length < this.size) {
@@ -637,72 +534,30 @@ export default {
       return `${date.getMonth() + 1}/${date.getDate()}`;
     },
 
-    /**
-     * 获取相对时间（微信朋友圈风格）
-     * - 1分钟内：刚刚
-     * - 1小时内：X分钟前
-     * - 24小时内：X小时前
-     * - 2天内：昨天
-     * - 3天内：X天前
-     * - 超过3天：月/日
-     */
     getRelativeTime(timestamp) {
       if (!timestamp) return '';
       
-      // 处理时间戳，兼容多种格式
       let timeMs = 0;
-      
       if (typeof timestamp === 'number') {
-        // 已经是毫秒
         timeMs = timestamp;
       } else if (typeof timestamp === 'string') {
-        // 字符串格式，尝试解析
-        // 兼容格式：'2024-04-14T10:30:00' 或 '2024-04-14 10:30:00' 或 '2024-04-14T10:30:00.000'
         const dateStr = timestamp.replace(' ', 'T');
         timeMs = new Date(dateStr).getTime();
       }
       
-      if (isNaN(timeMs) || timeMs === 0) {
-        console.error('时间解析失败:', timestamp);
-        return '';
-      }
+      if (isNaN(timeMs) || timeMs === 0) return '';
       
       const now = Date.now();
       const diff = now - timeMs;
       
-      // 小于1分钟
-      if (diff < 60000) {
-        return '刚刚';
-      }
+      if (diff < 60000) return '刚刚';
+      if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+      if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+      if (diff < 172800000) return '昨天';
+      if (diff < 259200000) return Math.floor(diff / 86400000) + '天前';
       
-      // 小于1小时
-      if (diff < 3600000) {
-        const minutes = Math.floor(diff / 60000);
-        return minutes + '分钟前';
-      }
-      
-      // 小于24小时
-      if (diff < 86400000) {
-        const hours = Math.floor(diff / 3600000);
-        return hours + '小时前';
-      }
-      
-      // 小于2天（昨天）
-      if (diff < 172800000) {
-        return '昨天';
-      }
-      
-      // 小于3天
-      if (diff < 259200000) {
-        const days = Math.floor(diff / 86400000);
-        return days + '天前';
-      }
-      
-      // 超过3天，显示月/日
       const date = new Date(timeMs);
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-      return `${month}/${day}`;
+      return `${date.getMonth() + 1}/${date.getDate()}`;
     }
   }
 };
@@ -916,15 +771,9 @@ export default {
 }
 
 @keyframes likeAnimation {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.3);
-  }
-  100% {
-    transform: scale(1);
-  }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
 }
 
 .action-count {
@@ -1012,125 +861,5 @@ export default {
   font-size: 56rpx;
   color: #fff;
   font-weight: 300;
-}
-
-.comment-drawer-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  display: flex;
-  align-items: flex-end;
-}
-
-.comment-drawer {
-  width: 100%;
-  max-height: 70vh;
-  background: #fff;
-  border-radius: 32rpx 32rpx 0 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24rpx;
-  border-bottom: 1rpx solid #f3f4f6;
-}
-
-.drawer-title {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #111827;
-}
-
-.drawer-close {
-  font-size: 40rpx;
-  color: #6b7280;
-  padding: 8rpx;
-}
-
-.comment-list {
-  flex: 1;
-  padding: 24rpx;
-  max-height: 50vh;
-}
-
-.comment-item {
-  display: flex;
-  margin-bottom: 24rpx;
-}
-
-.comment-avatar {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  margin-right: 16rpx;
-  background: #e5e7eb;
-}
-
-.comment-info {
-  flex: 1;
-}
-
-.comment-username {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 4rpx;
-}
-
-.comment-content {
-  font-size: 26rpx;
-  color: #374151;
-  line-height: 36rpx;
-  margin-bottom: 8rpx;
-}
-
-.comment-footer {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.comment-time {
-  font-size: 22rpx;
-  color: #9ca3af;
-}
-
-.comment-reply {
-  font-size: 22rpx;
-  color: #6b7280;
-}
-
-.comment-input-wrap {
-  display: flex;
-  align-items: center;
-  padding: 24rpx;
-  border-top: 1rpx solid #f3f4f6;
-}
-
-.comment-input {
-  flex: 1;
-  height: 72rpx;
-  background: #f3f4f6;
-  border-radius: 999rpx;
-  padding: 0 24rpx;
-  font-size: 28rpx;
-}
-
-.send-btn {
-  margin-left: 16rpx;
-  padding: 16rpx 32rpx;
-  background: #3b82f6;
-  color: #fff;
-  border-radius: 999rpx;
-  font-size: 28rpx;
-  font-weight: 600;
 }
 </style>

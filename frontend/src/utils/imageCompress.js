@@ -4,73 +4,28 @@
  */
 
 /**
- * 压缩图片
+ * 压缩单张图片
  * @param {Object} options - 压缩选项
  * @param {string} options.filePath - 图片文件路径
  * @param {number} [options.quality=80] - 压缩质量 (0-100)
- * @param {number} [options.maxWidth=1920] - 最大宽度
- * @param {number} [options.maxHeight=1920] - 最大高度
  * @returns {Promise<string>} - 压缩后的临时文件路径
  */
 export const compressImage = (options) => {
   const {
     filePath,
-    quality = 80,
-    maxWidth = 1920,
-    maxHeight = 1920
+    quality = 80
   } = options
 
-  return new Promise((resolve, reject) => {
-    // 获取图片信息
-    uni.getImageInfo({
+  return new Promise((resolve) => {
+    uni.compressImage({
       src: filePath,
-      success: (imageInfo) => {
-        // 计算压缩后的尺寸
-        let { width, height } = imageInfo
-        
-        // 如果图片尺寸超过限制，等比缩放
-        if (width > maxWidth || height > maxHeight) {
-          const ratio = Math.min(maxWidth / width, maxHeight / height)
-          width = Math.floor(width * ratio)
-          height = Math.floor(height * ratio)
-        }
-
-        // 使用 canvas 压缩
-        const ctx = uni.createCanvasContext('compressCanvas')
-        
-        // 设置 canvas 尺寸
-        ctx.canvas = {
-          width: width,
-          height: height
-        }
-
-        // 绘制图片
-        ctx.drawImage(filePath, 0, 0, width, height)
-        
-        // 导出压缩后的图片
-        ctx.draw(false, () => {
-          setTimeout(() => {
-            uni.canvasToTempFilePath({
-              canvasId: 'compressCanvas',
-              destWidth: width,
-              destHeight: height,
-              fileType: 'jpg',
-              quality: quality / 100,
-              success: (res) => {
-                resolve(res.tempFilePath)
-              },
-              fail: (err) => {
-                console.error('图片压缩失败:', err)
-                // 如果压缩失败，返回原图
-                resolve(filePath)
-              }
-            })
-          }, 100)
-        })
+      quality,
+      success: (res) => {
+        resolve(res.tempFilePath)
       },
       fail: (err) => {
-        console.error('获取图片信息失败:', err)
-        reject(new Error('获取图片信息失败'))
+        console.warn('图片压缩失败，使用原图:', err)
+        resolve(filePath)
       }
     })
   })
@@ -84,7 +39,7 @@ export const compressImage = (options) => {
  */
 export const compressImages = async (filePaths, options = {}) => {
   const compressedPaths = []
-  
+
   for (let i = 0; i < filePaths.length; i++) {
     try {
       const compressedPath = await compressImage({
@@ -94,11 +49,10 @@ export const compressImages = async (filePaths, options = {}) => {
       compressedPaths.push(compressedPath)
     } catch (error) {
       console.error(`压缩第 ${i + 1} 张图片失败:`, error)
-      // 压缩失败保留原图
       compressedPaths.push(filePaths[i])
     }
   }
-  
+
   return compressedPaths
 }
 

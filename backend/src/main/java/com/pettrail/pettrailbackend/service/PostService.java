@@ -72,10 +72,25 @@ public class PostService {
 
     /**
      * 获取动态列表
+     * @param page 页码
+     * @param size 每页数量
+     * @param tab tab类型：all-全部, follow-关注, recommend-推荐
+     * @param userId 当前用户ID
      */
-    public List<Post> getFeed(int page, int size) {
+    public List<Post> getFeed(int page, int size, String tab, Long userId) {
         int offset = (page - 1) * size;
-        return postMapper.selectFeed(offset, size);
+        
+        // 根据 tab 类型返回不同的数据
+        if ("follow".equals(tab) && userId != null) {
+            // 关注：返回关注用户的动态（暂时返回全部，后续实现关注功能后修改）
+            return postMapper.selectFeed(offset, size);
+        } else if ("recommend".equals(tab)) {
+            // 推荐：返回推荐动态（暂时返回全部，后续实现推荐算法后修改）
+            return postMapper.selectFeed(offset, size);
+        } else {
+            // 全部：返回所有动态
+            return postMapper.selectFeed(offset, size);
+        }
     }
 
     /**
@@ -142,14 +157,11 @@ public class PostService {
 
         // 检查是否已收藏
         Boolean isEeLiked = redisTemplate.hasKey(userEeKey);
-        log.info("[收藏Service] 检查Redis - userEeKey存在: {}", isEeLiked);
 
         Post post = postMapper.selectById(postId);
         if (post == null) {
             throw new NotFoundException("动态不存在");
         }
-        
-        log.info("[收藏Service] 查询数据库 - postId: {}, 当前eeCount: {}", postId, post.getEeCount());
 
         if (Boolean.TRUE.equals(isEeLiked)) {
             // 取消收藏
@@ -159,9 +171,8 @@ public class PostService {
             // 更新收藏计数
             int newCount = Math.max(0, (post.getEeCount() != null ? post.getEeCount() : 0) - 1);
             post.setEeCount(newCount);
-            int updateResult = postMapper.updateById(post);
+            postMapper.updateById(post);
             
-            log.info("取消收藏 - postId: {}, userId: {}, newCount: {}, updateResult: {}", postId, userId, newCount, updateResult);
             return false;
         } else {
             // 收藏
@@ -171,9 +182,8 @@ public class PostService {
             // 更新收藏计数
             int newCount = (post.getEeCount() != null ? post.getEeCount() : 0) + 1;
             post.setEeCount(newCount);
-            int updateResult = postMapper.updateById(post);
+            postMapper.updateById(post);
             
-            log.info("收藏 - postId: {}, userId: {}, newCount: {}, updateResult: {}", postId, userId, newCount, updateResult);
             return true;
         }
     }

@@ -111,7 +111,9 @@
 
 <script>
 import * as postApi from '@/api/post'
+import * as petApi from '@/api/pet'
 import UserTopBar from '@/components/UserTopBar.vue'
+import { compressImages } from '@/utils/imageCompress'
 
 const defaultAvatar = 'https://ai-public.mastergo.com/ai/img_res/1774537096721a3K9mP2xQ7vN4rT8wY.jpg'
 
@@ -297,7 +299,6 @@ export default {
         uni.showLoading({ title: '处理图片...', mask: true })
         
         // 压缩图片
-        const { compressImages } = await import('@/utils/imageCompress')
         const compressedPaths = await compressImages(res.tempFilePaths, {
           quality: 75,
           maxWidth: 1920,
@@ -345,7 +346,6 @@ export default {
       try {
         // 先上传图片
         const uploadedUrls = []
-        const { uploadImage } = await import('@/api/pet')
         
         for (let i = 0; i < this.selectedImages.length; i++) {
           uni.showLoading({ 
@@ -354,7 +354,7 @@ export default {
           })
           
           try {
-            const uploadRes = await uploadImage(this.selectedImages[i])
+            const uploadRes = await petApi.uploadImage(this.selectedImages[i])
             if (uploadRes.success && uploadRes.data && uploadRes.data.url) {
               uploadedUrls.push(uploadRes.data.url)
             } else {
