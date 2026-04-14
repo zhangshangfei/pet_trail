@@ -37,6 +37,12 @@ public class PostVO {
     // 当前用户是否已点赞
     private Boolean liked;
 
+    // 当前用户是否已收藏/ee
+    private Boolean eeLiked;
+
+    // ee/收藏计数
+    private Integer eeCount;
+
     // 用户信息
     private String userName;
 

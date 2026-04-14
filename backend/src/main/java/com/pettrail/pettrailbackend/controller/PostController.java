@@ -157,8 +157,15 @@ public class PostController {
                 if (userId != null) {
                     boolean isLiked = postService.isUserLiked(post.getId(), userId);
                     vo.setLiked(isLiked);
+                    
+                    // 检查当前用户是否已收藏/ee
+                    boolean isEeLiked = postService.isUserEeLiked(post.getId(), userId);
+                    vo.setEeLiked(isEeLiked);
+                    vo.setEeCount(post.getEeCount() != null ? post.getEeCount() : 0);
                 } else {
                     vo.setLiked(false);
+                    vo.setEeLiked(false);
+                    vo.setEeCount(0);
                 }
 
                 return vo;
@@ -203,6 +210,35 @@ public class PostController {
 
         log.info("点赞操作 - postId: {}, userId: {}, isNowLiked: {}, likeCount: {}",
             id, userId, isNowLiked, likeCount);
+
+        return Result.success(result);
+    }
+
+    /**
+     * 收藏/取消收藏
+     */
+    @PostMapping("/{id}/ee")
+    public Result<Map<String, Object>> toggleEe(@PathVariable Long id) {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("eeLiked", false);
+            return Result.error(401, "用户未登录");
+        }
+
+        // 切换收藏状态
+        boolean isNowEeLiked = postService.toggleEe(id, userId);
+
+        // 获取当前收藏数
+        Post post = postService.getPostDetail(id);
+        int eeCount = post != null ? post.getEeCount() : 0;
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("eeLiked", isNowEeLiked);
+        result.put("eeCount", eeCount);
+
+        log.info("收藏操作 - postId: {}, userId: {}, isNowEeLiked: {}, eeCount: {}",
+            id, userId, isNowEeLiked, eeCount);
 
         return Result.success(result);
     }

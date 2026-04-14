@@ -133,6 +133,56 @@ public class PostService {
     }
 
     /**
+     * 收藏/取消收藏
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public boolean toggleEe(Long postId, Long userId) {
+        String eeKey = "post:ee:" + postId;
+        String userEeKey = "post:user:ee:" + postId + ":" + userId;
+
+        // 检查是否已收藏
+        Boolean isEeLiked = redisTemplate.hasKey(userEeKey);
+
+        if (Boolean.TRUE.equals(isEeLiked)) {
+            // 取消收藏
+            redisTemplate.delete(userEeKey);
+            redisTemplate.opsForHash().increment(eeKey, "count", -1);
+            
+            // 更新收藏计数
+            Post post = postMapper.selectById(postId);
+            if (post != null) {
+                int newCount = Math.max(0, (post.getEeCount() != null ? post.getEeCount() : 0) - 1);
+                post.setEeCount(newCount);
+                postMapper.updateById(post);
+            }
+            return false;
+        } else {
+            // 收藏
+            redisTemplate.opsForValue().set(userEeKey, "1", 7, TimeUnit.DAYS);
+            redisTemplate.opsForHash().increment(eeKey, "count", 1);
+
+            // 更新收藏计数
+            Post post = postMapper.selectById(postId);
+            if (post != null) {
+                int newCount = (post.getEeCount() != null ? post.getEeCount() : 0) + 1;
+                post.setEeCount(newCount);
+                postMapper.updateById(post);
+            }
+
+            return true;
+        }
+    }
+
+    /**
+     * 检查用户是否已收藏
+     */
+    public boolean isUserEeLiked(Long postId, Long userId) {
+        String userEeKey = "post:user:ee:" + postId + ":" + userId;
+        Boolean exists = redisTemplate.hasKey(userEeKey);
+        return Boolean.TRUE.equals(exists);
+    }
+
+    /**
      * 发布动态创建事件（异步处理）
      */
     public void publishPostCreateEvent(Post post) {

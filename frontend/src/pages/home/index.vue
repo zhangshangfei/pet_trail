@@ -99,7 +99,7 @@
           <view class="post-actions">
             <view class="actions-left">
               <view class="action-item" @click="onLikeTap(post)">
-                <text class="action-icon">{{ post.liked ? '❤️' : '🤍' }}</text>
+                <text class="action-icon" :class="{ 'action-icon--liked': post.liked }">{{ post.liked ? '❤️' : '🤍' }}</text>
                 <text class="action-count">{{ formatNumber(post.likes) }}</text>
               </view>
               <view class="action-item" @click="openComments(post)">
@@ -107,8 +107,11 @@
                 <text class="action-count">{{ formatNumber(post.comments) }}</text>
               </view>
               <view class="action-item" @click="onEeTap(post)">
-                <text class="action-icon">⭐</text>
+                <text class="action-icon" :class="{ 'action-icon--liked': post.eeLiked }">{{ post.eeLiked ? '⭐' : '☆' }}</text>
                 <text class="action-count">{{ formatNumber(post.eeCount) }}</text>
+              </view>
+              <view class="action-item post-time-item">
+                <text class="action-time">{{ post.relativeTime }}</text>
               </view>
             </view>
             <view class="action-item" @click="onShareTap(post)">
@@ -411,18 +414,28 @@ export default {
     async onLikeTap(post) {
       const token = uni.getStorageSync('token');
       if (!token) {
-        uni.showModal({ title: '提示', content: '请先登录', showCancel: false });
+        uni.showModal({ 
+          title: '提示', 
+          content: '请先登录后再点赞', 
+          showCancel: true,
+          confirmText: '去登录',
+          success: (res) => {
+            if (res.confirm) {
+              this.onWechatLogin();
+            }
+          }
+        });
         return;
       }
 
       try {
         const res = await postApi.toggleLike(post.id);
         if (res.success) {
+          // 使用后端返回的真实状态
           this.$set(post, 'liked', res.data.liked);
-          const newLikeCount = res.data.liked
-            ? (post.likes || 0) + 1
-            : Math.max(0, (post.likes || 0) - 1);
-          this.$set(post, 'likes', newLikeCount);
+          this.$set(post, 'likes', res.data.likeCount);
+          
+          console.log('[点赞] postId:', post.id, 'liked:', res.data.liked, 'likeCount:', res.data.likeCount);
         }
       } catch (error) {
         console.error('点赞失败:', error);
@@ -433,18 +446,29 @@ export default {
     async onEeTap(post) {
       const token = uni.getStorageSync('token');
       if (!token) {
-        uni.showModal({ title: '提示', content: '请先登录', showCancel: false });
+        uni.showModal({ 
+          title: '提示', 
+          content: '请先登录后再收藏', 
+          showCancel: true,
+          confirmText: '去登录',
+          success: (res) => {
+            if (res.confirm) {
+              this.onWechatLogin();
+            }
+          }
+        });
         return;
       }
 
       try {
-        const newCount = post.eeLiked
-          ? Math.max(0, (post.eeCount || 0) - 1)
-          : (post.eeCount || 0) + 1;
-        this.$set(post, 'eeCount', newCount);
-        this.$set(post, 'eeLiked', !post.eeLiked);
+        const res = await postApi.toggleEe(post.id);
+        if (res.success) {
+          this.$set(post, 'eeLiked', res.data.eeLiked);
+          this.$set(post, 'eeCount', res.data.eeCount);
+        }
       } catch (error) {
-        console.error('ee夸失败:', error);
+        console.error('收藏失败:', error);
+        uni.showToast({ title: '操作失败', icon: 'none' });
       }
     },
 
@@ -453,6 +477,22 @@ export default {
     },
 
     openComments(post) {
+      const token = uni.getStorageSync('token');
+      if (!token) {
+        uni.showModal({ 
+          title: '提示', 
+          content: '请先登录后再评论', 
+          showCancel: true,
+          confirmText: '去登录',
+          success: (res) => {
+            if (res.confirm) {
+              this.onWechatLogin();
+            }
+          }
+        });
+        return;
+      }
+      
       this.currentPost = post;
       this.showComments = true;
       this.newComment = '';
@@ -507,6 +547,11 @@ export default {
       try {
         const res = await postApi.getFeed(this.page, this.size);
         if (res.success && Array.isArray(res.data)) {
+          // 调试：查看第一条数据的时间
+          if (res.data.length > 0) {
+            console.log('[首页] 后端返回的时间数据示例:', res.data[0].createdAt);
+          }
+          
           const newPosts = res.data.map(post => ({
             ...post,
             // 用户信息
@@ -522,6 +567,7 @@ export default {
 
             // 时间（后端返回的是 createdAt 而不是 createTime）
             time: this.formatTime(post.createdAt),
+            relativeTime: this.getRelativeTime(post.createdAt),
 
             // 点赞和评论
             likes: post.likeCount || 0,
@@ -571,6 +617,74 @@ export default {
 
       const date = new Date(timestamp);
       return `${date.getMonth() + 1}/${date.getDate()}`;
+    },
+
+    /**
+     * 获取相对时间（微信朋友圈风格）
+     * - 1分钟内：刚刚
+     * - 1小时内：X分钟前
+     * - 24小时内：X小时前
+     * - 2天内：昨天
+     * - 3天内：X天前
+     * - 超过3天：月/日
+     */
+    getRelativeTime(timestamp) {
+      if (!timestamp) return '';
+      
+      // 处理时间戳，兼容多种格式
+      let timeMs = 0;
+      
+      if (typeof timestamp === 'number') {
+        // 已经是毫秒
+        timeMs = timestamp;
+      } else if (typeof timestamp === 'string') {
+        // 字符串格式，尝试解析
+        // 兼容格式：'2024-04-14T10:30:00' 或 '2024-04-14 10:30:00' 或 '2024-04-14T10:30:00.000'
+        const dateStr = timestamp.replace(' ', 'T');
+        timeMs = new Date(dateStr).getTime();
+      }
+      
+      if (isNaN(timeMs) || timeMs === 0) {
+        console.error('时间解析失败:', timestamp);
+        return '';
+      }
+      
+      const now = Date.now();
+      const diff = now - timeMs;
+      
+      // 小于1分钟
+      if (diff < 60000) {
+        return '刚刚';
+      }
+      
+      // 小于1小时
+      if (diff < 3600000) {
+        const minutes = Math.floor(diff / 60000);
+        return minutes + '分钟前';
+      }
+      
+      // 小于24小时
+      if (diff < 86400000) {
+        const hours = Math.floor(diff / 3600000);
+        return hours + '小时前';
+      }
+      
+      // 小于2天（昨天）
+      if (diff < 172800000) {
+        return '昨天';
+      }
+      
+      // 小于3天
+      if (diff < 259200000) {
+        const days = Math.floor(diff / 86400000);
+        return days + '天前';
+      }
+      
+      // 超过3天，显示月/日
+      const date = new Date(timeMs);
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${month}/${day}`;
     }
   }
 };
@@ -776,11 +890,37 @@ export default {
 .action-icon {
   font-size: 32rpx;
   margin-right: 8rpx;
+  transition: all 0.3s;
+}
+
+.action-icon--liked {
+  animation: likeAnimation 0.3s ease;
+}
+
+@keyframes likeAnimation {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .action-count {
   font-size: 24rpx;
   font-weight: 600;
+}
+
+.action-time {
+  font-size: 22rpx;
+  color: #9ca3af;
+}
+
+.post-time-item {
+  margin-left: auto;
 }
 
 .comment-preview {

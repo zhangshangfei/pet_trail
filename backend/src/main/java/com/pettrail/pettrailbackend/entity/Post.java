@@ -31,6 +31,8 @@ public class Post {
 
     private Integer shareCount;
 
+    private Integer eeCount;
+
     private Integer status;
 
     private LocalDateTime createdAt;

@@ -32,6 +32,13 @@ export const toggleLike = (id) => {
 }
 
 /**
+ * 收藏/取消收藏
+ */
+export const toggleEe = (id) => {
+  return request.post(`/api/posts/${id}/ee`)
+}
+
+/**
  * 发布评论
  */
 export const createComment = (postId, data) => {
