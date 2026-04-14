@@ -113,7 +113,6 @@
 import * as postApi from '@/api/post'
 import * as petApi from '@/api/pet'
 import UserTopBar from '@/components/UserTopBar.vue'
-import { compressImages } from '@/utils/imageCompress'
 
 const defaultAvatar = 'https://ai-public.mastergo.com/ai/img_res/1774537096721a3K9mP2xQ7vN4rT8wY.jpg'
 
@@ -288,28 +287,15 @@ export default {
         return
       }
       
-      uni.showLoading({ title: '选择图片...', mask: true })
-      
       try {
         const res = await uni.chooseImage({
           count: 9 - this.selectedImages.length,
           sourceType: ['album', 'camera']
         })
         
-        uni.showLoading({ title: '处理图片...', mask: true })
-        
-        // 压缩图片
-        const compressedPaths = await compressImages(res.tempFilePaths, {
-          quality: 75,
-          maxWidth: 1920,
-          maxHeight: 1920
-        })
-        
-        this.selectedImages = [...this.selectedImages, ...compressedPaths]
-        uni.hideLoading()
+        this.selectedImages = [...this.selectedImages, ...res.tempFilePaths]
       } catch (error) {
         console.error('选择图片失败:', error)
-        uni.hideLoading()
         uni.showToast({ title: '选择图片失败', icon: 'none' })
       }
     },

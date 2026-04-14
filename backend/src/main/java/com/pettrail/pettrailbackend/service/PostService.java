@@ -2,9 +2,11 @@ package com.pettrail.pettrailbackend.service;
 
 import com.alibaba.fastjson.JSON;
 import com.pettrail.pettrailbackend.entity.Post;
+import com.pettrail.pettrailbackend.entity.PostEe;
 import com.pettrail.pettrailbackend.entity.PostLike;
 import com.pettrail.pettrailbackend.event.PostCreateEvent;
 import com.pettrail.pettrailbackend.exception.NotFoundException;
+import com.pettrail.pettrailbackend.mapper.PostEeMapper;
 import com.pettrail.pettrailbackend.mapper.PostLikeMapper;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class PostService {
 
     private final PostMapper postMapper;
     private final PostLikeMapper postLikeMapper;
+    private final PostEeMapper postEeMapper;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -74,16 +77,19 @@ public class PostService {
      * 获取动态列表
      * @param page 页码
      * @param size 每页数量
-     * @param tab tab类型：all-全部, follow-关注, recommend-推荐
+     * @param tab tab类型：all-全部, follow-关注, recommend-推荐, collect-收藏
      * @param userId 当前用户ID
      */
     public List<Post> getFeed(int page, int size, String tab, Long userId) {
         int offset = (page - 1) * size;
-        
+
         // 根据 tab 类型返回不同的数据
         if ("follow".equals(tab) && userId != null) {
-            // 关注：返回关注用户的动态（暂时返回全部，后续实现关注功能后修改）
-            return postMapper.selectFeed(offset, size);
+            // 关注：返回关注用户的动态
+            return postMapper.selectFollowFeed(userId, offset, size);
+        } else if ("collect".equals(tab) && userId != null) {
+            // 收藏：返回用户收藏的动态
+            return postMapper.selectCollectFeed(userId, offset, size);
         } else if ("recommend".equals(tab)) {
             // 推荐：返回推荐动态（暂时返回全部，后续实现推荐算法后修改）
             return postMapper.selectFeed(offset, size);
@@ -168,22 +174,31 @@ public class PostService {
             redisTemplate.delete(userEeKey);
             redisTemplate.opsForHash().increment(eeKey, "count", -1);
             
+            // 删除数据库记录
+            postEeMapper.deleteByPostIdAndUserId(postId, userId);
+
             // 更新收藏计数
             int newCount = Math.max(0, (post.getEeCount() != null ? post.getEeCount() : 0) - 1);
             post.setEeCount(newCount);
             postMapper.updateById(post);
-            
+
             return false;
         } else {
             // 收藏
             redisTemplate.opsForValue().set(userEeKey, "1", 7, TimeUnit.DAYS);
             redisTemplate.opsForHash().increment(eeKey, "count", 1);
 
+            // 写入数据库
+            PostEe postEe = new PostEe();
+            postEe.setPostId(postId);
+            postEe.setUserId(userId);
+            postEeMapper.insert(postEe);
+
             // 更新收藏计数
             int newCount = (post.getEeCount() != null ? post.getEeCount() : 0) + 1;
             post.setEeCount(newCount);
             postMapper.updateById(post);
-            
+
             return true;
         }
     }

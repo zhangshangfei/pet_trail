@@ -56,3 +56,24 @@ export const getComments = (postId, page = 1, size = 20) => {
     params: { page, size }
   })
 }
+
+/**
+ * 关注/取消关注
+ */
+export const toggleFollow = (followeeId) => {
+  return request.post(`/api/follows/${followeeId}`)
+}
+
+/**
+ * 检查是否已关注
+ */
+export const checkFollow = (followeeId) => {
+  return request.get(`/api/follows/check/${followeeId}`)
+}
+
+/**
+ * 获取关注列表
+ */
+export const getFollowList = () => {
+  return request.get('/api/follows/list')
+}

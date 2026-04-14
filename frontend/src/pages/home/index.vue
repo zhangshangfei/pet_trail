@@ -34,6 +34,13 @@
         >
           <text class="segment-text">推荐</text>
         </view>
+        <view
+          class="segment-item"
+          :class="{ active: currentTab === 'collect' }"
+          @click="switchTab('collect')"
+        >
+          <text class="segment-text">收藏</text>
+        </view>
       </view>
     </view>
 

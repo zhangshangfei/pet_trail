@@ -33,6 +33,26 @@
         LIMIT #{offset}, #{limit}
     </select>
 
+    <!-- 查询关注用户的动态列表（按时间倒序） -->
+    <select id="selectFollowFeed" resultMap="BaseResultMap">
+        SELECT p.* FROM posts p
+        INNER JOIN follows f ON p.user_id = f.followee_id
+        WHERE f.follower_id = #{followerId}
+        AND p.status = 1
+        ORDER BY p.created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 查询用户收藏的动态列表（按时间倒序） -->
+    <select id="selectCollectFeed" resultMap="BaseResultMap">
+        SELECT p.* FROM posts p
+        INNER JOIN post_ee e ON p.id = e.post_id
+        WHERE e.user_id = #{userId}
+        AND p.status = 1
+        ORDER BY p.created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
     <!-- 根据日期范围查询动态 -->
     <select id="selectByDateRange" resultMap="BaseResultMap">
         SELECT * FROM posts

@@ -28,6 +28,20 @@ public interface PostMapper extends BaseMapper<Post> {
     List<Post> selectFeed(@Param("offset") int offset, @Param("limit") int limit);
 
     /**
+     * 查询关注用户的动态列表（按时间倒序）
+     */
+    List<Post> selectFollowFeed(@Param("followerId") Long followerId,
+                                @Param("offset") int offset,
+                                @Param("limit") int limit);
+
+    /**
+     * 查询用户收藏的动态列表（按时间倒序）
+     */
+    List<Post> selectCollectFeed(@Param("userId") Long userId,
+                                 @Param("offset") int offset,
+                                 @Param("limit") int limit);
+
+    /**
      * 根据日期范围查询动态
      */
     List<Post> selectByDateRange(@Param("userId") Long userId,

@@ -167,7 +167,6 @@
 <script>
 import * as postApi from '@/api/post'
 import * as petApi from '@/api/pet'
-import { compressImage } from '@/utils/imageCompress'
 
 export default {
   data() {
@@ -373,40 +372,13 @@ export default {
         count: remaining,
         mediaType: ['image', 'video'],
         sourceType: ['album', 'camera'],
-        success: async (res) => {
-          uni.showLoading({ title: '处理图片...', mask: true })
-
-          for (const file of res.tempFiles) {
-            if (file.fileType === 'image') {
-              // 压缩图片
-              try {
-                const compressedPath = await compressImage({
-                  filePath: file.tempFilePath,
-                  quality: 75,
-                  maxWidth: 1920,
-                  maxHeight: 1920
-                })
-
-                this.mediaList.push({
-                  type: 'image',
-                  path: compressedPath
-                })
-              } catch (error) {
-                console.error('图片压缩失败，使用原图:', error)
-                this.mediaList.push({
-                  type: 'image',
-                  path: file.tempFilePath
-                })
-              }
-            } else {
-              this.mediaList.push({
-                type: 'video',
-                path: file.tempFilePath
-              })
-            }
-          }
-
-          uni.hideLoading()
+        success: (res) => {
+          res.tempFiles.forEach(file => {
+            this.mediaList.push({
+              type: file.fileType,
+              path: file.tempFilePath
+            })
+          })
         }
       })
     },

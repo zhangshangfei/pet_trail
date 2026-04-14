@@ -148,6 +148,30 @@ CREATE TABLE IF NOT EXISTS `post_comments` (
   KEY `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='动态评论表';
 
+-- 关注表
+CREATE TABLE IF NOT EXISTS `follows` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `follower_id` bigint(20) NOT NULL COMMENT '关注者ID',
+  `followee_id` bigint(20) NOT NULL COMMENT '被关注者ID',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_follower_followee` (`follower_id`, `followee_id`),
+  KEY `idx_follower_id` (`follower_id`),
+  KEY `idx_followee_id` (`followee_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='关注表';
+
+-- 收藏表
+CREATE TABLE IF NOT EXISTS `post_ee` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `post_id` bigint(20) NOT NULL,
+  `user_id` bigint(20) NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_post_user` (`post_id`, `user_id`),
+  KEY `idx_post_id` (`post_id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='收藏表';
+
 -- ========================================
 -- 健康模块（体重、步数、饮水、统计）
 -- ========================================
