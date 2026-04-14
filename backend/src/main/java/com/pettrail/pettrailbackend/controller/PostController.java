@@ -1,18 +1,27 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.pettrail.pettrailbackend.dto.PostVO;
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.entity.Pet;
 import com.pettrail.pettrailbackend.entity.Post;
+import com.pettrail.pettrailbackend.entity.User;
+import com.pettrail.pettrailbackend.mapper.PetMapper;
+import com.pettrail.pettrailbackend.mapper.UserMapper;
 import com.pettrail.pettrailbackend.service.PostService;
 import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 动态控制器
@@ -24,6 +33,8 @@ import java.util.Map;
 public class PostController {
 
     private final PostService postService;
+    private final UserMapper userMapper;
+    private final PetMapper petMapper;
 
     /**
      * 发布动态
@@ -39,8 +50,8 @@ public class PostController {
 
         String content = data.getString("content");
         Long petId = data.getLong("petId");
-        List<String> images = data.getJSONArray("images") != null 
-            ? data.getJSONArray("images").toJavaList(String.class) 
+        List<String> images = data.getJSONArray("images") != null
+            ? data.getJSONArray("images").toJavaList(String.class)
             : null;
 
         Post post = postService.createPost(userId, petId, content, images);
@@ -61,8 +72,8 @@ public class PostController {
 
         Long userId = UserContext.getCurrentUserId();
         List<Post> posts = postService.getFeed(page, size);
-        
-        // 转换为 VO，包含用户是否已点赞的信息
+
+        // 转换为 VO，包含用户信息、宠物信息和点赞状态
         List<PostVO> postVOs = posts.stream()
             .map(post -> {
                 PostVO vo = new PostVO();
@@ -77,7 +88,71 @@ public class PostController {
                 vo.setStatus(post.getStatus());
                 vo.setCreatedAt(post.getCreatedAt());
                 vo.setUpdatedAt(post.getUpdatedAt());
-                
+
+                // 解析图片列表
+                if (post.getImages() != null && !post.getImages().equals("null")) {
+                    try {
+                        List<String> imageList = JSON.parseArray(post.getImages(), String.class);
+                        vo.setImageList(imageList);
+                    } catch (Exception e) {
+                        vo.setImageList(List.of());
+                    }
+                } else {
+                    vo.setImageList(List.of());
+                }
+
+                // 查询用户信息
+                try {
+                    User user = userMapper.selectById(post.getUserId());
+                    if (user != null) {
+                        vo.setUserName(user.getNickname() != null ? user.getNickname() : "萌宠主人");
+                        vo.setUserAvatar(user.getAvatar() != null ? user.getAvatar() : "");
+                    } else {
+                        vo.setUserName("未知用户");
+                        vo.setUserAvatar("");
+                    }
+                } catch (Exception e) {
+                    log.error("查询用户信息失败：userId={}", post.getUserId(), e);
+                    vo.setUserName("未知用户");
+                    vo.setUserAvatar("");
+                }
+
+                // 查询宠物信息
+                if (post.getPetId() != null) {
+                    try {
+                        Pet pet = petMapper.selectById(post.getPetId());
+                        if (pet != null) {
+                            vo.setPetName(pet.getName() != null ? pet.getName() : "未知宠物");
+                            vo.setPetAvatar(pet.getAvatar() != null ? pet.getAvatar() : "");
+                            vo.setPetType(pet.getCategory());
+                            
+                            // 计算宠物年龄
+                            if (pet.getBirthday() != null) {
+                                int age = Period.between(pet.getBirthday(), LocalDate.now()).getYears();
+                                vo.setPetAge(age > 0 ? age : 0);
+                            } else {
+                                vo.setPetAge(0);
+                            }
+                        } else {
+                            vo.setPetName("未知宠物");
+                            vo.setPetAvatar("");
+                            vo.setPetType(0);
+                            vo.setPetAge(0);
+                        }
+                    } catch (Exception e) {
+                        log.error("查询宠物信息失败：petId={}", post.getPetId(), e);
+                        vo.setPetName("未知宠物");
+                        vo.setPetAvatar("");
+                        vo.setPetType(0);
+                        vo.setPetAge(0);
+                    }
+                } else {
+                    vo.setPetName("");
+                    vo.setPetAvatar("");
+                    vo.setPetType(0);
+                    vo.setPetAge(0);
+                }
+
                 // 检查当前用户是否已点赞
                 if (userId != null) {
                     boolean isLiked = postService.isUserLiked(post.getId(), userId);
@@ -85,11 +160,11 @@ public class PostController {
                 } else {
                     vo.setLiked(false);
                 }
-                
+
                 return vo;
             })
-            .collect(java.util.stream.Collectors.toList());
-        
+            .collect(Collectors.toList());
+
         return Result.success(postVOs);
     }
 
@@ -116,7 +191,7 @@ public class PostController {
 
         // 切换点赞状态
         boolean isNowLiked = postService.toggleLike(id, userId);
-        
+
         // 获取当前点赞数
         Post post = postService.getPostDetail(id);
         int likeCount = post != null ? post.getLikeCount() : 0;
@@ -126,7 +201,7 @@ public class PostController {
         result.put("liked", isNowLiked);
         result.put("likeCount", likeCount);
 
-        log.info("点赞操作 - postId: {}, userId: {}, isNowLiked: {}, likeCount: {}", 
+        log.info("点赞操作 - postId: {}, userId: {}, isNowLiked: {}, likeCount: {}",
             id, userId, isNowLiked, likeCount);
 
         return Result.success(result);

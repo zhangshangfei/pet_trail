@@ -83,6 +83,13 @@
         "navigationBarTitleText": "每日打卡",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/publish/index",
+      "style": {
+        "navigationBarTitleText": "发布动态",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {
@@ -110,10 +117,6 @@
         "pagePath": "pages/checkin/index",
         "text": "打卡"
       },
-      // {
-      //   "pagePath": "pages/community/index",
-      //   "text": "社区"
-      // },
       {
         "pagePath": "pages/me/index",
         "text": "我的"

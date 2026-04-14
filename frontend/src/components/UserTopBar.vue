@@ -56,7 +56,7 @@ export default {
   left: 0;
   right: 0;
   z-index: 30;
-  background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 55%, rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 100%);
 }
 
 .user-topbar-statusbar {

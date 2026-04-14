@@ -713,7 +713,7 @@ export default {
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(180deg, #8b9cf7 0%, #667eea 100%);
   color: #fff;
 }
 </style>
