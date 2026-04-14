@@ -226,6 +226,8 @@ public class PostController {
             return Result.error(401, "用户未登录");
         }
 
+        log.info("[收藏Controller] 开始处理 - postId: {}, userId: {}", id, userId);
+
         // 切换收藏状态（内部已经更新了数据库）
         boolean isNowEeLiked = postService.toggleEe(id, userId);
 
@@ -237,10 +239,10 @@ public class PostController {
         result.put("eeLiked", isNowEeLiked);
         result.put("eeCount", eeCount);
 
-        log.info("收藏操作 - postId: {}, userId: {}, isNowEeLiked: {}, eeCount: {}",
+        log.info("[收藏Controller] 准备返回 - postId: {}, userId: {}, isNowEeLiked: {}, eeCount: {}",
             id, userId, isNowEeLiked, eeCount);
-
-        System.out.println("[收藏API] 返回数据: eeLiked=" + isNowEeLiked + ", eeCount=" + eeCount);
+        
+        System.out.println("[收藏API] Result对象: " + result.toString());
 
         return Result.success(result);
     }

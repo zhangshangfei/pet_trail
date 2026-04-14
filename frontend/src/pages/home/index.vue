@@ -468,12 +468,20 @@ export default {
         return;
       }
 
+      console.log('[收藏] 操作前 - postId:', post.id, 'eeLiked:', post.eeLiked, 'eeCount:', post.eeCount);
+
       try {
         const res = await postApi.toggleEe(post.id);
-        console.log('[收藏] 后端返回:', res);
-        if (res.success) {
-          this.$set(post, 'eeLiked', res.data.eeLiked);
-          this.$set(post, 'eeCount', res.data.eeCount);
+        console.log('[收藏] 完整响应:', JSON.stringify(res));
+        console.log('[收藏] res.data:', JSON.stringify(res.data));
+        
+        if (res.success && res.data) {
+          const { eeLiked, eeCount } = res.data;
+          console.log('[收藏] 解析数据 - eeLiked:', eeLiked, 'eeCount:', eeCount);
+          
+          this.$set(post, 'eeLiked', eeLiked);
+          this.$set(post, 'eeCount', eeCount);
+          
           console.log('[收藏] 更新后 - eeLiked:', post.eeLiked, 'eeCount:', post.eeCount);
         }
       } catch (error) {

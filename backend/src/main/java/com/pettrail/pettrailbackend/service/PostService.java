@@ -142,11 +142,14 @@ public class PostService {
 
         // 检查是否已收藏
         Boolean isEeLiked = redisTemplate.hasKey(userEeKey);
+        log.info("[收藏Service] 检查Redis - userEeKey存在: {}", isEeLiked);
 
         Post post = postMapper.selectById(postId);
         if (post == null) {
             throw new NotFoundException("动态不存在");
         }
+        
+        log.info("[收藏Service] 查询数据库 - postId: {}, 当前eeCount: {}", postId, post.getEeCount());
 
         if (Boolean.TRUE.equals(isEeLiked)) {
             // 取消收藏
@@ -156,9 +159,9 @@ public class PostService {
             // 更新收藏计数
             int newCount = Math.max(0, (post.getEeCount() != null ? post.getEeCount() : 0) - 1);
             post.setEeCount(newCount);
-            postMapper.updateById(post);
+            int updateResult = postMapper.updateById(post);
             
-            log.info("取消收藏 - postId: {}, userId: {}, newCount: {}", postId, userId, newCount);
+            log.info("取消收藏 - postId: {}, userId: {}, newCount: {}, updateResult: {}", postId, userId, newCount, updateResult);
             return false;
         } else {
             // 收藏
@@ -168,9 +171,9 @@ public class PostService {
             // 更新收藏计数
             int newCount = (post.getEeCount() != null ? post.getEeCount() : 0) + 1;
             post.setEeCount(newCount);
-            postMapper.updateById(post);
+            int updateResult = postMapper.updateById(post);
             
-            log.info("收藏 - postId: {}, userId: {}, newCount: {}", postId, userId, newCount);
+            log.info("收藏 - postId: {}, userId: {}, newCount: {}, updateResult: {}", postId, userId, newCount, updateResult);
             return true;
         }
     }
