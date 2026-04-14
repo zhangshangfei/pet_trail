@@ -226,12 +226,12 @@ public class PostController {
             return Result.error(401, "用户未登录");
         }
 
-        // 切换收藏状态
+        // 切换收藏状态（内部已经更新了数据库）
         boolean isNowEeLiked = postService.toggleEe(id, userId);
 
-        // 获取当前收藏数（重新从数据库查询，避免缓存问题）
-        Post post = postService.getPostDetail(id);
-        int eeCount = post != null ? post.getEeCount() : 0;
+        // 直接从数据库查询最新的收藏数（避免缓存问题）
+        Post post = postMapper.selectById(id);
+        int eeCount = post != null ? (post.getEeCount() != null ? post.getEeCount() : 0) : 0;
 
         Map<String, Object> result = new HashMap<>();
         result.put("eeLiked", isNowEeLiked);
