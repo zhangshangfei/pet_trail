@@ -308,6 +308,14 @@ export default {
                 self.avatarUrl = userInfo?.avatar || 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg';
 
                 uni.showToast({ title: '登录成功', icon: 'success', duration: 2000 });
+                
+                // 登录成功后刷新数据
+                setTimeout(() => {
+                  self.page = 1;
+                  self.postList = [];
+                  self.hasMore = true;
+                  self.loadPosts();
+                }, 1500);
               } else {
                 uni.showToast({ title: loginRes.message || '登录失败', icon: 'none', duration: 2000 });
               }
@@ -462,9 +470,11 @@ export default {
 
       try {
         const res = await postApi.toggleEe(post.id);
+        console.log('[收藏] 后端返回:', res);
         if (res.success) {
           this.$set(post, 'eeLiked', res.data.eeLiked);
           this.$set(post, 'eeCount', res.data.eeCount);
+          console.log('[收藏] 更新后 - eeLiked:', post.eeLiked, 'eeCount:', post.eeCount);
         }
       } catch (error) {
         console.error('收藏失败:', error);

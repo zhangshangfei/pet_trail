@@ -307,3 +307,7 @@ INSERT INTO `achievements` (`name`, `description`, `icon`, `type`, `condition_ty
 ('健康卫士', '记录 30 次健康数据', '💪', 2, 'health_record_count', 30, 4),
 ('社交达人', '发布 10 条动态', '📱', 3, 'post_count', 10, 5),
 ('人气王', '获得 100 个赞', '❤️', 3, 'like_received', 100, 6);
+
+
+ALTER TABLE posts ADD COLUMN ee_count INT DEFAULT 0 COMMENT '收藏数' AFTER share_count;
+

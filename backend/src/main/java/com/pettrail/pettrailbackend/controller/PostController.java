@@ -229,7 +229,7 @@ public class PostController {
         // 切换收藏状态
         boolean isNowEeLiked = postService.toggleEe(id, userId);
 
-        // 获取当前收藏数
+        // 获取当前收藏数（重新从数据库查询，避免缓存问题）
         Post post = postService.getPostDetail(id);
         int eeCount = post != null ? post.getEeCount() : 0;
 
@@ -239,6 +239,8 @@ public class PostController {
 
         log.info("收藏操作 - postId: {}, userId: {}, isNowEeLiked: {}, eeCount: {}",
             id, userId, isNowEeLiked, eeCount);
+
+        System.out.println("[收藏API] 返回数据: eeLiked=" + isNowEeLiked + ", eeCount=" + eeCount);
 
         return Result.success(result);
     }
