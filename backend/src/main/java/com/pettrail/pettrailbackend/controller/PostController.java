@@ -8,6 +8,7 @@ import com.pettrail.pettrailbackend.entity.Pet;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.PetMapper;
+import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
 import com.pettrail.pettrailbackend.service.PostService;
 import com.pettrail.pettrailbackend.util.UserContext;
@@ -35,6 +36,7 @@ public class PostController {
     private final PostService postService;
     private final UserMapper userMapper;
     private final PetMapper petMapper;
+    private final PostMapper postMapper;
 
     /**
      * 发布动态

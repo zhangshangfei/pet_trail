@@ -63,6 +63,7 @@ mybatis-plus:
 # 腾讯云 COS 配置 (微信云托管推荐)
 tencent:
   cos:
+#    bucket-name: jinttianchongleme-1419682950
     bucket-name: 7072-prod-3gyc3tpg28270da6-1419682950
     # 你的地域，通常是 ap-guangzhou 或 ap-shanghai
     region: ap-shanghai
