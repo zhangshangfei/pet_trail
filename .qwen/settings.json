@@ -20,7 +20,9 @@
       "Bash(rmdir *)",
       "Bash(type *)",
       "Bash(node *)",
-      "Bash(cmd *)"
+      "Bash(cmd *)",
+      "Bash(ping *)",
+      "Bash(taskkill *)"
     ]
   },
   "$version": 3

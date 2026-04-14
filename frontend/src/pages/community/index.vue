@@ -30,7 +30,7 @@
               class="post-image"
               :class="post.images.length === 2 ? 'post-image--2' : post.images.length === 3 ? 'post-image--3' : 'post-image--1'"
               :src="img"
-              mode="aspectFill"
+              mode="widthFix"
               @click="previewImage(post.images, idx)"
             />
           </view>
@@ -279,25 +279,38 @@ export default {
       })
     },
 
-    // 选择图片（暂时禁用，待实现图片上传功能）
-    chooseImage() {
-      uni.showModal({
-        title: '提示',
-        content: '图片上传功能开发中，当前仅支持发布文字动态',
-        showCancel: false
-      })
-      // TODO: 后续实现图片上传到 OSS 功能
-      // if (this.selectedImages.length >= 9) {
-      //   uni.showToast({ title: '最多上传 9 张图片', icon: 'none' })
-      //   return
-      // }
-      // uni.chooseImage({
-      //   count: 9 - this.selectedImages.length,
-      //   sourceType: ['album', 'camera'],
-      //   success: (res) => {
-      //     this.selectedImages = [...this.selectedImages, ...res.tempFilePaths]
-      //   }
-      // })
+    // 选择图片
+    async chooseImage() {
+      if (this.selectedImages.length >= 9) {
+        uni.showToast({ title: '最多上传 9 张图片', icon: 'none' })
+        return
+      }
+      
+      uni.showLoading({ title: '选择图片...', mask: true })
+      
+      try {
+        const res = await uni.chooseImage({
+          count: 9 - this.selectedImages.length,
+          sourceType: ['album', 'camera']
+        })
+        
+        uni.showLoading({ title: '处理图片...', mask: true })
+        
+        // 压缩图片
+        const { compressImages } = await import('@/utils/imageCompress')
+        const compressedPaths = await compressImages(res.tempFilePaths, {
+          quality: 75,
+          maxWidth: 1920,
+          maxHeight: 1920
+        })
+        
+        this.selectedImages = [...this.selectedImages, ...compressedPaths]
+        uni.hideLoading()
+      } catch (error) {
+        console.error('选择图片失败:', error)
+        uni.hideLoading()
+        uni.showToast({ title: '选择图片失败', icon: 'none' })
+      }
     },
 
     // 移除图片
@@ -327,21 +340,51 @@ export default {
       }
 
       this.submitting = true
+      uni.showLoading({ title: '发布中...', mask: true })
 
       try {
-        // 上传图片（简化处理，实际应该先上传到 OSS）
-        const images = this.selectedImages.length > 0 
-          ? this.selectedImages 
-          : undefined
+        // 先上传图片
+        const uploadedUrls = []
+        const { uploadImage } = await import('@/api/pet')
+        
+        for (let i = 0; i < this.selectedImages.length; i++) {
+          uni.showLoading({ 
+            title: `上传图片 ${i + 1}/${this.selectedImages.length}...`, 
+            mask: true 
+          })
+          
+          try {
+            const uploadRes = await uploadImage(this.selectedImages[i])
+            if (uploadRes.success && uploadRes.data && uploadRes.data.url) {
+              uploadedUrls.push(uploadRes.data.url)
+            } else {
+              throw new Error(uploadRes.message || '上传失败')
+            }
+          } catch (uploadError) {
+            console.error(`图片 ${i + 1} 上传失败:`, uploadError)
+            uni.hideLoading()
+            uni.showToast({
+              title: `图片 ${i + 1} 上传失败`,
+              icon: 'none'
+            })
+            this.submitting = false
+            return
+          }
+        }
 
+        // 发布动态
+        uni.showLoading({ title: '发布中...', mask: true })
+        
         const res = await postApi.createPost({
           content: this.newPostContent,
-          images: images
+          images: uploadedUrls.length > 0 ? uploadedUrls : undefined
         })
+
+        uni.hideLoading()
 
         if (res.success) {
           uni.showToast({ title: '发布成功', icon: 'success' })
-          
+
           // 添加到列表顶部
           const newPost = res.data
           newPost.liked = false
@@ -356,6 +399,7 @@ export default {
           this.showCreateModal = false
         }
       } catch (error) {
+        uni.hideLoading()
         console.error('发布失败:', error)
         uni.showToast({ title: '发布失败', icon: 'none' })
       } finally {
@@ -525,21 +569,20 @@ export default {
 .post-image {
   border-radius: 16rpx;
   background-color: #f3f4f6;
+  width: 100%;
+  display: block;
 }
 
 .post-image--2 {
   width: calc(50% - 6rpx);
-  height: 220rpx;
 }
 
 .post-image--3 {
   width: calc(33.333% - 8rpx);
-  height: 160rpx;
 }
 
 .post-image--1 {
   width: 100%;
-  height: 260rpx;
 }
 
 .post-actions {

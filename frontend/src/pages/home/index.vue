@@ -15,6 +15,13 @@
       <view class="segmented-control">
         <view
           class="segment-item"
+          :class="{ active: currentTab === 'all' }"
+          @click="switchTab('all')"
+        >
+          <text class="segment-text">全部</text>
+        </view>
+        <view
+          class="segment-item"
           :class="{ active: currentTab === 'follow' }"
           @click="switchTab('follow')"
         >
@@ -196,7 +203,7 @@ export default {
       avatarUrl: '',
       isLoggedIn: false,
 
-      currentTab: 'recommend',
+      currentTab: 'all',
 
       postList: [],
       page: 1,
@@ -221,6 +228,7 @@ export default {
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: false });
 
     this.checkLoginStatus();
+    // 未登录状态下也可以加载"全部"数据
     this.loadPosts();
   },
   onLoad() {
@@ -331,6 +339,24 @@ export default {
     },
 
     switchTab(tab) {
+      const token = uni.getStorageSync('token');
+      
+      // 未登录状态下只能查看"全部"，"关注"和"推荐"需要登录
+      if (!token && tab !== 'all') {
+        uni.showModal({
+          title: '提示',
+          content: '请先登录后查看',
+          showCancel: true,
+          confirmText: '去登录',
+          success: (res) => {
+            if (res.confirm) {
+              this.onWechatLogin();
+            }
+          }
+        })
+        return;
+      }
+      
       this.currentTab = tab;
       this.page = 1;
       this.postList = [];
@@ -466,8 +492,14 @@ export default {
       if (this.loading || !this.hasMore) return;
 
       const token = uni.getStorageSync('token');
-      if (!token) {
-        this.loading = false;
+
+      // 未登录状态下只能查看"全部"，"关注"和"推荐"需要登录
+      if (!token && this.currentTab !== 'all') {
+        uni.showModal({
+          title: '提示',
+          content: '请先登录后查看',
+          showCancel: false
+        })
         return;
       }
 
@@ -481,26 +513,26 @@ export default {
             userName: post.userName || '未知用户',
             userAvatar: post.userAvatar || 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg',
             avatar: post.userAvatar || 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg',
-            
+
             // 宠物信息
             petName: post.petName || '',
             petType: post.petType || 0,
             petAge: post.petAge || 0,
             petAvatar: post.petAvatar || '',
-            
+
             // 时间（后端返回的是 createdAt 而不是 createTime）
             time: this.formatTime(post.createdAt),
-            
+
             // 点赞和评论
             likes: post.likeCount || 0,
             comments: post.commentCount || 0,
             eeCount: post.eeCount || 0,
             liked: post.liked || false,
             eeLiked: post.eeLiked || false,
-            
+
             // 图片列表（使用后端解析好的 imageList）
             images: post.imageList || [],
-            
+
             // 评论
             previewComments: post.previewComments || [],
             allComments: post.allComments || []

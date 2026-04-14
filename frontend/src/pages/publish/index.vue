@@ -51,7 +51,8 @@
                 v-if="media.type === 'image'"
                 class="media-thumb"
                 :src="media.path"
-                mode="aspectFill"
+                mode="widthFix"
+                @click="previewImage(index)"
               />
               <view v-else class="video-thumb">
                 <text class="video-icon">🎬</text>
@@ -366,20 +367,62 @@ export default {
         })
         return
       }
-      
+
       uni.chooseMedia({
         count: remaining,
         mediaType: ['image', 'video'],
         sourceType: ['album', 'camera'],
-        success: (res) => {
-          res.tempFiles.forEach(file => {
-            this.mediaList.push({
-              type: file.fileType,
-              path: file.tempFilePath
-            })
-          })
+        success: async (res) => {
+          uni.showLoading({ title: '处理图片...', mask: true })
+          
+          for (const file of res.tempFiles) {
+            if (file.fileType === 'image') {
+              // 压缩图片
+              try {
+                const { compressImage } = await import('@/utils/imageCompress')
+                const compressedPath = await compressImage({
+                  filePath: file.tempFilePath,
+                  quality: 75,
+                  maxWidth: 1920,
+                  maxHeight: 1920
+                })
+                
+                this.mediaList.push({
+                  type: 'image',
+                  path: compressedPath
+                })
+              } catch (error) {
+                console.error('图片压缩失败，使用原图:', error)
+                this.mediaList.push({
+                  type: 'image',
+                  path: file.tempFilePath
+                })
+              }
+            } else {
+              this.mediaList.push({
+                type: 'video',
+                path: file.tempFilePath
+              })
+            }
+          }
+          
+          uni.hideLoading()
         }
       })
+    },
+
+    // 预览图片
+    previewImage(index) {
+      const imagePaths = this.mediaList
+        .filter(m => m.type === 'image')
+        .map(m => m.path)
+      
+      if (imagePaths.length > 0) {
+        uni.previewImage({
+          urls: imagePaths,
+          current: index
+        })
+      }
     },
     
     // 移除媒体
@@ -601,16 +644,16 @@ export default {
 
 .media-item {
   position: relative;
-  aspect-ratio: 1;
+  min-height: 200rpx;
   border-radius: 12rpx;
   overflow: hidden;
   background: #f5f5f5;
+  margin-bottom: 12rpx;
 }
 
-.media-thumb,
-.video-thumb {
+.media-thumb {
   width: 100%;
-  height: 100%;
+  display: block;
 }
 
 .video-thumb {
@@ -618,6 +661,7 @@ export default {
   align-items: center;
   justify-content: center;
   background: #e5e7eb;
+  min-height: 200rpx;
 }
 
 .video-icon {
