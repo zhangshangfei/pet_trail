@@ -220,35 +220,36 @@ export default {
       }
     },
 
-    // 收藏
-    async onEeTap() {
-      const token = uni.getStorageSync('token')
-      if (!token) {
-        uni.showModal({
-          title: '提示',
-          content: '请先登录后再收藏',
-          showCancel: true,
-          confirmText: '去登录',
-          success: (res) => {
-            if (res.confirm) {
-              this.onWechatLogin()
-            }
+        // 收藏
+        async onEeTap() {
+          const token = uni.getStorageSync('token')
+          if (!token) {
+            uni.showModal({
+              title: '提示',
+              content: '请先登录后再收藏',
+              showCancel: true,
+              confirmText: '去登录',
+              success: (res) => {
+                if (res.confirm) {
+                  this.onWechatLogin()
+                }
+              }
+            })
+            return
           }
-        })
-        return
-      }
 
-      try {
-        const res = await postApi.toggleEe(this.postId)
-        if (res.success && res.data) {
-          this.post.eeLiked = res.data.eeLiked
-          this.post.eeCount = res.data.eeCount
-        }
-      } catch (error) {
-        console.error('收藏失败:', error)
-        uni.showToast({ title: '操作失败', icon: 'none' })
-      }
-    },
+          try {
+            const res = await this.$api.post.toggleEe(post.id)
+            if (res.success && res.data) {
+              this.post.eeLiked = res.data.eeLiked
+              this.post.eeCount = res.data.eeCount
+              uni.showToast({ title: '收藏成功', icon: 'success' })
+            }
+          } catch (error) {
+            console.error('收藏失败:', error)
+            uni.showToast({ title: '收藏失败，请重试', icon: 'none' })
+          }
+        },
 
     // 分享
     onShareTap() {

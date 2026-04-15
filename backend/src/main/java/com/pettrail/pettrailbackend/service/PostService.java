@@ -84,19 +84,24 @@ public class PostService {
      */
     public List<Post> getFeed(int page, int size, String tab, Long userId) {
         int offset = (page - 1) * size;
+        log.info("getFeed - page: {}, size: {}, tab: {}, userId: {}, offset: {}", page, size, tab, userId, offset);
 
         // 根据 tab 类型返回不同的数据
         if ("follow".equals(tab) && userId != null) {
             // 关注：返回关注用户的动态
+            log.info("查询关注Tab动态");
             return postMapper.selectFollowFeed(userId, offset, size);
         } else if ("collect".equals(tab) && userId != null) {
             // 收藏：返回用户收藏的动态
+            log.info("查询收藏Tab动态");
             return postMapper.selectCollectFeed(userId, offset, size);
         } else if ("recommend".equals(tab)) {
             // 推荐：返回推荐动态（暂时返回全部，后续实现推荐算法后修改）
+            log.info("查询推荐Tab动态");
             return postMapper.selectFeed(offset, size);
         } else {
             // 全部：返回所有动态
+            log.info("查询全部Tab动态");
             return postMapper.selectFeed(offset, size);
         }
     }

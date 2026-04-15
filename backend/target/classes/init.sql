@@ -169,7 +169,8 @@ CREATE TABLE IF NOT EXISTS `post_ee` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_post_user` (`post_id`, `user_id`),
   KEY `idx_post_id` (`post_id`),
-  KEY `idx_user_id` (`user_id`)
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_user_post` (`user_id`, `post_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='收藏表';
 
 -- ========================================

@@ -14,4 +14,11 @@
         WHERE post_id = #{postId}
     </select>
 
+    <!-- 检查用户是否已收藏 -->
+    <select id="selectByPostIdAndUserId" resultType="com.pettrail.pettrailbackend.entity.PostEe">
+        SELECT * FROM post_ee
+        WHERE post_id = #{postId} AND user_id = #{userId}
+        LIMIT 1
+    </select>
+
 </mapper>

@@ -22,6 +22,13 @@
         </view>
         <view
           class="segment-item"
+          :class="{ active: currentTab === 'collect' }"
+          @click="switchTab('collect')"
+        >
+          <text class="segment-text">收藏</text>
+        </view>
+        <view
+          class="segment-item"
           :class="{ active: currentTab === 'follow' }"
           @click="switchTab('follow')"
         >
@@ -33,13 +40,6 @@
           @click="switchTab('recommend')"
         >
           <text class="segment-text">推荐</text>
-        </view>
-        <view
-          class="segment-item"
-          :class="{ active: currentTab === 'collect' }"
-          @click="switchTab('collect')"
-        >
-          <text class="segment-text">收藏</text>
         </view>
       </view>
     </view>
@@ -329,6 +329,8 @@ export default {
     switchTab(tab) {
       const token = uni.getStorageSync('token');
 
+      console.log('switchTab - 切换前的tab:', this.currentTab, '切换后的tab:', tab);
+
       if (!token && tab !== 'all') {
         uni.showModal({
           title: '提示',
@@ -348,6 +350,7 @@ export default {
       this.page = 1;
       this.postList = [];
       this.hasMore = true;
+      console.log('switchTab - 准备加载数据, currentTab:', this.currentTab);
       this.loadPosts();
     },
 
@@ -501,10 +504,14 @@ export default {
         return;
       }
 
+      console.log('loadPosts - currentTab:', this.currentTab, 'page:', this.page, 'size:', this.size);
+
       this.loading = true;
       try {
         const res = await postApi.getFeed(this.page, this.size, this.currentTab);
+        console.log('getFeed response:', res);
         if (res.success && Array.isArray(res.data)) {
+          console.log('获取到动态数量:', res.data.length);
           const newPosts = res.data.map(post => ({
             ...post,
             userName: post.userName || '未知用户',
