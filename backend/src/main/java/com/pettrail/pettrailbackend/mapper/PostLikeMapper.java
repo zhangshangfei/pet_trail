@@ -21,4 +21,10 @@ public interface PostLikeMapper extends BaseMapper<PostLike> {
      * 统计动态点赞数
      */
     int countByPostId(@Param("postId") Long postId);
+
+    /**
+     * 检查用户是否已点赞
+     */
+    PostLike selectByPostIdAndUserId(@Param("postId") Long postId,
+                                      @Param("userId") Long userId);
 }

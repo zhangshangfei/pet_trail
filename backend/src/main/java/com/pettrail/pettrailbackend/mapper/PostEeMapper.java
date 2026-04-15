@@ -21,4 +21,10 @@ public interface PostEeMapper extends BaseMapper<PostEe> {
      * 统计动态收藏数
      */
     int countByPostId(@Param("postId") Long postId);
+
+    /**
+     * 检查用户是否已收藏
+     */
+    PostEe selectByPostIdAndUserId(@Param("postId") Long postId,
+                                    @Param("userId") Long userId);
 }

@@ -12,6 +12,7 @@ import com.pettrail.pettrailbackend.mapper.PostMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +48,7 @@ public class PostService {
         post.setLikeCount(0);
         post.setCommentCount(0);
         post.setShareCount(0);
+        post.setEeCount(0); // 初始化收藏计数
         postMapper.insert(post);
         return post;
     }
@@ -107,6 +109,12 @@ public class PostService {
         String likeKey = "post:like:" + postId;
         String userLikeKey = "post:user:like:" + postId + ":" + userId;
 
+        // 先检查动态是否存在
+        Post post = postMapper.selectById(postId);
+        if (post == null) {
+            throw new NotFoundException("动态不存在");
+        }
+
         // 检查是否已点赞
         Boolean isLiked = redisTemplate.hasKey(userLikeKey);
 
@@ -114,34 +122,38 @@ public class PostService {
             // 取消点赞
             redisTemplate.delete(userLikeKey);
             redisTemplate.opsForHash().increment(likeKey, "count", -1);
+            redisTemplate.expire(likeKey, 7, TimeUnit.DAYS); // 设置 TTL
             postLikeMapper.deleteByPostIdAndUserId(postId, userId);
             // 更新点赞计数
-            Post post = postMapper.selectById(postId);
-            if (post != null) {
-                post.setLikeCount(post.getLikeCount() - 1);
-                postMapper.updateById(post);
-            }
-            return false;
+            post.setLikeCount(post.getLikeCount() - 1);
+            postMapper.updateById(post);
         } else {
             // 点赞
             redisTemplate.opsForValue().set(userLikeKey, "1", 7, TimeUnit.DAYS);
             redisTemplate.opsForHash().increment(likeKey, "count", 1);
+            redisTemplate.expire(likeKey, 7, TimeUnit.DAYS); // 设置 TTL
 
             // 写入数据库
             PostLike postLike = new PostLike();
             postLike.setPostId(postId);
             postLike.setUserId(userId);
-            postLikeMapper.insert(postLike);
-
-            // 更新点赞计数
-            Post post = postMapper.selectById(postId);
-            if (post != null) {
-                post.setLikeCount(post.getLikeCount() + 1);
-                postMapper.updateById(post);
+            try {
+                postLikeMapper.insert(postLike);
+            } catch (DuplicateKeyException e) {
+                log.warn("重复点赞: postId={}, userId={}", postId, userId);
+                return true;
             }
 
-            return true;
+            // 更新点赞计数
+            post.setLikeCount(post.getLikeCount() + 1);
+            postMapper.updateById(post);
         }
+
+        // 清除详情缓存
+        String cacheKey = "post:detail:" + postId;
+        redisTemplate.delete(cacheKey);
+
+        return Boolean.TRUE.equals(isLiked) ? false : true;
     }
 
     /**
@@ -150,7 +162,11 @@ public class PostService {
     public boolean isUserLiked(Long postId, Long userId) {
         String userLikeKey = "post:user:like:" + postId + ":" + userId;
         Boolean exists = redisTemplate.hasKey(userLikeKey);
-        return Boolean.TRUE.equals(exists);
+        if (Boolean.TRUE.equals(exists)) {
+            return true;
+        }
+        // Redis 未命中时，查数据库
+        return postLikeMapper.selectByPostIdAndUserId(postId, userId) != null;
     }
 
     /**
@@ -161,19 +177,21 @@ public class PostService {
         String eeKey = "post:ee:" + postId;
         String userEeKey = "post:user:ee:" + postId + ":" + userId;
 
-        // 检查是否已收藏
-        Boolean isEeLiked = redisTemplate.hasKey(userEeKey);
-
+        // 先检查动态是否存在
         Post post = postMapper.selectById(postId);
         if (post == null) {
             throw new NotFoundException("动态不存在");
         }
 
+        // 检查是否已收藏
+        Boolean isEeLiked = redisTemplate.hasKey(userEeKey);
+
         if (Boolean.TRUE.equals(isEeLiked)) {
             // 取消收藏
             redisTemplate.delete(userEeKey);
             redisTemplate.opsForHash().increment(eeKey, "count", -1);
-            
+            redisTemplate.expire(eeKey, 7, TimeUnit.DAYS); // 设置 TTL
+
             // 删除数据库记录
             postEeMapper.deleteByPostIdAndUserId(postId, userId);
 
@@ -181,26 +199,34 @@ public class PostService {
             int newCount = Math.max(0, (post.getEeCount() != null ? post.getEeCount() : 0) - 1);
             post.setEeCount(newCount);
             postMapper.updateById(post);
-
-            return false;
         } else {
             // 收藏
             redisTemplate.opsForValue().set(userEeKey, "1", 7, TimeUnit.DAYS);
             redisTemplate.opsForHash().increment(eeKey, "count", 1);
+            redisTemplate.expire(eeKey, 7, TimeUnit.DAYS); // 设置 TTL
 
             // 写入数据库
             PostEe postEe = new PostEe();
             postEe.setPostId(postId);
             postEe.setUserId(userId);
-            postEeMapper.insert(postEe);
+            try {
+                postEeMapper.insert(postEe);
+            } catch (DuplicateKeyException e) {
+                log.warn("重复收藏: postId={}, userId={}", postId, userId);
+                return true;
+            }
 
             // 更新收藏计数
             int newCount = (post.getEeCount() != null ? post.getEeCount() : 0) + 1;
             post.setEeCount(newCount);
             postMapper.updateById(post);
-
-            return true;
         }
+
+        // 清除详情缓存
+        String cacheKey = "post:detail:" + postId;
+        redisTemplate.delete(cacheKey);
+
+        return Boolean.TRUE.equals(isEeLiked) ? false : true;
     }
 
     /**
@@ -209,7 +235,11 @@ public class PostService {
     public boolean isUserEeLiked(Long postId, Long userId) {
         String userEeKey = "post:user:ee:" + postId + ":" + userId;
         Boolean exists = redisTemplate.hasKey(userEeKey);
-        return Boolean.TRUE.equals(exists);
+        if (Boolean.TRUE.equals(exists)) {
+            return true;
+        }
+        // Redis 未命中时，查数据库
+        return postEeMapper.selectByPostIdAndUserId(postId, userId) != null;
     }
 
     /**
