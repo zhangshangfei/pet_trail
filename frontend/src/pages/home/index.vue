@@ -145,7 +145,18 @@
         <!-- 加载状态 -->
         <view v-if="loading" class="loading-text">加载中...</view>
         <view v-if="!hasMore && postList.length > 0" class="no-more-text">没有更多了</view>
-        <view v-if="isEmpty" class="empty-state">
+        <view v-if="isEmpty && currentTab === 'follow'" class="empty-follow-state">
+          <view class="empty-follow-emoji">👥</view>
+          <text class="empty-follow-text">还没有关注任何人</text>
+          <text class="empty-follow-subtext">关注感兴趣的用户，获取他们的最新动态</text>
+          <button class="follow-guide-btn" @click="goToDiscover">去发现有趣的人</button>
+        </view>
+        <view v-if="isEmpty && currentTab === 'collect'" class="empty-follow-state">
+          <view class="empty-follow-emoji">⭐</view>
+          <text class="empty-follow-text">还没有收藏任何动态</text>
+          <text class="empty-follow-subtext">看到喜欢的内容可以收藏起来，方便以后查看</text>
+        </view>
+        <view v-if="isEmpty && currentTab !== 'follow' && currentTab !== 'collect'" class="empty-state">
           <text class="empty-state-text">暂无动态</text>
         </view>
       </view>
@@ -444,6 +455,14 @@ export default {
 
     onShareTap(post) {
       uni.showToast({ title: '分享功能开发中', icon: 'none' });
+    },
+
+    goToDiscover() {
+      uni.showToast({
+        title: '用户发现页设计中，敬请期待',
+        icon: 'none',
+        duration: 2000
+      });
     },
 
     openComments(post) {
@@ -831,6 +850,52 @@ export default {
   padding: 30rpx;
   color: #999;
   font-size: 26rpx;
+}
+
+.empty-follow-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 60rpx;
+  text-align: center;
+}
+
+.empty-follow-emoji {
+  font-size: 160rpx;
+  margin-bottom: 40rpx;
+  opacity: 0.6;
+}
+
+.empty-follow-text {
+  font-size: 32rpx;
+  color: #6b7280;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+
+.empty-follow-subtext {
+  font-size: 26rpx;
+  color: #9ca3af;
+  line-height: 40rpx;
+  margin-bottom: 48rpx;
+}
+
+.follow-guide-btn {
+  width: 400rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 600;
+  border-radius: 40rpx;
+  border: none;
+}
+
+.follow-guide-btn:active {
+  transform: scale(0.95);
+  opacity: 0.9;
 }
 
 .empty-state {
