@@ -143,7 +143,7 @@
 
 <script>
 import * as postApi from '@/api/post'
-import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
+import { checkLogin, getUserAvatar as resolveUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 
 export default {
   data() {
@@ -176,7 +176,14 @@ export default {
       this.loadPostDetail()
     } else {
       uni.showToast({ title: '参数错误', icon: 'none' })
-      setTimeout(() => { uni.navigateBack() }, 1500)
+      setTimeout(() => {
+        const pages = getCurrentPages()
+        if (pages.length > 1) {
+          uni.navigateBack()
+        } else {
+          uni.switchTab({ url: '/pages/home/index' })
+        }
+      }, 1500)
     }
   },
   onShareAppMessage() {
@@ -213,7 +220,7 @@ export default {
             liked: post.liked || false,
             eeLiked: post.eeLiked || false,
             userName: post.userName || '未知用户',
-            userAvatar: getUserAvatar(post.userId, post.userAvatar),
+            userAvatar: resolveUserAvatar(post.userId, post.userAvatar),
             petName: post.petName || '',
             petType: post.petType || 0,
             petAge: post.petAge || 0,
@@ -343,6 +350,10 @@ export default {
       return map[type] || '🐾'
     },
 
+    getUserAvatar(userId, avatarUrl) {
+      return resolveUserAvatar(userId, avatarUrl)
+    },
+
     formatNumber(num) {
       if (!num) return '0'
       if (num >= 1000) return (num / 1000).toFixed(1) + 'k'
@@ -379,7 +390,12 @@ export default {
     },
 
     goBack() {
-      uni.navigateBack()
+      const pages = getCurrentPages()
+      if (pages.length > 1) {
+        uni.navigateBack()
+      } else {
+        uni.switchTab({ url: '/pages/home/index' })
+      }
     }
   }
 }

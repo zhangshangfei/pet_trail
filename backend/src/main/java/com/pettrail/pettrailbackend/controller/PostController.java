@@ -218,9 +218,28 @@ public class PostController {
      * 获取动态详情
      */
     @GetMapping("/{id}")
-    public Result<Post> getPostDetail(@PathVariable Long id) {
+    public Result<PostVO> getPostDetail(@PathVariable Long id) {
+        Long currentUserId = UserContext.getCurrentUserId();
         Post post = postService.getPostDetail(id);
-        return Result.success(post);
+
+        Map<Long, User> userMap = new HashMap<>();
+        try {
+            userMap.put(post.getUserId(), userService.getProfile(post.getUserId()));
+        } catch (Exception e) {
+            log.warn("查询用户信息失败: userId={}", post.getUserId());
+        }
+
+        Map<Long, Pet> petMap = new HashMap<>();
+        if (post.getPetId() != null) {
+            try {
+                petMap.put(post.getPetId(), petService.getPetById(post.getPetId()));
+            } catch (Exception e) {
+                log.warn("查询宠物信息失败: petId={}", post.getPetId());
+            }
+        }
+
+        PostVO vo = convertToPostVO(post, currentUserId, userMap, petMap);
+        return Result.success(vo);
     }
 
     /**
