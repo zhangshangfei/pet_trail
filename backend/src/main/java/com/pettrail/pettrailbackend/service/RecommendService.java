@@ -2,11 +2,13 @@ package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.pettrail.pettrailbackend.entity.Pet;
+import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.entity.PostLike;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.FollowMapper;
 import com.pettrail.pettrailbackend.mapper.PetMapper;
 import com.pettrail.pettrailbackend.mapper.PostLikeMapper;
+import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,18 +31,28 @@ public class RecommendService {
     private final PetMapper petMapper;
     private final FollowMapper followMapper;
     private final PostLikeMapper postLikeMapper;
+    private final PostMapper postMapper;
     private final FollowService followService;
     private final PostService postService;
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String CACHE_KEY_PREFIX = "recommend:";
+    private static final String POST_CACHE_KEY_PREFIX = "recommend:posts:";
     private static final long CACHE_TTL_HOURS = 2;
+    private static final long POST_CACHE_TTL_MINUTES = 30;
 
     private static final double W_BREED = 0.30;
     private static final double W_ACTIVITY = 0.25;
     private static final double W_SOCIAL = 0.20;
     private static final double W_INTERACT = 0.15;
     private static final double W_NEWUSER = 0.10;
+
+    private static final double PW_INTEREST = 0.30;
+    private static final double PW_HOT = 0.25;
+    private static final double PW_SOCIAL = 0.20;
+    private static final double PW_INTERACT = 0.15;
+    private static final double PW_FRESH = 0.10;
+    private static final int CANDIDATE_LIMIT = 500;
 
     public List<Map<String, Object>> recommendUsers(Long currentUserId, int page, int size) {
         if (currentUserId == null) {
@@ -268,6 +280,206 @@ public class RecommendService {
         }
 
         return "activity";
+    }
+
+    public List<Post> recommendPosts(Long userId, int page, int size) {
+        if (userId == null) {
+            return postMapper.selectRecommendFeed((page - 1) * size, size);
+        }
+
+        String cacheKey = POST_CACHE_KEY_PREFIX + userId;
+        Object cached = redisTemplate.opsForValue().get(cacheKey);
+        if (cached != null) {
+            try {
+                @SuppressWarnings("unchecked")
+                List<Long> cachedIds = (List<Long>) cached;
+                int start = (page - 1) * size;
+                int end = Math.min(start + size, cachedIds.size());
+                if (start < cachedIds.size()) {
+                    List<Long> pageIds = cachedIds.subList(start, end);
+                    return pageIds.stream()
+                        .map(id -> postMapper.selectById(id))
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+                }
+                return Collections.emptyList();
+            } catch (Exception e) {
+                log.warn("动态推荐缓存读取异常，重新计算: {}", e.getMessage());
+            }
+        }
+
+        List<Long> sortedIds = computePostRecommendations(userId);
+
+        try {
+            redisTemplate.opsForValue().set(cacheKey, sortedIds, POST_CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.warn("动态推荐缓存写入异常: {}", e.getMessage());
+        }
+
+        int start = (page - 1) * size;
+        int end = Math.min(start + size, sortedIds.size());
+        if (start < sortedIds.size()) {
+            List<Long> pageIds = sortedIds.subList(start, end);
+            return pageIds.stream()
+                .map(id -> postMapper.selectById(id))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        }
+        return Collections.emptyList();
+    }
+
+    private List<Long> computePostRecommendations(Long userId) {
+        List<Post> candidates = postMapper.selectCandidatePosts(CANDIDATE_LIMIT);
+        if (candidates.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Pet> myPets = petMapper.selectList(
+            new LambdaQueryWrapper<Pet>().eq(Pet::getUserId, userId));
+        Set<String> myBreeds = myPets.stream()
+            .map(Pet::getBreed)
+            .filter(b -> b != null && !b.trim().isEmpty())
+            .collect(Collectors.toSet());
+        int myCategory = myPets.stream()
+            .mapToInt(p -> p.getCategory() != null ? p.getCategory() : 0)
+            .max().orElse(0);
+
+        List<Long> myFolloweeIds = followMapper.selectFolloweeIds(userId);
+        Set<Long> followeeSet = new HashSet<>(myFolloweeIds);
+
+        Set<Long> twoHopIds = new HashSet<>();
+        for (Long followeeId : myFolloweeIds) {
+            List<Long> theirFollowees = followMapper.selectFolloweeIds(followeeId);
+            twoHopIds.addAll(theirFollowees);
+        }
+        twoHopIds.removeAll(followeeSet);
+        twoHopIds.remove(userId);
+
+        Set<Long> likedAuthorIds = new HashSet<>();
+        LambdaQueryWrapper<PostLike> likeWrapper = new LambdaQueryWrapper<>();
+        likeWrapper.eq(PostLike::getUserId, userId);
+        List<PostLike> myLikes = postLikeMapper.selectList(likeWrapper);
+        if (!myLikes.isEmpty()) {
+            List<Long> myLikedPostIds = myLikes.stream()
+                .map(PostLike::getPostId)
+                .collect(Collectors.toList());
+            List<Post> likedPosts = postMapper.selectBatchIds(myLikedPostIds);
+            for (Post lp : likedPosts) {
+                if (!lp.getUserId().equals(userId) && !followeeSet.contains(lp.getUserId())) {
+                    likedAuthorIds.add(lp.getUserId());
+                }
+            }
+        }
+
+        Map<Long, Set<String>> authorBreedCache = new HashMap<>();
+        Map<Long, Integer> authorCategoryCache = new HashMap<>();
+
+        LocalDateTime now = LocalDateTime.now();
+        Map<Long, Double> scoreMap = new HashMap<>();
+
+        for (Post post : candidates) {
+            double score = 0.0;
+            Long authorId = post.getUserId();
+
+            double interestScore = computePostInterestScore(authorId, myBreeds, myCategory,
+                authorBreedCache, authorCategoryCache);
+            score += PW_INTEREST * interestScore;
+
+            double hotScore = computePostHotScore(post);
+            score += PW_HOT * hotScore;
+
+            double socialScore = 0.0;
+            if (followeeSet.contains(authorId)) {
+                socialScore = 0.5;
+            } else if (twoHopIds.contains(authorId)) {
+                socialScore = 1.0;
+            }
+            score += PW_SOCIAL * socialScore;
+
+            double interactScore = likedAuthorIds.contains(authorId) ? 1.0 : 0.0;
+            score += PW_INTERACT * interactScore;
+
+            double freshScore = computePostFreshnessScore(post.getCreatedAt(), now);
+            score += PW_FRESH * freshScore;
+
+            scoreMap.put(post.getId(), score);
+        }
+
+        return scoreMap.entrySet().stream()
+            .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toList());
+    }
+
+    private double computePostInterestScore(Long authorId, Set<String> myBreeds, int myCategory,
+                                             Map<Long, Set<String>> breedCache,
+                                             Map<Long, Integer> categoryCache) {
+        if (myBreeds.isEmpty() && myCategory == 0) return 0.3;
+
+        Set<String> authorBreeds = breedCache.computeIfAbsent(authorId, id -> {
+            List<Pet> pets = petMapper.selectList(
+                new LambdaQueryWrapper<Pet>().eq(Pet::getUserId, id));
+            return pets.stream()
+                .map(Pet::getBreed)
+                .filter(b -> b != null && !b.trim().isEmpty())
+                .collect(Collectors.toSet());
+        });
+
+        int authorCategory = categoryCache.computeIfAbsent(authorId, id -> {
+            List<Pet> pets = petMapper.selectList(
+                new LambdaQueryWrapper<Pet>().eq(Pet::getUserId, id));
+            return pets.stream()
+                .mapToInt(p -> p.getCategory() != null ? p.getCategory() : 0)
+                .max().orElse(0);
+        });
+
+        if (authorBreeds.isEmpty() && authorCategory == 0) return 0.1;
+
+        for (String breed : authorBreeds) {
+            if (myBreeds.contains(breed)) return 1.0;
+        }
+
+        if (authorCategory > 0 && authorCategory == myCategory) return 0.6;
+
+        return 0.1;
+    }
+
+    private double computePostHotScore(Post post) {
+        int likeCount = post.getLikeCount() != null ? post.getLikeCount() : 0;
+        int commentCount = post.getCommentCount() != null ? post.getCommentCount() : 0;
+        int shareCount = post.getShareCount() != null ? post.getShareCount() : 0;
+
+        double rawHot = likeCount * 3.0 + commentCount * 2.0 + shareCount;
+
+        long hoursSince = 1;
+        if (post.getCreatedAt() != null) {
+            hoursSince = ChronoUnit.HOURS.between(post.getCreatedAt(), LocalDateTime.now());
+            hoursSince = Math.max(1, hoursSince);
+        }
+
+        double hotValue = rawHot / (hoursSince + 2);
+
+        return Math.min(1.0, hotValue / 10.0);
+    }
+
+    private double computePostFreshnessScore(LocalDateTime createdAt, LocalDateTime now) {
+        if (createdAt == null) return 0.0;
+        long hoursSince = ChronoUnit.HOURS.between(createdAt, now);
+        if (hoursSince <= 1) return 1.0;
+        if (hoursSince <= 6) return 0.9;
+        if (hoursSince <= 24) return 0.7;
+        if (hoursSince <= 72) return 0.5;
+        if (hoursSince <= 168) return 0.3;
+        if (hoursSince <= 360) return 0.1;
+        return 0.0;
+    }
+
+    public void invalidatePostCache(Long userId) {
+        try {
+            redisTemplate.delete(POST_CACHE_KEY_PREFIX + userId);
+        } catch (Exception e) {
+            log.warn("清除动态推荐缓存异常: {}", e.getMessage());
+        }
     }
 
     public void invalidateCache(Long userId) {

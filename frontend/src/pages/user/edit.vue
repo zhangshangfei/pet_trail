@@ -6,9 +6,7 @@
           <text class="edit-back-icon">←</text>
         </view>
         <text class="edit-title">编辑资料</text>
-        <view class="edit-save" @tap="onSave">
-          <text class="edit-save-text">保存</text>
-        </view>
+        <view class="edit-header-right"></view>
       </view>
     </view>
 
@@ -44,6 +42,12 @@
         </view>
       </view>
     </scroll-view>
+
+    <view class="edit-bottom-bar">
+      <view class="save-btn" :class="{ 'save-btn--disabled': saving }" @tap="onSave">
+        <text class="save-btn-text">{{ saving ? '保存中...' : '保存修改' }}</text>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -221,21 +225,14 @@ export default {
   font-weight: 700;
 }
 
-.edit-save {
-  padding: 10rpx 28rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.edit-save-text {
-  color: #fff;
-  font-size: 26rpx;
-  font-weight: 600;
+.edit-header-right {
+  width: 56rpx;
 }
 
 .edit-scroll {
   height: 100vh;
   box-sizing: border-box;
+  padding-bottom: 160rpx;
 }
 
 .edit-content {
@@ -324,5 +321,43 @@ export default {
 .edit-select-placeholder {
   font-size: 28rpx;
   color: #9ca3af;
+}
+
+.edit-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  padding: 20rpx 32rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  box-shadow: 0 -4rpx 24rpx rgba(0, 0, 0, 0.06);
+}
+
+.save-btn {
+  height: 96rpx;
+  border-radius: 48rpx;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(255, 77, 79, 0.35);
+  transition: opacity 0.2s;
+}
+
+.save-btn:active {
+  opacity: 0.85;
+}
+
+.save-btn--disabled {
+  opacity: 0.6;
+}
+
+.save-btn-text {
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
 }
 </style>

@@ -4,16 +4,17 @@
       <view class="header-bg"></view>
       <view class="header-content">
         <view class="back-btn" @tap="goBack">
-          <text class="back-icon">←</text>
+          <view class="back-arrow"></view>
         </view>
-        <view v-if="isSelf" class="header-edit-btn" @tap="goEditProfile">
-          <text class="header-edit-text">编辑</text>
-        </view>
+        <view class="header-placeholder"></view>
       </view>
 
       <view class="user-info-section">
-        <view class="avatar-wrap">
+        <view class="avatar-wrap" @tap="isSelf && goEditProfile()">
           <image class="user-avatar" :src="getUserAvatar(userId, userInfo.avatar)" mode="aspectFill" />
+          <view v-if="isSelf" class="avatar-edit-badge">
+            <text class="avatar-edit-icon">✎</text>
+          </view>
         </view>
         <text class="user-nickname">{{ userInfo.nickname || '萌宠主人' }}</text>
         <view class="user-meta">
@@ -469,28 +470,58 @@ export default {
   width: 64rpx;
   height: 64rpx;
   border-radius: 32rpx;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+  transition: background 0.2s, transform 0.15s;
 }
 
-.back-icon {
+.back-btn:active {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0.92);
+}
+
+.back-arrow {
+  width: 18rpx;
+  height: 18rpx;
+  border-left: 4rpx solid #fff;
+  border-bottom: 4rpx solid #fff;
+  transform: rotate(45deg) translate(2rpx, -2rpx);
+}
+
+.header-placeholder {
+  width: 64rpx;
+}
+
+.avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  top: -4rpx;
+  right: -4rpx;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3rpx solid #fff;
+  box-shadow: 0 4rpx 12rpx rgba(255, 77, 79, 0.4);
+}
+
+.avatar-edit-icon {
   color: #fff;
-  font-size: 36rpx;
+  font-size: 22rpx;
   font-weight: 700;
-}
-
-.header-edit-btn {
-  padding: 12rpx 28rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.header-edit-text {
-  color: #fff;
-  font-size: 26rpx;
-  font-weight: 600;
 }
 
 .user-info-section {
@@ -500,11 +531,6 @@ export default {
   flex-direction: column;
   align-items: center;
   padding-top: 20rpx;
-}
-
-.avatar-wrap {
-  position: relative;
-  display: inline-flex;
 }
 
 .user-avatar {

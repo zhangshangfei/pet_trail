@@ -98,4 +98,14 @@
         LIMIT #{offset}, #{limit}
     </select>
 
+    <select id="selectCandidatePosts" resultMap="BaseResultMap">
+        SELECT p.* FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        WHERE p.status = 1
+        AND u.status = 1
+        AND p.created_at &gt;= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        ORDER BY p.created_at DESC
+        LIMIT #{limit}
+    </select>
+
 </mapper>

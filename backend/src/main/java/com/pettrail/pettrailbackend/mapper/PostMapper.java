@@ -59,4 +59,6 @@ public interface PostMapper extends BaseMapper<Post> {
     List<Post> selectPendingForAudit(@Param("beforeTime") LocalDateTime beforeTime);
 
     List<Post> selectRecommendFeed(@Param("offset") int offset, @Param("limit") int limit);
+
+    List<Post> selectCandidatePosts(@Param("limit") int limit);
 }

@@ -7,6 +7,7 @@ import com.pettrail.pettrailbackend.dto.PostVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.exception.NotFoundException;
 import com.pettrail.pettrailbackend.service.CommentService;
+import com.pettrail.pettrailbackend.service.RecommendService;
 import com.pettrail.pettrailbackend.service.UserService;
 import com.pettrail.pettrailbackend.service.PetService;
 import com.pettrail.pettrailbackend.entity.Pet;
@@ -32,6 +33,7 @@ public class PostController {
 
     private final PostService postService;
     private final CommentService commentService;
+    private final RecommendService recommendService;
     private final UserService userService;
     private final PetService petService;
     private final PostMapper postMapper;
@@ -98,7 +100,12 @@ public class PostController {
             return Result.success(java.util.Collections.emptyList());
         }
         
-        List<Post> posts = postService.getFeed(page, size, tab, userId);
+        List<Post> posts;
+        if ("recommend".equals(tab)) {
+            posts = recommendService.recommendPosts(userId, page, size);
+        } else {
+            posts = postService.getFeed(page, size, tab, userId);
+        }
         List<PostVO> postVOs = convertToPostVOList(posts, userId);
         log.info("获取动态列表成功，Tab={}，返回{}条数据", tab, postVOs.size());
         return Result.success(postVOs);
