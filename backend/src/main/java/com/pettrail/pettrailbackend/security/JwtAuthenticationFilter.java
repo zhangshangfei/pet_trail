@@ -33,6 +33,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         try {
             String token = getTokenFromRequest(request);
+            log.debug("请求URL: {}, Token: {}", request.getRequestURI(), token != null ? token.substring(0, Math.min(20, token.length())) + "..." : "null");
+            
             // 1. 验证 Token
             if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
                 Long userId = jwtUtil.getUserIdFromToken(token);
@@ -53,10 +55,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 3. 存入上下文
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                log.debug("用户认证成功: userId={}", userId);
+                log.info("用户认证成功: userId={}, token={}", userId, token.substring(0, Math.min(20, token.length())) + "...");
+            } else {
+                log.debug("Token验证失败: token={}", token);
             }
         } catch (Exception e) {
-            log.error("无法设置用户认证: {}", e.getMessage());
+            log.error("无法设置用户认证: {}", e.getMessage(), e);
         }
 
         filterChain.doFilter(request, response);

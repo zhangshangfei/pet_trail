@@ -239,15 +239,15 @@ export default {
           }
 
           try {
-            const res = await this.$api.post.toggleEe(post.id)
+            const res = await postApi.toggleEe(this.postId)
             if (res.success && res.data) {
               this.post.eeLiked = res.data.eeLiked
               this.post.eeCount = res.data.eeCount
-              uni.showToast({ title: '收藏成功', icon: 'success' })
+              uni.showToast({ title: res.data.eeLiked ? '收藏成功' : '取消收藏', icon: 'success' })
             }
           } catch (error) {
             console.error('收藏失败:', error)
-            uni.showToast({ title: '收藏失败，请重试', icon: 'none' })
+            uni.showToast({ title: '操作失败，请重试', icon: 'none' })
           }
         },
 

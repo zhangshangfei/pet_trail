@@ -74,6 +74,45 @@ public class PostController {
             @RequestParam(defaultValue = "all") String tab) {
 
         Long userId = UserContext.getCurrentUserId();
+        
+        log.info("获取动态列表 - page: {}, size: {}, tab: {}, userId: {}", page, size, tab, userId);
+        
+        // 未登录用户只能查看"全部"Tab，其他Tab返回空数据
+        if (userId == null) {
+            log.warn("用户未登录，返回空数据");
+            // 未登录时，强制返回空数据，避免暴露数据
+            List<Post> emptyList = java.util.Collections.emptyList();
+            List<PostVO> postVOs = emptyList.stream()
+                .map(post -> {
+                    PostVO vo = new PostVO();
+                    vo.setId(post.getId());
+                    vo.setUserId(post.getUserId());
+                    vo.setPetId(post.getPetId());
+                    vo.setContent(post.getContent());
+                    vo.setImages(post.getImages());
+                    vo.setLikeCount(post.getLikeCount());
+                    vo.setCommentCount(post.getCommentCount());
+                    vo.setShareCount(post.getShareCount());
+                    vo.setStatus(post.getStatus());
+                    vo.setCreatedAt(post.getCreatedAt());
+                    vo.setUpdatedAt(post.getUpdatedAt());
+                    vo.setImageList(java.util.Collections.emptyList());
+                    vo.setUserName("未知用户");
+                    vo.setUserAvatar("");
+                    vo.setPetName("");
+                    vo.setPetAvatar("");
+                    vo.setPetType(0);
+                    vo.setPetAge(0);
+                    vo.setLiked(false);
+                    vo.setEeLiked(false);
+                    vo.setEeCount(0);
+                    return vo;
+                })
+                .collect(Collectors.toList());
+            return Result.success(postVOs);
+        }
+        
+        log.info("用户已认证，userId={}, 开始查询Tab: {}", userId, tab);
         List<Post> posts = postService.getFeed(page, size, tab, userId);
 
         // 转换为 VO，包含用户信息、宠物信息和点赞状态
@@ -132,7 +171,7 @@ public class PostController {
                             // 计算宠物年龄
                             if (pet.getBirthday() != null) {
                                 int age = Period.between(pet.getBirthday(), LocalDate.now()).getYears();
-                                vo.setPetAge(age > 0 ? age : 0);
+                                vo.setPetAge(Math.max(age, 0));
                             } else {
                                 vo.setPetAge(0);
                             }
@@ -202,14 +241,13 @@ public class PostController {
         // 切换点赞状态
         boolean isNowLiked = postService.toggleLike(id, userId);
 
-        // 获取当前点赞数
-        Post post = postService.getPostDetail(id);
-        int likeCount = post != null ? post.getLikeCount() : 0;
+        // 获取当前点赞数 - 使用 Redis 原子操作优化
+        Long likeCount = postService.getLikeCountFromCache(id);
 
         Map<String, Object> result = new HashMap<>();
         // isNowLiked 表示操作后的状态：true=已点赞，false=已取消点赞
         result.put("liked", isNowLiked);
-        result.put("likeCount", likeCount);
+        result.put("likeCount", likeCount != null ? likeCount : 0);
 
         log.info("点赞操作 - postId: {}, userId: {}, isNowLiked: {}, likeCount: {}",
             id, userId, isNowLiked, likeCount);

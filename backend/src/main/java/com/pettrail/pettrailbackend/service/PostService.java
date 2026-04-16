@@ -123,7 +123,7 @@ public class PostService {
         // 检查是否已点赞
         Boolean isLiked = redisTemplate.hasKey(userLikeKey);
 
-        if (Boolean.TRUE.equals(isLiked)) {
+        if (isLiked) {
             // 取消点赞
             redisTemplate.delete(userLikeKey);
             redisTemplate.opsForHash().increment(likeKey, "count", -1);
@@ -158,7 +158,7 @@ public class PostService {
         String cacheKey = "post:detail:" + postId;
         redisTemplate.delete(cacheKey);
 
-        return Boolean.TRUE.equals(isLiked) ? false : true;
+        return !isLiked;
     }
 
     /**
@@ -167,11 +167,25 @@ public class PostService {
     public boolean isUserLiked(Long postId, Long userId) {
         String userLikeKey = "post:user:like:" + postId + ":" + userId;
         Boolean exists = redisTemplate.hasKey(userLikeKey);
-        if (Boolean.TRUE.equals(exists)) {
+        if (exists) {
             return true;
         }
         // Redis 未命中时，查数据库
         return postLikeMapper.selectByPostIdAndUserId(postId, userId) != null;
+    }
+
+    /**
+     * 获取点赞数（从缓存获取）
+     */
+    public Long getLikeCountFromCache(Long postId) {
+        String likeKey = "post:like:" + postId;
+        Object count = redisTemplate.opsForHash().get(likeKey, "count");
+        if (count != null) {
+            return Long.valueOf(count.toString());
+        }
+        // 缓存未命中时从数据库查询
+        Post post = postMapper.selectById(postId);
+        return post != null ? post.getLikeCount() : 0L;
     }
 
     /**
@@ -191,7 +205,7 @@ public class PostService {
         // 检查是否已收藏
         Boolean isEeLiked = redisTemplate.hasKey(userEeKey);
 
-        if (Boolean.TRUE.equals(isEeLiked)) {
+        if (isEeLiked) {
             // 取消收藏
             redisTemplate.delete(userEeKey);
             redisTemplate.opsForHash().increment(eeKey, "count", -1);
@@ -231,7 +245,7 @@ public class PostService {
         String cacheKey = "post:detail:" + postId;
         redisTemplate.delete(cacheKey);
 
-        return Boolean.TRUE.equals(isEeLiked) ? false : true;
+        return !isEeLiked;
     }
 
     /**
@@ -240,7 +254,7 @@ public class PostService {
     public boolean isUserEeLiked(Long postId, Long userId) {
         String userEeKey = "post:user:ee:" + postId + ":" + userId;
         Boolean exists = redisTemplate.hasKey(userEeKey);
-        if (Boolean.TRUE.equals(exists)) {
+        if (exists) {
             return true;
         }
         // Redis 未命中时，查数据库
