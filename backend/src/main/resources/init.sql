@@ -18,13 +18,15 @@ CREATE TABLE IF NOT EXISTS `users` (
   `avatar` varchar(255) DEFAULT NULL COMMENT '头像URL',
   `phone` varchar(20) DEFAULT NULL COMMENT '手机号',
   `gender` tinyint(4) DEFAULT NULL COMMENT '性别: 0-未知, 1-男, 2-女',
+  `status` tinyint(4) DEFAULT 1 COMMENT '状态: 1-正常 0-已删除',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_openid` (`openid`),
   UNIQUE KEY `uk_unionid` (`unionid`),
   KEY `idx_openid` (`openid`),
-  KEY `idx_unionid` (`unionid`)
+  KEY `idx_unionid` (`unionid`),
+  KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
 -- 宠物表

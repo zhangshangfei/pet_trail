@@ -209,7 +209,7 @@ public class UserController {
     public Result<Map<String, Object>> getUserById(@PathVariable Long id) {
         try {
             User user = userService.getProfile(id);
-            if (user == null) {
+            if (user == null || (user.getStatus() != null && user.getStatus() == 0)) {
                 return Result.error(404, "用户不存在");
             }
 
@@ -262,9 +262,24 @@ public class UserController {
         }
     }
 
-    /**
-     * 登录响应 DTO
-     */
+    @DeleteMapping("/account")
+    public Result<?> deactivateAccount() {
+        try {
+            Long userId = UserContext.getCurrentUserId();
+            if (userId == null) {
+                return Result.error(401, "用户未登录");
+            }
+            userService.deactivateUser(userId);
+
+            redisTemplate.delete("wechat:login:token:" + userId);
+
+            return Result.success("账号已注销");
+        } catch (Exception e) {
+            log.error("用户注销失败：{}", e.getMessage(), e);
+            return Result.error("注销失败：" + e.getMessage());
+        }
+    }
+
     public static class LoginResponse {
         private final User user;
         private final String token;

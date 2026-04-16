@@ -128,6 +128,8 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     public List<User> discoverUsers(Long currentUserId, String type, String keyword, int page, int size) {
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
 
+        queryWrapper.eq(User::getStatus, 1);
+
         if (currentUserId != null) {
             queryWrapper.ne(User::getId, currentUserId);
         }
@@ -152,5 +154,22 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         queryWrapper.last("LIMIT " + (page - 1) * size + ", " + size);
 
         return this.list(queryWrapper);
+    }
+
+    public void deactivateUser(Long userId) {
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+
+        user.setStatus(0);
+        this.updateById(user);
+        log.info("用户注销成功: userId={}", userId);
+
+        try {
+            redisTemplate.delete(PROFILE_CACHE_PREFIX + userId);
+        } catch (Exception e) {
+            log.warn("用户注销缓存清除异常: {}", e.getMessage());
+        }
     }
 }

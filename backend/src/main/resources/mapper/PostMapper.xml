@@ -18,18 +18,22 @@
 
     <!-- 根据用户 ID 查询动态列表 -->
     <select id="selectByUserId" resultMap="BaseResultMap">
-        SELECT * FROM posts
-        WHERE user_id = #{userId}
-        AND status = 1
-        ORDER BY created_at DESC
+        SELECT p.* FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        WHERE p.user_id = #{userId}
+        AND p.status = 1
+        AND u.status = 1
+        ORDER BY p.created_at DESC
         LIMIT #{offset}, #{limit}
     </select>
 
     <!-- 查询动态列表（按时间倒序） -->
     <select id="selectFeed" resultMap="BaseResultMap">
-        SELECT * FROM posts
-        WHERE status = 1
-        ORDER BY created_at DESC
+        SELECT p.* FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        WHERE p.status = 1
+        AND u.status = 1
+        ORDER BY p.created_at DESC
         LIMIT #{offset}, #{limit}
     </select>
 
@@ -37,8 +41,10 @@
     <select id="selectFollowFeed" resultMap="BaseResultMap">
         SELECT p.* FROM posts p
         INNER JOIN follows f ON p.user_id = f.followee_id
+        INNER JOIN users u ON p.user_id = u.id
         WHERE f.follower_id = #{followerId}
         AND p.status = 1
+        AND u.status = 1
         ORDER BY p.created_at DESC
         LIMIT #{offset}, #{limit}
     </select>
@@ -47,8 +53,10 @@
     <select id="selectCollectFeed" resultMap="BaseResultMap">
         SELECT p.* FROM posts p
         INNER JOIN post_ee e ON p.id = e.post_id
+        INNER JOIN users u ON p.user_id = u.id
         WHERE e.user_id = #{userId}
         AND p.status = 1
+        AND u.status = 1
         ORDER BY p.created_at DESC
         LIMIT #{offset}, #{limit}
     </select>
@@ -57,8 +65,10 @@
     <select id="selectLikedFeed" resultMap="BaseResultMap">
         SELECT p.* FROM posts p
         INNER JOIN post_likes l ON p.id = l.post_id
+        INNER JOIN users u ON p.user_id = u.id
         WHERE l.user_id = #{userId}
         AND p.status = 1
+        AND u.status = 1
         ORDER BY l.created_at DESC
         LIMIT #{offset}, #{limit}
     </select>

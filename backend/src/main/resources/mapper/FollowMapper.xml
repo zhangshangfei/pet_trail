@@ -10,25 +10,33 @@
 
     <!-- 查询用户的粉丝数 -->
     <select id="countFollowers" resultType="int">
-        SELECT COUNT(*) FROM follows
-        WHERE followee_id = #{followeeId}
+        SELECT COUNT(*) FROM follows f
+        INNER JOIN users u ON f.follower_id = u.id
+        WHERE f.followee_id = #{followeeId}
+        AND u.status = 1
     </select>
 
     <!-- 查询用户的关注数 -->
     <select id="countFollowees" resultType="int">
-        SELECT COUNT(*) FROM follows
-        WHERE follower_id = #{followerId}
+        SELECT COUNT(*) FROM follows f
+        INNER JOIN users u ON f.followee_id = u.id
+        WHERE f.follower_id = #{followerId}
+        AND u.status = 1
     </select>
 
     <!-- 查询用户关注的用户ID列表 -->
     <select id="selectFolloweeIds" resultType="java.lang.Long">
-        SELECT followee_id FROM follows
-        WHERE follower_id = #{followerId}
+        SELECT f.followee_id FROM follows f
+        INNER JOIN users u ON f.followee_id = u.id
+        WHERE f.follower_id = #{followerId}
+        AND u.status = 1
     </select>
 
     <select id="selectFollowerIds" resultType="java.lang.Long">
-        SELECT follower_id FROM follows
-        WHERE followee_id = #{followeeId}
+        SELECT f.follower_id FROM follows f
+        INNER JOIN users u ON f.follower_id = u.id
+        WHERE f.followee_id = #{followeeId}
+        AND u.status = 1
     </select>
 
 </mapper>

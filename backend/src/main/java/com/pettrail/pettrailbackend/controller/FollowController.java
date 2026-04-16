@@ -101,8 +101,13 @@ public class FollowController {
             int end = Math.min(start + size, followeeIds.size());
             for (int i = start; i < end; i++) {
                 Long followeeId = followeeIds.get(i);
-                User user = userService.getById(followeeId);
-                if (user == null) continue;
+                User user;
+                try {
+                    user = userService.getProfile(followeeId);
+                } catch (Exception e) {
+                    continue;
+                }
+                if (user.getStatus() != null && user.getStatus() == 0) continue;
                 Map<String, Object> item = new HashMap<>();
                 item.put("id", user.getId());
                 item.put("nickname", user.getNickname());
@@ -135,8 +140,13 @@ public class FollowController {
             int end = Math.min(start + size, followerIds.size());
             for (int i = start; i < end; i++) {
                 Long followerId = followerIds.get(i);
-                User user = userService.getById(followerId);
-                if (user == null) continue;
+                User user;
+                try {
+                    user = userService.getProfile(followerId);
+                } catch (Exception e) {
+                    continue;
+                }
+                if (user.getStatus() != null && user.getStatus() == 0) continue;
                 Map<String, Object> item = new HashMap<>();
                 item.put("id", user.getId());
                 item.put("nickname", user.getNickname());

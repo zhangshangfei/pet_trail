@@ -82,6 +82,7 @@ public class RecommendService {
 
     private List<Map<String, Object>> recommendForAnonymous(int page, int size) {
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getStatus, 1);
         wrapper.orderByDesc(User::getCreatedAt);
         wrapper.last("LIMIT " + (page - 1) * size + ", " + size);
         List<User> users = userMapper.selectList(wrapper);
@@ -143,6 +144,7 @@ public class RecommendService {
         }
 
         LambdaQueryWrapper<User> candidateWrapper = new LambdaQueryWrapper<>();
+        candidateWrapper.eq(User::getStatus, 1);
         candidateWrapper.notIn(User::getId, excludedIds);
         List<User> candidates = userMapper.selectList(candidateWrapper);
 
