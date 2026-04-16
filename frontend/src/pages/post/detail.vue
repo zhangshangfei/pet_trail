@@ -1,97 +1,116 @@
 <template>
   <view class="post-detail-page">
+    <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
+    <view class="nav-bar">
+      <view class="nav-back" @click="goBack">
+        <text class="nav-back-icon">←</text>
+      </view>
+      <text class="nav-title">动态详情</text>
+      <view class="nav-placeholder"></view>
+    </view>
+
     <view v-if="loading" class="loading-wrap">
       <text class="loading-text">加载中...</text>
     </view>
 
-    <scroll-view v-else-if="post" scroll-y class="detail-scroll">
-      <view class="post-header">
-        <image class="post-avatar" :src="post.userAvatar" mode="aspectFill" @tap="goUserProfile" />
-        <view class="post-info" @tap="goUserProfile">
-          <text class="post-name">{{ post.userName }}</text>
-          <view class="post-pet-info">
-            <text class="pet-icon">{{ getPetIcon(post.petType) }}</text>
-            <text class="pet-name">{{ post.petName || '未知宠物' }}</text>
-            <text class="pet-age" v-if="post.petAge"> | {{ post.petAge }}岁</text>
-          </view>
-        </view>
-        <text class="post-time">{{ post.relativeTime }}</text>
-      </view>
-
-      <view class="post-content-wrap">
-        <text class="post-content">{{ post.content }}</text>
-      </view>
-
-      <view v-if="post.images && post.images.length" class="post-image-wrap">
-        <image
-          v-for="(img, idx) in post.images"
-          :key="idx"
-          class="post-image"
-          :class="getImageClass(post.images.length)"
-          :src="img"
-          mode="aspectFill"
-          @click="previewImage(post.images, idx)"
-        />
-      </view>
-
-      <view class="post-actions">
-        <view class="actions-left">
-          <view class="action-item" @click="onLikeTap">
-            <text class="action-icon" :class="{ 'action-icon--liked': post.liked }">{{ post.liked ? '❤️' : '🤍' }}</text>
-            <text class="action-count">{{ formatNumber(post.likes) }}</text>
-          </view>
-          <view class="action-item" @click="onEeTap">
-            <text class="action-icon" :class="{ 'action-icon--liked': post.eeLiked }">{{ post.eeLiked ? '⭐' : '☆' }}</text>
-            <text class="action-count">{{ formatNumber(post.eeCount) }}</text>
-          </view>
-          <view class="action-item" @click="focusCommentInput">
-            <text class="action-icon">💬</text>
-            <text class="action-count">{{ formatNumber(post.comments) }}</text>
-          </view>
-        </view>
-        <view class="action-item" @click="onShareTap">
-          <text class="action-icon">↗️</text>
-        </view>
-      </view>
-
-      <view class="comment-section">
-        <view class="comment-header">
-          <text class="comment-title">全部评论 ({{ totalCommentCount }})</text>
-        </view>
-
-        <view v-if="commentList.length === 0" class="no-comment">
-          <text class="no-comment-text">暂无评论，快来抢沙发吧~</text>
-        </view>
-
-        <view v-else class="comment-list">
-          <view
-            v-for="comment in commentList"
-            :key="comment.id"
-            class="comment-item"
-          >
-            <image class="comment-avatar" :src="comment.userAvatar || ''" mode="aspectFill" />
-            <view class="comment-info">
-              <text class="comment-username">{{ comment.userName }}</text>
-              <text class="comment-content">{{ comment.content }}</text>
-              <view class="comment-footer">
-                <text class="comment-time">{{ comment.relativeTime }}</text>
-                <text class="comment-reply-btn" @click="onReplyTap(comment)">回复</text>
+    <scroll-view v-else-if="post" scroll-y class="detail-scroll" :style="{ top: navHeight + 'px' }">
+      <view class="feed-list">
+        <view class="post-card">
+          <view class="post-header">
+            <image class="post-avatar" :src="getUserAvatar(post.userId, post.userAvatar)" mode="aspectFill" @tap="goUserProfile" />
+            <view class="post-info" @tap="goUserProfile">
+              <text class="post-name">{{ post.userName }}</text>
+              <view class="post-pet-info">
+                <text class="pet-icon">{{ getPetIcon(post.petType) }}</text>
+                <text class="pet-name">{{ post.petName || '未知宠物' }}</text>
+                <text class="pet-age" v-if="post.petAge"> | {{ post.petAge }}岁</text>
               </view>
+            </view>
+            <text class="post-time">{{ post.relativeTime }}</text>
+          </view>
 
-              <view v-if="comment.replies && comment.replies.length" class="reply-list">
-                <view
-                  v-for="reply in comment.replies"
-                  :key="reply.id"
-                  class="reply-item"
-                >
-                  <image class="reply-avatar" :src="reply.userAvatar || ''" mode="aspectFill" />
-                  <view class="reply-info">
-                    <text class="reply-username">{{ reply.userName }}</text>
-                    <text v-if="reply.replyToUserName" class="reply-to">回复 {{ reply.replyToUserName }}</text>
-                    <text class="reply-content">{{ reply.content }}</text>
-                    <view class="comment-footer">
-                      <text class="comment-time">{{ getRelativeTime(reply.createdAt) }}</text>
-                      <text class="comment-reply-btn" @click="onReplyTap(reply, comment)">回复</text>
+          <view class="post-content-wrap">
+            <text class="post-content">{{ post.content }}</text>
+          </view>
+
+          <view v-if="post.images && post.images.length" class="post-image-wrap">
+            <image
+              v-for="(img, idx) in post.images"
+              :key="idx"
+              class="post-image"
+              :class="getImageClass(post.images.length)"
+              :src="img"
+              mode="aspectFill"
+              @click="previewImage(post.images, idx)"
+            />
+          </view>
+
+          <view class="post-actions">
+            <view class="actions-left">
+              <view class="action-item" @click="onLikeTap">
+                <text class="action-icon">{{ post.liked ? '❤️' : '🤍' }}</text>
+                <text class="action-count">{{ formatNumber(post.likes) }}</text>
+              </view>
+              <view class="action-item" @click="onEeTap">
+                <text class="action-icon">{{ post.eeLiked ? '⭐' : '☆' }}</text>
+                <text class="action-count">{{ formatNumber(post.eeCount) }}</text>
+              </view>
+              <view class="action-item" @click="focusCommentInput">
+                <text class="action-icon">💬</text>
+                <text class="action-count">{{ formatNumber(post.comments) }}</text>
+              </view>
+            </view>
+            <view class="action-item" @click="onShareTap">
+              <text class="action-icon">↗️</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="comment-card">
+          <view class="comment-header">
+            <text class="comment-title">全部评论 ({{ totalCommentCount }})</text>
+          </view>
+
+          <view v-if="commentList.length === 0" class="no-comment">
+            <text class="no-comment-emoji">💬</text>
+            <text class="no-comment-text">暂无评论，快来抢沙发吧~</text>
+          </view>
+
+          <view v-else class="comment-list">
+            <view
+              v-for="comment in commentList"
+              :key="comment.id"
+              class="comment-item"
+            >
+              <image class="comment-avatar" :src="getUserAvatar(comment.userId, comment.userAvatar)" mode="aspectFill" />
+              <view class="comment-info">
+                <view class="comment-main">
+                  <text class="comment-username">{{ comment.userName }}：</text>
+                  <text class="comment-content">{{ comment.content }}</text>
+                </view>
+                <view class="comment-footer">
+                  <text class="comment-time">{{ comment.relativeTime }}</text>
+                  <text class="comment-reply-btn" @click="onReplyTap(comment)">回复</text>
+                </view>
+
+                <view v-if="comment.replies && comment.replies.length" class="reply-list">
+                  <view
+                    v-for="reply in comment.replies"
+                    :key="reply.id"
+                    class="reply-item"
+                  >
+                    <image class="reply-avatar" :src="getUserAvatar(reply.userId, reply.userAvatar)" mode="aspectFill" />
+                    <view class="reply-info">
+                      <view class="reply-main">
+                        <text class="reply-username">{{ reply.userName }}</text>
+                        <text v-if="reply.replyToUserName" class="reply-to">回复 {{ reply.replyToUserName }}</text>
+                        <text class="reply-colon">：</text>
+                        <text class="reply-content">{{ reply.content }}</text>
+                      </view>
+                      <view class="comment-footer">
+                        <text class="comment-time">{{ getRelativeTime(reply.createdAt) }}</text>
+                        <text class="comment-reply-btn" @click="onReplyTap(reply, comment)">回复</text>
+                      </view>
                     </view>
                   </view>
                 </view>
@@ -109,7 +128,6 @@
       </view>
       <view class="comment-input-row">
         <input
-          ref="commentInputRef"
           class="comment-input"
           v-model="newComment"
           :placeholder="replyTarget ? `回复 ${replyTarget.userName}...` : '写评论...'"
@@ -123,7 +141,7 @@
 
 <script>
 import * as postApi from '@/api/post'
-import { checkLogin } from '@/utils/index'
+import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 
 export default {
   data() {
@@ -135,26 +153,28 @@ export default {
       loading: true,
       newComment: '',
       safeAreaBottom: 0,
+      statusBarHeight: 20,
+      navHeight: 64,
       replyTarget: null,
       replyParentComment: null
     }
   },
   onLoad(options) {
+    try {
+      const sys = uni.getSystemInfoSync()
+      this.statusBarHeight = (sys && sys.statusBarHeight) || 20
+      this.safeAreaBottom = sys.safeAreaInsets ? sys.safeAreaInsets.bottom : 0
+      this.navHeight = this.statusBarHeight + 44
+    } catch (e) {
+      this.navHeight = 64
+    }
+
     if (options.id) {
       this.postId = options.id
       this.loadPostDetail()
     } else {
       uni.showToast({ title: '参数错误', icon: 'none' })
-      setTimeout(() => {
-        uni.navigateBack()
-      }, 1500)
-    }
-
-    try {
-      const sys = uni.getSystemInfoSync()
-      this.safeAreaBottom = sys.safeAreaInsets ? sys.safeAreaInsets.bottom : 0
-    } catch (e) {
-      this.safeAreaBottom = 0
+      setTimeout(() => { uni.navigateBack() }, 1500)
     }
   },
   methods: {
@@ -176,7 +196,7 @@ export default {
             liked: post.liked || false,
             eeLiked: post.eeLiked || false,
             userName: post.userName || '未知用户',
-            userAvatar: post.userAvatar || '',
+            userAvatar: getUserAvatar(post.userId, post.userAvatar),
             petName: post.petName || '',
             petType: post.petType || 0,
             petAge: post.petAge || 0,
@@ -215,7 +235,6 @@ export default {
     async onLikeTap() {
       const loggedIn = await checkLogin('请先登录后再点赞')
       if (!loggedIn) return
-
       try {
         const res = await postApi.toggleLike(this.postId)
         if (res.success) {
@@ -231,7 +250,6 @@ export default {
     async onEeTap() {
       const loggedIn = await checkLogin('请先登录后再收藏')
       if (!loggedIn) return
-
       try {
         const res = await postApi.toggleEe(this.postId)
         if (res.success && res.data) {
@@ -269,17 +287,14 @@ export default {
         uni.showToast({ title: '请输入评论内容', icon: 'none' })
         return
       }
-
       const loggedIn = await checkLogin('请先登录后再评论')
       if (!loggedIn) return
-
       try {
         const data = { content: this.newComment.trim() }
         if (this.replyTarget && this.replyParentComment) {
           data.parentId = this.replyParentComment.id
           data.replyToId = this.replyTarget.id
         }
-
         const res = await postApi.createComment(this.postId, data)
         if (res.success) {
           this.newComment = ''
@@ -299,27 +314,17 @@ export default {
     },
 
     previewImage(images, index) {
-      uni.previewImage({
-        urls: images,
-        current: index
-      })
+      uni.previewImage({ urls: images, current: index })
     },
 
     getPetIcon(type) {
-      switch(type) {
-        case 1: return '🐱'
-        case 2: return '🐕'
-        case 3: return '🐰'
-        case 4: return '🐦'
-        default: return '🐾'
-      }
+      const map = { 1: '🐱', 2: '🐕', 3: '🐰', 4: '🐦' }
+      return map[type] || '🐾'
     },
 
     formatNumber(num) {
       if (!num) return '0'
-      if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'k'
-      }
+      if (num >= 1000) return (num / 1000).toFixed(1) + 'k'
       return num.toString()
     },
 
@@ -333,15 +338,10 @@ export default {
     getRelativeTime(timestamp) {
       if (!timestamp) return ''
       let timeMs = 0
-      if (typeof timestamp === 'number') {
-        timeMs = timestamp
-      } else if (typeof timestamp === 'string') {
-        const dateStr = timestamp.replace(' ', 'T')
-        timeMs = new Date(dateStr).getTime()
-      }
+      if (typeof timestamp === 'number') timeMs = timestamp
+      else if (typeof timestamp === 'string') timeMs = new Date(timestamp.replace(' ', 'T')).getTime()
       if (isNaN(timeMs) || timeMs === 0) return ''
-      const now = Date.now()
-      const diff = now - timeMs
+      const diff = Date.now() - timeMs
       if (diff < 60000) return '刚刚'
       if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
       if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
@@ -355,6 +355,10 @@ export default {
       if (this.post.userId) {
         uni.navigateTo({ url: `/pages/user/detail?id=${this.post.userId}` })
       }
+    },
+
+    goBack() {
+      uni.navigateBack()
     }
   }
 }
@@ -363,15 +367,51 @@ export default {
 <style lang="scss" scoped>
 .post-detail-page {
   min-height: 100vh;
-  background: #f9fafb;
-  padding-bottom: 140rpx;
+  background: #f5f5f5;
+}
+
+.status-bar {
+  width: 100%;
+  background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 100%);
+}
+
+.nav-bar {
+  height: 44px;
+  background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.nav-back {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-icon {
+  font-size: 36rpx;
+  color: #fff;
+}
+
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #fff;
+}
+
+.nav-placeholder {
+  width: 60rpx;
 }
 
 .loading-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  height: 60vh;
 }
 
 .loading-text {
@@ -380,15 +420,29 @@ export default {
 }
 
 .detail-scroll {
-  height: 100vh;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.feed-list {
+  padding: 8rpx 20rpx;
+  padding-bottom: 200rpx;
+}
+
+.post-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
 }
 
 .post-header {
   display: flex;
   align-items: center;
-  padding: 24rpx;
-  background: #fff;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
 }
 
 .post-avatar {
@@ -438,9 +492,7 @@ export default {
 }
 
 .post-content-wrap {
-  padding: 0 24rpx 24rpx;
-  background: #fff;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
 }
 
 .post-content {
@@ -451,9 +503,11 @@ export default {
 }
 
 .post-image-wrap {
-  padding: 0 24rpx 24rpx;
-  background: #fff;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .post-image {
@@ -491,9 +545,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24rpx;
-  background: #fff;
-  margin-bottom: 20rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #f3f4f6;
 }
 
 .actions-left {
@@ -510,17 +563,6 @@ export default {
 .action-icon {
   font-size: 32rpx;
   margin-right: 8rpx;
-  transition: all 0.3s;
-}
-
-.action-icon--liked {
-  animation: likeAnimation 0.3s ease;
-}
-
-@keyframes likeAnimation {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1); }
 }
 
 .action-count {
@@ -528,13 +570,18 @@ export default {
   font-weight: 600;
 }
 
-.comment-section {
+.comment-card {
   background: #fff;
+  border-radius: 24rpx;
   padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
 }
 
 .comment-header {
   margin-bottom: 24rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #f3f4f6;
 }
 
 .comment-title {
@@ -545,12 +592,19 @@ export default {
 
 .no-comment {
   padding: 60rpx 0;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.no-comment-emoji {
+  font-size: 60rpx;
+  margin-bottom: 16rpx;
 }
 
 .no-comment-text {
   font-size: 26rpx;
-  color: #999;
+  color: #9ca3af;
 }
 
 .comment-list {
@@ -561,7 +615,7 @@ export default {
   display: flex;
   margin-bottom: 24rpx;
   padding-bottom: 24rpx;
-  border-bottom: 1rpx solid #f3f4f6;
+  border-bottom: 1rpx solid #f5f5f5;
 }
 
 .comment-item:last-child {
@@ -584,18 +638,22 @@ export default {
   min-width: 0;
 }
 
+.comment-main {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 12rpx;
+}
+
 .comment-username {
   font-size: 26rpx;
   font-weight: 600;
-  color: #111827;
-  margin-bottom: 8rpx;
+  color: #ff6a3d;
 }
 
 .comment-content {
   font-size: 26rpx;
   color: #374151;
   line-height: 36rpx;
-  margin-bottom: 12rpx;
 }
 
 .comment-footer {
@@ -611,14 +669,14 @@ export default {
 
 .comment-reply-btn {
   font-size: 22rpx;
-  color: #3b82f6;
+  color: #ff6a3d;
 }
 
 .reply-list {
   margin-top: 16rpx;
   padding: 16rpx;
   background: #f9fafb;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
 }
 
 .reply-item {
@@ -644,24 +702,35 @@ export default {
   min-width: 0;
 }
 
+.reply-main {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 8rpx;
+}
+
 .reply-username {
   font-size: 24rpx;
   font-weight: 600;
-  color: #374151;
-  margin-right: 8rpx;
+  color: #ff6a3d;
+  margin-right: 4rpx;
 }
 
 .reply-to {
   font-size: 22rpx;
   color: #9ca3af;
-  margin-right: 8rpx;
+  margin-right: 4rpx;
+}
+
+.reply-colon {
+  font-size: 24rpx;
+  color: #374151;
+  margin-right: 4rpx;
 }
 
 .reply-content {
   font-size: 24rpx;
   color: #374151;
   line-height: 34rpx;
-  margin-top: 4rpx;
 }
 
 .comment-input-bar {
@@ -669,8 +738,9 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 100;
   background: #fff;
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
   padding: 16rpx 24rpx;
 }
 
@@ -678,20 +748,22 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8rpx 12rpx;
+  padding: 10rpx 16rpx;
   margin-bottom: 12rpx;
-  background: #f3f4f6;
-  border-radius: 8rpx;
+  background: #fff5f0;
+  border-radius: 12rpx;
+  border: 1rpx solid #ffe0d0;
 }
 
 .reply-hint-text {
   font-size: 24rpx;
-  color: #6b7280;
+  color: #ff6a3d;
+  font-weight: 500;
 }
 
 .reply-hint-close {
   font-size: 28rpx;
-  color: #9ca3af;
+  color: #ff6a3d;
   padding: 0 8rpx;
 }
 
@@ -704,7 +776,7 @@ export default {
 .comment-input {
   flex: 1;
   height: 72rpx;
-  background: #f3f4f6;
+  background: #f5f5f5;
   border-radius: 999rpx;
   padding: 0 24rpx;
   font-size: 28rpx;
@@ -712,10 +784,11 @@ export default {
 
 .send-btn {
   padding: 16rpx 32rpx;
-  background: #3b82f6;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
   color: #fff;
   border-radius: 999rpx;
   font-size: 28rpx;
   font-weight: 600;
+  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
 }
 </style>

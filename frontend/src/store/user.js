@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { auth } from '@/api'
+import { getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -19,7 +20,7 @@ export const useUserStore = defineStore('user', {
       return state.userInfo?.nickname || '宠物管家'
     },
     avatar: (state) => {
-      return state.userInfo?.avatar || 'https://ai-public.mastergo.com/ai/img_res/1774537096721a3K9mP2xQ7vN4rT8wY.jpg'
+      return getUserAvatar(state.userInfo?.id, state.userInfo?.avatar)
     }
   },
 

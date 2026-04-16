@@ -6,14 +6,14 @@
         <view class="back-btn" @tap="goBack">
           <text class="back-icon">←</text>
         </view>
+        <view v-if="isSelf" class="header-edit-btn" @tap="goEditProfile">
+          <text class="header-edit-text">编辑</text>
+        </view>
       </view>
 
       <view class="user-info-section">
         <view class="avatar-wrap">
-          <image class="user-avatar" :src="userInfo.avatar || defaultAvatar" mode="aspectFill" />
-          <view v-if="isSelf" class="avatar-edit-badge" @tap="goEditProfile">
-            <text class="avatar-edit-icon">✎</text>
-          </view>
+          <image class="user-avatar" :src="getUserAvatar(userId, userInfo.avatar)" mode="aspectFill" />
         </view>
         <text class="user-nickname">{{ userInfo.nickname || '萌宠主人' }}</text>
         <view class="user-meta">
@@ -188,9 +188,9 @@
 <script>
 import * as postApi from '@/api/post'
 import { getUserById } from '@/api/auth'
-import { checkLogin } from '@/utils/index'
+import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 
-const defaultAvatar = 'https://ai-public.mastergo.com/ai/img_res/1774537096721a3K9mP2xQ7vN4rT8wY.jpg'
+const defaultAvatar = DEFAULT_USER_AVATAR
 
 export default {
   data() {
@@ -264,7 +264,7 @@ export default {
         if (res && res.success && Array.isArray(res.data)) {
           const newPosts = res.data.map(post => ({
             ...post,
-            avatar: post.userAvatar || defaultAvatar,
+            avatar: getUserAvatar(post.userId, post.userAvatar),
             userName: post.userName || '萌宠主人',
             likes: post.likeCount || 0,
             comments: post.commentCount || 0,
@@ -453,6 +453,18 @@ export default {
   font-weight: 700;
 }
 
+.header-edit-btn {
+  padding: 12rpx 28rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.header-edit-text {
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
 .user-info-section {
   position: relative;
   z-index: 2;
@@ -474,27 +486,6 @@ export default {
   border: 6rpx solid #fff;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
   background: #e5e7eb;
-}
-
-.avatar-edit-badge {
-  position: absolute;
-  right: -4rpx;
-  top: -4rpx;
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: 50%;
-  background: #ff7a3d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 3rpx solid #fff;
-  box-shadow: 0 4rpx 12rpx rgba(255, 122, 61, 0.4);
-}
-
-.avatar-edit-icon {
-  color: #fff;
-  font-size: 24rpx;
-  line-height: 1;
 }
 
 .user-nickname {

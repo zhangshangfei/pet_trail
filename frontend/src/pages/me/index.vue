@@ -11,11 +11,11 @@
 
     <scroll-view scroll-y class="me-scroll" :style="{ height: scrollHeight + 'px', paddingTop: headerHeight + 'px' }">
       <view class="me-content">
-        <!-- Pet management card -->
         <view class="card pet-card">
-          <view class="pet-card-head">
-            <text class="pet-card-title">我的宠物</text>
-            <text class="pet-card-subtitle">共 {{ pets.length }} 只</text>
+          <view class="card-label">
+            <text class="card-label-icon">🐾</text>
+            <text class="card-label-text">我的宠物</text>
+            <text class="card-label-sub">共 {{ pets.length }} 只</text>
           </view>
 
           <view class="pet-avatars">
@@ -26,115 +26,125 @@
               @tap="goPetDetail(pet.id)"
             >
               <image class="pet-avatar" :src="pet.avatar || defaultPetAvatar" mode="aspectFill" />
-              <view class="pet-index-badge">{{ index + 1 }}</view>
+              <text class="pet-name-label">{{ pet.name || ('宠物' + (index + 1)) }}</text>
             </view>
 
             <view class="pet-avatar-add" @tap.stop="goAddPet">
               <text class="pet-plus">＋</text>
+              <text class="pet-add-label">添加</text>
             </view>
           </view>
 
           <view class="pet-actions">
-            <view class="pet-action-btn pet-action-blue" @tap="goToHealthRecord">
+            <view class="pet-action-btn" @tap="goToHealthRecord">
               <text class="pet-action-icon">💙</text>
               <text class="pet-action-text">健康记录</text>
             </view>
-            <view class="pet-action-btn pet-action-green" @tap="goToFeedingReminder">
+            <view class="pet-action-btn" @tap="goToFeedingReminder">
               <text class="pet-action-icon">🔔</text>
               <text class="pet-action-text">喂食提醒</text>
             </view>
           </view>
         </view>
 
-        <!-- Common features card -->
         <view class="card feature-card">
-          <text class="feature-title">常用功能</text>
+          <view class="card-label">
+            <text class="card-label-icon">✨</text>
+            <text class="card-label-text">常用功能</text>
+          </view>
           <view class="feature-grid">
             <view class="feature-item" @tap="goToHealth">
-              <view class="feature-icon feature-icon-blue"><text>📈</text></view>
+              <view class="feature-icon-wrap feature-icon-orange"><text class="feature-emoji">📈</text></view>
               <text class="feature-text">健康监测</text>
             </view>
-            <!-- 社区功能暂时隐藏
-            <view class="feature-item" @tap="goToCommunity">
-              <view class="feature-icon feature-icon-green"><text>👥</text></view>
-              <text class="feature-text">宠物社区</text>
+            <view class="feature-item" @tap="goToNotification">
+              <view class="feature-icon-wrap feature-icon-red"><text class="feature-emoji">🔔</text></view>
+              <text class="feature-text">消息通知</text>
             </view>
-            -->
-            <!-- 商城功能暂时隐藏
-            <view class="feature-item" @tap="goToShop">
-              <view class="feature-icon feature-icon-orange"><text>🛒</text></view>
-              <text class="feature-text">商城</text>
+            <view class="feature-item" @tap="goToUserDetail">
+              <view class="feature-icon-wrap feature-icon-blue"><text class="feature-emoji">👤</text></view>
+              <text class="feature-text">个人主页</text>
             </view>
-            -->
-            <!-- 训练功能暂时隐藏
-            <view class="feature-item" @tap="goToTraining">
-              <view class="feature-icon feature-icon-purple"><text>🎓</text></view>
-              <text class="feature-text">训练</text>
+          </view>
+        </view>
+
+        <view class="card settings-card">
+          <view class="card-label">
+            <text class="card-label-icon">⚙️</text>
+            <text class="card-label-text">更多</text>
+          </view>
+          <view class="option-list">
+            <view class="option-item" @tap="goToAbout">
+              <text class="option-icon">ℹ️</text>
+              <text class="option-text">关于宠迹</text>
+              <text class="option-arrow">›</text>
             </view>
-            -->
-            <!-- 兽医功能暂时隐藏
-            <view class="feature-item" @tap="goToVet">
-              <view class="feature-icon feature-icon-red"><text>🩺</text></view>
-              <text class="feature-text">兽医</text>
+            <view class="option-item" @tap="goToFeedback">
+              <text class="option-icon">📝</text>
+              <text class="option-text">意见反馈</text>
+              <text class="option-arrow">›</text>
             </view>
-            -->
-            <!-- 相册功能暂时隐藏
-            <view class="feature-item" @tap="goToGallery">
-              <view class="feature-icon feature-icon-pink"><text>🖼️</text></view>
-              <text class="feature-text">相册</text>
+            <view class="option-item" @tap="goToSettings">
+              <text class="option-icon">🔧</text>
+              <text class="option-text">设置</text>
+              <text class="option-arrow">›</text>
             </view>
-            -->
           </view>
         </view>
       </view>
     </scroll-view>
 
-    <view v-if="showAddPetModal" class="me-modal-mask" @tap="closeAddPetModal">
-      <view class="me-modal-card" @tap.stop>
-        <view class="me-modal-avatar" @tap="onPickAvatar">
-          <view v-if="!addPetForm.avatar" class="me-modal-avatar-empty">
-            <text class="me-modal-avatar-icon">📷</text>
-            <text class="me-modal-avatar-tip">点击上传</text>
-          </view>
-          <image v-else class="me-modal-avatar-img" :src="addPetForm.avatar" mode="aspectFill" />
+    <view v-if="showAddPetModal" class="modal-mask" @tap="closeAddPetModal">
+      <view class="modal-card" @tap.stop>
+        <view class="modal-header">
+          <text class="modal-title">添加宠物</text>
+          <text class="modal-close" @tap="closeAddPetModal">✕</text>
         </view>
 
-        <view class="me-modal-grid">
-          <view class="me-modal-field me-modal-field-full">
-            <text class="me-modal-label">宠物昵称</text>
-            <input class="me-modal-input" v-model="addPetForm.name" placeholder="请输入昵称" />
+        <view class="modal-avatar-area" @tap="onPickAvatar">
+          <view v-if="!addPetForm.avatar" class="modal-avatar-empty">
+            <text class="modal-avatar-icon">📷</text>
+            <text class="modal-avatar-tip">点击上传头像</text>
           </view>
-          <view class="me-modal-field">
-            <text class="me-modal-label">宠物品种</text>
-            <input class="me-modal-input" v-model="addPetForm.breed" placeholder="请选择品种" />
+          <image v-else class="modal-avatar-img" :src="addPetForm.avatar" mode="aspectFill" />
+        </view>
+
+        <view class="modal-grid">
+          <view class="modal-field modal-field-full">
+            <text class="modal-label">宠物昵称</text>
+            <input class="modal-input" v-model="addPetForm.name" placeholder="请输入昵称" />
           </view>
-          <view class="me-modal-field">
-            <text class="me-modal-label">体重 (kg)</text>
-            <input class="me-modal-input" type="digit" v-model="addPetForm.weight" placeholder="输入体重" />
+          <view class="modal-field">
+            <text class="modal-label">宠物品种</text>
+            <input class="modal-input" v-model="addPetForm.breed" placeholder="请选择品种" />
           </view>
-          <view class="me-modal-field">
-            <text class="me-modal-label">性别</text>
+          <view class="modal-field">
+            <text class="modal-label">体重 (kg)</text>
+            <input class="modal-input" type="digit" v-model="addPetForm.weight" placeholder="输入体重" />
+          </view>
+          <view class="modal-field">
+            <text class="modal-label">性别</text>
             <picker :range="genderLabels" :value="genderIndex" @change="onGenderChange">
-              <view class="me-modal-select">
+              <view class="modal-select">
                 <text v-if="genderIndex >= 0">{{ genderLabels[genderIndex] }}</text>
-                <text v-else class="me-modal-placeholder">请选择</text>
+                <text v-else class="modal-placeholder">请选择</text>
               </view>
             </picker>
           </view>
-          <view class="me-modal-field">
-            <text class="me-modal-label">生日</text>
+          <view class="modal-field">
+            <text class="modal-label">生日</text>
             <picker mode="date" :value="addPetForm.birthday" @change="onBirthdayChange">
-              <view class="me-modal-select">
+              <view class="modal-select">
                 <text v-if="addPetForm.birthday">{{ addPetForm.birthday }}</text>
-                <text v-else class="me-modal-placeholder">请选择</text>
+                <text v-else class="modal-placeholder">请选择</text>
               </view>
             </picker>
           </view>
         </view>
 
-        <view class="me-modal-actions">
-          <button class="me-modal-btn me-modal-btn-cancel" @tap="closeAddPetModal">取消</button>
-          <button class="me-modal-btn me-modal-btn-save" type="primary" @tap="submitAddPet(addPetForm)">保存</button>
+        <view class="modal-actions">
+          <text class="modal-btn modal-btn-cancel" @tap="closeAddPetModal">取消</text>
+          <text class="modal-btn modal-btn-save" @tap="submitAddPet(addPetForm)">保存</text>
         </view>
       </view>
     </view>
@@ -144,7 +154,7 @@
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
 import { uploadImage } from '@/api/pet'
-import { checkLogin } from '@/utils/index'
+import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
 
 export default {
   components: {
@@ -155,8 +165,8 @@ export default {
       statusBarHeight: 20,
       headerHeight: 70,
       scrollHeight: 0,
-      avatarUrl: "https://ai-public.mastergo.com/ai/img_res/1774537096721a3K9mP2xQ7vN4rT8wY.jpg",
-      defaultPetAvatar: "https://ai-public.mastergo.com/ai/img_res/1774575365924b4L8nQ3xR6vM9wP2yZ.jpg",
+      avatarUrl: DEFAULT_USER_AVATAR,
+      defaultPetAvatar: DEFAULT_PET_AVATAR_URL,
       userName: "宠物管家",
       pets: [],
       showAddPetModal: false,
@@ -211,24 +221,20 @@ export default {
     this.loadUserInfo();
   },
   methods: {
-    // 加载用户信息
     async loadUserInfo() {
-      // 先从本地缓存读取
       const userInfo = uni.getStorageSync('userInfo');
       if (userInfo && userInfo.avatar) {
-        this.avatarUrl = userInfo.avatar;
+        this.avatarUrl = getUserAvatar(userInfo.id, userInfo.avatar);
         this.userName = userInfo.nickname || '宠物管家';
       }
-      // 如果有 token，从后端获取最新数据
       const token = uni.getStorageSync('token');
       if (token) {
         try {
           const res = await uni.$request.get('/api/users/profile');
           if (res && res.success) {
             const userData = res.data;
-            this.avatarUrl = userData.avatar || this.avatarUrl;
+            this.avatarUrl = getUserAvatar(userData.id, userData.avatar);
             this.userName = userData.nickname || this.userName;
-            // 更新缓存
             uni.setStorageSync('userInfo', userData);
           }
         } catch (e) {
@@ -249,7 +255,7 @@ export default {
       }
     },
     onBellTap() {
-      uni.showToast({ title: "通知未实现", icon: "none" });
+      uni.navigateTo({ url: '/pages/notification/index' });
     },
     onTopUserTap() {
       const token = uni.getStorageSync('token')
@@ -347,17 +353,20 @@ export default {
     goToHealth() {
       uni.navigateTo({ url: "/pages/health/index" });
     },
-    goToShop() {
-      uni.showToast({ title: "商城未实现", icon: "none" });
+    goToNotification() {
+      uni.navigateTo({ url: '/pages/notification/index' });
     },
-    goToTraining() {
-      uni.showToast({ title: "训练未实现", icon: "none" });
+    goToUserDetail() {
+      this.onTopUserTap();
     },
-    goToVet() {
-      uni.showToast({ title: "兽医未实现", icon: "none" });
+    goToAbout() {
+      uni.showToast({ title: "关于宠迹未实现", icon: "none" });
     },
-    goToGallery() {
-      uni.showToast({ title: "相册未实现", icon: "none" });
+    goToFeedback() {
+      uni.showToast({ title: "意见反馈未实现", icon: "none" });
+    },
+    goToSettings() {
+      uni.showToast({ title: "设置未实现", icon: "none" });
     }
   }
 };
@@ -366,310 +375,353 @@ export default {
 <style lang="scss" scoped>
 .me-page {
   min-height: 100vh;
-  background: var(--pt-bg);
-}
-
-.me-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 20;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10rpx 30rpx rgba(17, 24, 39, 0.06);
-  padding: 0 20rpx 14rpx;
-}
-
-.me-statusbar {
-  width: 100%;
-}
-
-.me-nav-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.me-nav-left {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-}
-
-.me-avatar {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  background: #e5e7eb;
-}
-
-.me-title {
-  font-size: 30rpx;
-  font-weight: 800;
-  color: #111827;
-}
-
-.me-nav-right {
-  width: 96rpx;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.me-bell {
-  font-size: 38rpx;
-  color: #6b7280;
+  background: #f5f5f5;
 }
 
 .me-scroll {
-  // 高度由模板内联 style 决定
   height: auto;
 }
 
 .me-content {
-  padding: 80rpx 20rpx 220rpx;
+  padding: 8rpx 20rpx 220rpx;
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 28rpx;
-  box-shadow: var(--pt-shadow-soft);
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
 }
 
-.pet-card {
-  padding: 36rpx 24rpx 28rpx;
+.card-label {
+  display: flex;
+  align-items: center;
   margin-bottom: 24rpx;
 }
 
-.pet-card-head {
-  text-align: center;
-  margin-bottom: 28rpx;
+.card-label-icon {
+  font-size: 28rpx;
+  margin-right: 8rpx;
 }
 
-.pet-card-title {
-  display: block;
-  font-size: 34rpx;
-  font-weight: 900;
+.card-label-text {
+  font-size: 28rpx;
+  font-weight: 600;
   color: #111827;
-  margin-bottom: 8rpx;
 }
 
-.pet-card-subtitle {
-  display: block;
-  font-size: 24rpx;
-  color: #6b7280;
+.card-label-sub {
+  font-size: 22rpx;
+  color: #9ca3af;
+  margin-left: auto;
 }
 
 .pet-avatars {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   gap: 24rpx;
   flex-wrap: wrap;
-  margin-bottom: 30rpx;
+  margin-bottom: 24rpx;
+  padding: 16rpx 0;
 }
 
 .pet-avatar-item {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .pet-avatar {
-  width: 112rpx;
-  height: 112rpx;
-  border-radius: 56rpx;
-  overflow: hidden;
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
   background: #e5e7eb;
-  border: 4rpx solid rgba(255, 255, 255, 0.98);
-  box-shadow: 0 10rpx 24rpx rgba(17, 24, 39, 0.08);
+  border: 4rpx solid #fff;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
-.pet-avatar-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(180deg, var(--pt-primary-2) 0%, var(--pt-primary) 100%);
-}
-
-.pet-avatar-fallback-text {
-  color: #fff;
-  font-size: 40rpx;
-  font-weight: 900;
-}
-
-.pet-index-badge {
-  position: absolute;
-  bottom: -6rpx;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40rpx;
-  height: 40rpx;
-  border-radius: 20rpx;
-  background: #3b82f6;
-  color: #fff;
+.pet-name-label {
   font-size: 22rpx;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 4rpx solid rgba(255, 255, 255, 0.98);
+  color: #6b7280;
+  margin-top: 8rpx;
+  max-width: 100rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .pet-avatar-add {
-  width: 112rpx;
-  height: 112rpx;
-  border-radius: 56rpx;
-  border: 4rpx dashed rgba(107, 114, 128, 0.35);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.7);
+  width: 100rpx;
 }
 
 .pet-plus {
-  font-size: 52rpx;
-  color: rgba(107, 114, 128, 0.7);
-  font-weight: 900;
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  border: 2rpx dashed #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+  color: #9ca3af;
+  background: #fafafa;
+}
+
+.pet-add-label {
+  font-size: 22rpx;
+  color: #9ca3af;
+  margin-top: 8rpx;
 }
 
 .pet-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18rpx;
+  gap: 16rpx;
 }
 
 .pet-action-btn {
-  height: 92rpx;
+  height: 84rpx;
   border-radius: 999rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12rpx;
+  gap: 10rpx;
+  font-weight: 600;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
   color: #fff;
-  font-weight: 900;
-}
+  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.25);
 
-.pet-action-blue {
-  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
-}
-
-.pet-action-green {
-  background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+  &:active {
+    transform: scale(0.98);
+  }
 }
 
 .pet-action-icon {
-  font-size: 30rpx;
-}
-
-.pet-action-text {
   font-size: 28rpx;
 }
 
-.feature-card {
-  padding: 28rpx 22rpx 24rpx;
-}
-
-.feature-title {
-  display: block;
-  font-size: 30rpx;
-  font-weight: 900;
-  color: #111827;
-  margin-bottom: 18rpx;
+.pet-action-text {
+  font-size: 26rpx;
 }
 
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 18rpx;
+  gap: 16rpx;
 }
 
 .feature-item {
-  padding: 14rpx 10rpx;
-  border-radius: 20rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  padding: 20rpx 10rpx;
+  border-radius: 16rpx;
+  background: #f9fafb;
+
+  &:active {
+    background: #f3f4f6;
+  }
 }
 
-.feature-icon {
-  width: 88rpx;
-  height: 88rpx;
-  border-radius: 44rpx;
+.feature-icon-wrap {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 12rpx;
-  font-size: 34rpx;
 }
+
+.feature-emoji {
+  font-size: 36rpx;
+}
+
+.feature-icon-orange { background: #fff5f0; }
+.feature-icon-red { background: #fff1f2; }
+.feature-icon-blue { background: #eff6ff; }
 
 .feature-text {
   font-size: 24rpx;
-  color: #6b7280;
+  color: #374151;
+  font-weight: 500;
 }
 
-.feature-icon-blue { background: #dbeafe; }
-.feature-icon-green { background: #d1fae5; }
-.feature-icon-orange { background: #ffedd5; }
-.feature-icon-purple { background: #ede9fe; }
-.feature-icon-red { background: #fee2e2; }
-.feature-icon-pink { background: #fce7f3; }
-.me-modal-mask {
+.settings-card {
+  padding-bottom: 8rpx;
+}
+
+.option-list {
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 16rpx;
+  border-bottom: 1rpx solid #f3f4f6;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.option-icon {
+  font-size: 32rpx;
+  margin-right: 16rpx;
+}
+
+.option-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #374151;
+}
+
+.option-arrow {
+  font-size: 32rpx;
+  color: #d1d5db;
+}
+
+.modal-mask {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 50000;
+  z-index: 1000;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24rpx;
+  padding: 40rpx;
 }
 
-.me-modal-card {
+.modal-card {
   width: 100%;
-  max-width: 680rpx;
   background: #fff;
-  border-radius: 28rpx;
-  padding: 26rpx 24rpx;
+  border-radius: 24rpx;
+  padding: 28rpx 24rpx;
 }
 
-.me-modal-avatar {
-  width: 180rpx;
-  height: 180rpx;
-  margin: 0 auto 18rpx;
-  border-radius: 90rpx;
-  border: 4rpx dashed rgba(59,130,246,.4);
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #111827;
+}
+
+.modal-close {
+  font-size: 32rpx;
+  color: #9ca3af;
+  padding: 8rpx;
+}
+
+.modal-avatar-area {
+  width: 160rpx;
+  height: 160rpx;
+  margin: 0 auto 24rpx;
+  border-radius: 50%;
+  border: 2rpx dashed #d1d5db;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #f9fafb;
 }
 
-.me-modal-avatar-empty { display: flex; flex-direction: column; align-items: center; }
-.me-modal-avatar-icon { font-size: 40rpx; }
-.me-modal-avatar-tip { font-size: 22rpx; color: #6b7280; }
-.me-modal-avatar-img { width: 100%; height: 100%; }
+.modal-avatar-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-.me-modal-grid {
+.modal-avatar-icon {
+  font-size: 40rpx;
+  margin-bottom: 8rpx;
+}
+
+.modal-avatar-tip {
+  font-size: 20rpx;
+  color: #9ca3af;
+}
+
+.modal-avatar-img {
+  width: 100%;
+  height: 100%;
+}
+
+.modal-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16rpx;
 }
 
-.me-modal-field { display: flex; flex-direction: column; }
-.me-modal-field-full { grid-column: 1 / -1; }
-.me-modal-label { font-size: 22rpx; color: #6b7280; margin-bottom: 8rpx; }
-.me-modal-input, .me-modal-select {
+.modal-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-field-full {
+  grid-column: 1 / -1;
+}
+
+.modal-label {
+  font-size: 22rpx;
+  color: #6b7280;
+  margin-bottom: 8rpx;
+}
+
+.modal-input,
+.modal-select {
   border: 2rpx solid #e5e7eb;
-  border-radius: 16rpx;
+  border-radius: 12rpx;
   padding: 16rpx;
   font-size: 26rpx;
+  background: #f9fafb;
 }
-.me-modal-placeholder { color: #9ca3af; }
-.me-modal-actions { display: flex; gap: 14rpx; margin-top: 18rpx; }
-.me-modal-btn { flex: 1; border-radius: 999rpx; font-size: 26rpx; font-weight: 700; }
-.me-modal-btn-cancel { background: #f3f4f6; color: #374151; }
-.me-modal-btn-save { background: #3b82f6; color: #fff; }
-</style>
 
+.modal-placeholder {
+  color: #9ca3af;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.modal-btn-cancel {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.modal-btn-save {
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  color: #fff;
+  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
+}
+</style>

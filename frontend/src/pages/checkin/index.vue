@@ -109,7 +109,7 @@
 
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
-import { checkLogin } from '@/utils/index'
+import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 
 const DISPLAY_ITEM_PRESETS = [
   { code: 'feed', label: '喂食', emoji: '🍖' },
@@ -128,7 +128,7 @@ export default {
       statusBarHeight: 20,
       headerHeight: 70,
       userName: '萌宠主人',
-      userAvatar: 'https://ai-public.mastergo.com/ai/img_res/1774575365924a3K9mP2xQ7vN4rT8wY.jpg',
+      userAvatar: DEFAULT_USER_AVATAR,
       petId: null,
       pets: [],
       pet: null,
@@ -475,14 +475,14 @@ export default {
         const userInfo = uni.getStorageSync('userInfo')
         if (userInfo) {
           if (userInfo.nickname) this.userName = userInfo.nickname
-          if (userInfo.avatar) this.userAvatar = userInfo.avatar
+          if (userInfo.avatar) this.userAvatar = getUserAvatar(userInfo.id, userInfo.avatar)
         }
         const token = uni.getStorageSync('token')
         if (!token) return
         const res = await uni.$request.get('/api/users/profile')
         if (res && res.success && res.data) {
           if (res.data.nickname) this.userName = res.data.nickname
-          if (res.data.avatar) this.userAvatar = res.data.avatar
+          this.userAvatar = getUserAvatar(res.data.id, res.data.avatar)
           uni.setStorageSync('userInfo', res.data)
         }
       } catch (error) {

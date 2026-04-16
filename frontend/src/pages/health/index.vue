@@ -276,7 +276,7 @@
 
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
-import { checkLogin } from '@/utils/index'
+import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
 
 function todayStr() {
   const d = new Date();
@@ -294,9 +294,9 @@ export default {
     return {
       statusBarHeight: 20,
       headerHeight: 0,
-      userAvatar: "https://ai-public.mastergo.com/ai/img_res/1774575365924a3K9mP2xQ7vN4rT8wY.jpg",
+      userAvatar: DEFAULT_USER_AVATAR,
       userName: "小萌宠主人",
-      fallbackPetAvatar: "https://ai-public.mastergo.com/ai/img_res/1774575365924b4L8nQ3xR6vM9wP2yZ.jpg",
+      fallbackPetAvatar: DEFAULT_PET_AVATAR_URL,
       pets: [],
       currentPet: null,
       petSelectorOpen: false,
@@ -435,10 +435,10 @@ export default {
       const token = uni.getStorageSync("token");
 
       if (userInfo && userInfo.avatar) {
-        this.userAvatar = userInfo.avatar;
+        this.userAvatar = getUserAvatar(userInfo.id, userInfo.avatar);
         this.userName = userInfo.nickname || "小萌宠主人";
       } else if (!token) {
-        this.userAvatar = "https://ai-public.mastergo.com/ai/img_res/1774575365924a3K9mP2xQ7vN4rT8wY.jpg";
+        this.userAvatar = DEFAULT_USER_AVATAR;
         this.userName = "小萌宠主人";
       }
 
@@ -447,7 +447,7 @@ export default {
           const res = await uni.$request.get("/api/users/profile");
           if (res && res.success) {
             const userData = res.data;
-            this.userAvatar = userData.avatar || this.userAvatar;
+            this.userAvatar = getUserAvatar(userData.id, userData.avatar);
             this.userName = userData.nickname || this.userName;
             uni.setStorageSync("userInfo", userData);
           }

@@ -214,7 +214,7 @@
 import UserTopBar from '@/components/UserTopBar.vue'
 import * as postApi from '@/api/post'
 import * as notificationApi from '@/api/notification'
-import { checkLogin, wechatLogin } from '@/utils/index'
+import { checkLogin, wechatLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 
 export default {
   components: {
@@ -226,7 +226,7 @@ export default {
       headerHeight: 0,
       segmentBarTop: 0,
       userName: '',
-      avatarUrl: '',
+      avatarUrl: DEFAULT_USER_AVATAR,
       isLoggedIn: false,
 
       currentTab: 'all',
@@ -291,7 +291,7 @@ export default {
       if (!token) {
         this.isLoggedIn = false;
         this.userName = '请登录';
-        this.avatarUrl = 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg';
+        this.avatarUrl = DEFAULT_USER_AVATAR;
         return;
       }
       try {
@@ -300,18 +300,18 @@ export default {
           const userData = res.data;
           this.isLoggedIn = true;
           this.userName = userData.nickname || '萌宠主人';
-          this.avatarUrl = userData.avatar || 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg';
+          this.avatarUrl = getUserAvatar(userData.id, userData.avatar);
           uni.setStorageSync('userInfo', userData);
         } else {
           this.isLoggedIn = false;
           this.userName = '请登录';
-          this.avatarUrl = 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg';
+          this.avatarUrl = DEFAULT_USER_AVATAR;
         }
       } catch (error) {
         console.error('获取用户资料失败:', error);
         this.isLoggedIn = false;
         this.userName = '请登录';
-        this.avatarUrl = 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg';
+        this.avatarUrl = DEFAULT_USER_AVATAR;
       }
     },
 
@@ -356,7 +356,7 @@ export default {
 
                 self.isLoggedIn = true;
                 self.userName = userInfo?.nickname || '萌宠主人';
-                self.avatarUrl = userInfo?.avatar || 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg';
+                self.avatarUrl = getUserAvatar(userInfo?.id, userInfo?.avatar);
 
                 uni.showToast({ title: '登录成功', icon: 'success', duration: 2000 });
                 
@@ -546,8 +546,8 @@ export default {
           const newPosts = res.data.map(post => ({
             ...post,
             userName: post.userName || '未知用户',
-            userAvatar: post.userAvatar || 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg',
-            avatar: post.userAvatar || 'https://ai-public.mastergo.com/ai/img_res/1774535762852mP2xQ7vN4rT8wY3zA6.jpg',
+            userAvatar: getUserAvatar(post.userId, post.userAvatar),
+            avatar: getUserAvatar(post.userId, post.userAvatar),
             petName: post.petName || '',
             petType: post.petType || 0,
             petAge: post.petAge || 0,

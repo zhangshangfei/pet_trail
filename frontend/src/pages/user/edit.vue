@@ -50,14 +50,13 @@
 <script>
 import { getProfile, updateProfile } from '@/api/auth'
 import { uploadImage } from '@/api/pet'
-
-const defaultAvatar = 'https://ai-public.mastergo.com/ai/img_res/1774537096721a3K9mP2xQ7vN4rT8wY.jpg'
+import { getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 
 export default {
   data() {
     return {
       statusBarHeight: 20,
-      defaultAvatar,
+      defaultAvatar: DEFAULT_USER_AVATAR,
       form: {
         nickname: '',
         avatar: '',
