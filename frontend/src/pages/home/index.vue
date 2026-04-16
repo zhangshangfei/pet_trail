@@ -103,6 +103,22 @@
             />
           </view>
 
+          <!-- 贴纸展示 -->
+          <view v-if="post.stickers && post.stickers.length" class="post-stickers">
+            <text v-for="(s, i) in post.stickers" :key="i" class="post-sticker">{{ s }}</text>
+          </view>
+
+          <!-- 文字气泡 -->
+          <view v-if="post.bubble" class="post-bubble" :style="{ background: post.bubble.bgColor || '#ff6a3d' }">
+            <text class="post-bubble-text" :style="{ color: post.bubble.textColor || '#ffffff' }">{{ post.bubble.text }}</text>
+          </view>
+
+          <!-- 位置信息 -->
+          <view v-if="post.location" class="post-location">
+            <text class="location-icon">📍</text>
+            <text class="location-text">{{ post.location }}</text>
+          </view>
+
           <!-- 视频展示 -->
           <view
             v-if="post.videos && post.videos.length"
@@ -637,7 +653,10 @@ export default {
             eeLiked: post.eeLiked || false,
             images: post.imageList || [],
             videos: post.videoList || [],
-            previewComments: post.previewComments || []
+            previewComments: post.previewComments || [],
+            stickers: post.stickers || [],
+            bubble: post.bubble || null,
+            location: post.location || ''
           }));
 
           if (newPosts.length < this.size) {
@@ -899,6 +918,45 @@ export default {
   height: 180rpx;
   margin-right: 12rpx;
   margin-bottom: 12rpx;
+}
+
+.post-stickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  padding: 8rpx 0;
+}
+
+.post-sticker {
+  font-size: 40rpx;
+}
+
+.post-bubble {
+  display: inline-flex;
+  padding: 16rpx 28rpx;
+  border-radius: 24rpx;
+  margin: 8rpx 0;
+}
+
+.post-bubble-text {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.post-location {
+  display: flex;
+  align-items: center;
+  margin-top: 8rpx;
+}
+
+.location-icon {
+  font-size: 24rpx;
+  margin-right: 6rpx;
+}
+
+.location-text {
+  font-size: 22rpx;
+  color: #6b7280;
 }
 
 .post-actions {

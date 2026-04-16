@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,13 +40,17 @@ public class PostService {
      * 创建动态
      */
     @Transactional(rollbackFor = Exception.class)
-    public Post createPost(Long userId, Long petId, String content, List<String> images, List<String> videos) {
+    public Post createPost(Long userId, Long petId, String content, List<String> images, List<String> videos,
+                           List<String> stickers, Map<String, String> bubble, String location) {
         Post post = new Post();
         post.setUserId(userId);
         post.setPetId(petId);
         post.setContent(content);
         post.setImages(images != null ? JSON.toJSONString(images) : null);
         post.setVideos(videos != null ? JSON.toJSONString(videos) : null);
+        post.setStickers(stickers != null && !stickers.isEmpty() ? JSON.toJSONString(stickers) : null);
+        post.setBubble(bubble != null ? JSON.toJSONString(bubble) : null);
+        post.setLocation(location);
         post.setStatus(1);
         post.setLikeCount(0);
         post.setCommentCount(0);

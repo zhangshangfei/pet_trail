@@ -35,6 +35,12 @@ public class Post {
 
     private Integer eeCount;
 
+    private String location;
+
+    private String stickers;
+
+    private String bubble;
+
     private Integer status;
 
     private LocalDateTime createdAt;

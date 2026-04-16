@@ -57,7 +57,22 @@ public class PostController {
             ? data.getJSONArray("videos").toJavaList(String.class)
             : null;
 
-        Post post = postService.createPost(userId, petId, content, images, videos);
+        List<String> stickers = data.getJSONArray("stickers") != null
+            ? data.getJSONArray("stickers").toJavaList(String.class)
+            : null;
+
+        Map<String, String> bubble = null;
+        JSONObject bubbleObj = data.getJSONObject("bubble");
+        if (bubbleObj != null) {
+            bubble = new HashMap<>();
+            if (bubbleObj.getString("text") != null) bubble.put("text", bubbleObj.getString("text"));
+            if (bubbleObj.getString("bgColor") != null) bubble.put("bgColor", bubbleObj.getString("bgColor"));
+            if (bubbleObj.getString("textColor") != null) bubble.put("textColor", bubbleObj.getString("textColor"));
+        }
+
+        String location = data.getString("location");
+
+        Post post = postService.createPost(userId, petId, content, images, videos, stickers, bubble, location);
 
         // 异步发送消息（内容审核、推送粉丝等）
         postService.publishPostCreateEvent(post);
@@ -128,6 +143,26 @@ public class PostController {
         vo.setLikeCount(post.getLikeCount());
         vo.setCommentCount(post.getCommentCount());
         vo.setShareCount(post.getShareCount());
+        vo.setLocation(post.getLocation());
+
+        if (post.getStickers() != null && !post.getStickers().equals("null")) {
+            try {
+                vo.setStickers(JSON.parseArray(post.getStickers(), String.class));
+            } catch (Exception e) {
+                vo.setStickers(List.of());
+            }
+        } else {
+            vo.setStickers(List.of());
+        }
+
+        if (post.getBubble() != null && !post.getBubble().equals("null")) {
+            try {
+                vo.setBubble(JSON.parseObject(post.getBubble(), PostVO.BubbleVO.class));
+            } catch (Exception e) {
+                vo.setBubble(null);
+            }
+        }
+
         vo.setStatus(post.getStatus());
         vo.setCreatedAt(post.getCreatedAt());
         vo.setUpdatedAt(post.getUpdatedAt());

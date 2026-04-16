@@ -92,20 +92,21 @@
             <text class="card-label-text">更多选项</text>
           </view>
           <view class="option-list">
-            <view class="option-item" @click="addSticker">
+            <view class="option-item" @click="showStickerPicker = true">
               <text class="option-icon">🎨</text>
-              <text class="option-text">添加贴纸</text>
+              <text class="option-text">{{ selectedStickers.length > 0 ? `已选${selectedStickers.length}个贴纸` : '添加贴纸' }}</text>
               <text class="option-arrow">›</text>
             </view>
-            <view class="option-item" @click="addTextBubble">
+            <view class="option-item" @click="showBubbleEditor = true">
               <text class="option-icon">💬</text>
-              <text class="option-text">添加文字气泡</text>
+              <text class="option-text">{{ bubbleText ? '编辑文字气泡' : '添加文字气泡' }}</text>
               <text class="option-arrow">›</text>
             </view>
-            <view class="option-item" @click="addLocation">
+            <view class="option-item" @click="chooseLocation">
               <text class="option-icon">📍</text>
-              <text class="option-text">添加位置</text>
-              <text class="option-arrow">›</text>
+              <text class="option-text">{{ selectedLocation || '添加位置' }}</text>
+              <text v-if="selectedLocation" class="option-clear" @click.stop="clearLocation">✕</text>
+              <text v-else class="option-arrow">›</text>
             </view>
             <view class="option-item" @click="showChallengePicker = true">
               <text class="option-icon">🏆</text>
@@ -179,6 +180,87 @@
       </view>
     </view>
 
+    <view v-if="showStickerPicker" class="modal-mask" @click="showStickerPicker = false">
+      <view class="modal-card sticker-modal" @click.stop>
+        <view class="modal-header">
+          <text class="modal-title">选择贴纸</text>
+          <text class="modal-close" @click="showStickerPicker = false">✕</text>
+        </view>
+        <view class="sticker-category">
+          <view
+            v-for="cat in stickerCategories"
+            :key="cat.key"
+            class="sticker-cat-item"
+            :class="{ active: currentStickerCat === cat.key }"
+            @click="currentStickerCat = cat.key"
+          >
+            <text class="sticker-cat-text">{{ cat.label }}</text>
+          </view>
+        </view>
+        <view class="sticker-grid">
+          <view
+            v-for="sticker in currentStickers"
+            :key="sticker"
+            class="sticker-item"
+            :class="{ selected: selectedStickers.includes(sticker) }"
+            @click="toggleSticker(sticker)"
+          >
+            <text class="sticker-emoji">{{ sticker }}</text>
+          </view>
+        </view>
+        <view v-if="selectedStickers.length > 0" class="sticker-selected-bar">
+          <scroll-view scroll-x class="sticker-selected-scroll">
+            <view class="sticker-selected-list">
+              <view v-for="(s, i) in selectedStickers" :key="i" class="sticker-selected-item">
+                <text class="sticker-selected-emoji">{{ s }}</text>
+                <view class="sticker-remove" @click="removeSticker(i)">
+                  <text class="sticker-remove-icon">✕</text>
+                </view>
+              </view>
+            </view>
+          </scroll-view>
+          <text class="sticker-confirm-btn" @click="showStickerPicker = false">确定</text>
+        </view>
+      </view>
+    </view>
+
+    <view v-if="showBubbleEditor" class="modal-mask" @click="showBubbleEditor = false">
+      <view class="modal-card bubble-modal" @click.stop>
+        <view class="modal-header">
+          <text class="modal-title">文字气泡</text>
+          <text class="modal-close" @click="showBubbleEditor = false">✕</text>
+        </view>
+        <view class="bubble-editor">
+          <view class="bubble-preview" :style="{ background: bubbleColor }">
+            <text class="bubble-preview-text" :style="{ color: bubbleTextColor }">{{ bubbleText || '输入文字预览...' }}</text>
+          </view>
+          <textarea
+            class="bubble-input"
+            v-model="bubbleText"
+            placeholder="输入气泡文字..."
+            maxlength="30"
+          />
+          <view class="bubble-color-row">
+            <text class="bubble-color-label">气泡颜色</text>
+            <view class="bubble-color-options">
+              <view
+                v-for="c in bubbleColors"
+                :key="c.bg"
+                class="bubble-color-dot"
+                :class="{ active: bubbleColor === c.bg }"
+                :style="{ background: c.bg }"
+                @click="bubbleColor = c.bg; bubbleTextColor = c.text"
+              />
+            </view>
+          </view>
+          <view v-if="bubbleText" class="bubble-actions">
+            <text class="bubble-clear-btn" @click="bubbleText = ''">清除</text>
+            <text class="bubble-confirm-btn" @click="showBubbleEditor = false">确定</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
     <view v-if="showVideoPlayer" class="video-player-mask" @click="closeVideoPlayer">
       <view class="video-player-container" @click.stop>
         <view class="video-player-close" @click="closeVideoPlayer">✕</view>
@@ -214,9 +296,44 @@ export default {
       selectedPet: null,
       mediaList: [],
       selectedChallenge: '',
+      selectedStickers: [],
+      bubbleText: '',
+      bubbleColor: '#ff6a3d',
+      bubbleTextColor: '#ffffff',
+      selectedLocation: '',
 
       showPetPicker: false,
       showChallengePicker: false,
+      showStickerPicker: false,
+      showBubbleEditor: false,
+      currentStickerCat: 'pet',
+
+      stickerCategories: [
+        { key: 'pet', label: '🐾 宠物' },
+        { key: 'mood', label: '😊 心情' },
+        { key: 'food', label: '🍖 美食' },
+        { key: 'nature', label: '🌸 自然' },
+        { key: 'deco', label: '✨ 装饰' }
+      ],
+
+      stickerMap: {
+        pet: ['🐱', '🐶', '🐰', '🐹', '🐦', '🐟', '🐢', '🦎', '🐍', '🐸', '🦜', '🐩', '🐈', '🦮', '🐕‍🦺', '🐈‍⬛'],
+        mood: ['😊', '😂', '🥰', '😍', '😎', '🤩', '😜', '🥳', '😴', '🤗', '😭', '😤', '🥺', '😱', '🤯', '😇'],
+        food: ['🍖', '🦴', '🥩', '🍗', '🥓', '🍔', '🍕', '🌭', '🥕', '🥦', '🍎', '🍌', '🥛', '🍼', '☕', '🧃'],
+        nature: ['🌸', '🌺', '🌻', '🌹', '🌷', '🍀', '🌿', '🌴', '🌈', '☀️', '🌙', '⭐', '❄️', '🌊', '🍂', '🌾'],
+        deco: ['✨', '💫', '⭐', '🌟', '💖', '💝', '🎀', '🎉', '🎊', '🎈', '🎁', '🏆', '👑', '💎', '🦋', '🐝']
+      },
+
+      bubbleColors: [
+        { bg: '#ff6a3d', text: '#ffffff' },
+        { bg: '#10b981', text: '#ffffff' },
+        { bg: '#3b82f6', text: '#ffffff' },
+        { bg: '#8b5cf6', text: '#ffffff' },
+        { bg: '#f59e0b', text: '#ffffff' },
+        { bg: '#ec4899', text: '#ffffff' },
+        { bg: '#1f2937', text: '#ffffff' },
+        { bg: '#ffffff', text: '#111827' }
+      ],
 
       petList: [],
       challengeList: [
@@ -234,6 +351,9 @@ export default {
   computed: {
     canSubmit() {
       return this.content.trim().length > 0
+    },
+    currentStickers() {
+      return this.stickerMap[this.currentStickerCat] || []
     }
   },
   onLoad() {
@@ -353,7 +473,10 @@ export default {
           petId: this.selectedPet ? this.selectedPet.id : undefined,
           images: uploadedImageUrls.length > 0 ? uploadedImageUrls : undefined,
           videos: uploadedVideoUrls.length > 0 ? uploadedVideoUrls : undefined,
-          challengeTag: this.selectedChallenge || undefined
+          challengeTag: this.selectedChallenge || undefined,
+          stickers: this.selectedStickers.length > 0 ? this.selectedStickers : undefined,
+          bubble: this.bubbleText ? { text: this.bubbleText, bgColor: this.bubbleColor, textColor: this.bubbleTextColor } : undefined,
+          location: this.selectedLocation || undefined
         }
 
         const res = await postApi.createPost(postData)
@@ -366,6 +489,11 @@ export default {
           this.selectedPet = null
           this.mediaList = []
           this.selectedChallenge = ''
+          this.selectedStickers = []
+          this.bubbleText = ''
+          this.bubbleColor = '#ff6a3d'
+          this.bubbleTextColor = '#ffffff'
+          this.selectedLocation = ''
           setTimeout(() => {
             uni.switchTab({ url: '/pages/home/index' })
           }, 1500)
@@ -447,21 +575,45 @@ export default {
       this.mediaList.splice(index, 1)
     },
 
-    addSticker() {
-      uni.showToast({ title: '贴纸功能开发中', icon: 'none' })
+    toggleSticker(sticker) {
+      const idx = this.selectedStickers.indexOf(sticker)
+      if (idx >= 0) {
+        this.selectedStickers.splice(idx, 1)
+      } else if (this.selectedStickers.length < 10) {
+        this.selectedStickers.push(sticker)
+      } else {
+        uni.showToast({ title: '最多选择10个贴纸', icon: 'none' })
+      }
     },
 
-    addTextBubble() {
-      uni.showToast({ title: '文字气泡功能开发中', icon: 'none' })
+    removeSticker(index) {
+      this.selectedStickers.splice(index, 1)
     },
 
-    addLocation() {
+    chooseLocation() {
       uni.chooseLocation({
         success: (res) => {
-          uni.showToast({ title: `已选择: ${res.name}`, icon: 'none' })
+          this.selectedLocation = res.name || res.address
+        },
+        fail: (err) => {
+          if (err.errMsg && err.errMsg.indexOf('auth deny') !== -1) {
+            uni.showModal({
+              title: '位置权限',
+              content: '需要获取您的位置信息，请在设置中开启',
+              success: (modalRes) => {
+                if (modalRes.confirm) {
+                  uni.openSetting()
+                }
+              }
+            })
+          }
         }
       })
-    }
+    },
+
+    clearLocation() {
+      this.selectedLocation = ''
+    },
   }
 }
 </script>
@@ -993,5 +1145,220 @@ export default {
 .video-player-video {
   width: 100%;
   height: 420rpx;
+}
+
+.sticker-modal {
+  max-height: 80vh;
+}
+
+.sticker-category {
+  display: flex;
+  padding: 16rpx 24rpx;
+  gap: 16rpx;
+  border-bottom: 1rpx solid #f3f4f6;
+  overflow-x: auto;
+}
+
+.sticker-cat-item {
+  flex-shrink: 0;
+  padding: 12rpx 24rpx;
+  border-radius: 999rpx;
+  background: #f3f4f6;
+
+  &.active {
+    background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  }
+}
+
+.sticker-cat-text {
+  font-size: 24rpx;
+  color: #374151;
+
+  .sticker-cat-item.active & {
+    color: #fff;
+  }
+}
+
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12rpx;
+  padding: 20rpx 24rpx;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.sticker-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100rpx;
+  border-radius: 16rpx;
+  background: #f9fafb;
+  border: 2rpx solid transparent;
+
+  &.selected {
+    border-color: #ff6a3d;
+    background: #fff5f0;
+  }
+}
+
+.sticker-emoji {
+  font-size: 48rpx;
+}
+
+.sticker-selected-bar {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 24rpx;
+  border-top: 1rpx solid #f3f4f6;
+  gap: 16rpx;
+}
+
+.sticker-selected-scroll {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.sticker-selected-list {
+  display: inline-flex;
+  gap: 12rpx;
+}
+
+.sticker-selected-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64rpx;
+  height: 64rpx;
+  background: #f9fafb;
+  border-radius: 12rpx;
+}
+
+.sticker-selected-emoji {
+  font-size: 36rpx;
+}
+
+.sticker-remove {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  width: 28rpx;
+  height: 28rpx;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sticker-remove-icon {
+  font-size: 16rpx;
+  color: #fff;
+}
+
+.sticker-confirm-btn {
+  flex-shrink: 0;
+  padding: 12rpx 32rpx;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
+  border-radius: 999rpx;
+}
+
+.bubble-modal {
+  max-height: 80vh;
+}
+
+.bubble-editor {
+  padding: 24rpx;
+}
+
+.bubble-preview {
+  padding: 24rpx 32rpx;
+  border-radius: 24rpx;
+  margin-bottom: 24rpx;
+  min-height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bubble-preview-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  text-align: center;
+}
+
+.bubble-input {
+  width: 100%;
+  height: 120rpx;
+  background: #f9fafb;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+  margin-bottom: 20rpx;
+}
+
+.bubble-color-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.bubble-color-label {
+  font-size: 26rpx;
+  color: #6b7280;
+  margin-right: 20rpx;
+}
+
+.bubble-color-options {
+  display: flex;
+  gap: 16rpx;
+  flex-wrap: wrap;
+}
+
+.bubble-color-dot {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  border: 4rpx solid transparent;
+
+  &.active {
+    border-color: #111827;
+    transform: scale(1.15);
+  }
+}
+
+.bubble-actions {
+  display: flex;
+  gap: 20rpx;
+  justify-content: flex-end;
+}
+
+.bubble-clear-btn {
+  padding: 16rpx 32rpx;
+  font-size: 26rpx;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-radius: 999rpx;
+}
+
+.bubble-confirm-btn {
+  padding: 16rpx 32rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  border-radius: 999rpx;
+}
+
+.option-clear {
+  font-size: 24rpx;
+  color: #9ca3af;
+  padding: 4rpx 8rpx;
 }
 </style>

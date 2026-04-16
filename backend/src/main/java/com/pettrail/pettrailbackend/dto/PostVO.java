@@ -32,6 +32,12 @@ public class PostVO {
 
     private Integer shareCount;
 
+    private String location;
+
+    private List<String> stickers;
+
+    private BubbleVO bubble;
+
     private Integer status;
 
     private LocalDateTime createdAt;
@@ -60,4 +66,11 @@ public class PostVO {
     private Integer petType;
 
     private Integer petAge;
+
+    @Data
+    public static class BubbleVO {
+        private String text;
+        private String bgColor;
+        private String textColor;
+    }
 }
