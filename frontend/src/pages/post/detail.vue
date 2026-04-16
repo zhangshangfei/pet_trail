@@ -60,8 +60,10 @@
                 <text class="action-count">{{ formatNumber(post.comments) }}</text>
               </view>
             </view>
-            <view class="action-item" @click="onShareTap">
-              <text class="action-icon">↗️</text>
+            <view class="action-item share-btn-wrap">
+              <button class="share-btn" open-type="share" :data-id="post.id">
+                <text class="action-icon">↗️</text>
+              </button>
             </view>
           </view>
         </view>
@@ -177,6 +179,21 @@ export default {
       setTimeout(() => { uni.navigateBack() }, 1500)
     }
   },
+  onShareAppMessage() {
+    this.recordShare()
+    return {
+      title: this.post && this.post.content ? this.post.content.substring(0, 30) + (this.post.content.length > 30 ? '...' : '') : '萌宠动态',
+      path: `/pages/post/detail?id=${this.postId}`,
+      imageUrl: this.post && this.post.images && this.post.images.length > 0 ? this.post.images[0] : ''
+    }
+  },
+  onShareTimeline() {
+    return {
+      title: this.post && this.post.content ? this.post.content.substring(0, 30) : '萌宠动态',
+      query: `id=${this.postId}`,
+      imageUrl: this.post && this.post.images && this.post.images.length > 0 ? this.post.images[0] : ''
+    }
+  },
   methods: {
     async loadPostDetail() {
       this.loading = true
@@ -263,8 +280,12 @@ export default {
       }
     },
 
-    onShareTap() {
-      uni.showToast({ title: '分享功能开发中', icon: 'none' })
+    async recordShare() {
+      try {
+        await postApi.sharePost(this.postId)
+      } catch (e) {
+        console.warn('分享统计失败:', e)
+      }
     },
 
     onReplyTap(comment, parentComment) {
@@ -558,6 +579,28 @@ export default {
   display: flex;
   align-items: center;
   color: #6b7280;
+}
+
+.share-btn-wrap {
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+}
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  line-height: 1;
+  font-size: inherit;
+
+  &::after {
+    border: none;
+  }
 }
 
 .action-icon {

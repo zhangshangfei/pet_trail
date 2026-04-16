@@ -146,8 +146,10 @@
                 <text class="action-time">{{ post.relativeTime }}</text>
               </view>
             </view>
-            <view class="action-item" @click="onShareTap(post)">
-              <text class="action-icon">↗️</text>
+            <view class="action-item share-btn-wrap">
+              <button class="share-btn" open-type="share" :data-id="post.id">
+                <text class="action-icon">↗️</text>
+              </button>
             </view>
           </view>
 
@@ -296,6 +298,32 @@ export default {
     this.loadPosts().finally(() => {
       uni.stopPullDownRefresh()
     })
+  },
+  onShareAppMessage(res) {
+    if (res.from === 'button' && res.target) {
+      const postId = res.target.dataset.id
+      const post = this.postList.find(p => p.id === postId)
+      if (post) {
+        this.recordShare(postId)
+        return {
+          title: post.content ? post.content.substring(0, 30) + (post.content.length > 30 ? '...' : '') : '萌宠动态',
+          path: `/pages/post/detail?id=${postId}`,
+          imageUrl: post.images && post.images.length > 0 ? post.images[0] : ''
+        }
+      }
+    }
+    return {
+      title: 'PetTrail - 萌宠社区',
+      path: '/pages/home/index'
+    }
+  },
+  onShareTimeline() {
+    const lastPost = this.postList.length > 0 ? this.postList[0] : null
+    return {
+      title: lastPost ? (lastPost.content ? lastPost.content.substring(0, 30) : '萌宠动态') : 'PetTrail - 萌宠社区',
+      query: lastPost ? `postId=${lastPost.id}` : '',
+      imageUrl: lastPost && lastPost.images && lastPost.images.length > 0 ? lastPost.images[0] : ''
+    }
   },
   methods: {
     loadCachedPosts() {
@@ -555,8 +583,12 @@ export default {
       }
     },
 
-    onShareTap(post) {
-      uni.showToast({ title: '分享功能开发中', icon: 'none' });
+    async recordShare(postId) {
+      try {
+        await postApi.sharePost(postId)
+      } catch (e) {
+        console.warn('分享统计失败:', e)
+      }
     },
 
     goToDiscover() {
@@ -886,6 +918,28 @@ export default {
   display: flex;
   align-items: center;
   color: #6b7280;
+}
+
+.share-btn-wrap {
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+}
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  line-height: 1;
+  font-size: inherit;
+
+  &::after {
+    border: none;
+  }
 }
 
 .action-icon {

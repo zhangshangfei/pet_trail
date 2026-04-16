@@ -89,3 +89,7 @@ export const getUserPosts = (userId, page = 1, size = 20) => {
 export const getUserLikedPosts = (userId, page = 1, size = 20) => {
   return request.get(`/api/posts/user/${userId}/likes`, { page, size })
 }
+
+export const sharePost = (id) => {
+  return request.post(`/api/posts/${id}/share`)
+}

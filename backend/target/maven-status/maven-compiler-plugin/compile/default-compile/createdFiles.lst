@@ -78,5 +78,4 @@ com\pettrail\pettrailbackend\entity\ParasiteReminder.class
 com\pettrail\pettrailbackend\security\JwtAuthenticationFilter.class
 com\pettrail\pettrailbackend\entity\PostComment.class
 com\pettrail\pettrailbackend\service\CosService.class
-com\pettrail\pettrailbackend\controller\PostController.class
 com\pettrail\pettrailbackend\mapper\VaccineReminderMapper.class

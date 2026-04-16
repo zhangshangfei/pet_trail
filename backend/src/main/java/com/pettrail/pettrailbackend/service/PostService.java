@@ -285,4 +285,20 @@ public class PostService {
                 .eq(Post::getStatus, 1)
         ).intValue();
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    public int incrementShareCount(Long postId) {
+        Post post = postMapper.selectById(postId);
+        if (post == null) {
+            throw new NotFoundException("动态不存在");
+        }
+        int newCount = (post.getShareCount() != null ? post.getShareCount() : 0) + 1;
+        post.setShareCount(newCount);
+        postMapper.updateById(post);
+
+        String cacheKey = "post:detail:" + postId;
+        redisTemplate.delete(cacheKey);
+
+        return newCount;
+    }
 }

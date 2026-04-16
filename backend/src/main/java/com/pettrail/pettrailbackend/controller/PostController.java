@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.pettrail.pettrailbackend.dto.CommentVO;
 import com.pettrail.pettrailbackend.dto.PostVO;
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.exception.NotFoundException;
 import com.pettrail.pettrailbackend.service.CommentService;
 import com.pettrail.pettrailbackend.service.UserService;
 import com.pettrail.pettrailbackend.service.PetService;
@@ -338,5 +339,20 @@ public class PostController {
             @RequestParam(defaultValue = "20") int size) {
         List<CommentVO> comments = commentService.getComments(id, page, size);
         return Result.success(comments);
+    }
+
+    @PostMapping("/{id}/share")
+    public Result<Map<String, Object>> sharePost(@PathVariable Long id) {
+        try {
+            int shareCount = postService.incrementShareCount(id);
+            Map<String, Object> result = new HashMap<>();
+            result.put("shareCount", shareCount);
+            return Result.success(result);
+        } catch (NotFoundException e) {
+            return Result.error(404, "动态不存在");
+        } catch (Exception e) {
+            log.error("分享统计失败：{}", e.getMessage(), e);
+            return Result.error("分享失败：" + e.getMessage());
+        }
     }
 }
