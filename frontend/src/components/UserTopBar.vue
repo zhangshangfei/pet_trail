@@ -9,7 +9,7 @@
         <image class="user-topbar-avatar" :src="avatar" mode="aspectFill" />
         <text class="user-topbar-name">{{ name }}</text>
       </view>
-      <view class="user-topbar-right-group">
+      <view class="user-topbar-right-group" :style="{ marginRight: rightMargin + 'px' }">
         <view class="user-topbar-right" @tap="$emit('discoverTap')">
           <text class="user-topbar-right-icon">🔍</text>
         </view>
@@ -53,7 +53,26 @@ export default {
       default: 0
     }
   },
-  emits: ['rightTap', 'loginTap', 'userTap', 'discoverTap']
+  emits: ['rightTap', 'loginTap', 'userTap', 'discoverTap'],
+  data() {
+    return {
+      rightMargin: 0
+    }
+  },
+  created() {
+    this.calcRightMargin()
+  },
+  methods: {
+    calcRightMargin() {
+      try {
+        const menuButton = uni.getMenuButtonBoundingClientRect()
+        const sysInfo = uni.getSystemInfoSync()
+        this.rightMargin = sysInfo.windowWidth - menuButton.left + 8
+      } catch (e) {
+        this.rightMargin = 0
+      }
+    }
+  }
 }
 </script>
 
