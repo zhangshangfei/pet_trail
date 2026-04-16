@@ -213,7 +213,7 @@ public class PostController {
                 return vo;
             })
             .collect(Collectors.toList());
-
+        log.info("获取动态列表成功，返回结果：{}", postVOs);
         return Result.success(postVOs);
     }
 
