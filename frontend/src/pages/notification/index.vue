@@ -138,7 +138,7 @@ export default {
           console.error('标记已读失败:', e)
         }
       }
-      if (item.type === 'like' || item.type === 'comment') {
+      if (item.type === 'like' || item.type === 'comment' || item.type === 'favorite') {
         if (item.targetId) {
           uni.navigateTo({ url: `/pages/post/detail?id=${item.targetId}` })
         }
@@ -165,6 +165,7 @@ export default {
     getTypeIcon(type) {
       const map = {
         like: '❤️',
+        favorite: '⭐',
         comment: '💬',
         follow: '👤',
         system: '📢'

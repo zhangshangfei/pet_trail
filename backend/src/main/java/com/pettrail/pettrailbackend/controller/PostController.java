@@ -2,8 +2,10 @@ package com.pettrail.pettrailbackend.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.pettrail.pettrailbackend.dto.CommentVO;
 import com.pettrail.pettrailbackend.dto.PostVO;
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.service.CommentService;
 import com.pettrail.pettrailbackend.entity.Pet;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.entity.User;
@@ -34,6 +36,7 @@ import java.util.stream.Collectors;
 public class PostController {
 
     private final PostService postService;
+    private final CommentService commentService;
     private final UserMapper userMapper;
     private final PetMapper petMapper;
     private final PostMapper postMapper;
@@ -288,5 +291,35 @@ public class PostController {
             .collect(Collectors.toList());
 
         return Result.success(postVOs);
+    }
+
+    @PostMapping("/{id}/comments")
+    public Result<CommentVO> createComment(
+            @PathVariable Long id,
+            @RequestBody JSONObject data) {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+
+        String content = data.getString("content");
+        if (content == null || content.trim().isEmpty()) {
+            return Result.error(400, "评论内容不能为空");
+        }
+
+        Long parentId = data.getLong("parentId");
+        Long replyToId = data.getLong("replyToId");
+
+        CommentVO comment = commentService.createComment(id, userId, content.trim(), parentId, replyToId);
+        return Result.success(comment);
+    }
+
+    @GetMapping("/{id}/comments")
+    public Result<List<CommentVO>> getComments(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        List<CommentVO> comments = commentService.getComments(id, page, size);
+        return Result.success(comments);
     }
 }

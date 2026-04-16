@@ -244,6 +244,9 @@ public class PostService {
             int newCount = (post.getEeCount() != null ? post.getEeCount() : 0) + 1;
             post.setEeCount(newCount);
             postMapper.updateById(post);
+
+            notificationService.createNotification(
+                post.getUserId(), userId, "favorite", postId, "收藏了你的动态");
         }
 
         // 清除详情缓存

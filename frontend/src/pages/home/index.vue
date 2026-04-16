@@ -523,10 +523,7 @@ export default {
       });
     },
 
-    async openComments(post) {
-      const loggedIn = await checkLogin('请先登录后再评论')
-      if (!loggedIn) return
-      
+    openComments(post) {
       uni.navigateTo({
         url: `/pages/post/detail?id=${post.id}`
       });
