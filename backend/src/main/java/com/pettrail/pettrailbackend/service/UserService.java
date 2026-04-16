@@ -7,26 +7,28 @@ import com.pettrail.pettrailbackend.mapper.UserMapper;
 import com.pettrail.pettrailbackend.util.NicknameUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService extends ServiceImpl<UserMapper, User> {
 
-    /**
-     * 微信登录
-     */
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    private static final String PROFILE_CACHE_PREFIX = "user:profile:";
+    private static final long PROFILE_CACHE_TTL_MINUTES = 30;
+
     public User login(String openid) {
-        // 查询用户是否存在
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getOpenid, openid);
         User user = this.getOne(queryWrapper);
 
         if (user == null) {
-            // 创建新用户
             user = new User();
             user.setOpenid(openid);
             user.setNickname(NicknameUtil.generateRandomNickname());
@@ -39,11 +41,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         return user;
     }
 
-    /**
-     * 用户注册
-     */
     public User register(String openid, String unionid, String nickname, String avatar) {
-        // 检查用户是否已存在
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.or().eq(User::getOpenid, openid);
         if (unionid != null) {
@@ -55,7 +53,6 @@ public class UserService extends ServiceImpl<UserMapper, User> {
             throw new RuntimeException("用户已存在");
         }
 
-        // 创建新用户
         User user = new User();
         user.setOpenid(openid);
         user.setUnionid(unionid);
@@ -67,20 +64,31 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         return user;
     }
 
-    /**
-     * 获取用户资料
-     */
     public User getProfile(Long userId) {
+        String cacheKey = PROFILE_CACHE_PREFIX + userId;
+        try {
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached != null && cached instanceof User) {
+                return (User) cached;
+            }
+        } catch (Exception e) {
+            log.warn("用户资料缓存读取异常: {}", e.getMessage());
+        }
+
         User user = this.getById(userId);
         if (user == null) {
             throw new RuntimeException("用户不存在");
         }
+
+        try {
+            redisTemplate.opsForValue().set(cacheKey, user, PROFILE_CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.warn("用户资料缓存写入异常: {}", e.getMessage());
+        }
+
         return user;
     }
 
-    /**
-     * 更新用户资料
-     */
     public User updateProfile(
             Long userId,
             String nickname,
@@ -107,6 +115,13 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 
         this.updateById(user);
         log.info("更新用户资料成功: userId={}", userId);
+
+        try {
+            redisTemplate.opsForValue().set(PROFILE_CACHE_PREFIX + userId, user, PROFILE_CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.warn("用户资料缓存更新异常: {}", e.getMessage());
+        }
+
         return user;
     }
 

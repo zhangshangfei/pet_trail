@@ -274,6 +274,7 @@ export default {
     }
 
     this.checkLoginStatus();
+    this.loadCachedPosts();
 
     uni.$on('loginSuccess', () => {
       this.checkLoginStatus()
@@ -297,6 +298,34 @@ export default {
     })
   },
   methods: {
+    loadCachedPosts() {
+      try {
+        const cacheKey = 'home:posts:' + this.currentTab
+        const cached = uni.getStorageSync(cacheKey)
+        if (cached && cached.posts && cached.posts.length > 0) {
+          this.postList = cached.posts
+          this.page = cached.page || 2
+          this.hasMore = cached.hasMore !== false
+        }
+      } catch (e) {
+        console.warn('读取缓存动态失败:', e)
+      }
+    },
+
+    saveCachedPosts() {
+      try {
+        const cacheKey = 'home:posts:' + this.currentTab
+        uni.setStorageSync(cacheKey, {
+          posts: this.postList.slice(0, 20),
+          page: this.page,
+          hasMore: this.hasMore,
+          timestamp: Date.now()
+        })
+      } catch (e) {
+        console.warn('保存缓存动态失败:', e)
+      }
+    },
+
     async loadUserInfo() {
       const token = uni.getStorageSync('token');
       if (!token) {
@@ -437,7 +466,7 @@ export default {
       this.page = 1;
       this.postList = [];
       this.hasMore = true;
-      console.log('switchTab - 准备加载数据, currentTab:', this.currentTab);
+      this.loadCachedPosts();
       this.loadPosts();
     },
 
@@ -584,6 +613,7 @@ export default {
           }
           this.postList = [...this.postList, ...newPosts];
           this.page++;
+          this.saveCachedPosts();
         }
       } catch (error) {
         if (error.statusCode !== 401) {

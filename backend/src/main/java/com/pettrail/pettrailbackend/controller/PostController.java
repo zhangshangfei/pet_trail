@@ -6,12 +6,12 @@ import com.pettrail.pettrailbackend.dto.CommentVO;
 import com.pettrail.pettrailbackend.dto.PostVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.service.CommentService;
+import com.pettrail.pettrailbackend.service.UserService;
+import com.pettrail.pettrailbackend.service.PetService;
 import com.pettrail.pettrailbackend.entity.Pet;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.entity.User;
-import com.pettrail.pettrailbackend.mapper.PetMapper;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
-import com.pettrail.pettrailbackend.mapper.UserMapper;
 import com.pettrail.pettrailbackend.service.PostService;
 import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.RequiredArgsConstructor;
@@ -19,16 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.Period;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * 动态控制器
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/posts")
@@ -37,8 +31,8 @@ public class PostController {
 
     private final PostService postService;
     private final CommentService commentService;
-    private final UserMapper userMapper;
-    private final PetMapper petMapper;
+    private final UserService userService;
+    private final PetService petService;
     private final PostMapper postMapper;
 
     /**
@@ -89,14 +83,41 @@ public class PostController {
         }
         
         List<Post> posts = postService.getFeed(page, size, tab, userId);
-        List<PostVO> postVOs = posts.stream()
-            .map(post -> convertToPostVO(post, userId))
-            .collect(Collectors.toList());
+        List<PostVO> postVOs = convertToPostVOList(posts, userId);
         log.info("获取动态列表成功，Tab={}，返回{}条数据", tab, postVOs.size());
         return Result.success(postVOs);
     }
 
-    private PostVO convertToPostVO(Post post, Long userId) {
+    private List<PostVO> convertToPostVOList(List<Post> posts, Long currentUserId) {
+        if (posts.isEmpty()) return Collections.emptyList();
+
+        Set<Long> userIds = posts.stream().map(Post::getUserId).collect(Collectors.toSet());
+        Set<Long> petIds = posts.stream().map(Post::getPetId).filter(Objects::nonNull).collect(Collectors.toSet());
+
+        Map<Long, User> userMap = new HashMap<>();
+        for (Long uid : userIds) {
+            try {
+                userMap.put(uid, userService.getProfile(uid));
+            } catch (Exception e) {
+                log.warn("批量预加载用户失败: uid={}", uid);
+            }
+        }
+
+        Map<Long, Pet> petMap = new HashMap<>();
+        for (Long pid : petIds) {
+            try {
+                petMap.put(pid, petService.getPetById(pid));
+            } catch (Exception e) {
+                log.warn("批量预加载宠物失败: pid={}", pid);
+            }
+        }
+
+        return posts.stream()
+            .map(post -> convertToPostVO(post, currentUserId, userMap, petMap))
+            .collect(Collectors.toList());
+    }
+
+    private PostVO convertToPostVO(Post post, Long userId, Map<Long, User> userMap, Map<Long, Pet> petMap) {
         PostVO vo = new PostVO();
         vo.setId(post.getId());
         vo.setUserId(post.getUserId());
@@ -132,7 +153,7 @@ public class PostController {
         }
 
         try {
-            User user = userMapper.selectById(post.getUserId());
+            User user = userMap.get(post.getUserId());
             if (user != null) {
                 vo.setUserName(user.getNickname() != null ? user.getNickname() : "萌宠主人");
                 vo.setUserAvatar(user.getAvatar() != null ? user.getAvatar() : "");
@@ -148,7 +169,7 @@ public class PostController {
 
         if (post.getPetId() != null) {
             try {
-                Pet pet = petMapper.selectById(post.getPetId());
+                Pet pet = petMap.get(post.getPetId());
                 if (pet != null) {
                     vo.setPetName(pet.getName() != null ? pet.getName() : "未知宠物");
                     vo.setPetAvatar(pet.getAvatar() != null ? pet.getAvatar() : "");
@@ -269,9 +290,7 @@ public class PostController {
         int offset = (page - 1) * size;
 
         List<Post> posts = postMapper.selectByUserId(userId, offset, size);
-        List<PostVO> postVOs = posts.stream()
-            .map(post -> convertToPostVO(post, currentUserId))
-            .collect(Collectors.toList());
+        List<PostVO> postVOs = convertToPostVOList(posts, currentUserId);
 
         return Result.success(postVOs);
     }
@@ -286,9 +305,7 @@ public class PostController {
         int offset = (page - 1) * size;
 
         List<Post> posts = postMapper.selectLikedFeed(userId, offset, size);
-        List<PostVO> postVOs = posts.stream()
-            .map(post -> convertToPostVO(post, currentUserId))
-            .collect(Collectors.toList());
+        List<PostVO> postVOs = convertToPostVOList(posts, currentUserId);
 
         return Result.success(postVOs);
     }

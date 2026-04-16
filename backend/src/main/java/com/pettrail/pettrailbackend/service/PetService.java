@@ -6,6 +6,7 @@ import com.pettrail.pettrailbackend.entity.Pet;
 import com.pettrail.pettrailbackend.mapper.PetMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,25 +14,47 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PetService extends ServiceImpl<PetMapper, Pet> {
 
-    /**
-     * 获取用户的宠物列表
-     */
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    private static final String PET_DETAIL_PREFIX = "pet:detail:";
+    private static final String PET_LIST_PREFIX = "pet:list:";
+    private static final long PET_CACHE_TTL_MINUTES = 20;
+    private static final long LIST_CACHE_TTL_MINUTES = 5;
+
     public List<Pet> listByUserId(Long userId) {
+        String cacheKey = PET_LIST_PREFIX + userId;
+        try {
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached != null) {
+                @SuppressWarnings("unchecked")
+                List<Pet> result = (List<Pet>) cached;
+                return result;
+            }
+        } catch (Exception e) {
+            log.warn("宠物列表缓存读取异常: {}", e.getMessage());
+        }
+
         LambdaQueryWrapper<Pet> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Pet::getUserId, userId);
         queryWrapper.orderByDesc(Pet::getCreatedAt);
-        return this.list(queryWrapper);
+        List<Pet> pets = this.list(queryWrapper);
+
+        try {
+            redisTemplate.opsForValue().set(cacheKey, pets, LIST_CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.warn("宠物列表缓存写入异常: {}", e.getMessage());
+        }
+
+        return pets;
     }
 
-    /**
-     * 创建宠物
-     */
     @Transactional(rollbackFor = Exception.class)
     public Pet createPet(Long userId, String name, String breed, Integer gender,
                          Integer sterilized, Integer category,
@@ -52,34 +75,40 @@ public class PetService extends ServiceImpl<PetMapper, Pet> {
 
         this.save(pet);
         log.info("创建宠物成功: id={}, userId={}, name={}", pet.getId(), userId, name);
+
+        evictPetListCache(userId);
         return pet;
     }
 
-    /**
-     * 获取宠物详情
-     */
     public Pet getPetById(Long petId) {
+        String cacheKey = PET_DETAIL_PREFIX + petId;
+        try {
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached != null && cached instanceof Pet) {
+                return (Pet) cached;
+            }
+        } catch (Exception e) {
+            log.warn("宠物详情缓存读取异常: {}", e.getMessage());
+        }
+
         Pet pet = this.getById(petId);
         if (pet == null) {
             throw new RuntimeException("宠物不存在");
         }
+
+        try {
+            redisTemplate.opsForValue().set(cacheKey, pet, PET_CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.warn("宠物详情缓存写入异常: {}", e.getMessage());
+        }
+
         return pet;
     }
 
-    /**
-     * 获取宠物的详细信息（包括用户ID）
-     */
     public Pet getPetDetail(Long petId) {
-        Pet pet = this.getById(petId);
-        if (pet == null) {
-            throw new RuntimeException("宠物不存在");
-        }
-        return pet;
+        return getPetById(petId);
     }
 
-    /**
-     * 更新宠物信息
-     */
     @Transactional(rollbackFor = Exception.class)
     public Pet updatePet(Long petId, String name, String breed, Integer gender,
                          Integer sterilized, Integer category,
@@ -120,12 +149,17 @@ public class PetService extends ServiceImpl<PetMapper, Pet> {
         pet.setUpdatedAt(LocalDateTime.now());
         this.updateById(pet);
         log.info("更新宠物信息成功: petId={}", petId);
+
+        try {
+            redisTemplate.opsForValue().set(PET_DETAIL_PREFIX + petId, pet, PET_CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            evictPetListCache(pet.getUserId());
+        } catch (Exception e) {
+            log.warn("宠物缓存更新异常: {}", e.getMessage());
+        }
+
         return pet;
     }
 
-    /**
-     * 删除宠物
-     */
     @Transactional(rollbackFor = Exception.class)
     public void deletePet(Long petId) {
         Pet pet = this.getById(petId);
@@ -134,11 +168,15 @@ public class PetService extends ServiceImpl<PetMapper, Pet> {
         }
         this.removeById(petId);
         log.info("删除宠物成功: petId={}", petId);
+
+        try {
+            redisTemplate.delete(PET_DETAIL_PREFIX + petId);
+            evictPetListCache(pet.getUserId());
+        } catch (Exception e) {
+            log.warn("宠物缓存清除异常: {}", e.getMessage());
+        }
     }
 
-    /**
-     * 更新宠物体重
-     */
     @Transactional(rollbackFor = Exception.class)
     public Pet updatePetWeight(Long petId, BigDecimal weight) {
         Pet pet = this.getById(petId);
@@ -149,7 +187,21 @@ public class PetService extends ServiceImpl<PetMapper, Pet> {
         pet.setUpdatedAt(LocalDateTime.now());
         this.updateById(pet);
         log.info("更新宠物体重成功: petId={}, weight={}", petId, weight);
+
+        try {
+            redisTemplate.opsForValue().set(PET_DETAIL_PREFIX + petId, pet, PET_CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.warn("宠物缓存更新异常: {}", e.getMessage());
+        }
+
         return pet;
     }
 
+    private void evictPetListCache(Long userId) {
+        try {
+            redisTemplate.delete(PET_LIST_PREFIX + userId);
+        } catch (Exception e) {
+            log.warn("宠物列表缓存清除异常: {}", e.getMessage());
+        }
+    }
 }

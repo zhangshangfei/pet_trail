@@ -4,6 +4,11 @@ import config from '@/config/env'
 const BASE_URL = config.VITE_API_BASE_URL
 const CLOUD_CONFIG = config.VITE_CLOUD_CONFIG
 
+const pendingRequests = new Map()
+const responseCache = new Map()
+const CACHE_TTL = 3000
+const DEDUP_TTL = 500
+
 // 将对象编码为 application/x-www-form-urlencoded 格式
 const encodeFormData = (data) => {
   if (!data) return ''
@@ -271,7 +276,6 @@ const buildQueryString = (data) => {
 
 // 请求拦截器 - 根据环境选择请求方式
 const request = (options = {}) => {
-  // GET 请求时，将 data 参数拼接到 URL 查询字符串中
   if (options.method === 'GET' && options.data && typeof options.data === 'object') {
     const queryString = buildQueryString(options.data)
     if (queryString) {
@@ -279,12 +283,39 @@ const request = (options = {}) => {
       options.data = {}
     }
   }
+
+  if (options.method === 'GET') {
+    const cacheKey = options.url
+    const now = Date.now()
+
+    const cached = responseCache.get(cacheKey)
+    if (cached && now - cached.timestamp < CACHE_TTL) {
+      return Promise.resolve(cached.data)
+    }
+
+    const pending = pendingRequests.get(cacheKey)
+    if (pending && now - pending.timestamp < DEDUP_TTL) {
+      return pending.promise
+    }
+
+    const promise = (BASE_URL === 'cloud' ? cloudRequest(options) : httpRequest(options))
+      .then(data => {
+        responseCache.set(cacheKey, { data, timestamp: Date.now() })
+        pendingRequests.delete(cacheKey)
+        return data
+      })
+      .catch(err => {
+        pendingRequests.delete(cacheKey)
+        throw err
+      })
+
+    pendingRequests.set(cacheKey, { promise, timestamp: now })
+    return promise
+  }
   
-  // 如果 BASE_URL 为 'cloud'，使用云托管请求
   if (BASE_URL === 'cloud') {
     return cloudRequest(options)
   }
-  // 否则使用普通 HTTP 请求
   return httpRequest(options)
 }
 
