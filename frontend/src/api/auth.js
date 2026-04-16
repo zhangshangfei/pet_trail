@@ -47,6 +47,10 @@ export const getUserById = (userId) => {
   return request.get(`/api/users/${userId}`)
 }
 
+export const discoverUsers = (params) => {
+  return request.get('/api/users/discover', params)
+}
+
 /**
  * 退出登录
  */

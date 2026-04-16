@@ -7,6 +7,7 @@
       right-icon="🔔"
       @rightTap="onBellTap"
       @userTap="onTopUserTap"
+      @discoverTap="onDiscoverTap"
     />
 
     <scroll-view scroll-y class="me-scroll" :style="{ height: scrollHeight + 'px', paddingTop: headerHeight + 'px' }">
@@ -64,6 +65,10 @@
             <view class="feature-item" @tap="goToUserDetail">
               <view class="feature-icon-wrap feature-icon-blue"><text class="feature-emoji">👤</text></view>
               <text class="feature-text">个人主页</text>
+            </view>
+            <view class="feature-item" @tap="goToDiscover">
+              <view class="feature-icon-wrap feature-icon-green"><text class="feature-emoji">🔍</text></view>
+              <text class="feature-text">发现用户</text>
             </view>
           </view>
         </view>
@@ -359,6 +364,12 @@ export default {
     goToUserDetail() {
       this.onTopUserTap();
     },
+    goToDiscover() {
+      uni.navigateTo({ url: '/pages/discover/index' });
+    },
+    onDiscoverTap() {
+      uni.navigateTo({ url: '/pages/discover/index' });
+    },
     goToAbout() {
       uni.showToast({ title: "关于宠迹未实现", icon: "none" });
     },
@@ -546,6 +557,7 @@ export default {
 .feature-icon-orange { background: #fff5f0; }
 .feature-icon-red { background: #fff1f2; }
 .feature-icon-blue { background: #eff6ff; }
+.feature-icon-green { background: #ecfdf5; }
 
 .feature-text {
   font-size: 24rpx;

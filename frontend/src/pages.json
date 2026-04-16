@@ -110,6 +110,13 @@
         "navigationBarTitleText": "消息通知",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/discover/index",
+      "style": {
+        "navigationBarTitleText": "发现用户",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

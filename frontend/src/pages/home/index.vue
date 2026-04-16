@@ -8,6 +8,7 @@
       :unread-count="unreadNotificationCount"
       @rightTap="onBellTap"
       @userTap="onTopUserTap"
+      @discoverTap="onDiscoverTap"
     />
 
     <!-- 分段控制器栏 -->
@@ -398,6 +399,10 @@ export default {
 
     onBellTap() {
       uni.navigateTo({ url: '/pages/notification/index' });
+    },
+
+    onDiscoverTap() {
+      uni.navigateTo({ url: '/pages/discover/index' });
     },
 
     async onPublishTap() {

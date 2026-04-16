@@ -105,4 +105,8 @@ public class FollowService {
     public List<Long> getFolloweeIds(Long followerId) {
         return followMapper.selectFolloweeIds(followerId);
     }
+
+    public List<Long> getFollowerIds(Long followeeId) {
+        return followMapper.selectFollowerIds(followeeId);
+    }
 }

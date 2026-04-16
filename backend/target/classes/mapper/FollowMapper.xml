@@ -26,4 +26,9 @@
         WHERE follower_id = #{followerId}
     </select>
 
+    <select id="selectFollowerIds" resultType="java.lang.Long">
+        SELECT follower_id FROM follows
+        WHERE followee_id = #{followeeId}
+    </select>
+
 </mapper>

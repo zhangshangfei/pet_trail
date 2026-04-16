@@ -9,10 +9,15 @@
         <image class="user-topbar-avatar" :src="avatar" mode="aspectFill" />
         <text class="user-topbar-name">{{ name }}</text>
       </view>
-      <view class="user-topbar-right" @tap="$emit('rightTap')">
-        <text class="user-topbar-right-icon">🔔</text>
-        <view v-if="unreadCount > 0" class="user-topbar-badge">
-          <text class="user-topbar-badge-text">{{ unreadCount > 99 ? '99+' : unreadCount }}</text>
+      <view class="user-topbar-right-group">
+        <view class="user-topbar-right" @tap="$emit('discoverTap')">
+          <text class="user-topbar-right-icon">🔍</text>
+        </view>
+        <view class="user-topbar-right" @tap="$emit('rightTap')">
+          <text class="user-topbar-right-icon">🔔</text>
+          <view v-if="unreadCount > 0" class="user-topbar-badge">
+            <text class="user-topbar-badge-text">{{ unreadCount > 99 ? '99+' : unreadCount }}</text>
+          </view>
         </view>
       </view>
     </view>
@@ -48,7 +53,7 @@ export default {
       default: 0
     }
   },
-  emits: ['rightTap', 'loginTap', 'userTap']
+  emits: ['rightTap', 'loginTap', 'userTap', 'discoverTap']
 }
 </script>
 
@@ -107,6 +112,12 @@ export default {
   color: #ffffff;
   font-size: 30rpx;
   font-weight: 600;
+}
+
+.user-topbar-right-group {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
 }
 
 .user-topbar-right {

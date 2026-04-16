@@ -16,7 +16,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -149,6 +151,45 @@ public class UserController {
             return Result.success(user);
         } catch (Exception e) {
             log.error("获取用户资料失败：{}", e.getMessage(), e);
+            return Result.error("获取失败：" + e.getMessage());
+        }
+    }
+
+    @GetMapping("/discover")
+    public Result<List<Map<String, Object>>> discoverUsers(
+            @RequestParam(defaultValue = "recommend") String type,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String keyword) {
+        try {
+            Long currentUserId = UserContext.getCurrentUserId();
+
+            List<User> users = userService.discoverUsers(currentUserId, type, keyword, page, size);
+
+            List<Long> followedIds = new ArrayList<>();
+            if (currentUserId != null) {
+                followedIds = followService.getFolloweeIds(currentUserId);
+            }
+
+            List<Long> finalFollowedIds = followedIds;
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (User user : users) {
+                Map<String, Object> item = new HashMap<>();
+                item.put("id", user.getId());
+                item.put("nickname", user.getNickname());
+                item.put("avatar", user.getAvatar());
+                item.put("gender", user.getGender());
+                item.put("createdAt", user.getCreatedAt());
+                item.put("isFollowing", finalFollowedIds.contains(user.getId()));
+                item.put("followerCount", followService.getFollowerCount(user.getId()));
+                item.put("followeeCount", followService.getFolloweeCount(user.getId()));
+                item.put("postCount", postService.getUserPostCount(user.getId()));
+                result.add(item);
+            }
+
+            return Result.success(result);
+        } catch (Exception e) {
+            log.error("发现用户失败：{}", e.getMessage(), e);
             return Result.error("获取失败：" + e.getMessage());
         }
     }

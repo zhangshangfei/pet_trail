@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -106,5 +108,34 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         this.updateById(user);
         log.info("更新用户资料成功: userId={}", userId);
         return user;
+    }
+
+    public List<User> discoverUsers(Long currentUserId, String type, String keyword, int page, int size) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+
+        if (currentUserId != null) {
+            queryWrapper.ne(User::getId, currentUserId);
+        }
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            queryWrapper.like(User::getNickname, keyword.trim());
+        }
+
+        switch (type) {
+            case "hot":
+                queryWrapper.orderByDesc(User::getId);
+                break;
+            case "new":
+                queryWrapper.orderByDesc(User::getCreatedAt);
+                break;
+            case "recommend":
+            default:
+                queryWrapper.orderByDesc(User::getId);
+                break;
+        }
+
+        queryWrapper.last("LIMIT " + (page - 1) * size + ", " + size);
+
+        return this.list(queryWrapper);
     }
 }

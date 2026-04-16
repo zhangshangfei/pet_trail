@@ -33,4 +33,6 @@ public interface FollowMapper extends BaseMapper<Follow> {
      * 查询用户关注的用户ID列表
      */
     List<Long> selectFolloweeIds(@Param("followerId") Long followerId);
+
+    List<Long> selectFollowerIds(@Param("followeeId") Long followeeId);
 }
