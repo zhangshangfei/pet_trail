@@ -15,9 +15,7 @@ export const getWeightRecords = (petId) => {
  * @param {string} endDate - 结束日期
  */
 export const getWeightRecordsByRange = (petId, startDate, endDate) => {
-  return request.get(`/api/pets/${petId}/weight-records/range`, {
-    params: { startDate, endDate }
-  })
+  return request.get(`/api/pets/${petId}/weight-records/range`, { startDate, endDate })
 }
 
 /**
@@ -34,9 +32,7 @@ export const getLastWeightRecord = (petId) => {
  * @param {number} days - 天数，默认 7
  */
 export const getWeightTrend = (petId, days = 7) => {
-  return request.get(`/api/pets/${petId}/weight-records/trend`, {
-    params: { days }
-  })
+  return request.get(`/api/pets/${petId}/weight-records/trend`, { days })
 }
 
 /**
@@ -46,9 +42,7 @@ export const getWeightTrend = (petId, days = 7) => {
  * @param {string} recordDate - 记录日期
  */
 export const createWeightRecord = (petId, weight, recordDate) => {
-  return request.post(`/api/pets/${petId}/weight-records`, null, {
-    params: { weight, recordDate }
-  })
+  return request.post(`/api/pets/${petId}/weight-records`, { weight, recordDate })
 }
 
 /**
@@ -68,9 +62,7 @@ export const deleteWeightRecord = (petId, recordId) => {
  * @param {number} petId - 宠物 ID
  */
 export const recordStep = (steps, distance, recordDate, petId) => {
-  return request.post('/api/health/steps', null, {
-    params: { steps, distance, record_date: recordDate, pet_id: petId }
-  })
+  return request.post('/api/health/steps', { steps, distance, record_date: recordDate, pet_id: petId })
 }
 
 /**
@@ -81,9 +73,7 @@ export const recordStep = (steps, distance, recordDate, petId) => {
  * @param {number} petId - 宠物 ID
  */
 export const recordWater = (amount, recordDate, recordTime, petId) => {
-  return request.post('/api/health/water', null, {
-    params: { amount, record_date: recordDate, record_time: recordTime, pet_id: petId }
-  })
+  return request.post('/api/health/water', { amount, record_date: recordDate, record_time: recordTime, pet_id: petId })
 }
 
 /**
@@ -91,7 +81,5 @@ export const recordWater = (amount, recordDate, recordTime, petId) => {
  * @param {number} petId - 宠物 ID
  */
 export const getHealthDashboard = (petId) => {
-  return request.get('/api/health/dashboard', {
-    params: { pet_id: petId }
-  })
+  return request.get('/api/health/dashboard', { pet_id: petId })
 }

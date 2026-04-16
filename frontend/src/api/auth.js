@@ -16,13 +16,11 @@ export const loginByCode = (code) => {
  * @param {string} avatar - 用户头像（可选）
  */
 export const register = (openid, unionid = '', nickname = '', avatar = '') => {
-  return request.post('/api/users/register', null, {
-    params: {
-      openid,
-      unionid,
-      nickname,
-      avatar
-    }
+  return request.post('/api/users/register', {
+    openid,
+    unionid,
+    nickname,
+    avatar
   })
 }
 
@@ -42,9 +40,7 @@ export const getProfile = () => {
  * @param {number} data.gender - 性别（1-男，2-女）
  */
 export const updateProfile = (data) => {
-  return request.put('/api/users/profile', null, {
-    params: data
-  })
+  return request.put('/api/users/profile', data)
 }
 
 /**

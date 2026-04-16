@@ -18,9 +18,7 @@ export const checkin = (data) => {
  * 获取打卡日历
  */
 export const getCalendar = (year, month) => {
-  return request.get('/api/checkin/calendar', {
-    params: { year, month }
-  })
+  return request.get('/api/checkin/calendar', { year, month })
 }
 
 /**

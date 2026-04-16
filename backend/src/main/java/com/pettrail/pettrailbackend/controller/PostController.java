@@ -77,144 +77,102 @@ public class PostController {
         
         log.info("获取动态列表 - page: {}, size: {}, tab: {}, userId: {}", page, size, tab, userId);
         
-        // 未登录用户只能查看"全部"Tab，其他Tab返回空数据
-        if (userId == null) {
-            log.warn("用户未登录，返回空数据");
-            // 未登录时，强制返回空数据，避免暴露数据
-            List<Post> emptyList = java.util.Collections.emptyList();
-            List<PostVO> postVOs = emptyList.stream()
-                .map(post -> {
-                    PostVO vo = new PostVO();
-                    vo.setId(post.getId());
-                    vo.setUserId(post.getUserId());
-                    vo.setPetId(post.getPetId());
-                    vo.setContent(post.getContent());
-                    vo.setImages(post.getImages());
-                    vo.setLikeCount(post.getLikeCount());
-                    vo.setCommentCount(post.getCommentCount());
-                    vo.setShareCount(post.getShareCount());
-                    vo.setStatus(post.getStatus());
-                    vo.setCreatedAt(post.getCreatedAt());
-                    vo.setUpdatedAt(post.getUpdatedAt());
-                    vo.setImageList(java.util.Collections.emptyList());
-                    vo.setUserName("未知用户");
-                    vo.setUserAvatar("");
-                    vo.setPetName("");
-                    vo.setPetAvatar("");
-                    vo.setPetType(0);
-                    vo.setPetAge(0);
-                    vo.setLiked(false);
-                    vo.setEeLiked(false);
-                    vo.setEeCount(0);
-                    return vo;
-                })
-                .collect(Collectors.toList());
-            return Result.success(postVOs);
+        if (userId == null && !"all".equals(tab) && !"recommend".equals(tab)) {
+            log.info("用户未登录，Tab={} 返回空数据", tab);
+            return Result.success(java.util.Collections.emptyList());
         }
         
-        log.info("用户已认证，userId={}, 开始查询Tab: {}", userId, tab);
         List<Post> posts = postService.getFeed(page, size, tab, userId);
-
-        // 转换为 VO，包含用户信息、宠物信息和点赞状态
         List<PostVO> postVOs = posts.stream()
-            .map(post -> {
-                PostVO vo = new PostVO();
-                vo.setId(post.getId());
-                vo.setUserId(post.getUserId());
-                vo.setPetId(post.getPetId());
-                vo.setContent(post.getContent());
-                vo.setImages(post.getImages());
-                vo.setLikeCount(post.getLikeCount());
-                vo.setCommentCount(post.getCommentCount());
-                vo.setShareCount(post.getShareCount());
-                vo.setStatus(post.getStatus());
-                vo.setCreatedAt(post.getCreatedAt());
-                vo.setUpdatedAt(post.getUpdatedAt());
+            .map(post -> convertToPostVO(post, userId))
+            .collect(Collectors.toList());
+        log.info("获取动态列表成功，Tab={}，返回{}条数据", tab, postVOs.size());
+        return Result.success(postVOs);
+    }
 
-                // 解析图片列表
-                if (post.getImages() != null && !post.getImages().equals("null")) {
-                    try {
-                        List<String> imageList = JSON.parseArray(post.getImages(), String.class);
-                        vo.setImageList(imageList);
-                    } catch (Exception e) {
-                        vo.setImageList(List.of());
-                    }
-                } else {
-                    vo.setImageList(List.of());
-                }
+    private PostVO convertToPostVO(Post post, Long userId) {
+        PostVO vo = new PostVO();
+        vo.setId(post.getId());
+        vo.setUserId(post.getUserId());
+        vo.setPetId(post.getPetId());
+        vo.setContent(post.getContent());
+        vo.setImages(post.getImages());
+        vo.setLikeCount(post.getLikeCount());
+        vo.setCommentCount(post.getCommentCount());
+        vo.setShareCount(post.getShareCount());
+        vo.setStatus(post.getStatus());
+        vo.setCreatedAt(post.getCreatedAt());
+        vo.setUpdatedAt(post.getUpdatedAt());
 
-                // 查询用户信息
-                try {
-                    User user = userMapper.selectById(post.getUserId());
-                    if (user != null) {
-                        vo.setUserName(user.getNickname() != null ? user.getNickname() : "萌宠主人");
-                        vo.setUserAvatar(user.getAvatar() != null ? user.getAvatar() : "");
+        if (post.getImages() != null && !post.getImages().equals("null")) {
+            try {
+                vo.setImageList(JSON.parseArray(post.getImages(), String.class));
+            } catch (Exception e) {
+                vo.setImageList(List.of());
+            }
+        } else {
+            vo.setImageList(List.of());
+        }
+
+        try {
+            User user = userMapper.selectById(post.getUserId());
+            if (user != null) {
+                vo.setUserName(user.getNickname() != null ? user.getNickname() : "萌宠主人");
+                vo.setUserAvatar(user.getAvatar() != null ? user.getAvatar() : "");
+            } else {
+                vo.setUserName("未知用户");
+                vo.setUserAvatar("");
+            }
+        } catch (Exception e) {
+            log.error("查询用户信息失败：userId={}", post.getUserId(), e);
+            vo.setUserName("未知用户");
+            vo.setUserAvatar("");
+        }
+
+        if (post.getPetId() != null) {
+            try {
+                Pet pet = petMapper.selectById(post.getPetId());
+                if (pet != null) {
+                    vo.setPetName(pet.getName() != null ? pet.getName() : "未知宠物");
+                    vo.setPetAvatar(pet.getAvatar() != null ? pet.getAvatar() : "");
+                    vo.setPetType(pet.getCategory());
+                    if (pet.getBirthday() != null) {
+                        int age = Period.between(pet.getBirthday(), LocalDate.now()).getYears();
+                        vo.setPetAge(Math.max(age, 0));
                     } else {
-                        vo.setUserName("未知用户");
-                        vo.setUserAvatar("");
-                    }
-                } catch (Exception e) {
-                    log.error("查询用户信息失败：userId={}", post.getUserId(), e);
-                    vo.setUserName("未知用户");
-                    vo.setUserAvatar("");
-                }
-
-                // 查询宠物信息
-                if (post.getPetId() != null) {
-                    try {
-                        Pet pet = petMapper.selectById(post.getPetId());
-                        if (pet != null) {
-                            vo.setPetName(pet.getName() != null ? pet.getName() : "未知宠物");
-                            vo.setPetAvatar(pet.getAvatar() != null ? pet.getAvatar() : "");
-                            vo.setPetType(pet.getCategory());
-                            
-                            // 计算宠物年龄
-                            if (pet.getBirthday() != null) {
-                                int age = Period.between(pet.getBirthday(), LocalDate.now()).getYears();
-                                vo.setPetAge(Math.max(age, 0));
-                            } else {
-                                vo.setPetAge(0);
-                            }
-                        } else {
-                            vo.setPetName("未知宠物");
-                            vo.setPetAvatar("");
-                            vo.setPetType(0);
-                            vo.setPetAge(0);
-                        }
-                    } catch (Exception e) {
-                        log.error("查询宠物信息失败：petId={}", post.getPetId(), e);
-                        vo.setPetName("未知宠物");
-                        vo.setPetAvatar("");
-                        vo.setPetType(0);
                         vo.setPetAge(0);
                     }
                 } else {
-                    vo.setPetName("");
+                    vo.setPetName("未知宠物");
                     vo.setPetAvatar("");
                     vo.setPetType(0);
                     vo.setPetAge(0);
                 }
+            } catch (Exception e) {
+                log.error("查询宠物信息失败：petId={}", post.getPetId(), e);
+                vo.setPetName("未知宠物");
+                vo.setPetAvatar("");
+                vo.setPetType(0);
+                vo.setPetAge(0);
+            }
+        } else {
+            vo.setPetName("");
+            vo.setPetAvatar("");
+            vo.setPetType(0);
+            vo.setPetAge(0);
+        }
 
-                // 检查当前用户是否已点赞
-                if (userId != null) {
-                    boolean isLiked = postService.isUserLiked(post.getId(), userId);
-                    vo.setLiked(isLiked);
-                    
-                    // 检查当前用户是否已收藏/ee
-                    boolean isEeLiked = postService.isUserEeLiked(post.getId(), userId);
-                    vo.setEeLiked(isEeLiked);
-                    vo.setEeCount(post.getEeCount() != null ? post.getEeCount() : 0);
-                } else {
-                    vo.setLiked(false);
-                    vo.setEeLiked(false);
-                    vo.setEeCount(0);
-                }
+        if (userId != null) {
+            vo.setLiked(postService.isUserLiked(post.getId(), userId));
+            vo.setEeLiked(postService.isUserEeLiked(post.getId(), userId));
+            vo.setEeCount(post.getEeCount() != null ? post.getEeCount() : 0);
+        } else {
+            vo.setLiked(false);
+            vo.setEeLiked(false);
+            vo.setEeCount(post.getEeCount() != null ? post.getEeCount() : 0);
+        }
 
-                return vo;
-            })
-            .collect(Collectors.toList());
-        log.info("获取动态列表成功，返回结果：{}", postVOs);
-        return Result.success(postVOs);
+        return vo;
     }
 
     /**

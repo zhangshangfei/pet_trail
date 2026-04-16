@@ -15,9 +15,7 @@ export const createPost = (data) => {
  * @param {string} tab - tab类型：all-全部, follow-关注, recommend-推荐
  */
 export const getFeed = (page = 1, size = 20, tab = 'all') => {
-  return request.get('/api/posts/feed', {
-    params: { page, size, tab }
-  })
+  return request.get('/api/posts/feed', { page, size, tab })
 }
 
 /**
@@ -52,9 +50,7 @@ export const createComment = (postId, data) => {
  * 获取评论列表
  */
 export const getComments = (postId, page = 1, size = 20) => {
-  return request.get(`/api/posts/${postId}/comments`, {
-    params: { page, size }
-  })
+  return request.get(`/api/posts/${postId}/comments`, { page, size })
 }
 
 /**

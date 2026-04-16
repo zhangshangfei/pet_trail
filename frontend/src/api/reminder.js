@@ -5,9 +5,7 @@ import request from '@/utils/request'
  * @param {number} petId - 宠物 ID
  */
 export const getVaccineReminders = (petId) => {
-  return request.get(`/api/reminders/vaccine`, {
-    params: { pet_id: petId }
-  })
+  return request.get(`/api/reminders/vaccine`, { pet_id: petId })
 }
 
 /**
@@ -27,9 +25,7 @@ export const getUpcomingVaccineReminders = (petId) => {
  * @param {number} reminderDays - 提前几天提醒
  */
 export const createVaccineReminder = (petId, vaccineName, nextDate, vaccineType, reminderDays) => {
-  return request.post('/api/reminders/vaccine', null, {
-    params: { pet_id: petId, vaccine_name: vaccineName, next_date: nextDate, vaccine_type: vaccineType, reminder_days: reminderDays }
-  })
+  return request.post('/api/reminders/vaccine', { pet_id: petId, vaccine_name: vaccineName, next_date: nextDate, vaccine_type: vaccineType, reminder_days: reminderDays })
 }
 
 /**
@@ -54,9 +50,7 @@ export const deleteVaccineReminder = (petId, reminderId) => {
  * @param {number} petId - 宠物 ID
  */
 export const getParasiteReminders = (petId) => {
-  return request.get(`/api/reminders/parasite`, {
-    params: { pet_id: petId }
-  })
+  return request.get(`/api/reminders/parasite`, { pet_id: petId })
 }
 
 /**
@@ -68,9 +62,7 @@ export const getParasiteReminders = (petId) => {
  * @param {number} intervalDays - 间隔天数
  */
 export const createParasiteReminder = (petId, type, productName, nextDate, intervalDays) => {
-  return request.post('/api/reminders/parasite', null, {
-    params: { pet_id: petId, type, product_name: productName, next_date: nextDate, interval_days: intervalDays }
-  })
+  return request.post('/api/reminders/parasite', { pet_id: petId, type, product_name: productName, next_date: nextDate, interval_days: intervalDays })
 }
 
 /**

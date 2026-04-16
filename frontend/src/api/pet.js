@@ -83,9 +83,7 @@ export const uploadImage = (filePath) => {
  * @param {object} data - 宠物信息
  */
 export const createPet = (data) => {
-  return request.post('/api/pets', null, {
-    params: data
-  })
+  return request.post('/api/pets', data)
 }
 
 /**
@@ -102,9 +100,7 @@ export const getPetDetail = (petId) => {
  * @param {object} data - 更新的宠物信息
  */
 export const updatePet = (petId, data) => {
-  return request.put(`/api/pets/${petId}`, null, {
-    params: data
-  })
+  return request.put(`/api/pets/${petId}`, data)
 }
 
 /**
@@ -121,7 +117,5 @@ export const deletePet = (petId) => {
  * @param {number} weight - 体重
  */
 export const updatePetWeight = (petId, weight) => {
-  return request.put(`/api/pets/${petId}/weight`, null, {
-    params: { weight }
-  })
+  return request.put(`/api/pets/${petId}/weight`, { weight })
 }

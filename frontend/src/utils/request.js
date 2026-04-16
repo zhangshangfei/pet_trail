@@ -257,8 +257,29 @@ const httpRequest = (options = {}) => {
   })
 }
 
+// 将对象编码为 URL 查询字符串
+const buildQueryString = (data) => {
+  if (!data || typeof data !== 'object') return ''
+  const params = []
+  for (const key in data) {
+    if (data.hasOwnProperty(key) && data[key] !== undefined && data[key] !== null) {
+      params.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+    }
+  }
+  return params.length > 0 ? '?' + params.join('&') : ''
+}
+
 // 请求拦截器 - 根据环境选择请求方式
 const request = (options = {}) => {
+  // GET 请求时，将 data 参数拼接到 URL 查询字符串中
+  if (options.method === 'GET' && options.data && typeof options.data === 'object') {
+    const queryString = buildQueryString(options.data)
+    if (queryString) {
+      options.url = options.url + queryString
+      options.data = {}
+    }
+  }
+  
   // 如果 BASE_URL 为 'cloud'，使用云托管请求
   if (BASE_URL === 'cloud') {
     return cloudRequest(options)
