@@ -1,72 +1,91 @@
 <template>
   <view class="parasite-page">
-    <!-- 页面标题 -->
-    <view class="page-header">
-      <text class="page-title">驱虫提醒</text>
-      <text class="page-subtitle">{{ pet.name }}</text>
+    <view class="nav-fixed">
+      <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
+      <view class="nav-bar">
+        <view class="nav-back" @tap="goBack">
+          <text class="nav-back-icon">←</text>
+        </view>
+        <text class="nav-title">驱虫提醒</text>
+        <view class="nav-placeholder"></view>
+      </view>
     </view>
 
-    <!-- 即将到期提醒 -->
-    <view class="section" v-if="upcomingReminders.length > 0">
-      <view class="section-header">
-        <text class="section-title">即将到期</text>
-        <view class="badge">
-          <text class="badge-text">{{ upcomingReminders.length }}</text>
-        </view>
-      </view>
-      <view class="reminder-list">
-        <view class="reminder-item" v-for="reminder in upcomingReminders" :key="reminder.id">
-          <view class="reminder-icon">🦠</view>
-          <view class="reminder-content">
-            <text class="reminder-name">{{ reminder.type }}</text>
-            <text class="reminder-date">{{ formatDate(reminder.nextDate) }}</text>
-            <text class="reminder-days">{{ reminder.daysUntil }} 天后</text>
-          </view>
-          <view class="reminder-actions">
-            <button class="action-btn" size="mini" @click="showStatusModal(reminder, 1)">完成</button>
-            <button class="action-btn" size="mini" type="primary" @click="showEditModal(reminder)">编辑</button>
+    <scroll-view scroll-y class="parasite-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px' }">
+      <view class="parasite-content">
+        <view v-if="pet" class="pet-info-card">
+          <image class="pet-info-avatar" :src="pet.avatar || ''" mode="aspectFill" />
+          <view class="pet-info-meta">
+            <text class="pet-info-name">{{ pet.name }}</text>
+            <text class="pet-info-breed">{{ pet.breed || '' }}</text>
           </view>
         </view>
-      </view>
-    </view>
 
-    <!-- 已完成提醒 -->
-    <view class="section" v-if="completedReminders.length > 0">
-      <view class="section-header">
-        <text class="section-title">已完成</text>
-        <view class="badge completed">
-          <text class="badge-text">{{ completedReminders.length }}</text>
+        <view class="section" v-if="upcomingReminders.length > 0">
+          <view class="section-header">
+            <view class="section-label">
+              <text class="section-label-icon">⏰</text>
+              <text class="section-label-text">即将到期</text>
+            </view>
+            <view class="badge">
+              <text class="badge-text">{{ upcomingReminders.length }}</text>
+            </view>
+          </view>
+          <view class="reminder-list">
+            <view class="reminder-item" v-for="reminder in upcomingReminders" :key="reminder.id">
+              <view class="reminder-icon-wrap"><text class="reminder-emoji">🦠</text></view>
+              <view class="reminder-content">
+                <text class="reminder-name">{{ reminder.type }}</text>
+                <text class="reminder-date">{{ formatDate(reminder.nextDate) }}</text>
+                <text class="reminder-days">{{ reminder.daysUntil }} 天后</text>
+              </view>
+              <view class="reminder-actions">
+                <view class="action-btn action-btn-done" @click="showStatusModal(reminder, 1)"><text class="action-btn-text">完成</text></view>
+                <view class="action-btn action-btn-edit" @click="showEditModal(reminder)"><text class="action-btn-text">编辑</text></view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="section" v-if="completedReminders.length > 0">
+          <view class="section-header">
+            <view class="section-label">
+              <text class="section-label-icon">✅</text>
+              <text class="section-label-text">已完成</text>
+            </view>
+            <view class="badge badge-green">
+              <text class="badge-text badge-text-green">{{ completedReminders.length }}</text>
+            </view>
+          </view>
+          <view class="reminder-list">
+            <view class="reminder-item" v-for="reminder in completedReminders" :key="reminder.id">
+              <view class="reminder-icon-wrap reminder-icon-wrap-done"><text class="reminder-emoji">✅</text></view>
+              <view class="reminder-content">
+                <text class="reminder-name reminder-name-done">{{ reminder.type }}</text>
+                <text class="reminder-date reminder-date-done">{{ formatDate(reminder.nextDate) }}</text>
+              </view>
+              <view class="reminder-actions">
+                <view class="action-btn action-btn-reset" @click="showStatusModal(reminder, 0)"><text class="action-btn-text">重置</text></view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="add-section" @click="showAddModal">
+          <view class="add-item">
+            <text class="add-icon">＋</text>
+            <text class="add-text">添加驱虫提醒</text>
+          </view>
+        </view>
+
+        <view class="empty-section" v-if="upcomingReminders.length === 0 && completedReminders.length === 0">
+          <text class="empty-emoji">🦠</text>
+          <text class="empty-text">暂无驱虫提醒</text>
+          <view class="empty-btn" @click="showAddModal"><text class="empty-btn-text">添加第一个提醒</text></view>
         </view>
       </view>
-      <view class="reminder-list">
-        <view class="reminder-item" v-for="reminder in completedReminders" :key="reminder.id">
-          <view class="reminder-icon completed">✅</view>
-          <view class="reminder-content">
-            <text class="reminder-name completed">{{ reminder.type }}</text>
-            <text class="reminder-date completed">{{ formatDate(reminder.nextDate) }}</text>
-          </view>
-          <view class="reminder-actions">
-            <button class="action-btn" size="mini" @click="showStatusModal(reminder, 0)">重置</button>
-          </view>
-        </view>
-      </view>
-    </view>
+    </scroll-view>
 
-    <!-- 添加提醒 -->
-    <view class="add-section">
-      <view class="add-item" @click="showAddModal">
-        <view class="add-icon">➕</view>
-        <text class="add-text">添加驱虫提醒</text>
-      </view>
-    </view>
-
-    <!-- 空状态 -->
-    <view class="empty-section" v-if="upcomingReminders.length === 0 && completedReminders.length === 0">
-      <text class="empty-text">暂无驱虫提醒</text>
-      <button class="add-btn" type="primary" @click="showAddModal">添加第一个提醒</button>
-    </view>
-
-    <!-- 添加/编辑弹窗 -->
     <view class="modal-mask" v-if="showModal" @click="hideModal">
       <view class="modal-content" @click.stop>
         <view class="modal-header">
@@ -74,42 +93,56 @@
           <text class="modal-close" @click="hideModal">✕</text>
         </view>
         <view class="modal-body">
-          <view class="form-item">
-            <text class="form-label">类型 *</text>
-            <radio-group class="form-radio-group" @change="onTypeChange">
-              <label class="radio-label">
-                <radio value="体内" :checked="form.type === '体内'" />
-                <text>体内驱虫</text>
-              </label>
-              <label class="radio-label">
-                <radio value="体外" :checked="form.type === '体外'" />
-                <text>体外驱虫</text>
-              </label>
-            </radio-group>
+          <view class="form-group">
+            <view class="form-label">
+              <text class="label-emoji">💊</text>
+              <text class="label-text">驱虫类型 *</text>
+            </view>
+            <view class="radio-group">
+              <view
+                class="radio-item"
+                :class="{ active: form.type === '体内' }"
+                @click="form.type = '体内'"
+              >
+                <view class="radio-dot" :class="{ checked: form.type === '体内' }"></view>
+                <text class="radio-text">体内驱虫</text>
+              </view>
+              <view
+                class="radio-item"
+                :class="{ active: form.type === '体外' }"
+                @click="form.type = '体外'"
+              >
+                <view class="radio-dot" :class="{ checked: form.type === '体外' }"></view>
+                <text class="radio-text">体外驱虫</text>
+              </view>
+            </view>
           </view>
-          <view class="form-item">
-            <text class="form-label">驱虫日期 *</text>
+          <view class="form-group">
+            <view class="form-label">
+              <text class="label-emoji">📅</text>
+              <text class="label-text">驱虫日期 *</text>
+            </view>
             <picker
               mode="date"
               :value="form.nextDate"
               @change="onDateChange"
             >
-              <view class="picker">
-                <text v-if="form.nextDate">{{ formatDate(form.nextDate) }}</text>
+              <view class="picker-value">
+                <text v-if="form.nextDate" class="value-text">{{ formatDate(form.nextDate) }}</text>
                 <text v-else class="picker-placeholder">请选择日期</text>
+                <text class="picker-arrow">▼</text>
               </view>
             </picker>
           </view>
         </view>
         <view class="modal-footer">
-          <button class="modal-btn cancel" @click="hideModal">取消</button>
-          <button class="modal-btn confirm" type="primary" @click="submitForm">确定</button>
+          <view class="modal-btn modal-btn-cancel" @click="hideModal"><text class="modal-btn-text-cancel">取消</text></view>
+          <view class="modal-btn modal-btn-confirm" @click="submitForm"><text class="modal-btn-text-confirm">确定</text></view>
         </view>
       </view>
     </view>
 
-    <!-- 状态修改弹窗 -->
-    <view class="modal-mask" v-if="showStatusModal" @click="hideStatusModal">
+    <view class="modal-mask" v-if="showStatusModalFlag" @click="hideStatusModal">
       <view class="modal-content" @click.stop>
         <view class="modal-header">
           <text class="modal-title">修改状态</text>
@@ -122,22 +155,22 @@
               :class="{ active: tempStatus === 1 }"
               @click="tempStatus = 1"
             >
-              <view class="status-icon">✅</view>
-              <text class="status-text">已完成</text>
+              <text class="status-emoji">✅</text>
+              <text class="status-label">已完成</text>
             </view>
             <view
               class="status-option"
               :class="{ active: tempStatus === 0 }"
               @click="tempStatus = 0"
             >
-              <view class="status-icon">⏰</view>
-              <text class="status-text">未完成</text>
+              <text class="status-emoji">⏰</text>
+              <text class="status-label">未完成</text>
             </view>
           </view>
         </view>
         <view class="modal-footer">
-          <button class="modal-btn cancel" @click="hideStatusModal">取消</button>
-          <button class="modal-btn confirm" type="primary" @click="updateStatus">确定</button>
+          <view class="modal-btn modal-btn-cancel" @click="hideStatusModal"><text class="modal-btn-text-cancel">取消</text></view>
+          <view class="modal-btn modal-btn-confirm" @click="updateStatus"><text class="modal-btn-text-confirm">确定</text></view>
         </view>
       </view>
     </view>
@@ -150,12 +183,13 @@ import { checkLogin } from '@/utils/index'
 export default {
   data() {
     return {
+      statusBarHeight: 20,
       petId: null,
       pet: null,
       upcomingReminders: [],
       completedReminders: [],
       showModal: false,
-      showStatusModal: false,
+      showStatusModalFlag: false,
       isEditing: false,
       currentReminder: null,
       tempStatus: 0,
@@ -166,6 +200,12 @@ export default {
     };
   },
   onLoad(options) {
+    try {
+      const sys = uni.getSystemInfoSync();
+      this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
+    } catch (e) {
+      this.statusBarHeight = 20;
+    }
     if (options.petId) {
       this.petId = options.petId;
       this.loadPetInfo();
@@ -173,13 +213,19 @@ export default {
     }
   },
   onShow() {
-    // 每次显示页面时重新加载提醒数据
     if (this.petId) {
       this.loadReminders();
     }
   },
   methods: {
-    // 加载宠物信息
+    goBack() {
+      const pages = getCurrentPages();
+      if (pages.length > 1) {
+        uni.navigateBack();
+      } else {
+        uni.switchTab({ url: '/pages/dashboard/index' });
+      }
+    },
     async loadPetInfo() {
       try {
         const res = await uni.$request.get(`/api/pets/${this.petId}`);
@@ -190,8 +236,6 @@ export default {
         console.error('加载宠物信息失败:', error);
       }
     },
-
-    // 加载提醒
     async loadReminders() {
       try {
         const res = await uni.$request.get(`/api/pets/${this.petId}/parasite-reminders`);
@@ -204,8 +248,6 @@ export default {
         console.error('加载提醒失败:', error);
       }
     },
-
-    // 计算天数
     calculateDays() {
       const now = new Date();
       this.upcomingReminders.forEach(r => {
@@ -214,20 +256,11 @@ export default {
         r.daysUntil = diff;
       });
     },
-
-    // 格式化日期
     formatDate(date) {
       if (!date) return '-';
       const d = new Date(date);
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     },
-
-    // 类型选择
-    onTypeChange(e) {
-      this.form.type = e.detail.value;
-    },
-
-    // 显示添加弹窗
     async showAddModal() {
       const loggedIn = await checkLogin('请先登录后再添加驱虫提醒')
       if (!loggedIn) return
@@ -238,8 +271,6 @@ export default {
         nextDate: ''
       };
     },
-
-    // 显示编辑弹窗
     showEditModal(reminder) {
       this.showModal = true;
       this.isEditing = true;
@@ -249,41 +280,28 @@ export default {
         nextDate: reminder.nextDate
       };
     },
-
-    // 显示状态弹窗
     showStatusModal(reminder, status) {
-      this.showStatusModal = true;
+      this.showStatusModalFlag = true;
       this.currentReminder = reminder;
       this.tempStatus = status;
     },
-
-    // 隐藏弹窗
     hideModal() {
       this.showModal = false;
       this.currentReminder = null;
     },
-
-    // 隐藏状态弹窗
     hideStatusModal() {
-      this.showStatusModal = false;
+      this.showStatusModalFlag = false;
       this.currentReminder = null;
     },
-
-    // 日期变化
     onDateChange(e) {
       this.form.nextDate = e.detail.value;
     },
-
-    // 提交表单
     async submitForm() {
       const loggedIn = await checkLogin('请先登录后再保存驱虫提醒')
       if (!loggedIn) return
 
       if (!this.form.type) {
-        uni.showToast({
-          title: '请选择类型',
-          icon: 'none'
-        });
+        uni.showToast({ title: '请选择类型', icon: 'none' });
         return;
       }
 
@@ -297,28 +315,17 @@ export default {
         }
 
         if (res.success) {
-          uni.showToast({
-            title: this.isEditing ? '修改成功' : '添加成功',
-            icon: 'success'
-          });
+          uni.showToast({ title: this.isEditing ? '修改成功' : '添加成功', icon: 'success' });
           this.hideModal();
           this.loadReminders();
         } else {
-          uni.showToast({
-            title: res.message || '操作失败',
-            icon: 'none'
-          });
+          uni.showToast({ title: res.message || '操作失败', icon: 'none' });
         }
       } catch (error) {
         console.error('操作失败:', error);
-        uni.showToast({
-          title: '网络错误',
-          icon: 'none'
-        });
+        uni.showToast({ title: '网络错误', icon: 'none' });
       }
     },
-
-    // 更新状态
     async updateStatus() {
       const loggedIn = await checkLogin('请先登录后再修改状态')
       if (!loggedIn) return
@@ -329,24 +336,15 @@ export default {
         });
 
         if (res.success) {
-          uni.showToast({
-            title: '状态修改成功',
-            icon: 'success'
-          });
+          uni.showToast({ title: '状态修改成功', icon: 'success' });
           this.hideStatusModal();
           this.loadReminders();
         } else {
-          uni.showToast({
-            title: res.message || '修改失败',
-            icon: 'none'
-          });
+          uni.showToast({ title: res.message || '修改失败', icon: 'none' });
         }
       } catch (error) {
         console.error('修改状态失败:', error);
-        uni.showToast({
-          title: '网络错误',
-          icon: 'none'
-        });
+        uni.showToast({ title: '网络错误', icon: 'none' });
       }
     }
   }
@@ -356,67 +354,144 @@ export default {
 <style lang="scss" scoped>
 .parasite-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: #f5f5f5;
 }
 
-.page-header {
-  padding: 30rpx;
-  background-color: #ffffff;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+.nav-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 100%);
 }
 
-.page-title {
+.status-bar {
+  width: 100%;
+}
+
+.nav-bar {
+  height: 92rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16rpx;
+}
+
+.nav-back {
+  width: 68rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-icon {
   font-size: 36rpx;
-  font-weight: bold;
-  color: #333333;
+  color: #fff;
+  font-weight: 600;
+}
+
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.nav-placeholder {
+  width: 68rpx;
+}
+
+.parasite-scroll {
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.parasite-content {
+  padding: 20rpx 24rpx 40rpx;
+}
+
+.pet-info-card {
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.pet-info-avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 44rpx;
+  margin-right: 20rpx;
+  background: #f3f4f6;
+}
+
+.pet-info-name {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #111827;
   display: block;
 }
 
-.page-subtitle {
+.pet-info-breed {
   font-size: 24rpx;
-  color: #999999;
+  color: #6b7280;
   display: block;
-  margin-top: 8rpx;
+  margin-top: 4rpx;
 }
 
 .section {
-  margin: 20rpx;
-  padding: 30rpx;
-  background-color: #ffffff;
-  border-radius: 16rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  padding: 28rpx 24rpx;
+  margin-bottom: 20rpx;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24rpx;
+  margin-bottom: 20rpx;
 }
 
-.section-title {
+.section-label {
+  display: flex;
+  align-items: center;
+}
+
+.section-label-icon {
   font-size: 28rpx;
-  font-weight: bold;
-  color: #333333;
+  margin-right: 8rpx;
+}
+
+.section-label-text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #111827;
 }
 
 .badge {
   padding: 4rpx 16rpx;
-  background-color: #ffebee;
-  border-radius: 20rpx;
+  background: rgba(255, 77, 79, 0.1);
+  border-radius: 999rpx;
 }
 
 .badge-text {
-  font-size: 24rpx;
-  color: #f44336;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #ff4d4f;
 }
 
-.badge.completed {
-  background-color: #e8f5e9;
+.badge-green {
+  background: rgba(16, 185, 129, 0.1);
 }
 
-.badge.completed .badge-text {
-  color: #4caf50;
+.badge-text-green {
+  color: #10b981;
 }
 
 .reminder-list {
@@ -429,48 +504,62 @@ export default {
   display: flex;
   align-items: center;
   padding: 20rpx;
-  background-color: #f8f8f8;
-  border-radius: 12rpx;
+  background: #f9fafb;
+  border-radius: 16rpx;
 }
 
-.reminder-icon {
-  font-size: 40rpx;
+.reminder-icon-wrap {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 122, 61, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-right: 16rpx;
+  flex-shrink: 0;
 }
 
-.reminder-icon.completed {
-  opacity: 0.5;
+.reminder-icon-wrap-done {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.reminder-emoji {
+  font-size: 28rpx;
 }
 
 .reminder-content {
   flex: 1;
+  min-width: 0;
 }
 
 .reminder-name {
   font-size: 28rpx;
-  color: #333333;
+  font-weight: 600;
+  color: #111827;
   display: block;
-  margin-bottom: 8rpx;
+  margin-bottom: 6rpx;
 }
 
-.reminder-name.completed {
+.reminder-name-done {
   text-decoration: line-through;
-  color: #999999;
+  color: #9ca3af;
 }
 
 .reminder-date {
   font-size: 24rpx;
-  color: #999999;
+  color: #6b7280;
   display: block;
 }
 
-.reminder-date.completed {
-  color: #cccccc;
+.reminder-date-done {
+  color: #d1d5db;
 }
 
 .reminder-days {
-  font-size: 24rpx;
-  color: #f5a623;
+  font-size: 22rpx;
+  color: #ff7a3d;
+  font-weight: 600;
   margin-top: 4rpx;
   display: block;
 }
@@ -478,55 +567,108 @@ export default {
 .reminder-actions {
   display: flex;
   gap: 12rpx;
-  margin-left: 16rpx;
+  margin-left: 12rpx;
+  flex-shrink: 0;
 }
 
 .action-btn {
+  padding: 10rpx 20rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn-done {
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+}
+
+.action-btn-done .action-btn-text {
+  color: #fff;
   font-size: 22rpx;
-  padding: 8rpx 16rpx;
+  font-weight: 600;
+}
+
+.action-btn-edit {
+  background: #f3f4f6;
+}
+
+.action-btn-edit .action-btn-text {
+  color: #6b7280;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.action-btn-reset {
+  background: #f3f4f6;
+}
+
+.action-btn-reset .action-btn-text {
+  color: #6b7280;
+  font-size: 22rpx;
+  font-weight: 600;
 }
 
 .add-section {
-  margin: 20rpx;
+  margin-bottom: 20rpx;
 }
 
 .add-item {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 30rpx;
-  background-color: #ffffff;
-  border-radius: 16rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  padding: 32rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  border: 2rpx dashed rgba(255, 122, 61, 0.3);
 }
 
 .add-icon {
-  font-size: 48rpx;
-  margin-right: 16rpx;
+  font-size: 40rpx;
+  color: #ff7a3d;
+  margin-right: 12rpx;
+  font-weight: 600;
 }
 
 .add-text {
   font-size: 28rpx;
-  color: #333333;
+  color: #ff7a3d;
+  font-weight: 600;
 }
 
 .empty-section {
-  padding: 100rpx 0;
+  padding: 120rpx 0;
   text-align: center;
+}
+
+.empty-emoji {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 20rpx;
 }
 
 .empty-text {
   font-size: 28rpx;
-  color: #999999;
+  color: #9ca3af;
   display: block;
   margin-bottom: 30rpx;
 }
 
-.add-btn {
-  width: 200rpx;
-  padding: 24rpx;
+.empty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 48rpx;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  border-radius: 999rpx;
+  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
+}
+
+.empty-btn-text {
   font-size: 28rpx;
-  border-radius: 12rpx;
+  font-weight: 600;
+  color: #fff;
 }
 
 .modal-mask {
@@ -535,7 +677,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -545,8 +687,8 @@ export default {
 .modal-content {
   width: 80%;
   max-height: 80vh;
-  background-color: #ffffff;
-  border-radius: 20rpx;
+  background: #fff;
+  border-radius: 24rpx;
   overflow: hidden;
 }
 
@@ -554,89 +696,173 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: 32rpx;
+  border-bottom: 1rpx solid #f3f4f6;
 }
 
 .modal-title {
   font-size: 32rpx;
-  font-weight: bold;
-  color: #333333;
+  font-weight: 700;
+  color: #111827;
 }
 
 .modal-close {
-  font-size: 40rpx;
-  color: #999999;
-  cursor: pointer;
+  font-size: 36rpx;
+  color: #9ca3af;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-body {
-  padding: 30rpx;
+  padding: 32rpx;
 }
 
-.form-item {
-  margin-bottom: 30rpx;
+.form-group {
+  margin-bottom: 28rpx;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
 }
 
 .form-label {
-  font-size: 28rpx;
-  color: #333333;
-  margin-bottom: 12rpx;
-  display: block;
-}
-
-.form-radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-}
-
-.radio-label {
   display: flex;
   align-items: center;
-  font-size: 28rpx;
-  color: #666666;
+  margin-bottom: 14rpx;
 }
 
-.radio-label radio {
+.label-emoji {
+  font-size: 28rpx;
+  margin-right: 8rpx;
+}
+
+.label-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #111827;
+}
+
+.radio-group {
+  display: flex;
+  gap: 16rpx;
+}
+
+.radio-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  background: #f9fafb;
+  border-radius: 16rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+}
+
+.radio-item.active {
+  border-color: #ff7a3d;
+  background: rgba(255, 122, 61, 0.06);
+}
+
+.radio-dot {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid #d1d5db;
   margin-right: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
 }
 
-.picker {
-  width: 100%;
-  padding: 20rpx;
-  border: 1rpx solid #e0e0e0;
-  border-radius: 12rpx;
+.radio-dot.checked {
+  border-color: #ff7a3d;
+  background: #ff7a3d;
+}
+
+.radio-dot.checked::after {
+  content: '';
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 6rpx;
+  background: #fff;
+}
+
+.radio-text {
   font-size: 28rpx;
-  color: #333333;
+  color: #374151;
+  font-weight: 500;
+}
+
+.radio-item.active .radio-text {
+  color: #ff7a3d;
+  font-weight: 600;
+}
+
+.picker-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9fafb;
+  border: none;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  min-height: 80rpx;
+}
+
+.value-text {
+  font-size: 28rpx;
+  color: #374151;
 }
 
 .picker-placeholder {
-  color: #999999;
+  font-size: 28rpx;
+  color: #9ca3af;
+}
+
+.picker-arrow {
+  font-size: 20rpx;
+  color: #9ca3af;
 }
 
 .modal-footer {
   display: flex;
-  gap: 20rpx;
-  padding: 30rpx;
-  border-top: 1rpx solid #f0f0f0;
+  gap: 16rpx;
+  padding: 24rpx 32rpx;
+  border-top: 1rpx solid #f3f4f6;
 }
 
 .modal-btn {
   flex: 1;
-  padding: 24rpx;
+  height: 88rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-btn-cancel {
+  background: #f3f4f6;
+}
+
+.modal-btn-text-cancel {
   font-size: 28rpx;
-  border-radius: 12rpx;
+  font-weight: 600;
+  color: #6b7280;
 }
 
-.modal-btn.cancel {
-  background-color: #f5f5f5;
-  color: #666666;
+.modal-btn-confirm {
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
 }
 
-.modal-btn.confirm {
-  background-color: #667eea;
-  color: #ffffff;
+.modal-btn-text-confirm {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #fff;
 }
 
 .status-options {
@@ -649,25 +875,29 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30rpx;
-  border: 2rpx solid #e0e0e0;
-  border-radius: 12rpx;
-  cursor: pointer;
+  padding: 32rpx;
+  border: 2rpx solid #e5e7eb;
+  border-radius: 20rpx;
   transition: all 0.3s;
 }
 
 .status-option.active {
-  border-color: #667eea;
-  background-color: #f0f4ff;
+  border-color: #ff7a3d;
+  background: rgba(255, 122, 61, 0.06);
 }
 
-.status-icon {
+.status-emoji {
   font-size: 48rpx;
   margin-bottom: 12rpx;
 }
 
-.status-text {
+.status-label {
   font-size: 26rpx;
-  color: #666666;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.status-option.active .status-label {
+  color: #ff7a3d;
 }
 </style>

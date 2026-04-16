@@ -1,62 +1,75 @@
 <template>
   <view class="record-page">
-    <!-- 页面标题 -->
-    <view class="page-header">
-      <view class="header-back" @tap="goBack">
-        <text class="header-back-icon">‹</text>
-        <text class="header-back-text">返回</text>
-      </view>
-      <text class="page-title">体重记录</text>
-      <text class="page-subtitle">{{ pet && pet.name ? pet.name : "请选择宠物" }}</text>
-      <picker class="pet-picker" :range="petNames" :value="petIndex" @change="onPetChange">
-        <view class="pet-picker-inner">
-          <text class="pet-picker-text">{{ pet && pet.name ? pet.name : "选择宠物" }}</text>
-          <text class="pet-picker-arrow">⌄</text>
+    <view class="nav-fixed">
+      <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
+      <view class="nav-bar">
+        <view class="nav-back" @tap="goBack">
+          <text class="nav-back-icon">←</text>
         </view>
-      </picker>
+        <text class="nav-title">体重记录</text>
+        <view class="nav-placeholder"></view>
+      </view>
     </view>
 
-    <!-- 体重输入卡片 -->
-    <view class="input-card">
-      <view class="input-label">当前体重</view>
-      <view class="weight-display">
-        <text class="weight-value">{{ currentWeight || '-' }}</text>
-        <text class="weight-unit">kg</text>
-      </view>
-      <button class="record-btn" type="primary" @click="showRecordModal">
-        + 记录体重
-      </button>
-    </view>
-
-    <!-- 最近记录 -->
-    <view class="section" v-if="records.length > 0">
-      <view class="section-header">
-        <text class="section-title">最近记录</text>
-        <text class="section-link" @click="viewAllRecords">查看全部</text>
-      </view>
-      <view class="record-list">
-        <view class="record-item" v-for="(record, index) in records" :key="record.id">
-          <view class="record-icon">⚖️</view>
-          <view class="record-content">
-            <text class="record-weight">{{ record.weight }} kg</text>
-            <text class="record-date">{{ formatDate(record.recordDate) }}</text>
+    <scroll-view scroll-y class="record-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px' }">
+      <view class="record-content">
+        <view v-if="pet" class="pet-info-card">
+          <image class="pet-info-avatar" :src="pet.avatar || ''" mode="aspectFill" />
+          <view class="pet-info-meta">
+            <text class="pet-info-name">{{ pet.name }}</text>
+            <text class="pet-info-breed">{{ pet.breed || '' }}</text>
           </view>
-          <view class="record-change" v-if="index < records.length - 1 && records[index + 1].weight">
-            <text :class="record.change > 0 ? 'text-up' : 'text-down'">
-              {{ record.change > 0 ? '+' : '' }}{{ record.change }}%
-            </text>
+          <picker class="pet-picker" :range="petNames" :value="petIndex" @change="onPetChange">
+            <view class="pet-picker-inner">
+              <text class="pet-picker-text">切换</text>
+              <text class="pet-picker-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+
+        <view class="weight-card">
+          <view class="weight-label">当前体重</view>
+          <view class="weight-display">
+            <text class="weight-value">{{ currentWeight || '-' }}</text>
+            <text class="weight-unit">kg</text>
+          </view>
+          <view class="weight-btn-wrap" @click="showRecordModal">
+            <text class="weight-btn-text">+ 记录体重</text>
           </view>
         </view>
+
+        <view class="section" v-if="records.length > 0">
+          <view class="section-header">
+            <view class="section-label">
+              <text class="section-label-icon">📊</text>
+              <text class="section-label-text">最近记录</text>
+            </view>
+            <text class="section-link" @click="viewAllRecords">查看全部</text>
+          </view>
+          <view class="record-list">
+            <view class="record-item" v-for="(record, index) in records" :key="record.id">
+              <view class="record-icon-wrap"><text class="record-emoji">⚖️</text></view>
+              <view class="record-info">
+                <text class="record-weight">{{ record.weight }} kg</text>
+                <text class="record-date">{{ formatDate(record.recordDate) }}</text>
+              </view>
+              <view class="record-change" v-if="index < records.length - 1 && records[index + 1].weight">
+                <text class="change-text" :class="record.change > 0 ? 'up' : 'down'">
+                  {{ record.change > 0 ? '+' : '' }}{{ record.change }}%
+                </text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="empty-section" v-if="records.length === 0">
+          <text class="empty-emoji">⚖️</text>
+          <text class="empty-text">暂无体重记录</text>
+          <view class="empty-btn" @click="showRecordModal"><text class="empty-btn-text">添加第一条记录</text></view>
+        </view>
       </view>
-    </view>
+    </scroll-view>
 
-    <!-- 空状态 -->
-    <view class="empty-section" v-if="records.length === 0">
-      <text class="empty-text">暂无体重记录</text>
-      <button class="add-btn" type="primary" @click="showRecordModal">添加第一条记录</button>
-    </view>
-
-    <!-- 记录弹窗 -->
     <view class="modal-mask" v-if="showModal" @click="hideModal">
       <view class="modal-content" @click.stop>
         <view class="modal-header">
@@ -64,33 +77,39 @@
           <text class="modal-close" @click="hideModal">✕</text>
         </view>
         <view class="modal-body">
-          <view class="form-item">
-            <text class="form-label">体重 (kg)</text>
+          <view class="form-group">
+            <view class="form-label">
+              <text class="label-emoji">⚖️</text>
+              <text class="label-text">体重 (kg)</text>
+            </view>
             <input
               class="form-input"
               type="digit"
               v-model="form.weight"
               placeholder="请输入体重"
-              :keyboard-type="'number-pad'"
             />
           </view>
-          <view class="form-item">
-            <text class="form-label">记录日期</text>
+          <view class="form-group">
+            <view class="form-label">
+              <text class="label-emoji">📅</text>
+              <text class="label-text">记录日期</text>
+            </view>
             <picker
               mode="date"
               :value="form.recordDate"
               @change="onDateChange"
             >
-              <view class="picker">
-                <text v-if="form.recordDate">{{ formatDate(form.recordDate) }}</text>
+              <view class="picker-value">
+                <text v-if="form.recordDate" class="value-text">{{ formatDate(form.recordDate) }}</text>
                 <text v-else class="picker-placeholder">请选择日期</text>
+                <text class="picker-arrow">▼</text>
               </view>
             </picker>
           </view>
         </view>
         <view class="modal-footer">
-          <button class="modal-btn cancel" @click="hideModal">取消</button>
-          <button class="modal-btn confirm" type="primary" @click="submitRecord">确定</button>
+          <view class="modal-btn modal-btn-cancel" @click="hideModal"><text class="modal-btn-text-cancel">取消</text></view>
+          <view class="modal-btn modal-btn-confirm" @click="submitRecord"><text class="modal-btn-text-confirm">确定</text></view>
         </view>
       </view>
     </view>
@@ -103,6 +122,7 @@ import { checkLogin } from '@/utils/index'
 export default {
   data() {
     return {
+      statusBarHeight: 20,
       petId: null,
       pets: [],
       pet: null,
@@ -126,13 +146,18 @@ export default {
     }
   },
   onLoad(options) {
+    try {
+      const sys = uni.getSystemInfoSync();
+      this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
+    } catch (e) {
+      this.statusBarHeight = 20;
+    }
     if (options.petId || options.id) {
       this.petId = options.petId || options.id;
     }
     this.loadPets();
   },
   onShow() {
-    // 每次显示页面时重新加载数据
     if (this.petId) {
       this.loadPetInfo();
       this.loadRecords();
@@ -141,6 +166,14 @@ export default {
     }
   },
   methods: {
+    goBack() {
+      const pages = getCurrentPages();
+      if (pages.length > 1) {
+        uni.navigateBack();
+      } else {
+        uni.switchTab({ url: '/pages/dashboard/index' });
+      }
+    },
     async loadPets() {
       try {
         const res = await uni.$request.get('/api/pets');
@@ -161,7 +194,6 @@ export default {
         console.error("加载宠物列表失败:", error);
       }
     },
-    // 加载宠物信息
     async loadPetInfo() {
       if (!this.petId) return;
       try {
@@ -174,8 +206,6 @@ export default {
         console.error('加载宠物信息失败:', error);
       }
     },
-
-    // 加载记录
     async loadRecords() {
       if (!this.petId) return;
       try {
@@ -188,11 +218,8 @@ export default {
         console.error('加载记录失败:', error);
       }
     },
-
-    // 计算变化
     calculateChanges() {
       if (this.records.length < 2) return;
-
       for (let i = 1; i < this.records.length; i++) {
         const prev = this.records[i - 1];
         const curr = this.records[i];
@@ -202,28 +229,20 @@ export default {
         }
       }
     },
-
-    // 格式化日期
     formatDate(date) {
       if (!date) return '-';
       const d = new Date(date);
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     },
-
-    // 显示弹窗
     async showRecordModal() {
       const loggedIn = await checkLogin('请先登录后再记录体重')
       if (!loggedIn) return
       this.showModal = true;
       this.form.recordDate = this.form.recordDate || new Date().toISOString().split('T')[0];
     },
-
-    // 隐藏弹窗
     hideModal() {
       this.showModal = false;
     },
-
-    // 日期变化
     onDateChange(e) {
       this.form.recordDate = e.detail.value;
     },
@@ -235,21 +254,15 @@ export default {
       await this.loadPetInfo();
       await this.loadRecords();
     },
-
-    // 提交记录
     async submitRecord() {
       const loggedIn = await checkLogin('请先登录后再记录体重')
       if (!loggedIn) return
 
       if (!this.form.weight) {
-        uni.showToast({
-          title: '请输入体重',
-          icon: 'none'
-        });
+        uni.showToast({ title: '请输入体重', icon: 'none' });
         return;
       }
 
-      // 检查当天是否已有记录
       const todayRecord = this.records.find(r => {
         const recordDate = new Date(r.recordDate);
         const recordDateStr = `${recordDate.getFullYear()}-${String(recordDate.getMonth() + 1).padStart(2, '0')}-${String(recordDate.getDate()).padStart(2, '0')}`;
@@ -257,7 +270,6 @@ export default {
       });
 
       if (todayRecord) {
-        // 当天已有记录，提示用户是否修改
         uni.showModal({
           title: '提示',
           content: `当天已有体重记录（${todayRecord.weight}kg），是否修改？`,
@@ -272,11 +284,8 @@ export default {
         return;
       }
 
-      // 新增记录
       await this.createNewRecord();
     },
-
-    // 新增记录
     async createNewRecord() {
       try {
         const res = await uni.$request.post(`/api/pets/${this.petId}/weight-records`, {
@@ -285,32 +294,17 @@ export default {
         });
 
         if (res && res.success) {
-          uni.showToast({
-            title: '记录成功',
-            icon: 'success'
-          });
+          uni.showToast({ title: '记录成功', icon: 'success' });
           this.hideModal();
           this.loadRecords();
           this.loadPetInfo();
         } else {
-          const errorMsg = (res && res.message) || '记录失败';
-          uni.showToast({
-            title: errorMsg,
-            icon: 'none',
-            duration: 3000
-          });
+          uni.showToast({ title: (res && res.message) || '记录失败', icon: 'none' });
         }
       } catch (error) {
-        const errorMsg = (error && error.message) || '网络错误';
-        uni.showToast({
-          title: errorMsg,
-          icon: 'none',
-          duration: 3000
-        });
+        uni.showToast({ title: (error && error.message) || '网络错误', icon: 'none' });
       }
     },
-
-    // 修改记录
     async updateRecord(recordId) {
       try {
         const res = await uni.$request.put(`/api/pets/${this.petId}/weight-records/${recordId}`, {
@@ -319,44 +313,21 @@ export default {
         });
 
         if (res && res.success) {
-          uni.showToast({
-            title: '修改成功',
-            icon: 'success'
-          });
+          uni.showToast({ title: '修改成功', icon: 'success' });
           this.hideModal();
           this.loadRecords();
           this.loadPetInfo();
         } else {
-          const errorMsg = (res && res.message) || '修改失败';
-          uni.showToast({
-            title: errorMsg,
-            icon: 'none',
-            duration: 3000
-          });
+          uni.showToast({ title: (res && res.message) || '修改失败', icon: 'none' });
         }
       } catch (error) {
-        const errorMsg = (error && error.message) || '网络错误';
-        uni.showToast({
-          title: errorMsg,
-          icon: 'none',
-          duration: 3000
-        });
+        uni.showToast({ title: (error && error.message) || '网络错误', icon: 'none' });
       }
     },
-
-    // 查看全部
     viewAllRecords() {
       uni.switchTab({
         url: `/pages/health/record-all?petId=${this.petId}`
       });
-    },
-    goBack() {
-      const pages = getCurrentPages();
-      if (pages.length > 1) {
-        uni.navigateBack();
-      } else {
-        uni.navigateTo({ url: "/pages/dashboard/index" });
-      }
     }
   }
 };
@@ -365,90 +336,138 @@ export default {
 <style lang="scss" scoped>
 .record-page {
   min-height: 100vh;
-  background-color: var(--pt-bg);
-  padding-top: env(safe-area-inset-top);
+  background: #f5f5f5;
 }
 
-.page-header {
-  padding: 34rpx 30rpx 22rpx;
-  background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 55%, rgba(247, 243, 239, 0) 100%);
+.nav-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 100%);
 }
 
-.header-back {
-  display: inline-flex;
+.status-bar {
+  width: 100%;
+}
+
+.nav-bar {
+  height: 92rpx;
+  display: flex;
   align-items: center;
-  margin-bottom: 10rpx;
-  padding: 12rpx 24rpx;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 999rpx;
-  backdrop-filter: blur(10px);
+  justify-content: space-between;
+  padding: 0 16rpx;
 }
 
-.header-back-icon {
+.nav-back {
+  width: 68rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-icon {
   font-size: 36rpx;
-  line-height: 32rpx;
-  color: #ffffff;
-  margin-right: 4rpx;
-}
-
-.header-back-text {
-  font-size: 26rpx;
-  color: #ffffff;
+  color: #fff;
   font-weight: 600;
 }
 
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.nav-placeholder {
+  width: 68rpx;
+}
+
+.record-scroll {
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.record-content {
+  padding: 20rpx 24rpx 40rpx;
+}
+
+.pet-info-card {
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.pet-info-avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 44rpx;
+  margin-right: 20rpx;
+  background: #f3f4f6;
+  flex-shrink: 0;
+}
+
+.pet-info-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.pet-info-name {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #111827;
+  display: block;
+}
+
+.pet-info-breed {
+  font-size: 24rpx;
+  color: #6b7280;
+  display: block;
+  margin-top: 4rpx;
+}
+
 .pet-picker {
-  margin-top: 12rpx;
-  display: inline-block;
+  flex-shrink: 0;
 }
 
 .pet-picker-inner {
   display: inline-flex;
   align-items: center;
-  gap: 8rpx;
-  padding: 10rpx 16rpx;
+  gap: 6rpx;
+  padding: 10rpx 20rpx;
+  background: #f9fafb;
   border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.2);
 }
 
 .pet-picker-text {
   font-size: 24rpx;
-  color: #ffffff;
-  font-weight: 700;
+  color: #6b7280;
+  font-weight: 600;
 }
 
 .pet-picker-arrow {
-  font-size: 20rpx;
-  color: #ffffff;
+  font-size: 18rpx;
+  color: #9ca3af;
 }
 
-.page-title {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #ffffff;
-  display: block;
-}
-
-.page-subtitle {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.85);
-  display: block;
-  margin-top: 8rpx;
-}
-
-.input-card {
-  margin: 20rpx;
-  padding: 40rpx;
-  background-color: var(--pt-card);
+.weight-card {
+  background: #fff;
   border-radius: 24rpx;
-  box-shadow: var(--pt-shadow-soft);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  padding: 40rpx 32rpx;
   text-align: center;
+  margin-bottom: 20rpx;
 }
 
-.input-label {
+.weight-label {
   font-size: 28rpx;
-  color: #666666;
-  margin-bottom: 30rpx;
+  color: #6b7280;
+  margin-bottom: 20rpx;
   display: block;
 }
 
@@ -456,53 +475,73 @@ export default {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  margin-bottom: 30rpx;
+  margin-bottom: 32rpx;
 }
 
 .weight-value {
   font-size: 80rpx;
-  font-weight: bold;
-  color: var(--pt-primary);
+  font-weight: 800;
+  color: #ff7a3d;
+  line-height: 1;
 }
 
 .weight-unit {
   font-size: 32rpx;
-  color: #999999;
+  color: #9ca3af;
   margin-left: 8rpx;
 }
 
-.record-btn {
-  width: 100%;
-  padding: 24rpx;
-  font-size: 32rpx;
+.weight-btn-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 64rpx;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
   border-radius: 999rpx;
-  background: linear-gradient(180deg, var(--pt-primary-2) 0%, var(--pt-primary) 100%);
+  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
+}
+
+.weight-btn-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #fff;
 }
 
 .section {
-  margin: 20rpx;
-  padding: 30rpx;
-  background-color: var(--pt-card);
+  background: #fff;
   border-radius: 24rpx;
-  box-shadow: var(--pt-shadow-soft);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  padding: 28rpx 24rpx;
+  margin-bottom: 20rpx;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24rpx;
+  margin-bottom: 20rpx;
 }
 
-.section-title {
+.section-label {
+  display: flex;
+  align-items: center;
+}
+
+.section-label-icon {
   font-size: 28rpx;
-  font-weight: bold;
-  color: #333333;
+  margin-right: 8rpx;
+}
+
+.section-label-text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #111827;
 }
 
 .section-link {
   font-size: 24rpx;
-  color: var(--pt-primary);
+  color: #ff7a3d;
+  font-weight: 600;
 }
 
 .record-list {
@@ -515,63 +554,95 @@ export default {
   display: flex;
   align-items: center;
   padding: 20rpx;
-  background-color: #f8f8f8;
-  border-radius: 12rpx;
+  background: #f9fafb;
+  border-radius: 16rpx;
 }
 
-.record-icon {
-  font-size: 40rpx;
+.record-icon-wrap {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 122, 61, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-right: 16rpx;
+  flex-shrink: 0;
 }
 
-.record-content {
+.record-emoji {
+  font-size: 28rpx;
+}
+
+.record-info {
   flex: 1;
+  min-width: 0;
 }
 
 .record-weight {
   font-size: 28rpx;
-  color: #333333;
-  font-weight: 500;
+  font-weight: 600;
+  color: #111827;
   display: block;
-  margin-bottom: 8rpx;
+  margin-bottom: 4rpx;
 }
 
 .record-date {
   font-size: 24rpx;
-  color: #999999;
+  color: #6b7280;
+  display: block;
 }
 
 .record-change {
-  margin-left: 20rpx;
+  margin-left: 16rpx;
+  flex-shrink: 0;
 }
 
-.text-up {
+.change-text {
   font-size: 24rpx;
-  color: #4caf50;
+  font-weight: 600;
 }
 
-.text-down {
-  font-size: 24rpx;
-  color: #f44336;
+.change-text.up {
+  color: #10b981;
+}
+
+.change-text.down {
+  color: #ff4d4f;
 }
 
 .empty-section {
-  padding: 100rpx 0;
+  padding: 120rpx 0;
   text-align: center;
+}
+
+.empty-emoji {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 20rpx;
 }
 
 .empty-text {
   font-size: 28rpx;
-  color: #999999;
+  color: #9ca3af;
   display: block;
   margin-bottom: 30rpx;
 }
 
-.add-btn {
-  width: 200rpx;
-  padding: 24rpx;
+.empty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 48rpx;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  border-radius: 999rpx;
+  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
+}
+
+.empty-btn-text {
   font-size: 28rpx;
-  border-radius: 12rpx;
+  font-weight: 600;
+  color: #fff;
 }
 
 .modal-mask {
@@ -580,7 +651,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -590,8 +661,8 @@ export default {
 .modal-content {
   width: 80%;
   max-height: 80vh;
-  background-color: #ffffff;
-  border-radius: 20rpx;
+  background: #fff;
+  border-radius: 24rpx;
   overflow: hidden;
 }
 
@@ -599,80 +670,127 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: 32rpx;
+  border-bottom: 1rpx solid #f3f4f6;
 }
 
 .modal-title {
   font-size: 32rpx;
-  font-weight: bold;
-  color: #333333;
+  font-weight: 700;
+  color: #111827;
 }
 
 .modal-close {
-  font-size: 40rpx;
-  color: #999999;
-  cursor: pointer;
+  font-size: 36rpx;
+  color: #9ca3af;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-body {
-  padding: 30rpx;
+  padding: 32rpx;
 }
 
-.form-item {
-  margin-bottom: 30rpx;
+.form-group {
+  margin-bottom: 28rpx;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
 }
 
 .form-label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14rpx;
+}
+
+.label-emoji {
   font-size: 28rpx;
-  color: #333333;
-  margin-bottom: 12rpx;
-  display: block;
+  margin-right: 8rpx;
+}
+
+.label-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #111827;
 }
 
 .form-input {
   width: 100%;
-  padding: 20rpx;
-  border: 1rpx solid #e0e0e0;
-  border-radius: 12rpx;
+  box-sizing: border-box;
+  background: #f9fafb;
+  border: none;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  min-height: 80rpx;
   font-size: 28rpx;
+  color: #374151;
 }
 
-.picker {
-  width: 100%;
-  padding: 20rpx;
-  border: 1rpx solid #e0e0e0;
-  border-radius: 12rpx;
+.picker-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9fafb;
+  border: none;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  min-height: 80rpx;
+}
+
+.value-text {
   font-size: 28rpx;
-  color: #333333;
+  color: #374151;
 }
 
 .picker-placeholder {
-  color: #999999;
+  font-size: 28rpx;
+  color: #9ca3af;
+}
+
+.picker-arrow {
+  font-size: 20rpx;
+  color: #9ca3af;
 }
 
 .modal-footer {
   display: flex;
-  gap: 20rpx;
-  padding: 30rpx;
-  border-top: 1rpx solid #f0f0f0;
+  gap: 16rpx;
+  padding: 24rpx 32rpx;
+  border-top: 1rpx solid #f3f4f6;
 }
 
 .modal-btn {
   flex: 1;
-  padding: 24rpx;
-  font-size: 28rpx;
+  height: 88rpx;
   border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-btn-cancel {
+  background: #f3f4f6;
+}
+
+.modal-btn-text-cancel {
+  font-size: 28rpx;
   font-weight: 600;
+  color: #6b7280;
 }
 
-.modal-btn.cancel {
-  background-color: #f5f5f5;
-  color: #666666;
+.modal-btn-confirm {
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
 }
 
-.modal-btn.confirm {
-  background: linear-gradient(180deg, var(--pt-primary-2) 0%, var(--pt-primary) 100%);
-  color: #ffffff;
+.modal-btn-text-confirm {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #fff;
 }
 </style>

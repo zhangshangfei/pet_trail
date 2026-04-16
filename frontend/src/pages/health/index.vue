@@ -1,15 +1,17 @@
 <template>
   <view class="health-page">
-    <user-top-bar
-      :status-bar-height="statusBarHeight"
-      :avatar="userAvatar"
-      :name="userName"
-      right-icon="⋯"
-      @rightTap="onMore"
-      @userTap="onTopUserTap"
-    />
+    <view class="nav-fixed">
+      <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
+      <view class="nav-bar">
+        <view class="nav-back" @tap="goBackToBoard">
+          <text class="nav-back-icon">←</text>
+        </view>
+        <text class="nav-title">新增记录</text>
+        <view class="nav-placeholder"></view>
+      </view>
+    </view>
 
-    <scroll-view scroll-y class="health-scroll" :style="{ paddingTop: headerHeight + 'px' }">
+    <scroll-view scroll-y class="health-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px' }">
       <view class="health-content">
         <!-- 宠物切换（保留原逻辑） -->
         <view class="pet-selector">
@@ -262,20 +264,14 @@
     </scroll-view>
 
     <view class="cta-footer">
-      <view class="btn-row">
-        <button class="btn-back-board" hover-class="btn-back-board-hover" @tap="goBackToBoard">
-          <text class="btn-back-board-text">返回看板</text>
-        </button>
-        <button class="btn-submit" hover-class="btn-submit-hover" @tap="onSubmitCurrent">
-          <text class="btn-submit-text">{{ submitButtonText }}</text>
-        </button>
-      </view>
+      <button class="btn-submit" hover-class="btn-submit-hover" @tap="onSubmitCurrent">
+        <text class="btn-submit-text">{{ submitButtonText }}</text>
+      </button>
     </view>
   </view>
 </template>
 
 <script>
-import UserTopBar from '@/components/UserTopBar.vue'
 import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
 
 function todayStr() {
@@ -287,13 +283,9 @@ function todayStr() {
 }
 
 export default {
-  components: {
-    UserTopBar
-  },
   data() {
     return {
       statusBarHeight: 20,
-      headerHeight: 0,
       userAvatar: DEFAULT_USER_AVATAR,
       userName: "小萌宠主人",
       fallbackPetAvatar: DEFAULT_PET_AVATAR_URL,
@@ -388,10 +380,8 @@ export default {
     try {
       const sys = uni.getSystemInfoSync();
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
-      this.headerHeight = this.statusBarHeight + 50;
     } catch (e) {
       this.statusBarHeight = 20;
-      this.headerHeight = 70;
     }
     this.resetFormDates();
     this.loadPets();
@@ -522,20 +512,6 @@ export default {
         this.loadLastWeightRecord();
       });
     },
-    onMore() {
-      uni.showToast({ title: "未实现", icon: "none" });
-    },
-    onTopUserTap() {
-      const token = uni.getStorageSync("token");
-      if (!token) {
-        uni.showToast({ title: "请先登录", icon: "none" });
-        return;
-      }
-      const userInfo = uni.getStorageSync("userInfo");
-      if (userInfo && userInfo.id) {
-        uni.navigateTo({ url: `/pages/user/detail?id=${userInfo.id}` });
-      }
-    },
     goBackToBoard() {
       uni.switchTab({ url: "/pages/dashboard/index" });
     },
@@ -647,51 +623,52 @@ export default {
 <style lang="scss" scoped>
 .health-page {
   min-height: 100vh;
-  background: var(--pt-bg, #f7f3ef);
+  background: #f5f5f5;
 }
 
-.health-nav {
+.nav-fixed {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 30;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 10rpx 30rpx rgba(17, 24, 39, 0.06);
+  background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 100%);
 }
-.health-statusbar {
+
+.status-bar {
   width: 100%;
 }
-.health-nav-inner {
-  padding: 16rpx 20rpx 14rpx;
+
+.nav-bar {
+  height: 92rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 16rpx;
 }
-.health-user {
+
+.nav-back {
+  width: 68rpx;
+  height: 56rpx;
   display: flex;
   align-items: center;
-  gap: 14rpx;
+  justify-content: center;
 }
-.health-user-avatar {
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 28rpx;
-  background: #e5e7eb;
+
+.nav-back-icon {
+  font-size: 36rpx;
+  color: #fff;
+  font-weight: 600;
 }
-.health-user-name {
-  font-size: 28rpx;
-  font-weight: 800;
-  color: #111827;
-}
-.health-nav-actions {
-  display: flex;
-  gap: 18rpx;
-}
-.health-nav-icon {
+
+.nav-title {
   font-size: 34rpx;
-  color: #6b7280;
-  padding: 6rpx 10rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.nav-placeholder {
+  width: 68rpx;
 }
 
 .health-scroll {
@@ -708,9 +685,9 @@ export default {
   z-index: 50;
 }
 .pet-selector-card {
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 22rpx;
-  box-shadow: var(--pt-shadow-soft);
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
   padding: 22rpx 20rpx;
   display: flex;
   align-items: center;
@@ -733,7 +710,7 @@ export default {
 }
 .pet-selector-name {
   font-size: 30rpx;
-  font-weight: 900;
+  font-weight: 700;
   color: #111827;
 }
 .pet-selector-breed {
@@ -743,7 +720,7 @@ export default {
 }
 .pet-selector-arrow {
   font-size: 30rpx;
-  color: #6b7280;
+  color: #9ca3af;
 }
 
 .pet-selector-pop {
@@ -752,7 +729,7 @@ export default {
   left: 0;
   right: 0;
   background: #fff;
-  border-radius: 22rpx;
+  border-radius: 24rpx;
   box-shadow: 0 18rpx 44rpx rgba(0, 0, 0, 0.12);
   z-index: 50;
   overflow: hidden;
@@ -760,18 +737,12 @@ export default {
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10rpx);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10rpx); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .pet-selector-search {
   padding: 16rpx;
-  border-bottom: 1rpx solid rgba(17, 24, 39, 0.08);
+  border-bottom: 1rpx solid #f3f4f6;
 }
 .pet-selector-input {
   background: #f9fafb;
@@ -787,6 +758,10 @@ export default {
   align-items: center;
   gap: 14rpx;
   padding: 16rpx;
+
+  &:active {
+    background: #f9fafb;
+  }
 }
 .pet-selector-item-avatar {
   width: 56rpx;
@@ -800,7 +775,7 @@ export default {
 }
 .pet-selector-item-name {
   font-size: 28rpx;
-  font-weight: 800;
+  font-weight: 600;
   color: #111827;
 }
 .pet-selector-item-breed {
@@ -820,9 +795,9 @@ export default {
 .core-card {
   flex-shrink: 0;
   width: 168rpx;
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 22rpx;
-  box-shadow: var(--pt-shadow-soft);
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
   padding: 20rpx 16rpx;
   display: flex;
   flex-direction: column;
@@ -834,41 +809,32 @@ export default {
 }
 .core-value {
   font-size: 40rpx;
-  font-weight: 900;
+  font-weight: 800;
 }
 .core-label {
   margin-top: 8rpx;
   font-size: 22rpx;
   color: #6b7280;
 }
-.core-blue {
-  color: #3b82f6;
-}
-.core-green {
-  color: #10b981;
-}
-.core-orange {
-  color: #f59e0b;
-}
+.core-blue { color: #3b82f6; }
+.core-green { color: #10b981; }
+.core-orange { color: #ff7a3d; }
 .score-circle {
   width: 96rpx;
   height: 96rpx;
   border-radius: 48rpx;
-  border: 6rpx solid rgba(59, 130, 246, 0.35);
+  border: 6rpx solid rgba(255, 122, 61, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 8rpx;
+  background: linear-gradient(135deg, rgba(255,122,61,0.08) 0%, rgba(255,77,79,0.05) 100%);
 }
 .score-text {
   font-size: 24rpx;
-  font-weight: 900;
-  color: #2563eb;
+  font-weight: 800;
+  color: #ff6a3d;
 }
-
-/* —— pages/test/add 风格 —— */
-$tab-accent: #c4a574;
-$tab-accent-light: #d4b896;
 
 .tab-container {
   margin-bottom: 28rpx;
@@ -879,7 +845,7 @@ $tab-accent-light: #d4b896;
   flex-direction: row;
   background: #fff;
   border-radius: 20rpx;
-  box-shadow: var(--pt-shadow-soft);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
   padding: 8rpx;
 }
 
@@ -894,8 +860,8 @@ $tab-accent-light: #d4b896;
 }
 
 .tab-item.active {
-  background: linear-gradient(135deg, $tab-accent 0%, $tab-accent-light 100%);
-  box-shadow: 0 4rpx 14rpx rgba(196, 165, 116, 0.35);
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  box-shadow: 0 4rpx 14rpx rgba(255, 106, 61, 0.25);
 }
 
 .tab-emoji {
@@ -921,7 +887,7 @@ $tab-accent-light: #d4b896;
 .form-card {
   background: #fff;
   border-radius: 24rpx;
-  box-shadow: var(--pt-shadow-soft);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
   padding: 32rpx 24rpx;
 }
 
@@ -940,26 +906,26 @@ $tab-accent-light: #d4b896;
 }
 
 .label-emoji {
-  font-size: 32rpx;
-  margin-right: 12rpx;
+  font-size: 28rpx;
+  margin-right: 8rpx;
 }
 
 .label-text {
   font-size: 28rpx;
-  font-weight: 500;
+  font-weight: 600;
   color: #111827;
 }
 
 .form-input {
   width: 100%;
   box-sizing: border-box;
-  background: #faf6f0;
-  border: 2rpx solid rgba(17, 24, 39, 0.08);
+  background: #f9fafb;
+  border: none;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   min-height: 80rpx;
   font-size: 28rpx;
-  color: #111827;
+  color: #374151;
 }
 
 .picker-value {
@@ -967,48 +933,45 @@ $tab-accent-light: #d4b896;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  background: #faf6f0;
-  border: 2rpx solid rgba(17, 24, 39, 0.08);
+  background: #f9fafb;
+  border: none;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
 }
 
 .picker-value.selected {
   background: #fff;
-  border-color: rgba(16, 185, 129, 0.35);
+  border: 2rpx solid rgba(255, 122, 61, 0.25);
 }
 
 .value-text {
   font-size: 28rpx;
-  color: #111827;
-}
-
-.value-text.placeholder {
-  color: #9ca3af;
+  color: #374151;
 }
 
 .picker-arrow {
   font-size: 20rpx;
-  color: #6b7280;
+  color: #9ca3af;
 }
 
 .form-textarea {
   width: 100%;
   box-sizing: border-box;
-  background: #faf6f0;
-  border: 2rpx solid rgba(17, 24, 39, 0.08);
+  background: #f9fafb;
+  border: none;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   font-size: 28rpx;
-  color: #111827;
+  color: #374151;
   min-height: 160rpx;
   line-height: 1.6;
 }
 
 .last-record {
-  background: #fff4e6;
+  background: linear-gradient(135deg, rgba(255,122,61,0.06) 0%, rgba(255,77,79,0.04) 100%);
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
+  border: 1rpx solid rgba(255, 122, 61, 0.1);
 }
 
 .last-label {
@@ -1028,18 +991,18 @@ $tab-accent-light: #d4b896;
 
 .last-value {
   font-size: 30rpx;
-  font-weight: 600;
+  font-weight: 700;
   color: #111827;
 }
 
 .last-date {
   font-size: 22rpx;
-  color: #6b7280;
+  color: #9ca3af;
 }
 
 .weight-change {
   font-size: 24rpx;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .weight-change.up {
@@ -1047,7 +1010,7 @@ $tab-accent-light: #d4b896;
 }
 
 .weight-change.down {
-  color: #ff6b6b;
+  color: #ff4d4f;
 }
 
 .cta-footer {
@@ -1057,61 +1020,34 @@ $tab-accent-light: #d4b896;
   bottom: 0;
   z-index: 40;
   padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.96);
-  border-top: 1rpx solid rgba(17, 24, 39, 0.06);
-  box-shadow: 0 -8rpx 24rpx rgba(17, 24, 39, 0.06);
-}
-
-.btn-row {
-  display: flex;
-  gap: 16rpx;
-  align-items: center;
+  background: #fff;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.06);
 }
 
 .btn-submit {
-  flex: 1;
+  width: 100%;
   height: 96rpx;
   line-height: 96rpx;
   border-radius: 999rpx;
   border: none;
   padding: 0;
   margin: 0;
-  background: linear-gradient(180deg, var(--pt-primary-2, #8b9cf7) 0%, var(--pt-primary, #667eea) 100%);
-  box-shadow: 0 12rpx 28rpx rgba(196, 165, 116, 0.35);
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
+
+  &:active {
+    opacity: 0.92;
+    transform: scale(0.98);
+  }
 }
 
 .btn-submit::after {
   border: none;
 }
 
-.btn-submit-hover {
-  opacity: 0.92;
-}
-
 .btn-submit-text {
   font-size: 30rpx;
   font-weight: 600;
   color: #fff;
-}
-
-.btn-back-board {
-  flex: 1;
-  height: 96rpx;
-  line-height: 96rpx;
-  padding: 0;
-  margin: 0;
-  background: #f5f5f5;
-  border-radius: 999rpx;
-}
-
-.btn-back-board-hover {
-  opacity: 0.85;
-  background: rgba(240, 240, 240, 0.95);
-}
-
-.btn-back-board-text {
-  font-size: 28rpx;
-  color: #666666;
-  font-weight: 800;
 }
 </style>

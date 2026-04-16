@@ -238,6 +238,7 @@ export default {
     }
   },
   methods: {
+    getUserAvatar,
     goBack() {
       uni.navigateBack({ delta: 1 })
     },

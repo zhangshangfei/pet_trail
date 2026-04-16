@@ -1,15 +1,19 @@
 <template>
   <view class="board-page">
-    <user-top-bar
-      :status-bar-height="statusBarHeight"
-      :avatar="userAvatar"
-      :name="userName"
-      right-icon="⏷"
-      @rightTap="onFilter"
-      @userTap="onTopUserTap"
-    />
+    <view class="nav-fixed">
+      <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
+      <view class="nav-bar">
+        <view class="nav-user" @tap="onTopUserTap">
+          <image class="nav-user-avatar" :src="userAvatar" mode="aspectFill" />
+          <text class="nav-user-name">{{ userName }}</text>
+        </view>
+        <view class="nav-right" @tap="onFilter">
+          <text class="nav-right-icon">⏷</text>
+        </view>
+      </view>
+    </view>
 
-    <scroll-view scroll-y class="board-scroll" :style="{ paddingTop: headerHeight + 'px' }">
+    <scroll-view scroll-y class="board-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px' }">
       <view class="board-content">
         <view class="pet-selector">
           <view class="pet-selector-card" @touchstart.stop="togglePetSelector">
@@ -213,7 +217,7 @@
     </scroll-view>
 
     <view class="fab" @tap="addRecord">
-      <text>＋</text>
+      <text class="fab-text">＋</text>
     </view>
 
     <view class="board-tabbar-safe">
@@ -236,17 +240,12 @@
 </template>
 
 <script>
-import UserTopBar from '@/components/UserTopBar.vue'
 import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
 
 export default {
-  components: {
-    UserTopBar
-  },
   data() {
     return {
       statusBarHeight: 20,
-      headerHeight: 0,
       userName: "小萌宠主人",
       userAvatar: DEFAULT_USER_AVATAR,
       fallbackPetAvatar: DEFAULT_PET_AVATAR_URL,
@@ -387,10 +386,8 @@ export default {
     try {
       const sys = uni.getSystemInfoSync();
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
-      this.headerHeight = this.statusBarHeight + 46;
     } catch (e) {
       this.statusBarHeight = 20;
-      this.headerHeight = 66;
     }
     this.loadPets();
     this.loadUserInfo();
@@ -671,46 +668,63 @@ export default {
 <style lang="scss" scoped>
 .board-page {
   min-height: 100vh;
-  background: var(--pt-bg, #f7f3ef);
+  background: #f5f5f5;
 }
 
-.board-nav {
+.nav-fixed {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 40;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 8rpx 24rpx rgba(17, 24, 39, 0.08);
+  z-index: 30;
+  background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 100%);
 }
-.board-statusbar {
+
+.status-bar {
   width: 100%;
 }
-.board-nav-inner {
-  padding: 12rpx 20rpx 14rpx;
+
+.nav-bar {
+  height: 92rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 28rpx;
 }
-.board-user {
+
+.nav-user {
   display: flex;
   align-items: center;
-  gap: 14rpx;
 }
-.board-user-avatar {
+
+.nav-user-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  margin-right: 14rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.85);
+}
+
+.nav-user-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #fff;
+}
+
+.nav-right {
   width: 56rpx;
   height: 56rpx;
   border-radius: 28rpx;
-  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.25);
 }
-.board-user-name {
+
+.nav-right-icon {
   font-size: 30rpx;
-  font-weight: 800;
-  color: #111827;
-}
-.board-filter {
-  font-size: 30rpx;
-  color: #6b7280;
+  color: #fff;
+  line-height: 1;
 }
 
 .board-scroll {
@@ -726,9 +740,9 @@ export default {
   margin-bottom: 24rpx;
 }
 .pet-selector-card {
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 22rpx;
-  box-shadow: var(--pt-shadow-soft);
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
   padding: 22rpx 20rpx;
   display: flex;
   align-items: center;
@@ -766,15 +780,20 @@ export default {
 
 .pet-selector-pop {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 12rpx);
   left: 0;
   right: 0;
-  margin-top: 12rpx;
   background: #fff;
-  border-radius: 22rpx;
+  border-radius: 24rpx;
   box-shadow: 0 18rpx 44rpx rgba(0, 0, 0, 0.12);
   z-index: 50;
   overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10rpx); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .pet-selector-search {
   padding: 16rpx;
@@ -837,21 +856,21 @@ export default {
 }
 
 .chart-switch {
-  background: #fff4e6;
+  background: rgba(255, 122, 61, 0.1);
   padding: 8rpx 20rpx;
   border-radius: 30rpx;
 }
 
 .switch-text {
   font-size: 24rpx;
-  color: #ea580c;
+  color: #ff7a3d;
   font-weight: 500;
 }
 
 .dash-card {
   background: #fff;
   border-radius: 24rpx;
-  box-shadow: var(--pt-shadow-soft);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
 }
 
 .chart-card-inner {
@@ -986,7 +1005,7 @@ export default {
 }
 
 .stat-value.down {
-  color: #ff6b6b;
+  color: #ff4d4f;
 }
 
 .stat-divider {
@@ -1007,7 +1026,7 @@ export default {
 
 .vaccine-card.urgent {
   background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
-  border: 2rpx solid #ffd0d0;
+  border: 2rpx solid rgba(255, 77, 79, 0.2);
 }
 
 .vaccine-header {
@@ -1048,7 +1067,7 @@ export default {
 }
 
 .vaccine-card.urgent .vaccine-countdown {
-  background: #ff6b6b;
+  background: #ff4d4f;
 }
 
 .countdown-number {
@@ -1099,7 +1118,7 @@ export default {
 }
 
 .btn-vaccine {
-  background: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
   color: #ffffff;
   border: none;
   border-radius: 999rpx;
@@ -1107,11 +1126,12 @@ export default {
   font-size: 26rpx;
   font-weight: 500;
   line-height: 1.2;
+  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
 }
 
 .btn-vaccine.completed {
   background: #d1fae5;
-  opacity: 0.9;
+  box-shadow: none;
 }
 
 .btn-text {
@@ -1138,15 +1158,21 @@ export default {
   bottom: calc(env(safe-area-inset-bottom) + 250rpx);
   width: 96rpx;
   height: 96rpx;
-  border-radius: 16rpx;
-  background: #3b82f6;
+  border-radius: 48rpx;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 56rpx;
-  box-shadow: 0 16rpx 34rpx rgba(59, 130, 246, 0.35);
+  box-shadow: 0 8rpx 24rpx rgba(255, 106, 61, 0.35);
   z-index: 45;
+}
+
+.fab-text {
+  font-size: 48rpx;
+  color: #fff;
+  font-weight: 300;
+  line-height: 1;
 }
 
 .board-tabbar-safe {
@@ -1178,7 +1204,7 @@ export default {
   color: #8b93a6;
 }
 .board-tab-item.active {
-  color: #ff6a3d;
+  color: #ff7a3d;
 }
 .board-tab-icon {
   font-size: 40rpx;
