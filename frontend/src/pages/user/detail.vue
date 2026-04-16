@@ -165,6 +165,23 @@
         </view>
       </view>
     </scroll-view>
+
+    <!-- 视频播放弹窗 -->
+    <view v-if="showVideoPlayer" class="video-player-mask" @click="closeVideoPlayer">
+      <view class="video-player-container" @click.stop>
+        <view class="video-player-close" @click="closeVideoPlayer">✕</view>
+        <video
+          class="video-player-video"
+          :src="currentVideoUrl"
+          :autoplay="true"
+          :show-play-btn="true"
+          :show-center-play-btn="true"
+          :enable-progress-gesture="true"
+          :show-fullscreen-btn="true"
+          object-fit="contain"
+        />
+      </view>
+    </view>
   </view>
 </template>
 
@@ -188,7 +205,9 @@ export default {
       loading: false,
       hasMore: true,
       followLoading: false,
-      expandedPosts: {}
+      expandedPosts: {},
+      showVideoPlayer: false,
+      currentVideoUrl: ''
     }
   },
   computed: {
@@ -344,10 +363,12 @@ export default {
       })
     },
     playVideo(url) {
-      uni.previewMedia({
-        sources: [{ url, type: 'video' }],
-        current: 0
-      })
+      this.currentVideoUrl = url
+      this.showVideoPlayer = true
+    },
+    closeVideoPlayer() {
+      this.showVideoPlayer = false
+      this.currentVideoUrl = ''
     },
     getPetIcon(type) {
       const map = { 1: '🐱', 2: '🐶' }
@@ -786,5 +807,44 @@ export default {
 .empty-text {
   font-size: 28rpx;
   color: #9ca3af;
+}
+
+.video-player-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-player-container {
+  position: relative;
+  width: 100%;
+}
+
+.video-player-close {
+  position: absolute;
+  top: -80rpx;
+  right: 20rpx;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.video-player-video {
+  width: 100%;
+  height: 420rpx;
 }
 </style>

@@ -6,7 +6,6 @@ Component({
       { pagePath: "/pages/home/index" },
       { pagePath: "/pages/dashboard/index" },
       { pagePath: "/pages/checkin/index" },
-      // { pagePath: "/pages/community/index" }, // 社区功能暂时隐藏
       { pagePath: "/pages/me/index" }
     ]
   },

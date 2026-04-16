@@ -347,10 +347,6 @@ export default {
     goToHealth() {
       uni.navigateTo({ url: "/pages/health/index" });
     },
-    // 社区功能暂时隐藏
-    // goToCommunity() {
-    //   uni.switchTab({ url: "/pages/community/index" });
-    // },
     goToShop() {
       uni.showToast({ title: "商城未实现", icon: "none" });
     },
