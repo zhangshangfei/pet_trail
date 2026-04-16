@@ -103,6 +103,13 @@
         "navigationBarTitleText": "编辑资料",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/notification/index",
+      "style": {
+        "navigationBarTitleText": "消息通知",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

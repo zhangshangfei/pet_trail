@@ -5,7 +5,7 @@
       :status-bar-height="statusBarHeight"
       :avatar="avatarUrl"
       :name="isLoggedIn ? (userName || '萌宠主人') : '请登录'"
-      right-icon="🔔"
+      :unread-count="unreadNotificationCount"
       @rightTap="onBellTap"
       @userTap="onTopUserTap"
     />
@@ -213,6 +213,7 @@
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
 import * as postApi from '@/api/post'
+import * as notificationApi from '@/api/notification'
 import { checkLogin, wechatLogin } from '@/utils/index'
 
 export default {
@@ -238,7 +239,8 @@ export default {
 
       expandedPosts: {},
       showVideoPlayer: false,
-      currentVideoUrl: ''
+      currentVideoUrl: '',
+      unreadNotificationCount: 0
     };
   },
   computed: {
@@ -251,7 +253,7 @@ export default {
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: false });
 
     this.checkLoginStatus();
-    // 每次进入首页都重置分页参数并刷新数据
+    this.fetchUnreadCount();
     this.page = 1;
     this.postList = [];
     this.hasMore = true;
@@ -274,6 +276,7 @@ export default {
 
     uni.$on('loginSuccess', () => {
       this.checkLoginStatus()
+      this.fetchUnreadCount()
     })
   },
   onHide() {
@@ -314,6 +317,22 @@ export default {
 
     async checkLoginStatus() {
       return this.loadUserInfo();
+    },
+
+    async fetchUnreadCount() {
+      const token = uni.getStorageSync('token');
+      if (!token) {
+        this.unreadNotificationCount = 0;
+        return;
+      }
+      try {
+        const res = await notificationApi.getUnreadCount();
+        if (res.success && res.data) {
+          this.unreadNotificationCount = res.data.count || 0;
+        }
+      } catch (e) {
+        console.error('获取未读通知数失败:', e);
+      }
     },
 
     onWechatLogin() {
@@ -378,7 +397,7 @@ export default {
     },
 
     onBellTap() {
-      uni.showToast({ title: '通知', icon: 'none' });
+      uni.navigateTo({ url: '/pages/notification/index' });
     },
 
     async onPublishTap() {

@@ -18,6 +18,7 @@ import java.util.List;
 public class FollowService {
 
     private final FollowMapper followMapper;
+    private final NotificationService notificationService;
 
     /**
      * 关注/取消关注
@@ -52,6 +53,9 @@ public class FollowService {
             follow.setFolloweeId(followeeId);
             followMapper.insert(follow);
             log.info("关注成功: followerId={}, followeeId={}", followerId, followeeId);
+
+            notificationService.createNotification(
+                followeeId, followerId, "follow", followerId, "关注了你");
             return true;
         }
     }

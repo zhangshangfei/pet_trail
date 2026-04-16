@@ -310,6 +310,21 @@ CREATE TABLE IF NOT EXISTS `user_achievements` (
   KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户成就表';
 
+CREATE TABLE IF NOT EXISTS `notifications` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL COMMENT '接收通知的用户ID',
+  `from_user_id` bigint(20) NOT NULL COMMENT '触发通知的用户ID',
+  `type` varchar(32) NOT NULL COMMENT '通知类型：like-点赞, comment-评论, follow-关注, system-系统',
+  `target_id` bigint(20) DEFAULT NULL COMMENT '关联目标ID（动态ID/评论ID等）',
+  `content` varchar(500) DEFAULT NULL COMMENT '通知内容',
+  `is_read` tinyint(1) DEFAULT '0' COMMENT '是否已读：0-未读, 1-已读',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_user_read` (`user_id`, `is_read`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='通知表';
+
 -- ========================================
 -- 初始化数据
 -- ========================================

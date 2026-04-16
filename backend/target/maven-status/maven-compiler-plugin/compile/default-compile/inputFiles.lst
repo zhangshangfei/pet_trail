@@ -24,6 +24,7 @@ G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\entity\PostEe.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\config\GlobalExceptionHandler.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\task\PostAuditScheduledTask.java
+G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\mapper\NotificationMapper.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\service\ReminderService.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\config\RedisConfig.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\mapper\FollowMapper.java
@@ -38,6 +39,7 @@ G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\service\ParasiteReminderService.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\entity\VaccineReminder.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\mapper\PostLikeMapper.java
+G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\controller\NotificationController.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\config\CacheConfig.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\controller\CheckinController.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\service\CosService.java
@@ -50,6 +52,7 @@ G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\dto\PostVO.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\entity\User.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\util\HttpUtil.java
+G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\entity\Notification.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\config\CosConfig.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\controller\FollowController.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\exception\NotFoundException.java
@@ -73,6 +76,7 @@ G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\AppModule.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\controller\ReminderController.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\entity\WaterRecord.java
+G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\dto\NotificationVO.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\enums\ErrorCodeEnum.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\mapper\PostMapper.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\mapper\PetMapper.java

@@ -7,7 +7,6 @@ com\pettrail\pettrailbackend\util\NicknameUtil.class
 com\pettrail\pettrailbackend\entity\CheckinItem.class
 com\pettrail\pettrailbackend\dto\NotifyFansMessage.class
 com\pettrail\pettrailbackend\service\CheckinService.class
-com\pettrail\pettrailbackend\controller\UserController.class
 com\pettrail\pettrailbackend\util\MultiLevelCache.class
 com\pettrail\pettrailbackend\service\PostService.class
 com\pettrail\pettrailbackend\util\HttpUtil.class
@@ -21,7 +20,6 @@ com\pettrail\pettrailbackend\controller\ReminderController.class
 com\pettrail\pettrailbackend\controller\DashboardController.class
 com\pettrail\pettrailbackend\controller\VaccineReminderController.class
 com\pettrail\pettrailbackend\mapper\PostLikeMapper.class
-com\pettrail\pettrailbackend\controller\UserController$LoginResponse.class
 com\pettrail\pettrailbackend\mapper\StepRecordMapper.class
 com\pettrail\pettrailbackend\config\SecurityConfig.class
 com\pettrail\pettrailbackend\entity\User.class
@@ -31,7 +29,6 @@ com\pettrail\pettrailbackend\task\PostAuditScheduledTask.class
 com\pettrail\pettrailbackend\PetTrailBackendApplication.class
 com\pettrail\pettrailbackend\config\SentinelConfig.class
 com\pettrail\pettrailbackend\service\FollowService.class
-com\pettrail\pettrailbackend\task\ReminderTask.class
 com\pettrail\pettrailbackend\service\HealthRecordService.class
 com\pettrail\pettrailbackend\controller\PetController.class
 com\pettrail\pettrailbackend\enums\ErrorCodeEnum.class

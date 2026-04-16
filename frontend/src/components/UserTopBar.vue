@@ -10,7 +10,10 @@
         <text class="user-topbar-name">{{ name }}</text>
       </view>
       <view class="user-topbar-right" @tap="$emit('rightTap')">
-        <text class="user-topbar-right-icon">{{ rightIcon }}</text>
+        <text class="user-topbar-right-icon">🔔</text>
+        <view v-if="unreadCount > 0" class="user-topbar-badge">
+          <text class="user-topbar-badge-text">{{ unreadCount > 99 ? '99+' : unreadCount }}</text>
+        </view>
       </view>
     </view>
   </view>
@@ -32,10 +35,6 @@ export default {
       type: String,
       default: '小萌宠主人'
     },
-    rightIcon: {
-      type: String,
-      default: '⋯'
-    },
     showLoginButton: {
       type: Boolean,
       default: false
@@ -43,6 +42,10 @@ export default {
     loginText: {
       type: String,
       default: '微信登录'
+    },
+    unreadCount: {
+      type: Number,
+      default: 0
     }
   },
   emits: ['rightTap', 'loginTap', 'userTap']
@@ -114,11 +117,34 @@ export default {
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.25);
+  position: relative;
 }
 
 .user-topbar-right-icon {
   color: #ffffff;
-  font-size: 34rpx;
+  font-size: 30rpx;
+  line-height: 1;
+}
+
+.user-topbar-badge {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  border-radius: 16rpx;
+  background: #ff4d4f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8rpx;
+  border: 2rpx solid #ff7a3d;
+}
+
+.user-topbar-badge-text {
+  font-size: 18rpx;
+  color: #fff;
+  font-weight: 600;
   line-height: 1;
 }
 </style>

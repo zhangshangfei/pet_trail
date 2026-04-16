@@ -33,6 +33,7 @@ public class PostService {
     private final PostEeMapper postEeMapper;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
 
     /**
      * 创建动态
@@ -153,6 +154,9 @@ public class PostService {
             // 更新点赞计数
             post.setLikeCount(post.getLikeCount() + 1);
             postMapper.updateById(post);
+
+            notificationService.createNotification(
+                post.getUserId(), userId, "like", postId, "赞了你的动态");
         }
 
         // 清除详情缓存
