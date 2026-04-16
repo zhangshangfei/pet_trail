@@ -97,6 +97,13 @@
         "navigationBarTitleText": "动态详情",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/user/detail",
+      "style": {
+        "navigationBarTitleText": "用户详情",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

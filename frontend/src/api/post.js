@@ -73,3 +73,7 @@ export const checkFollow = (followeeId) => {
 export const getFollowList = () => {
   return request.get('/api/follows/list')
 }
+
+export const getUserPosts = (userId, page = 1, size = 20) => {
+  return request.get(`/api/posts/user/${userId}`, { page, size })
+}

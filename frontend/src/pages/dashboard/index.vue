@@ -236,6 +236,7 @@
 
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
+import { checkLogin } from '@/utils/index'
 
 export default {
   components: {
@@ -557,7 +558,9 @@ export default {
     async onMarkVaccineDone(item) {
       if (!item || item.isCompleted || !this.selectedPet) return;
       
-      // 二次确认弹窗
+      const loggedIn = await checkLogin('请先登录后再操作')
+      if (!loggedIn) return
+
       uni.showModal({
         title: "确认完成",
         content: `确定要将"${item.name}"标记为已完成吗？`,
@@ -585,7 +588,9 @@ export default {
     async onMarkParasiteDone(item) {
       if (!item || item.isCompleted || !this.selectedPet) return;
       
-      // 二次确认弹窗
+      const loggedIn = await checkLogin('请先登录后再操作')
+      if (!loggedIn) return
+
       uni.showModal({
         title: "确认完成",
         content: `确定要将"${item.name}"标记为已完成吗？`,
@@ -632,7 +637,9 @@ export default {
         uni.navigateTo({ url });
       }
     },
-    addRecord() {
+    async addRecord() {
+      const loggedIn = await checkLogin('请先登录后再添加记录')
+      if (!loggedIn) return
       uni.navigateTo({ url: "/pages/health/index" });
     }
   }

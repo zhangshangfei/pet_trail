@@ -143,6 +143,7 @@
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
 import { uploadImage } from '@/api/pet'
+import { checkLogin } from '@/utils/index'
 
 export default {
   components: {
@@ -239,7 +240,10 @@ export default {
     onBellTap() {
       uni.showToast({ title: "通知未实现", icon: "none" });
     },
-    goAddPet() {
+    async goAddPet() {
+      const loggedIn = await checkLogin('请先登录后再添加宠物')
+      if (!loggedIn) return
+
       this.addPetForm = {
         name: "",
         breed: "",
@@ -292,6 +296,9 @@ export default {
       });
     },
     async submitAddPet(payload) {
+      const loggedIn = await checkLogin('请先登录后再添加宠物')
+      if (!loggedIn) return
+
       try {
         const res = await uni.$request.post('/api/pets', payload);
         if (res && res.success) {

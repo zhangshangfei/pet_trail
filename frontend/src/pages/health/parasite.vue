@@ -145,6 +145,7 @@
 </template>
 
 <script>
+import { checkLogin } from '@/utils/index'
 
 export default {
   data() {
@@ -227,7 +228,9 @@ export default {
     },
 
     // 显示添加弹窗
-    showAddModal() {
+    async showAddModal() {
+      const loggedIn = await checkLogin('请先登录后再添加驱虫提醒')
+      if (!loggedIn) return
       this.showModal = true;
       this.isEditing = false;
       this.form = {
@@ -273,6 +276,9 @@ export default {
 
     // 提交表单
     async submitForm() {
+      const loggedIn = await checkLogin('请先登录后再保存驱虫提醒')
+      if (!loggedIn) return
+
       if (!this.form.type) {
         uni.showToast({
           title: '请选择类型',
@@ -314,6 +320,9 @@ export default {
 
     // 更新状态
     async updateStatus() {
+      const loggedIn = await checkLogin('请先登录后再修改状态')
+      if (!loggedIn) return
+
       try {
         const res = await uni.$request.put(`/api/pets/${this.petId}/parasite-reminders/${this.currentReminder.id}/status`, {
           status: this.tempStatus

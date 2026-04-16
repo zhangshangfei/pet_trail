@@ -122,6 +122,7 @@
 </template>
 
 <script>
+import { checkLogin } from '@/utils/index'
 
 export default {
   data() {
@@ -246,7 +247,9 @@ export default {
     },
 
     // 前往编辑
-    goToEdit() {
+    async goToEdit() {
+      const loggedIn = await checkLogin('请先登录后再编辑宠物')
+      if (!loggedIn) return
       uni.navigateTo({
         url: `/pages/pets/edit?id=${this.pet.id}`
       });
@@ -274,7 +277,9 @@ export default {
     },
 
     // 显示删除确认
-    showDeleteModal() {
+    async showDeleteModal() {
+      const loggedIn = await checkLogin('请先登录后再删除宠物')
+      if (!loggedIn) return
       this.showDeleteModal = true;
     },
 

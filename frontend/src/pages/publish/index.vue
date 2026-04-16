@@ -167,6 +167,7 @@
 <script>
 import * as postApi from '@/api/post'
 import * as petApi from '@/api/pet'
+import { checkLogin } from '@/utils/index'
 
 export default {
   data() {
@@ -250,15 +251,8 @@ export default {
     async onSubmit() {
       if (!this.canSubmit || this.submitting) return
 
-      const token = uni.getStorageSync('token')
-      if (!token) {
-        uni.showModal({
-          title: '提示',
-          content: '请先登录',
-          showCancel: false
-        })
-        return
-      }
+      const loggedIn = await checkLogin('请先登录后再发布动态')
+      if (!loggedIn) return
 
       this.submitting = true
       uni.showLoading({ title: '发布中...', mask: true })

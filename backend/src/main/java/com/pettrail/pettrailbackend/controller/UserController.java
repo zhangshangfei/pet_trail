@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.service.UserService;
+import com.pettrail.pettrailbackend.service.FollowService;
+import com.pettrail.pettrailbackend.service.PostService;
 import com.pettrail.pettrailbackend.util.HttpUtil;
 import com.pettrail.pettrailbackend.util.JwtUtil;
 import com.pettrail.pettrailbackend.util.UserContext;
@@ -13,6 +15,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -25,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 public class UserController {
 
     private final UserService userService;
+    private final FollowService followService;
+    private final PostService postService;
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate redisTemplate;
 
@@ -143,6 +149,39 @@ public class UserController {
             return Result.success(user);
         } catch (Exception e) {
             log.error("获取用户资料失败：{}", e.getMessage(), e);
+            return Result.error("获取失败：" + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}")
+    public Result<Map<String, Object>> getUserById(@PathVariable Long id) {
+        try {
+            User user = userService.getProfile(id);
+            if (user == null) {
+                return Result.error(404, "用户不存在");
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("id", user.getId());
+            result.put("nickname", user.getNickname());
+            result.put("avatar", user.getAvatar());
+            result.put("gender", user.getGender());
+            result.put("createdAt", user.getCreatedAt());
+
+            Long currentUserId = UserContext.getCurrentUserId();
+            if (currentUserId != null && !currentUserId.equals(id)) {
+                result.put("isFollowing", followService.isFollowing(currentUserId, id));
+            } else {
+                result.put("isFollowing", false);
+            }
+
+            result.put("followerCount", followService.getFollowerCount(id));
+            result.put("followeeCount", followService.getFolloweeCount(id));
+            result.put("postCount", postService.getUserPostCount(id));
+
+            return Result.success(result);
+        } catch (Exception e) {
+            log.error("获取用户信息失败：{}", e.getMessage(), e);
             return Result.error("获取失败：" + e.getMessage());
         }
     }

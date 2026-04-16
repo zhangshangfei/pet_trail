@@ -54,6 +54,7 @@
 
 <script>
 import AddPetModal from "../../components/AddPetModal.vue";
+import { checkLogin } from '@/utils/index'
 
 export default {
   components: {
@@ -112,7 +113,10 @@ export default {
     },
 
     // 显示添加弹窗
-    showAddModal() {
+    async showAddModal() {
+      const loggedIn = await checkLogin('请先登录后再添加宠物')
+      if (!loggedIn) return
+
       this.showModal = true;
       this.form = {
         name: '',
@@ -141,6 +145,9 @@ export default {
 
     // 提交表单
     async submitForm(payload) {
+      const loggedIn = await checkLogin('请先登录后再添加宠物')
+      if (!loggedIn) return
+
       const data = payload || this.form;
       console.log('[pet-list] 提交表单数据:', data);
       this.form = data;

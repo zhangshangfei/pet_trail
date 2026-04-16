@@ -60,8 +60,8 @@
         >
           <!-- 用户信息头部 -->
           <view class="post-header">
-            <image class="post-avatar" :src="post.avatar" mode="aspectFill" />
-            <view class="post-info">
+            <image class="post-avatar" :src="post.avatar" mode="aspectFill" @tap="goUserProfile(post)" />
+            <view class="post-info" @tap="goUserProfile(post)">
               <text class="post-name">{{ post.userName }}</text>
               <view class="post-pet-info">
                 <text class="pet-icon">{{ getPetIcon(post.petType) }}</text>
@@ -172,6 +172,7 @@
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
 import * as postApi from '@/api/post'
+import { checkLogin, wechatLogin } from '@/utils/index'
 
 export default {
   components: {
@@ -322,28 +323,22 @@ export default {
       uni.showToast({ title: '通知', icon: 'none' });
     },
 
-    onPublishTap() {
+    async onPublishTap() {
+      const loggedIn = await checkLogin('请先登录后再发布动态')
+      if (!loggedIn) return
       uni.navigateTo({ url: '/pages/publish/index' });
     },
 
-    switchTab(tab) {
-      const token = uni.getStorageSync('token');
+    goUserProfile(post) {
+      if (post.userId) {
+        uni.navigateTo({ url: `/pages/user/detail?id=${post.userId}` })
+      }
+    },
 
-      console.log('switchTab - 切换前的tab:', this.currentTab, '切换后的tab:', tab);
-
-      if (!token && tab !== 'all') {
-        uni.showModal({
-          title: '提示',
-          content: '请先登录后查看',
-          showCancel: true,
-          confirmText: '去登录',
-          success: (res) => {
-            if (res.confirm) {
-              this.onWechatLogin();
-            }
-          }
-        })
-        return;
+    async switchTab(tab) {
+      if (tab !== 'all') {
+        const loggedIn = await checkLogin('请先登录后查看')
+        if (!loggedIn) return
       }
 
       this.currentTab = tab;
@@ -398,21 +393,8 @@ export default {
     },
 
     async onLikeTap(post) {
-      const token = uni.getStorageSync('token');
-      if (!token) {
-        uni.showModal({
-          title: '提示',
-          content: '请先登录后再点赞',
-          showCancel: true,
-          confirmText: '去登录',
-          success: (res) => {
-            if (res.confirm) {
-              this.onWechatLogin();
-            }
-          }
-        });
-        return;
-      }
+      const loggedIn = await checkLogin('请先登录后再点赞')
+      if (!loggedIn) return
 
       try {
         const res = await postApi.toggleLike(post.id);
@@ -427,21 +409,8 @@ export default {
     },
 
     async onEeTap(post) {
-      const token = uni.getStorageSync('token');
-      if (!token) {
-        uni.showModal({
-          title: '提示',
-          content: '请先登录后再收藏',
-          showCancel: true,
-          confirmText: '去登录',
-          success: (res) => {
-            if (res.confirm) {
-              this.onWechatLogin();
-            }
-          }
-        });
-        return;
-      }
+      const loggedIn = await checkLogin('请先登录后再收藏')
+      if (!loggedIn) return
 
       try {
         const res = await postApi.toggleEe(post.id);
@@ -468,22 +437,9 @@ export default {
       });
     },
 
-    openComments(post) {
-      const token = uni.getStorageSync('token');
-      if (!token) {
-        uni.showModal({
-          title: '提示',
-          content: '请先登录后再评论',
-          showCancel: true,
-          confirmText: '去登录',
-          success: (res) => {
-            if (res.confirm) {
-              this.onWechatLogin();
-            }
-          }
-        });
-        return;
-      }
+    async openComments(post) {
+      const loggedIn = await checkLogin('请先登录后再评论')
+      if (!loggedIn) return
       
       uni.navigateTo({
         url: `/pages/post/detail?id=${post.id}`
@@ -493,18 +449,10 @@ export default {
     async loadPosts() {
       if (this.loading || !this.hasMore) return;
 
-      const token = uni.getStorageSync('token');
-
-      if (!token && this.currentTab !== 'all') {
-        uni.showModal({
-          title: '提示',
-          content: '请先登录后查看',
-          showCancel: false
-        })
-        return;
+      if (this.currentTab !== 'all') {
+        const loggedIn = await checkLogin('请先登录后查看')
+        if (!loggedIn) return
       }
-
-      console.log('loadPosts - currentTab:', this.currentTab, 'page:', this.page, 'size:', this.size);
 
       this.loading = true;
       try {

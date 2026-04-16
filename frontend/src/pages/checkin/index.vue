@@ -109,6 +109,7 @@
 
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
+import { checkLogin } from '@/utils/index'
 
 const DISPLAY_ITEM_PRESETS = [
   { code: 'feed', label: '喂食', emoji: '🍖' },
@@ -396,6 +397,9 @@ export default {
         })
         return
       }
+
+      const loggedIn = await checkLogin('请先登录后再打卡')
+      if (!loggedIn) return
 
       try {
         const res = await uni.$request.post('/api/checkin', {

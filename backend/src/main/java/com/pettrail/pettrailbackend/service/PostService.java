@@ -269,4 +269,12 @@ public class PostService {
         eventPublisher.publishEvent(new PostCreateEvent(this, post));
         log.info("发布动态创建事件：postId={}", post.getId());
     }
+
+    public int getUserPostCount(Long userId) {
+        return postMapper.selectCount(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Post>()
+                .eq(Post::getUserId, userId)
+                .eq(Post::getStatus, 1)
+        ).intValue();
+    }
 }

@@ -275,6 +275,7 @@
 
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
+import { checkLogin } from '@/utils/index'
 
 function todayStr() {
   const d = new Date();
@@ -533,6 +534,8 @@ export default {
         uni.showToast({ title: "请先选择宠物", icon: "none" });
         return;
       }
+      const loggedIn = await checkLogin('请先登录后再保存记录')
+      if (!loggedIn) return
       if (!this.weightForm.weight) {
         uni.showToast({ title: "请输入体重", icon: "none" });
         return;
@@ -565,6 +568,8 @@ export default {
         uni.showToast({ title: "请先选择宠物", icon: "none" });
         return;
       }
+      const loggedIn = await checkLogin('请先登录后再保存记录')
+      if (!loggedIn) return
       const vaccineName = this.vaccineTypes[this.vaccineForm.typeIndex];
       try {
         const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/vaccine-reminders`, {
@@ -595,6 +600,8 @@ export default {
         uni.showToast({ title: "请先选择宠物", icon: "none" });
         return;
       }
+      const loggedIn = await checkLogin('请先登录后再保存记录')
+      if (!loggedIn) return
       const type = this.dewormTypeToApiType(this.dewormForm.typeIndex);
       try {
         const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/parasite-reminders`, {

@@ -14,8 +14,8 @@
         <!-- 动态列表 -->
         <view v-for="(post, index) in postList" :key="post.id" class="post-card">
           <view class="post-header">
-            <image class="post-avatar" :src="post.userAvatar || defaultAvatar" mode="aspectFill" />
-            <view class="post-meta">
+            <image class="post-avatar" :src="post.userAvatar || defaultAvatar" mode="aspectFill" @tap="goUserProfile(post)" />
+            <view class="post-meta" @tap="goUserProfile(post)">
               <text class="post-name">{{ post.userName || '未知用户' }}</text>
               <text class="post-time">{{ formatTime(post.createTime) }}</text>
             </view>
@@ -61,7 +61,7 @@
     </scroll-view>
 
     <!-- 悬浮发布按钮 -->
-    <view class="fab-button" @click="showCreateModal = true">
+    <view class="fab-button" @click="onFabTap">
       <text class="fab-icon">＋</text>
     </view>
 
@@ -113,6 +113,7 @@
 import * as postApi from '@/api/post'
 import * as petApi from '@/api/pet'
 import UserTopBar from '@/components/UserTopBar.vue'
+import { checkLogin } from '@/utils/index'
 
 const defaultAvatar = 'https://ai-public.mastergo.com/ai/img_res/1774537096721a3K9mP2xQ7vN4rT8wY.jpg'
 
@@ -235,19 +236,8 @@ export default {
 
     // 点赞/取消点赞
     async toggleLike(post) {
-      const token = uni.getStorageSync('token')
-      if (!token) {
-        uni.showModal({
-          title: '提示',
-          content: '请先登录',
-          success: (res) => {
-            if (res.confirm) {
-              uni.navigateTo({ url: '/pages/login/index' })
-            }
-          }
-        })
-        return
-      }
+      const loggedIn = await checkLogin('请先登录后再点赞')
+      if (!loggedIn) return
 
       try {
         const res = await postApi.toggleLike(post.id)
@@ -268,6 +258,18 @@ export default {
     // 显示评论（暂未实现）
     showComments(post) {
       uni.showToast({ title: '评论功能开发中', icon: 'none' })
+    },
+
+    goUserProfile(post) {
+      if (post.userId) {
+        uni.navigateTo({ url: `/pages/user/detail?id=${post.userId}` })
+      }
+    },
+
+    async onFabTap() {
+      const loggedIn = await checkLogin('请先登录后再发布动态')
+      if (!loggedIn) return
+      this.showCreateModal = true
     },
 
     // 预览图片
@@ -307,19 +309,8 @@ export default {
 
     // 发布动态
     async submitPost() {
-      const token = uni.getStorageSync('token')
-      if (!token) {
-        uni.showModal({
-          title: '提示',
-          content: '请先登录',
-          success: (res) => {
-            if (res.confirm) {
-              uni.navigateTo({ url: '/pages/login/index' })
-            }
-          }
-        })
-        return
-      }
+      const loggedIn = await checkLogin('请先登录后再发布动态')
+      if (!loggedIn) return
 
       if (!this.newPostContent.trim()) {
         uni.showToast({ title: '请输入内容', icon: 'none' })

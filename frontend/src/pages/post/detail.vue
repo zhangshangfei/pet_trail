@@ -9,8 +9,8 @@
     <scroll-view v-else-if="post" scroll-y class="detail-scroll">
       <!-- 用户信息头部 -->
       <view class="post-header">
-        <image class="post-avatar" :src="post.userAvatar" mode="aspectFill" />
-        <view class="post-info">
+        <image class="post-avatar" :src="post.userAvatar" mode="aspectFill" @tap="goUserProfile" />
+        <view class="post-info" @tap="goUserProfile">
           <text class="post-name">{{ post.userName }}</text>
           <view class="post-pet-info">
             <text class="pet-icon">{{ getPetIcon(post.petType) }}</text>
@@ -104,6 +104,7 @@
 
 <script>
 import * as postApi from '@/api/post'
+import { checkLogin, wechatLogin } from '@/utils/index'
 
 export default {
   data() {
@@ -192,21 +193,8 @@ export default {
 
     // 点赞
     async onLikeTap() {
-      const token = uni.getStorageSync('token')
-      if (!token) {
-        uni.showModal({
-          title: '提示',
-          content: '请先登录后再点赞',
-          showCancel: true,
-          confirmText: '去登录',
-          success: (res) => {
-            if (res.confirm) {
-              this.onWechatLogin()
-            }
-          }
-        })
-        return
-      }
+      const loggedIn = await checkLogin('请先登录后再点赞')
+      if (!loggedIn) return
 
       try {
         const res = await postApi.toggleLike(this.postId)
@@ -220,23 +208,9 @@ export default {
       }
     },
 
-        // 收藏
         async onEeTap() {
-          const token = uni.getStorageSync('token')
-          if (!token) {
-            uni.showModal({
-              title: '提示',
-              content: '请先登录后再收藏',
-              showCancel: true,
-              confirmText: '去登录',
-              success: (res) => {
-                if (res.confirm) {
-                  this.onWechatLogin()
-                }
-              }
-            })
-            return
-          }
+          const loggedIn = await checkLogin('请先登录后再收藏')
+          if (!loggedIn) return
 
           try {
             const res = await postApi.toggleEe(this.postId)
@@ -263,21 +237,8 @@ export default {
         return
       }
 
-      const token = uni.getStorageSync('token')
-      if (!token) {
-        uni.showModal({
-          title: '提示',
-          content: '请先登录后再评论',
-          showCancel: true,
-          confirmText: '去登录',
-          success: (res) => {
-            if (res.confirm) {
-              this.onWechatLogin()
-            }
-          }
-        })
-        return
-      }
+      const loggedIn = await checkLogin('请先登录后再评论')
+      if (!loggedIn) return
 
       try {
         // TODO: 调用后端API添加评论
@@ -392,6 +353,12 @@ export default {
           }
         }
       })
+    },
+
+    goUserProfile() {
+      if (this.post.userId) {
+        uni.navigateTo({ url: `/pages/user/detail?id=${this.post.userId}` })
+      }
     }
   }
 }

@@ -197,3 +197,65 @@ export const isValidPhone = (phone) => {
 export const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
+
+export const wechatLogin = () => {
+  return new Promise((resolve) => {
+    uni.showLoading({ title: '登录中...', mask: true })
+    wx.login({
+      success: async (res) => {
+        if (res.code) {
+          try {
+            const loginRes = await uni.$request.post('/api/users/login', { code: res.code })
+            uni.hideLoading()
+            if (loginRes.success) {
+              uni.setStorageSync('token', loginRes.data.token)
+              uni.setStorageSync('userInfo', loginRes.data.user)
+              uni.showToast({ title: '登录成功', icon: 'success' })
+              resolve(true)
+            } else {
+              uni.showToast({ title: loginRes.message || '登录失败', icon: 'none' })
+              resolve(false)
+            }
+          } catch (err) {
+            uni.hideLoading()
+            uni.showToast({ title: '网络错误', icon: 'none' })
+            resolve(false)
+          }
+        } else {
+          uni.hideLoading()
+          uni.showToast({ title: '获取登录凭证失败', icon: 'none' })
+          resolve(false)
+        }
+      },
+      fail: () => {
+        uni.hideLoading()
+        uni.showToast({ title: '登录失败，请重试', icon: 'none' })
+        resolve(false)
+      }
+    })
+  })
+}
+
+export const checkLogin = (content = '请先登录后再操作') => {
+  return new Promise((resolve) => {
+    const token = uni.getStorageSync('token')
+    if (token) {
+      resolve(true)
+      return
+    }
+    uni.showModal({
+      title: '提示',
+      content,
+      showCancel: true,
+      confirmText: '去登录',
+      success: async (res) => {
+        if (res.confirm) {
+          const loginResult = await wechatLogin()
+          resolve(loginResult)
+        } else {
+          resolve(false)
+        }
+      }
+    })
+  })
+}

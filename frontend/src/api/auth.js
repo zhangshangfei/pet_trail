@@ -43,6 +43,10 @@ export const updateProfile = (data) => {
   return request.put('/api/users/profile', data)
 }
 
+export const getUserById = (userId) => {
+  return request.get(`/api/users/${userId}`)
+}
+
 /**
  * 退出登录
  */

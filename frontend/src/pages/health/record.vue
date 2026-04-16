@@ -98,6 +98,7 @@
 </template>
 
 <script>
+import { checkLogin } from '@/utils/index'
 
 export default {
   data() {
@@ -210,7 +211,9 @@ export default {
     },
 
     // 显示弹窗
-    showRecordModal() {
+    async showRecordModal() {
+      const loggedIn = await checkLogin('请先登录后再记录体重')
+      if (!loggedIn) return
       this.showModal = true;
       this.form.recordDate = this.form.recordDate || new Date().toISOString().split('T')[0];
     },
@@ -235,6 +238,9 @@ export default {
 
     // 提交记录
     async submitRecord() {
+      const loggedIn = await checkLogin('请先登录后再记录体重')
+      if (!loggedIn) return
+
       if (!this.form.weight) {
         uni.showToast({
           title: '请输入体重',
