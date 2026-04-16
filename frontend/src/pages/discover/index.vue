@@ -137,6 +137,14 @@ export default {
     this.navHeight = this.statusBarHeight + 46
     this.loadUsers()
   },
+  onPullDownRefresh() {
+    this.page = 1
+    this.userList = []
+    this.hasMore = true
+    this.loadUsers().finally(() => {
+      uni.stopPullDownRefresh()
+    })
+  },
   methods: {
     getUserAvatar,
     goBack() {

@@ -212,6 +212,11 @@ export default {
   onUnload() {
     uni.$off('loginSuccess')
   },
+  onPullDownRefresh() {
+    this.loadUserInfo()
+    this.loadPets()
+    setTimeout(() => { uni.stopPullDownRefresh() }, 800)
+  },
   onLoad() {
     try {
       const sys = uni.getSystemInfoSync();

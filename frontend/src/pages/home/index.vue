@@ -286,6 +286,16 @@ export default {
   onUnload() {
     uni.$off('loginSuccess')
   },
+  onPullDownRefresh() {
+    this.page = 1
+    this.postList = []
+    this.hasMore = true
+    this.checkLoginStatus()
+    this.fetchUnreadCount()
+    this.loadPosts().finally(() => {
+      uni.stopPullDownRefresh()
+    })
+  },
   methods: {
     async loadUserInfo() {
       const token = uni.getStorageSync('token');

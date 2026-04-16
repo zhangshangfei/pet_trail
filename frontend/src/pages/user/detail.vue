@@ -237,6 +237,13 @@ export default {
       this.loadUserInfo()
     }
   },
+  onPullDownRefresh() {
+    if (this.userId) {
+      this.loadUserInfo()
+      this.loadPosts()
+    }
+    setTimeout(() => { uni.stopPullDownRefresh() }, 800)
+  },
   methods: {
     getUserAvatar,
     goBack() {

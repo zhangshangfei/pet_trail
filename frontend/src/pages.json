@@ -4,7 +4,9 @@
       "path": "pages/home/index",
       "style": {
         "navigationBarTitleText": "宠迹",
-        "navigationStyle": "custom"
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
       }
     },
     {
@@ -18,7 +20,9 @@
       "path": "pages/me/index",
       "style": {
         "navigationBarTitleText": "我的",
-        "navigationStyle": "custom"
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
       }
     },
     {
@@ -41,7 +45,9 @@
       "path": "pages/dashboard/index",
       "style": {
         "navigationBarTitleText": "健康看板",
-        "navigationStyle": "custom"
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
       }
     },
     {
@@ -94,7 +100,9 @@
       "path": "pages/user/detail",
       "style": {
         "navigationBarTitleText": "用户详情",
-        "navigationStyle": "custom"
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
       }
     },
     {
@@ -115,14 +123,18 @@
       "path": "pages/discover/index",
       "style": {
         "navigationBarTitleText": "发现用户",
-        "navigationStyle": "custom"
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
       }
     },
     {
       "path": "pages/follows/index",
       "style": {
         "navigationBarTitleText": "关注/粉丝",
-        "navigationStyle": "custom"
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
       }
     }
   ],

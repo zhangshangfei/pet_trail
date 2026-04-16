@@ -405,6 +405,12 @@ export default {
   onUnload() {
     uni.$off('loginSuccess')
   },
+  onPullDownRefresh() {
+    this.loadUserInfo()
+    this.loadPets()
+    this.loadDashboardData()
+    setTimeout(() => { uni.stopPullDownRefresh() }, 800)
+  },
   methods: {
     formatDateYMD(date) {
       if (!date) return "-";
