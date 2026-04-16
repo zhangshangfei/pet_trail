@@ -38,17 +38,18 @@ public class PostService {
      * 创建动态
      */
     @Transactional(rollbackFor = Exception.class)
-    public Post createPost(Long userId, Long petId, String content, List<String> images) {
+    public Post createPost(Long userId, Long petId, String content, List<String> images, List<String> videos) {
         Post post = new Post();
         post.setUserId(userId);
         post.setPetId(petId);
         post.setContent(content);
-        post.setImages(JSON.toJSONString(images));
-        post.setStatus(1); // 1-正常
+        post.setImages(images != null ? JSON.toJSONString(images) : null);
+        post.setVideos(videos != null ? JSON.toJSONString(videos) : null);
+        post.setStatus(1);
         post.setLikeCount(0);
         post.setCommentCount(0);
         post.setShareCount(0);
-        post.setEeCount(0); // 初始化收藏计数
+        post.setEeCount(0);
         postMapper.insert(post);
         return post;
     }

@@ -22,6 +22,10 @@ public class PostVO {
 
     private List<String> imageList;
 
+    private String videos;
+
+    private List<String> videoList;
+
     private Integer likeCount;
 
     private Integer commentCount;

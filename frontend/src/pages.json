@@ -104,6 +104,13 @@
         "navigationBarTitleText": "用户详情",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/user/edit",
+      "style": {
+        "navigationBarTitleText": "编辑资料",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

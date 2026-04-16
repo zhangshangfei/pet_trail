@@ -107,6 +107,7 @@ CREATE TABLE IF NOT EXISTS `posts` (
   `pet_id` bigint(20) DEFAULT NULL COMMENT '关联宠物 ID',
   `content` varchar(2000) NOT NULL COMMENT '内容',
   `images` json DEFAULT NULL COMMENT '图片 URL 数组',
+  `videos` json DEFAULT NULL COMMENT '视频 URL 数组',
   `like_count` int(11) DEFAULT '0' COMMENT '点赞数',
   `comment_count` int(11) DEFAULT '0' COMMENT '评论数',
   `share_count` int(11) DEFAULT '0' COMMENT '分享数',

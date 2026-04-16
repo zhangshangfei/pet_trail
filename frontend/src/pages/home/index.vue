@@ -102,6 +102,30 @@
             />
           </view>
 
+          <!-- 视频展示 -->
+          <view
+            v-if="post.videos && post.videos.length"
+            class="post-video-wrap"
+          >
+            <view
+              v-for="(vid, vidx) in post.videos"
+              :key="'v' + vidx"
+              class="post-video-item"
+              @click="playVideo(vid)"
+            >
+              <video
+                class="post-video"
+                :src="vid"
+                :autoplay="false"
+                :show-play-btn="true"
+                :show-center-play-btn="true"
+                :enable-progress-gesture="false"
+                object-fit="cover"
+                poster=""
+              />
+            </view>
+          </view>
+
           <!-- 操作栏 -->
           <view class="post-actions">
             <view class="actions-left">
@@ -228,6 +252,16 @@ export default {
     }
 
     this.checkLoginStatus();
+
+    uni.$on('loginSuccess', () => {
+      this.checkLoginStatus()
+    })
+  },
+  onHide() {
+    uni.$off('loginSuccess')
+  },
+  onUnload() {
+    uni.$off('loginSuccess')
   },
   methods: {
     async loadUserInfo() {
@@ -316,6 +350,11 @@ export default {
     onTopUserTap() {
       if (!this.isLoggedIn) {
         this.onWechatLogin();
+      } else {
+        const userInfo = uni.getStorageSync('userInfo')
+        if (userInfo && userInfo.id) {
+          uni.navigateTo({ url: `/pages/user/detail?id=${userInfo.id}` })
+        }
       }
     },
 
@@ -390,6 +429,13 @@ export default {
         urls: imageList,
         current: index
       });
+    },
+
+    playVideo(url) {
+      uni.previewMedia({
+        sources: [{ url, type: 'video' }],
+        current: 0
+      })
     },
 
     async onLikeTap(post) {
@@ -477,6 +523,7 @@ export default {
             liked: post.liked || false,
             eeLiked: post.eeLiked || false,
             images: post.imageList || [],
+            videos: post.videoList || [],
             previewComments: post.previewComments || []
           }));
 
@@ -713,6 +760,24 @@ export default {
   height: 200rpx;
   margin-right: 12rpx;
   margin-bottom: 12rpx;
+}
+
+.post-video-wrap {
+  margin-bottom: 16rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.post-video-item {
+  border-radius: 16rpx;
+  overflow: hidden;
+  margin-bottom: 12rpx;
+}
+
+.post-video {
+  width: 100%;
+  height: 420rpx;
+  border-radius: 16rpx;
 }
 
 .post-image--grid {

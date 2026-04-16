@@ -55,8 +55,11 @@ public class PostController {
         List<String> images = data.getJSONArray("images") != null
             ? data.getJSONArray("images").toJavaList(String.class)
             : null;
+        List<String> videos = data.getJSONArray("videos") != null
+            ? data.getJSONArray("videos").toJavaList(String.class)
+            : null;
 
-        Post post = postService.createPost(userId, petId, content, images);
+        Post post = postService.createPost(userId, petId, content, images, videos);
 
         // 异步发送消息（内容审核、推送粉丝等）
         postService.publishPostCreateEvent(post);
@@ -112,6 +115,17 @@ public class PostController {
             }
         } else {
             vo.setImageList(List.of());
+        }
+
+        vo.setVideos(post.getVideos());
+        if (post.getVideos() != null && !post.getVideos().equals("null")) {
+            try {
+                vo.setVideoList(JSON.parseArray(post.getVideos(), String.class));
+            } catch (Exception e) {
+                vo.setVideoList(List.of());
+            }
+        } else {
+            vo.setVideoList(List.of());
         }
 
         try {

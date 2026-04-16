@@ -211,6 +211,7 @@ export const wechatLogin = () => {
               uni.setStorageSync('token', loginRes.data.token)
               uni.setStorageSync('userInfo', loginRes.data.user)
               uni.showToast({ title: '登录成功', icon: 'success' })
+              uni.$emit('loginSuccess')
               resolve(true)
             } else {
               uni.showToast({ title: loginRes.message || '登录失败', icon: 'none' })

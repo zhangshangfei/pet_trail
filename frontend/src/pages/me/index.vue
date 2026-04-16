@@ -6,6 +6,7 @@
       :name="userName"
       right-icon="🔔"
       @rightTap="onBellTap"
+      @userTap="onTopUserTap"
     />
 
     <scroll-view scroll-y class="me-scroll" :style="{ height: scrollHeight + 'px', paddingTop: headerHeight + 'px' }">
@@ -185,6 +186,16 @@ export default {
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: false });
     this.loadPets();
     this.loadUserInfo();
+
+    uni.$on('loginSuccess', () => {
+      this.loadUserInfo()
+    })
+  },
+  onHide() {
+    uni.$off('loginSuccess')
+  },
+  onUnload() {
+    uni.$off('loginSuccess')
   },
   onLoad() {
     try {
@@ -239,6 +250,17 @@ export default {
     },
     onBellTap() {
       uni.showToast({ title: "通知未实现", icon: "none" });
+    },
+    onTopUserTap() {
+      const token = uni.getStorageSync('token')
+      if (!token) {
+        uni.showToast({ title: '请先登录', icon: 'none' })
+        return
+      }
+      const userInfo = uni.getStorageSync('userInfo')
+      if (userInfo && userInfo.id) {
+        uni.navigateTo({ url: `/pages/user/detail?id=${userInfo.id}` })
+      }
     },
     async goAddPet() {
       const loggedIn = await checkLogin('请先登录后再添加宠物')

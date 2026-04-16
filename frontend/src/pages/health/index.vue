@@ -6,6 +6,7 @@
       :name="userName"
       right-icon="⋯"
       @rightTap="onMore"
+      @userTap="onTopUserTap"
     />
 
     <scroll-view scroll-y class="health-scroll" :style="{ paddingTop: headerHeight + 'px' }">
@@ -368,14 +369,20 @@ export default {
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: true });
     this.loadUserInfo();
     this.loadPets();
+
+    uni.$on('loginSuccess', () => {
+      this.loadUserInfo()
+    })
   },
   onHide() {
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: false });
+    uni.$off('loginSuccess')
   },
   onUnload() {
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: false });
+    uni.$off('loginSuccess')
   },
   onLoad() {
     try {
@@ -517,6 +524,17 @@ export default {
     },
     onMore() {
       uni.showToast({ title: "未实现", icon: "none" });
+    },
+    onTopUserTap() {
+      const token = uni.getStorageSync("token");
+      if (!token) {
+        uni.showToast({ title: "请先登录", icon: "none" });
+        return;
+      }
+      const userInfo = uni.getStorageSync("userInfo");
+      if (userInfo && userInfo.id) {
+        uni.navigateTo({ url: `/pages/user/detail?id=${userInfo.id}` });
+      }
     },
     goBackToBoard() {
       uni.switchTab({ url: "/pages/dashboard/index" });

@@ -6,15 +6,15 @@
         <view class="back-btn" @tap="goBack">
           <text class="back-icon">←</text>
         </view>
-        <view class="header-right">
-          <view v-if="isSelf" class="edit-btn" @tap="goEditProfile">
-            <text class="edit-text">编辑</text>
-          </view>
-        </view>
       </view>
 
       <view class="user-info-section">
-        <image class="user-avatar" :src="userInfo.avatar || defaultAvatar" mode="aspectFill" />
+        <view class="avatar-wrap">
+          <image class="user-avatar" :src="userInfo.avatar || defaultAvatar" mode="aspectFill" />
+          <view v-if="isSelf" class="avatar-edit-badge" @tap="goEditProfile">
+            <text class="avatar-edit-icon">✎</text>
+          </view>
+        </view>
         <text class="user-nickname">{{ userInfo.nickname || '萌宠主人' }}</text>
         <view class="user-meta">
           <text class="user-gender" v-if="userInfo.gender">{{ genderText }}</text>
@@ -117,6 +117,28 @@
             />
           </view>
 
+          <view
+            v-if="post.videoList && post.videoList.length"
+            class="post-video-wrap"
+          >
+            <view
+              v-for="(vid, vidx) in post.videoList"
+              :key="'v' + vidx"
+              class="post-video-item"
+              @click="playVideo(vid)"
+            >
+              <video
+                class="post-video"
+                :src="vid"
+                :autoplay="false"
+                :show-play-btn="true"
+                :show-center-play-btn="true"
+                :enable-progress-gesture="false"
+                object-fit="cover"
+              />
+            </view>
+          </view>
+
           <view class="post-actions">
             <view class="actions-left">
               <view class="action-item" @click="onLikeTap(post)">
@@ -189,6 +211,11 @@ export default {
       this.userId = Number(options.id)
       this.loadUserInfo()
       this.loadPosts()
+    }
+  },
+  onShow() {
+    if (this.userId) {
+      this.loadUserInfo()
     }
   },
   methods: {
@@ -316,6 +343,12 @@ export default {
         current: index
       })
     },
+    playVideo(url) {
+      uni.previewMedia({
+        sources: [{ url, type: 'video' }],
+        current: 0
+      })
+    },
     getPetIcon(type) {
       const map = { 1: '🐱', 2: '🐶' }
       return map[type] || '🐾'
@@ -345,7 +378,7 @@ export default {
       uni.showToast({ title: `${type}列表开发中`, icon: 'none' })
     },
     goEditProfile() {
-      uni.navigateTo({ url: '/pages/me/index' })
+      uni.navigateTo({ url: '/pages/user/edit' })
     }
   }
 }
@@ -399,23 +432,6 @@ export default {
   font-weight: 700;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-}
-
-.edit-btn {
-  padding: 10rpx 28rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.edit-text {
-  color: #fff;
-  font-size: 26rpx;
-  font-weight: 600;
-}
-
 .user-info-section {
   position: relative;
   z-index: 2;
@@ -425,6 +441,11 @@ export default {
   padding-top: 20rpx;
 }
 
+.avatar-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
 .user-avatar {
   width: 160rpx;
   height: 160rpx;
@@ -432,6 +453,27 @@ export default {
   border: 6rpx solid #fff;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
   background: #e5e7eb;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  right: -4rpx;
+  top: -4rpx;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: #ff7a3d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3rpx solid #fff;
+  box-shadow: 0 4rpx 12rpx rgba(255, 122, 61, 0.4);
+}
+
+.avatar-edit-icon {
+  color: #fff;
+  font-size: 24rpx;
+  line-height: 1;
 }
 
 .user-nickname {
@@ -664,6 +706,22 @@ export default {
     width: calc(33.33% - 6rpx);
     height: 220rpx;
   }
+}
+
+.post-video-wrap {
+  margin-bottom: 16rpx;
+}
+
+.post-video-item {
+  border-radius: 12rpx;
+  overflow: hidden;
+  margin-bottom: 12rpx;
+}
+
+.post-video {
+  width: 100%;
+  height: 420rpx;
+  border-radius: 12rpx;
 }
 
 .post-actions {

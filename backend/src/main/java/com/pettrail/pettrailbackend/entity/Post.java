@@ -25,6 +25,8 @@ public class Post {
 
     private String images;
 
+    private String videos;
+
     private Integer likeCount;
 
     private Integer commentCount;

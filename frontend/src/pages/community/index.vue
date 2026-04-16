@@ -6,6 +6,7 @@
       :name="userName"
       right-icon="🔔"
       @rightTap="onBellTap"
+      @userTap="onTopUserTap"
     />
 
     <!-- 动态列表 -->
@@ -23,16 +24,34 @@
 
           <text class="post-content">{{ post.content }}</text>
 
-          <view v-if="post.images && post.images !== 'null' && Array.isArray(post.images) && post.images.length" class="post-images">
+          <view v-if="post.imageList && post.imageList !== 'null' && Array.isArray(post.imageList) && post.imageList.length" class="post-images">
             <image
-              v-for="(img, idx) in post.images"
+              v-for="(img, idx) in post.imageList"
               :key="'img-' + post.id + '-' + idx"
               class="post-image"
-              :class="post.images.length === 2 ? 'post-image--2' : post.images.length === 3 ? 'post-image--3' : 'post-image--1'"
+              :class="post.imageList.length === 2 ? 'post-image--2' : post.imageList.length === 3 ? 'post-image--3' : 'post-image--1'"
               :src="img"
               mode="widthFix"
-              @click="previewImage(post.images, idx)"
+              @click="previewImage(post.imageList, idx)"
             />
+          </view>
+
+          <view v-if="post.videoList && Array.isArray(post.videoList) && post.videoList.length" class="post-videos">
+            <view
+              v-for="(vid, vidx) in post.videoList"
+              :key="'vid-' + post.id + '-' + vidx"
+              class="post-video-item"
+            >
+              <video
+                class="post-video"
+                :src="vid"
+                :autoplay="false"
+                :show-play-btn="true"
+                :show-center-play-btn="true"
+                :enable-progress-gesture="false"
+                object-fit="cover"
+              />
+            </view>
           </view>
 
           <view class="post-actions">
@@ -163,6 +182,16 @@ export default {
       this.scrollHeight = 0
     }
     this.loadUserInfo()
+
+    uni.$on('loginSuccess', () => {
+      this.loadUserInfo()
+    })
+  },
+  onHide() {
+    uni.$off('loginSuccess')
+  },
+  onUnload() {
+    uni.$off('loginSuccess')
   },
   methods: {
     // 加载用户信息
@@ -177,6 +206,18 @@ export default {
     },
     onBellTap() {
       uni.showToast({ title: '通知未实现', icon: 'none' })
+    },
+
+    onTopUserTap() {
+      const token = uni.getStorageSync('token')
+      if (!token) {
+        checkLogin('请先登录后再查看个人主页')
+        return
+      }
+      const userInfo = uni.getStorageSync('userInfo')
+      if (userInfo && userInfo.id) {
+        uni.navigateTo({ url: `/pages/user/detail?id=${userInfo.id}` })
+      }
     },
 
     // 加载动态列表
@@ -560,6 +601,22 @@ export default {
 
 .post-image--1 {
   width: 100%;
+}
+
+.post-videos {
+  margin-bottom: 10rpx;
+}
+
+.post-video-item {
+  border-radius: 16rpx;
+  overflow: hidden;
+  margin-bottom: 12rpx;
+}
+
+.post-video {
+  width: 100%;
+  height: 420rpx;
+  border-radius: 16rpx;
 }
 
 .post-actions {

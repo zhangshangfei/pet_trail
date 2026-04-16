@@ -54,8 +54,9 @@
                 mode="widthFix"
                 @click="previewImage(index)"
               />
-              <view v-else class="video-thumb">
-                <text class="video-icon">🎬</text>
+              <view v-else class="video-thumb" @click="previewVideo(index)">
+                <image v-if="media.thumb" class="video-thumb-img" :src="media.thumb" mode="aspectFill" />
+                <view class="video-play-icon">▶</view>
               </view>
               <text class="remove-media" @click="removeMedia(index)">✕</text>
             </view>
@@ -258,43 +259,69 @@ export default {
       uni.showLoading({ title: '发布中...', mask: true })
 
       try {
-        // 1. 先上传图片
-        const uploadedUrls = []
         const imageFiles = this.mediaList.filter(m => m.type === 'image')
-        
+        const videoFiles = this.mediaList.filter(m => m.type === 'video')
+        const totalFiles = imageFiles.length + videoFiles.length
+        let uploadedCount = 0
+
+        const uploadedImageUrls = []
         for (let i = 0; i < imageFiles.length; i++) {
           const media = imageFiles[i]
-          uni.showLoading({ 
-            title: `上传图片 ${i + 1}/${imageFiles.length}...`, 
-            mask: true 
+          uploadedCount++
+          uni.showLoading({
+            title: `压缩并上传 ${uploadedCount}/${totalFiles}...`,
+            mask: true
           })
-          
+
           try {
-            const uploadRes = await petApi.uploadImage(media.path)
+            const compressedPath = await petApi.compressImage(media.path, 80)
+            const uploadRes = await petApi.uploadFile(compressedPath)
             if (uploadRes.success && uploadRes.data && uploadRes.data.url) {
-              uploadedUrls.push(uploadRes.data.url)
+              uploadedImageUrls.push(uploadRes.data.url)
             } else {
               throw new Error(uploadRes.message || '上传失败')
             }
           } catch (uploadError) {
             console.error(`图片 ${i + 1} 上传失败:`, uploadError)
             uni.hideLoading()
-            uni.showToast({
-              title: `图片 ${i + 1} 上传失败`,
-              icon: 'none'
-            })
+            uni.showToast({ title: `图片 ${i + 1} 上传失败`, icon: 'none' })
             this.submitting = false
             return
           }
         }
 
-        // 2. 发布动态
+        const uploadedVideoUrls = []
+        for (let i = 0; i < videoFiles.length; i++) {
+          const media = videoFiles[i]
+          uploadedCount++
+          uni.showLoading({
+            title: `上传视频 ${uploadedCount}/${totalFiles}...`,
+            mask: true
+          })
+
+          try {
+            const uploadRes = await petApi.uploadFile(media.path)
+            if (uploadRes.success && uploadRes.data && uploadRes.data.url) {
+              uploadedVideoUrls.push(uploadRes.data.url)
+            } else {
+              throw new Error(uploadRes.message || '上传失败')
+            }
+          } catch (uploadError) {
+            console.error(`视频 ${i + 1} 上传失败:`, uploadError)
+            uni.hideLoading()
+            uni.showToast({ title: `视频 ${i + 1} 上传失败`, icon: 'none' })
+            this.submitting = false
+            return
+          }
+        }
+
         uni.showLoading({ title: '发布中...', mask: true })
-        
+
         const postData = {
           content: this.content,
           petId: this.selectedPet ? this.selectedPet.id : undefined,
-          images: uploadedUrls.length > 0 ? uploadedUrls : undefined,
+          images: uploadedImageUrls.length > 0 ? uploadedImageUrls : undefined,
+          videos: uploadedVideoUrls.length > 0 ? uploadedVideoUrls : undefined,
           challengeTag: this.selectedChallenge || undefined
         }
 
@@ -366,12 +393,17 @@ export default {
         count: remaining,
         mediaType: ['image', 'video'],
         sourceType: ['album', 'camera'],
+        sizeType: ['compressed'],
         success: (res) => {
           res.tempFiles.forEach(file => {
-            this.mediaList.push({
+            const item = {
               type: file.fileType,
               path: file.tempFilePath
-            })
+            }
+            if (file.fileType === 'video' && file.thumbTempFilePath) {
+              item.thumb = file.thumbTempFilePath
+            }
+            this.mediaList.push(item)
           })
         }
       })
@@ -387,6 +419,16 @@ export default {
         uni.previewImage({
           urls: imagePaths,
           current: index
+        })
+      }
+    },
+
+    previewVideo(index) {
+      const video = this.mediaList[index]
+      if (video && video.path) {
+        uni.previewMedia({
+          sources: [{ url: video.path, type: 'video' }],
+          current: 0
         })
       }
     },
@@ -628,10 +670,25 @@ export default {
   justify-content: center;
   background: #e5e7eb;
   min-height: 200rpx;
+  position: relative;
 }
 
-.video-icon {
-  font-size: 60rpx;
+.video-thumb-img {
+  width: 100%;
+  height: 200rpx;
+}
+
+.video-play-icon {
+  position: absolute;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
 }
 
 .remove-media {

@@ -30,7 +30,9 @@ public class CosService {
      */
     public String uploadFile(MultipartFile file) throws IOException {
         String fileName = generateFileName(file.getOriginalFilename());
-        return uploadToCos(file.getInputStream(), fileName, file.getContentType(), (int) file.getSize());
+        String contentType = file.getContentType();
+        String folder = resolveFolder(contentType);
+        return uploadToCos(file.getInputStream(), fileName, contentType, (int) file.getSize(), folder);
     }
 
     /**
@@ -45,14 +47,15 @@ public class CosService {
         if (fileName == null || fileName.isEmpty()) {
             fileName = generateFileName("image.jpg");
         }
-        return uploadToCos(inputStream, fileName, contentType, size);
+        String folder = resolveFolder(contentType);
+        return uploadToCos(inputStream, fileName, contentType, size, folder);
     }
 
     /**
      * 实际上传到COS的私有方法
      */
-    private String uploadToCos(InputStream inputStream, String fileName, String contentType, int size) throws IOException {
-        String objectName = "images/" + LocalDate.now().format(DateTimeFormatter.ISO_DATE) + "/" + fileName;
+    private String uploadToCos(InputStream inputStream, String fileName, String contentType, int size, String folder) throws IOException {
+        String objectName = folder + "/" + LocalDate.now().format(DateTimeFormatter.ISO_DATE) + "/" + fileName;
 
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(size);
@@ -113,5 +116,12 @@ public class CosService {
         }
         String uuid = UUID.randomUUID().toString().replace("-", "");
         return uuid + extension;
+    }
+
+    private String resolveFolder(String contentType) {
+        if (contentType != null && contentType.startsWith("video/")) {
+            return "videos";
+        }
+        return "images";
     }
 }

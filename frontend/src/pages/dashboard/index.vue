@@ -6,6 +6,7 @@
       :name="userName"
       right-icon="⏷"
       @rightTap="onFilter"
+      @userTap="onTopUserTap"
     />
 
     <scroll-view scroll-y class="board-scroll" :style="{ paddingTop: headerHeight + 'px' }">
@@ -393,6 +394,16 @@ export default {
     }
     this.loadPets();
     this.loadUserInfo();
+
+    uni.$on('loginSuccess', () => {
+      this.loadUserInfo()
+    })
+  },
+  onHide() {
+    uni.$off('loginSuccess')
+  },
+  onUnload() {
+    uni.$off('loginSuccess')
   },
   methods: {
     formatDateYMD(date) {
@@ -629,6 +640,17 @@ export default {
     },
     onFilter() {
       uni.showToast({ title: "筛选未实现", icon: "none" });
+    },
+    onTopUserTap() {
+      const token = uni.getStorageSync("token");
+      if (!token) {
+        uni.showToast({ title: "请先登录", icon: "none" });
+        return;
+      }
+      const userInfo = uni.getStorageSync("userInfo");
+      if (userInfo && userInfo.id) {
+        uni.navigateTo({ url: `/pages/user/detail?id=${userInfo.id}` });
+      }
     },
     goTab(url, isTab) {
       if (isTab) {
