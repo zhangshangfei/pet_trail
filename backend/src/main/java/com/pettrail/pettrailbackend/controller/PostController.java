@@ -258,4 +258,21 @@ public class PostController {
 
         return Result.success(postVOs);
     }
+
+    @GetMapping("/user/{userId}/likes")
+    public Result<List<PostVO>> getUserLikedPosts(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        Long currentUserId = UserContext.getCurrentUserId();
+        int offset = (page - 1) * size;
+
+        List<Post> posts = postMapper.selectLikedFeed(userId, offset, size);
+        List<PostVO> postVOs = posts.stream()
+            .map(post -> convertToPostVO(post, currentUserId))
+            .collect(Collectors.toList());
+
+        return Result.success(postVOs);
+    }
 }

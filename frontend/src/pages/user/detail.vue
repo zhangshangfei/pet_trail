@@ -209,7 +209,12 @@ export default {
       if (this.loading) return
       this.loading = true
       try {
-        const res = await postApi.getUserPosts(this.userId, this.page, this.size)
+        let res
+        if (this.currentTab === 'likes') {
+          res = await postApi.getUserLikedPosts(this.userId, this.page, this.size)
+        } else {
+          res = await postApi.getUserPosts(this.userId, this.page, this.size)
+        }
         if (res && res.success && Array.isArray(res.data)) {
           const newPosts = res.data.map(post => ({
             ...post,
@@ -249,12 +254,7 @@ export default {
       this.page = 1
       this.postList = []
       this.hasMore = true
-      if (tab === 'posts') {
-        this.loadPosts()
-      } else {
-        this.loading = false
-        this.hasMore = false
-      }
+      this.loadPosts()
     },
     async onToggleFollow() {
       const loggedIn = await checkLogin('请先登录后再关注')

@@ -53,6 +53,16 @@
         LIMIT #{offset}, #{limit}
     </select>
 
+    <!-- 查询用户点赞的动态列表（按时间倒序） -->
+    <select id="selectLikedFeed" resultMap="BaseResultMap">
+        SELECT p.* FROM posts p
+        INNER JOIN post_likes l ON p.id = l.post_id
+        WHERE l.user_id = #{userId}
+        AND p.status = 1
+        ORDER BY l.created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
     <!-- 根据日期范围查询动态 -->
     <select id="selectByDateRange" resultMap="BaseResultMap">
         SELECT * FROM posts

@@ -41,6 +41,10 @@ public interface PostMapper extends BaseMapper<Post> {
                                  @Param("offset") int offset,
                                  @Param("limit") int limit);
 
+    List<Post> selectLikedFeed(@Param("userId") Long userId,
+                               @Param("offset") int offset,
+                               @Param("limit") int limit);
+
     /**
      * 根据日期范围查询动态
      */

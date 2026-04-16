@@ -77,3 +77,7 @@ export const getFollowList = () => {
 export const getUserPosts = (userId, page = 1, size = 20) => {
   return request.get(`/api/posts/user/${userId}`, { page, size })
 }
+
+export const getUserLikedPosts = (userId, page = 1, size = 20) => {
+  return request.get(`/api/posts/user/${userId}/likes`, { page, size })
+}
