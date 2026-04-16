@@ -1,60 +1,37 @@
 <template>
-  <view class="discover-page">
+  <view class="follows-page">
     <view class="nav-fixed">
       <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
       <view class="nav-bar">
         <view class="nav-back" @tap="goBack">
           <text class="nav-back-icon">←</text>
         </view>
-        <text class="nav-title">发现用户</text>
+        <text class="nav-title">{{ type === 'followers' ? '粉丝' : '关注' }}</text>
         <view class="nav-placeholder"></view>
       </view>
     </view>
 
-    <view class="search-bar" :style="{ top: navHeight + 'px' }">
-      <view class="search-input-wrap">
-        <text class="search-icon">🔍</text>
-        <input
-          class="search-input"
-          v-model="keyword"
-          placeholder="搜索用户昵称"
-          placeholder-class="search-placeholder"
-          confirm-type="search"
-          @confirm="onSearch"
-          @input="onInputChange"
-        />
-        <text v-if="keyword" class="search-clear" @tap="clearSearch">✕</text>
-      </view>
-    </view>
-
-    <view class="tab-bar" :style="{ top: navHeight + searchHeight + 'px' }">
+    <view class="tab-bar" :style="{ top: navHeight + 'px' }">
       <view
         class="tab-item"
-        :class="{ active: currentTab === 'recommend' }"
-        @tap="switchTab('recommend')"
+        :class="{ active: currentTab === 'followees' }"
+        @tap="switchTab('followees')"
       >
-        <text class="tab-text">推荐</text>
+        <text class="tab-text">关注</text>
       </view>
       <view
         class="tab-item"
-        :class="{ active: currentTab === 'hot' }"
-        @tap="switchTab('hot')"
+        :class="{ active: currentTab === 'followers' }"
+        @tap="switchTab('followers')"
       >
-        <text class="tab-text">热门</text>
-      </view>
-      <view
-        class="tab-item"
-        :class="{ active: currentTab === 'new' }"
-        @tap="switchTab('new')"
-      >
-        <text class="tab-text">新人</text>
+        <text class="tab-text">粉丝</text>
       </view>
     </view>
 
     <scroll-view
       scroll-y
       class="user-scroll"
-      :style="{ paddingTop: navHeight + searchHeight + tabHeight + 'px' }"
+      :style="{ paddingTop: navHeight + tabHeight + 'px' }"
       @scrolltolower="loadMore"
     >
       <view v-if="loading && userList.length === 0" class="loading-state">
@@ -62,8 +39,8 @@
       </view>
 
       <view v-else-if="userList.length === 0" class="empty-state">
-        <text class="empty-icon">🔍</text>
-        <text class="empty-text">{{ keyword ? '未找到相关用户' : '暂无推荐用户' }}</text>
+        <text class="empty-icon">{{ currentTab === 'followers' ? '👤' : '🔍' }}</text>
+        <text class="empty-text">{{ currentTab === 'followers' ? '暂无粉丝' : '暂无关注' }}</text>
       </view>
 
       <view v-else class="user-list">
@@ -85,11 +62,9 @@
               <text class="stat-dot">·</text>
               <text class="user-stat">{{ user.postCount || 0 }} 动态</text>
             </view>
-            <view v-if="user.recommendReason && currentTab === 'recommend'" class="user-reason-row">
-              <text class="reason-tag" :class="'reason-tag--' + user.recommendReason">{{ reasonText(user.recommendReason) }}</text>
-            </view>
           </view>
           <view
+            v-if="!isSelf(user.id)"
             class="follow-btn"
             :class="{ 'follow-btn--following': user.isFollowing }"
             @tap.stop="onToggleFollow(user)"
@@ -110,19 +85,18 @@
 </template>
 
 <script>
-import { discoverUsers } from '@/api/auth'
-import { toggleFollow } from '@/api/post'
+import { getFolloweeList, getFollowerList, toggleFollow } from '@/api/post'
 import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 
 export default {
   data() {
     return {
+      userId: null,
+      type: 'followees',
+      currentTab: 'followees',
       statusBarHeight: 0,
       navHeight: 0,
-      searchHeight: 56,
       tabHeight: 44,
-      currentTab: 'recommend',
-      keyword: '',
       userList: [],
       page: 1,
       size: 20,
@@ -131,16 +105,28 @@ export default {
       followLoadingMap: {}
     }
   },
-  onLoad() {
+  onLoad(options) {
     const sysInfo = uni.getSystemInfoSync()
     this.statusBarHeight = sysInfo.statusBarHeight || 0
     this.navHeight = this.statusBarHeight + 46
+
+    if (options.userId) {
+      this.userId = Number(options.userId)
+    }
+    if (options.type) {
+      this.type = options.type
+      this.currentTab = options.type
+    }
     this.loadUsers()
   },
   methods: {
     getUserAvatar,
     goBack() {
       uni.navigateBack({ delta: 1 })
+    },
+    isSelf(uid) {
+      const currentUserId = uni.getStorageSync('userInfo')?.id
+      return currentUserId && Number(currentUserId) === Number(uid)
     },
     switchTab(tab) {
       if (this.currentTab === tab) return
@@ -150,35 +136,12 @@ export default {
       this.hasMore = true
       this.loadUsers()
     },
-    onSearch() {
-      this.page = 1
-      this.userList = []
-      this.hasMore = true
-      this.loadUsers()
-    },
-    onInputChange(e) {
-      this.keyword = e.detail.value
-    },
-    clearSearch() {
-      this.keyword = ''
-      this.page = 1
-      this.userList = []
-      this.hasMore = true
-      this.loadUsers()
-    },
     async loadUsers() {
       if (this.loading) return
       this.loading = true
       try {
-        const params = {
-          type: this.currentTab,
-          page: this.page,
-          size: this.size
-        }
-        if (this.keyword.trim()) {
-          params.keyword = this.keyword.trim()
-        }
-        const res = await discoverUsers(params)
+        const api = this.currentTab === 'followers' ? getFollowerList : getFolloweeList
+        const res = await api(this.userId, this.page, this.size)
         if (res && res.success) {
           const list = res.data || []
           if (this.page === 1) {
@@ -189,7 +152,7 @@ export default {
           this.hasMore = list.length >= this.size
         }
       } catch (e) {
-        console.error('加载用户失败:', e)
+        console.error('加载用户列表失败:', e)
       } finally {
         this.loading = false
       }
@@ -224,25 +187,13 @@ export default {
     },
     goUserDetail(user) {
       uni.navigateTo({ url: `/pages/user/detail?id=${user.id}` })
-    },
-    reasonText(reason) {
-      const map = {
-        same_breed: '同品种',
-        same_category: '同类型',
-        social: '好友关注',
-        interact: '互动过',
-        activity: '活跃用户',
-        hot: '热门用户',
-        new_user: '新用户'
-      }
-      return map[reason] || '推荐'
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.discover-page {
+.follows-page {
   min-height: 100vh;
   background: #f5f5f5;
 }
@@ -289,46 +240,6 @@ export default {
 
 .nav-placeholder {
   width: 60rpx;
-}
-
-.search-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  z-index: 29;
-  background: linear-gradient(180deg, #ff4d4f 0%, #ff4d4f 100%);
-  padding: 0 24rpx 16rpx;
-}
-
-.search-input-wrap {
-  display: flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 36rpx;
-  padding: 0 24rpx;
-  height: 68rpx;
-}
-
-.search-icon {
-  font-size: 28rpx;
-  margin-right: 12rpx;
-}
-
-.search-input {
-  flex: 1;
-  font-size: 28rpx;
-  color: #fff;
-  height: 68rpx;
-}
-
-.search-placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.search-clear {
-  font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.6);
-  padding: 8rpx;
 }
 
 .tab-bar {
@@ -463,53 +374,6 @@ export default {
 .user-stats-row {
   display: flex;
   align-items: center;
-}
-
-.user-reason-row {
-  margin-top: 8rpx;
-}
-
-.reason-tag {
-  display: inline-block;
-  font-size: 20rpx;
-  padding: 2rpx 12rpx;
-  border-radius: 8rpx;
-  line-height: 28rpx;
-}
-
-.reason-tag--same_breed {
-  color: #10b981;
-  background: #ecfdf5;
-}
-
-.reason-tag--same_category {
-  color: #3b82f6;
-  background: #eff6ff;
-}
-
-.reason-tag--social {
-  color: #8b5cf6;
-  background: #f5f3ff;
-}
-
-.reason-tag--interact {
-  color: #f59e0b;
-  background: #fffbeb;
-}
-
-.reason-tag--activity {
-  color: #ff6a3d;
-  background: #fff7ed;
-}
-
-.reason-tag--hot {
-  color: #ef4444;
-  background: #fef2f2;
-}
-
-.reason-tag--new_user {
-  color: #06b6d4;
-  background: #ecfeff;
 }
 
 .user-stat {

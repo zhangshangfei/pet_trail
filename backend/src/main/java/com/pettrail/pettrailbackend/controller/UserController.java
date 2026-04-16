@@ -6,6 +6,7 @@ import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.service.UserService;
 import com.pettrail.pettrailbackend.service.FollowService;
 import com.pettrail.pettrailbackend.service.PostService;
+import com.pettrail.pettrailbackend.service.RecommendService;
 import com.pettrail.pettrailbackend.util.HttpUtil;
 import com.pettrail.pettrailbackend.util.JwtUtil;
 import com.pettrail.pettrailbackend.util.UserContext;
@@ -33,6 +34,7 @@ public class UserController {
     private final UserService userService;
     private final FollowService followService;
     private final PostService postService;
+    private final RecommendService recommendService;
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate redisTemplate;
 
@@ -164,6 +166,10 @@ public class UserController {
         try {
             Long currentUserId = UserContext.getCurrentUserId();
 
+            if ("recommend".equals(type) && (keyword == null || keyword.trim().isEmpty())) {
+                return Result.success(recommendService.recommendUsers(currentUserId, page, size));
+            }
+
             List<User> users = userService.discoverUsers(currentUserId, type, keyword, page, size);
 
             List<Long> followedIds = new ArrayList<>();
@@ -184,6 +190,11 @@ public class UserController {
                 item.put("followerCount", followService.getFollowerCount(user.getId()));
                 item.put("followeeCount", followService.getFolloweeCount(user.getId()));
                 item.put("postCount", postService.getUserPostCount(user.getId()));
+                if ("hot".equals(type)) {
+                    item.put("recommendReason", "hot");
+                } else if ("new".equals(type)) {
+                    item.put("recommendReason", "new_user");
+                }
                 result.add(item);
             }
 

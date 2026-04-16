@@ -397,7 +397,11 @@ export default {
       return this.formatTime(dateStr)
     },
     onStatTap(type) {
-      uni.showToast({ title: `${type}列表开发中`, icon: 'none' })
+      if (type === 'posts') {
+        this.switchTab('posts')
+        return
+      }
+      uni.navigateTo({ url: `/pages/follows/index?userId=${this.userId}&type=${type}` })
     },
     goEditProfile() {
       uni.navigateTo({ url: '/pages/user/edit' })

@@ -1,17 +1,15 @@
 <template>
   <view class="board-page">
-    <view class="nav-fixed">
-      <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
-      <view class="nav-bar">
-        <view class="nav-user" @tap="onTopUserTap">
-          <image class="nav-user-avatar" :src="userAvatar" mode="aspectFill" />
-          <text class="nav-user-name">{{ userName }}</text>
-        </view>
-        <view class="nav-right" @tap="onFilter">
-          <text class="nav-right-icon">⏷</text>
-        </view>
-      </view>
-    </view>
+    <user-top-bar
+      :status-bar-height="statusBarHeight"
+      :avatar="userAvatar"
+      :name="isLoggedIn ? (userName || '萌宠主人') : '请登录'"
+      :show-login-button="!isLoggedIn"
+      :unread-count="0"
+      @rightTap="onBellTap"
+      @userTap="onTopUserTap"
+      @discoverTap="onDiscoverTap"
+    />
 
     <scroll-view scroll-y class="board-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px' }">
       <view class="board-content">
@@ -241,8 +239,10 @@
 
 <script>
 import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
+import UserTopBar from '@/components/UserTopBar.vue'
 
 export default {
+  components: { UserTopBar },
   data() {
     return {
       statusBarHeight: 20,
@@ -267,6 +267,9 @@ export default {
     };
   },
   computed: {
+    isLoggedIn() {
+      return !!uni.getStorageSync('token')
+    },
     weightChartHasData() {
       return (this.weightSeriesFilled || []).some((v) => v != null && !Number.isNaN(v));
     },
@@ -635,8 +638,11 @@ export default {
     closePetSelector() {
       this.petSelectorOpen = false;
     },
-    onFilter() {
-      uni.showToast({ title: "筛选未实现", icon: "none" });
+    onBellTap() {
+      uni.navigateTo({ url: '/pages/notification/index' })
+    },
+    onDiscoverTap() {
+      uni.navigateTo({ url: '/pages/discover/index' })
     },
     onTopUserTap() {
       const token = uni.getStorageSync("token");
@@ -669,62 +675,6 @@ export default {
 .board-page {
   min-height: 100vh;
   background: #f5f5f5;
-}
-
-.nav-fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 30;
-  background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 100%);
-}
-
-.status-bar {
-  width: 100%;
-}
-
-.nav-bar {
-  height: 92rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 28rpx;
-}
-
-.nav-user {
-  display: flex;
-  align-items: center;
-}
-
-.nav-user-avatar {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  margin-right: 14rpx;
-  border: 2rpx solid rgba(255, 255, 255, 0.85);
-}
-
-.nav-user-name {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #fff;
-}
-
-.nav-right {
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 28rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.nav-right-icon {
-  font-size: 30rpx;
-  color: #fff;
-  line-height: 1;
 }
 
 .board-scroll {

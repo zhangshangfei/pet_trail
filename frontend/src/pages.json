@@ -117,6 +117,13 @@
         "navigationBarTitleText": "发现用户",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/follows/index",
+      "style": {
+        "navigationBarTitleText": "关注/粉丝",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

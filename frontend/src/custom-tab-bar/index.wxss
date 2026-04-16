@@ -9,14 +9,15 @@
 
 .tabbar {
   margin: 0 24rpx 18rpx;
-  height: 124rpx;
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: 64rpx;
-  box-shadow: 0 18rpx 40rpx rgba(0, 0, 0, 0.12);
+  height: 120rpx;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 60rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
   display: block;
   position: relative;
-  padding: 0 26rpx;
-  backdrop-filter: blur(16rpx);
+  padding: 0 16rpx;
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
 }
 
 .tabbar-items {
@@ -32,22 +33,157 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #8b93a6;
+  color: #b0b8c9;
+  transition: color 0.25s ease;
+}
+
+.tabbar-icon-wrap {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.25s ease;
+}
+
+.tabbar-item.active .tabbar-icon-wrap {
+  background: rgba(255, 106, 61, 0.1);
 }
 
 .tabbar-icon {
-  font-size: 40rpx;
-  line-height: 40rpx;
-  margin-bottom: 10rpx;
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tabbar-text {
-  font-size: 24rpx;
-  line-height: 24rpx;
-  font-weight: 600;
+  font-size: 22rpx;
+  line-height: 22rpx;
+  font-weight: 500;
+  margin-top: 4rpx;
+  transition: color 0.25s ease;
 }
 
 .tabbar-item.active {
   color: #ff6a3d;
 }
 
+.tabbar-item.active .tabbar-text {
+  font-weight: 600;
+}
+
+/* Home icon - house shape */
+.icon-home {
+  width: 28rpx;
+  height: 24rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 4rpx 4rpx 0 0;
+  position: relative;
+}
+.icon-home::before {
+  content: '';
+  position: absolute;
+  top: -14rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 20rpx solid transparent;
+  border-right: 20rpx solid transparent;
+  border-bottom: 14rpx solid currentColor;
+}
+.icon-home::after {
+  content: '';
+  position: absolute;
+  bottom: -3rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10rpx;
+  height: 12rpx;
+  border: 3rpx solid currentColor;
+  border-top: none;
+  border-radius: 0 0 2rpx 2rpx;
+}
+
+/* Health icon - heart shape */
+.icon-health {
+  width: 26rpx;
+  height: 24rpx;
+  position: relative;
+}
+.icon-health::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 2rpx;
+  width: 14rpx;
+  height: 14rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 50% 50% 0 0;
+  transform: rotate(-45deg);
+  transform-origin: right bottom;
+}
+.icon-health::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 2rpx;
+  width: 14rpx;
+  height: 14rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 50% 50% 0 0;
+  transform: rotate(45deg);
+  transform-origin: left bottom;
+}
+
+/* Checkin icon - checkmark in circle */
+.icon-checkin {
+  width: 28rpx;
+  height: 28rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 50%;
+  position: relative;
+}
+.icon-checkin::after {
+  content: '';
+  position: absolute;
+  top: 4rpx;
+  left: 8rpx;
+  width: 10rpx;
+  height: 6rpx;
+  border-left: 3rpx solid currentColor;
+  border-bottom: 3rpx solid currentColor;
+  transform: rotate(-45deg);
+}
+
+/* Me icon - person shape */
+.icon-me {
+  width: 28rpx;
+  height: 28rpx;
+  position: relative;
+}
+.icon-me::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14rpx;
+  height: 14rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 50%;
+}
+.icon-me::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22rpx;
+  height: 10rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 10rpx 10rpx 0 0;
+}

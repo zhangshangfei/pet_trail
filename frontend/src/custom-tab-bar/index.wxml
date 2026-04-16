@@ -2,33 +2,40 @@
   <view class="tabbar">
     <view class="tabbar-items">
       <view class="tabbar-item {{selected === 0 ? 'active' : ''}}" data-index="0" bindtap="onSwitch">
-        <view class="tabbar-icon">⌂</view>
+        <view class="tabbar-icon-wrap">
+          <view class="tabbar-icon">
+            <view class="icon-home"></view>
+          </view>
+        </view>
         <view class="tabbar-text">首页</view>
       </view>
 
       <view class="tabbar-item {{selected === 1 ? 'active' : ''}}" data-index="1" bindtap="onSwitch">
-        <view class="tabbar-icon">📈</view>
+        <view class="tabbar-icon-wrap">
+          <view class="tabbar-icon">
+            <view class="icon-health"></view>
+          </view>
+        </view>
         <view class="tabbar-text">健康</view>
       </view>
 
       <view class="tabbar-item {{selected === 2 ? 'active' : ''}}" data-index="2" bindtap="onSwitch">
-        <view class="tabbar-icon">✓</view>
+        <view class="tabbar-icon-wrap">
+          <view class="tabbar-icon">
+            <view class="icon-checkin"></view>
+          </view>
+        </view>
         <view class="tabbar-text">打卡</view>
       </view>
 
-      <!-- 社区功能暂时隐藏
       <view class="tabbar-item {{selected === 3 ? 'active' : ''}}" data-index="3" bindtap="onSwitch">
-        <view class="tabbar-icon">🐾</view>
-        <view class="tabbar-text">社区</view>
-      </view>
-      -->
-
-      <view class="tabbar-item {{selected === 3 ? 'active' : ''}}" data-index="3" bindtap="onSwitch">
-        <view class="tabbar-icon">👤</view>
+        <view class="tabbar-icon-wrap">
+          <view class="tabbar-icon">
+            <view class="icon-me"></view>
+          </view>
+        </view>
         <view class="tabbar-text">我的</view>
       </view>
     </view>
-
   </view>
 </view>
-
