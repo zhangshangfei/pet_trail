@@ -103,9 +103,8 @@ public class PostService {
             log.info("查询收藏Tab动态");
             return postMapper.selectCollectFeed(userId, offset, size);
         } else if ("recommend".equals(tab)) {
-            // 推荐：返回推荐动态（暂时返回全部，后续实现推荐算法后修改）
             log.info("查询推荐Tab动态");
-            return postMapper.selectFeed(offset, size);
+            return postMapper.selectRecommendFeed(offset, size);
         } else {
             // 全部：返回所有动态
             log.info("查询全部Tab动态");

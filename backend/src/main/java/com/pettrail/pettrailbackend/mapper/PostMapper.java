@@ -57,4 +57,6 @@ public interface PostMapper extends BaseMapper<Post> {
      * 用于定时任务兜底处理
      */
     List<Post> selectPendingForAudit(@Param("beforeTime") LocalDateTime beforeTime);
+
+    List<Post> selectRecommendFeed(@Param("offset") int offset, @Param("limit") int limit);
 }

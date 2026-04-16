@@ -8,15 +8,19 @@
         <result column="pet_id" property="petId"/>
         <result column="content" property="content"/>
         <result column="images" property="images"/>
+        <result column="videos" property="videos"/>
         <result column="like_count" property="likeCount"/>
         <result column="comment_count" property="commentCount"/>
         <result column="share_count" property="shareCount"/>
+        <result column="ee_count" property="eeCount"/>
+        <result column="location" property="location"/>
+        <result column="stickers" property="stickers"/>
+        <result column="bubble" property="bubble"/>
         <result column="status" property="status"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
     </resultMap>
 
-    <!-- 根据用户 ID 查询动态列表 -->
     <select id="selectByUserId" resultMap="BaseResultMap">
         SELECT p.* FROM posts p
         INNER JOIN users u ON p.user_id = u.id
@@ -27,7 +31,6 @@
         LIMIT #{offset}, #{limit}
     </select>
 
-    <!-- 查询动态列表（按时间倒序） -->
     <select id="selectFeed" resultMap="BaseResultMap">
         SELECT p.* FROM posts p
         INNER JOIN users u ON p.user_id = u.id
@@ -37,7 +40,6 @@
         LIMIT #{offset}, #{limit}
     </select>
 
-    <!-- 查询关注用户的动态列表（按时间倒序） -->
     <select id="selectFollowFeed" resultMap="BaseResultMap">
         SELECT p.* FROM posts p
         INNER JOIN follows f ON p.user_id = f.followee_id
@@ -49,7 +51,6 @@
         LIMIT #{offset}, #{limit}
     </select>
 
-    <!-- 查询用户收藏的动态列表（按时间倒序） -->
     <select id="selectCollectFeed" resultMap="BaseResultMap">
         SELECT p.* FROM posts p
         INNER JOIN post_ee e ON p.id = e.post_id
@@ -61,7 +62,6 @@
         LIMIT #{offset}, #{limit}
     </select>
 
-    <!-- 查询用户点赞的动态列表（按时间倒序） -->
     <select id="selectLikedFeed" resultMap="BaseResultMap">
         SELECT p.* FROM posts p
         INNER JOIN post_likes l ON p.id = l.post_id
@@ -73,7 +73,6 @@
         LIMIT #{offset}, #{limit}
     </select>
 
-    <!-- 根据日期范围查询动态 -->
     <select id="selectByDateRange" resultMap="BaseResultMap">
         SELECT * FROM posts
         WHERE user_id = #{userId}
@@ -82,12 +81,21 @@
         ORDER BY created_at DESC
     </select>
 
-    <!-- 查询待审核的动态（创建时间早于指定时间） -->
     <select id="selectPendingForAudit" resultMap="BaseResultMap">
         SELECT * FROM posts
         WHERE status = 0
         AND created_at &lt; #{beforeTime}
         ORDER BY created_at ASC
+    </select>
+
+    <select id="selectRecommendFeed" resultMap="BaseResultMap">
+        SELECT p.* FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        WHERE p.status = 1
+        AND u.status = 1
+        AND p.like_count + p.comment_count + p.share_count &gt; 0
+        ORDER BY (p.like_count * 3 + p.comment_count * 2 + p.share_count) / (GREATEST(1, TIMESTAMPDIFF(HOUR, p.created_at, NOW())) + 2) DESC
+        LIMIT #{offset}, #{limit}
     </select>
 
 </mapper>
