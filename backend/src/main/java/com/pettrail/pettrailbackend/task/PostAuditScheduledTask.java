@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.task;
 
+import com.alibaba.fastjson2.JSON;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.service.ContentAuditService;
@@ -88,7 +89,7 @@ public class PostAuditScheduledTask {
 
         // 2. 图片审核（如果有）
         if (post.getImages() != null && !post.getImages().isEmpty()) {
-            java.util.List<String> imageList = com.alibaba.fastjson.JSON.parseArray(post.getImages(), String.class);
+            List<String> imageList = JSON.parseArray(post.getImages(), String.class);
             for (String imageUrl : imageList) {
                 boolean imageAuditPassed = contentAuditService.auditImage(imageUrl);
                 if (!imageAuditPassed) {

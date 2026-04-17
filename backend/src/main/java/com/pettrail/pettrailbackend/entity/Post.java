@@ -43,6 +43,12 @@ public class Post {
 
     private Integer status;
 
+    private Integer auditStatus;
+
+    private String auditRemark;
+
+    private Integer deleted;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

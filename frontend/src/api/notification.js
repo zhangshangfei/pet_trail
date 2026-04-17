@@ -9,9 +9,17 @@ export const getUnreadCount = () => {
 }
 
 export const markAsRead = (id) => {
-  return request.put(`/api/notifications/${id}/read`)
+  return request.put('/api/notifications/' + id + '/read')
 }
 
 export const markAllAsRead = () => {
   return request.put('/api/notifications/read-all')
+}
+
+export const deleteNotification = (id) => {
+  return request.delete('/api/notifications/' + id)
+}
+
+export const clearAllNotifications = () => {
+  return request.delete('/api/notifications/clear')
 }

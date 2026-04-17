@@ -5,15 +5,15 @@ services:
     image: mysql:8.0
     container_name: pet-trail-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: pet_trail
-      MYSQL_USER: pettrail
-      MYSQL_PASSWORD: pettrail123
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-pet_trail}
+      MYSQL_USER: ${MYSQL_USER:-pettrail}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-pettrail123}
     ports:
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backend/src/main/resources/init.sql:/docker-entrypoint-initdb.d/init.sql
     command: --default-authentication-plugin=mysql_native_password
     networks:
       - pet-trail-network
@@ -28,45 +28,31 @@ services:
     networks:
       - pet-trail-network
 
-  # RabbitMQ 服务（已注释，改用 Spring Event + 定时任务兜底）
-  # rabbitmq:
-  #   image: rabbitmq:3-management-alpine
-  #   container_name: pet-trail-rabbitmq
-  #   ports:
-  #     - "5672:5672"
-  #     - "15672:15672"
-  #   environment:
-  #     RABBITMQ_DEFAULT_USER: guest
-  #     RABBITMQ_DEFAULT_PASS: guest
-  #   volumes:
-  #     - rabbitmq-data:/var/lib/rabbitmq
-  #   networks:
-  #     - pet-trail-network
-
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: pet-trail-backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/pet_trail?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
-      SPRING_DATASOURCE_USERNAME: pettrail
-      SPRING_DATASOURCE_PASSWORD: pettrail123
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
-      # RABBITMQ_HOST: rabbitmq  # 已注释
-      # RABBITMQ_PORT: 5672
-      # RABBITMQ_USERNAME: guest
-      # RABBITMQ_PASSWORD: guest
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: pet_trail
+      MYSQL_USERNAME: ${MYSQL_USER:-pettrail}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-pettrail123}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       TENCENT_COS_SECRET_ID: ${TENCENT_COS_SECRET_ID}
       TENCENT_COS_SECRET_KEY: ${TENCENT_COS_SECRET_KEY}
+      TENCENT_COS_BUCKET_NAME: ${TENCENT_COS_BUCKET_NAME}
+      TENCENT_COS_REGION: ${TENCENT_COS_REGION:-ap-shanghai}
       JWT_SECRET: ${JWT_SECRET}
+      WECHAT_MINIAPP_APP_ID: ${WECHAT_MINIAPP_APP_ID}
+      WECHAT_MINIAPP_APP_SECRET: ${WECHAT_MINIAPP_APP_SECRET}
     ports:
       - "8080:8080"
     depends_on:
       - mysql
       - redis
-      # - rabbitmq  # 已注释
     networks:
       - pet-trail-network
 
@@ -87,7 +73,6 @@ services:
 volumes:
   mysql-data:
   redis-data:
-  # rabbitmq-data:  # 已注释
 
 networks:
   pet-trail-network:

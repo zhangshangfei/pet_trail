@@ -1,6 +1,6 @@
 package com.pettrail.pettrailbackend.controller;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSONObject;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.service.UserService;

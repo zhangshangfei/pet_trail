@@ -2,7 +2,9 @@ package com.pettrail.pettrailbackend.config;
 
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
+import com.qcloud.cos.auth.BasicCOSCredentials;
 import com.qcloud.cos.auth.BasicSessionCredentials;
+import com.qcloud.cos.auth.COSCredentials;
 import com.qcloud.cos.region.Region;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -14,36 +16,26 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "tencent.cos")
 public class CosConfig {
 
-
-    /**
-     * 存储桶名称
-     */
     private String bucketName;
-
-    /**
-     * 地域 (Region)
-     * 示例: ap-shanghai (请根据你实际开通的地域填写)
-     */
     private String region;
-
-    /**
-     * 初始化 COS 客户端
-     * 注意：云托管环境下，不需要手动传入 secretId/secretKey
-     * SDK 会自动从环境变量 (TENCENTCLOUD_*) 中读取临时密钥和 Token
-     */
+    private String secretId;
+    private String secretKey;
 
     @Bean
     public COSClient cosClient() {
-        // 1. 手动读取云托管自动注入的环境变量
-        String secretId = System.getenv("TENCENTCLOUD_SECRET_ID");
-        String secretKey = System.getenv("TENCENTCLOUD_SECRET_KEY");
+        String cloudSecretId = System.getenv("TENCENTCLOUD_SECRET_ID");
+        String cloudSecretKey = System.getenv("TENCENTCLOUD_SECRET_KEY");
         String sessionToken = System.getenv("TENCENTCLOUD_SESSION_TOKEN");
 
-        // 2. 使用 BasicSessionCredentials 创建凭证
-        // 注意：云托管必须传 sessionToken，否则鉴权失败
-        BasicSessionCredentials credentials = new BasicSessionCredentials(secretId, secretKey, sessionToken);
+        COSCredentials credentials;
+        if (cloudSecretId != null && cloudSecretKey != null) {
+            credentials = new BasicSessionCredentials(cloudSecretId, cloudSecretKey, sessionToken);
+        } else if (secretId != null && !secretId.isEmpty() && secretKey != null && !secretKey.isEmpty()) {
+            credentials = new BasicCOSCredentials(secretId, secretKey);
+        } else {
+            throw new IllegalStateException("COS credentials not configured. Set TENCENTCLOUD_SECRET_ID/KEY or tencent.cos.secret-id/secret-key.");
+        }
 
-        // 3. 初始化客户端
         ClientConfig clientConfig = new ClientConfig(new Region(region));
         return new COSClient(credentials, clientConfig);
     }

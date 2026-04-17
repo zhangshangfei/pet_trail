@@ -1,7 +1,7 @@
 package com.pettrail.pettrailbackend.controller;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.pettrail.pettrailbackend.dto.CommentVO;
 import com.pettrail.pettrailbackend.dto.PostVO;
 import com.pettrail.pettrailbackend.dto.Result;
@@ -53,14 +53,14 @@ public class PostController {
         String content = data.getString("content");
         Long petId = data.getLong("petId");
         List<String> images = data.getJSONArray("images") != null
-            ? data.getJSONArray("images").toJavaList(String.class)
+            ? data.getJSONArray("images").toList(String.class)
             : null;
         List<String> videos = data.getJSONArray("videos") != null
-            ? data.getJSONArray("videos").toJavaList(String.class)
+            ? data.getJSONArray("videos").toList(String.class)
             : null;
 
         List<String> stickers = data.getJSONArray("stickers") != null
-            ? data.getJSONArray("stickers").toJavaList(String.class)
+            ? data.getJSONArray("stickers").toList(String.class)
             : null;
 
         Map<String, String> bubble = null;

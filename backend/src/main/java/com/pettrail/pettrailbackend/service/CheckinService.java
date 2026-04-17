@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.service;
 
+import com.alibaba.fastjson2.JSON;
 import com.pettrail.pettrailbackend.entity.CheckinItem;
 import com.pettrail.pettrailbackend.entity.CheckinRecord;
 import com.pettrail.pettrailbackend.entity.CheckinStats;
@@ -78,7 +79,7 @@ public class CheckinService {
         record.setRecordDate(today);
         record.setStatus(1);
         record.setNote(note);
-        record.setImages(images != null ? com.alibaba.fastjson.JSON.toJSONString(images) : null);
+        record.setImages(images != null ? JSON.toJSONString(images) : null);
         
         int insertResult = checkinRecordMapper.insert(record);
         log.info("打卡记录插入结果: rows={}, recordId={}", insertResult, record.getId());

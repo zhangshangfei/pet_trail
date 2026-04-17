@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.listener;
 
+import com.alibaba.fastjson2.JSON;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.event.PostCreateEvent;
 import com.pettrail.pettrailbackend.service.ContentAuditService;
@@ -8,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * 动态创建事件监听器
@@ -41,7 +44,7 @@ public class PostCreateEventListener {
             // 2. 图片审核（如果有）
             if (post.getImages() != null && !post.getImages().isEmpty()) {
                 // 解析图片列表
-                java.util.List<String> imageList = com.alibaba.fastjson.JSON.parseArray(post.getImages(), String.class);
+                List<String> imageList = JSON.parseArray(post.getImages(), String.class);
                 for (String imageUrl : imageList) {
                     boolean imageAuditPassed = contentAuditService.auditImage(imageUrl);
                     if (!imageAuditPassed) {

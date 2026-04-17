@@ -26,5 +26,7 @@ public class Report {
 
     private Integer status;
 
+    private String result;
+
     private LocalDateTime createdAt;
 }

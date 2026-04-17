@@ -44,10 +44,12 @@ public class SecurityConfig {
                                 "/api/users/register",
                                 "/api/auth/**",
                                 "/api/posts/feed",
+                                "/api/admin/auth/login",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/error"
                         ).permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET,
                                 "/api/posts/*",
                                 "/api/posts/*/comments",
@@ -65,11 +67,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 允许的源地址（前端开发服务器）
         configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:8080",           // uni-app H5 开发
-            "https://localhost:8080",          // uni-app H5 HTTPS
-            "http://127.0.0.1:8080"            // 本地 IP
+            "http://localhost:8080",
+            "https://localhost:8080",
+            "http://127.0.0.1:8080",
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "https://springboot-4fyd-243081-4-1419682950.sh.run.tcloudbase.com"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
@@ -78,7 +82,6 @@ public class SecurityConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-
         return source;
     }
 

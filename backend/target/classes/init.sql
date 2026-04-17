@@ -349,6 +349,21 @@ CREATE TABLE IF NOT EXISTS `reports` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='举报表';
 
+CREATE TABLE IF NOT EXISTS `admins` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL COMMENT '用户名',
+  `password` varchar(255) NOT NULL COMMENT '密码(BCrypt)',
+  `nickname` varchar(50) DEFAULT NULL COMMENT '昵称',
+  `avatar` varchar(255) DEFAULT NULL COMMENT '头像URL',
+  `role` varchar(50) DEFAULT 'ADMIN' COMMENT '角色: SUPER_ADMIN, ADMIN',
+  `status` tinyint(4) DEFAULT 1 COMMENT '状态: 1-正常 0-禁用',
+  `last_login_at` datetime DEFAULT NULL COMMENT '最后登录时间',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='管理员表';
+
 -- ========================================
 -- 初始化数据
 -- ========================================

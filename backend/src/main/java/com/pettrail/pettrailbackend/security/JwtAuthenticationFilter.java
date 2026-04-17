@@ -17,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -33,31 +34,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         try {
             String token = getTokenFromRequest(request);
-            log.debug("请求URL: {}, Token: {}", request.getRequestURI(), token != null ? token.substring(0, Math.min(20, token.length())) + "..." : "null");
-            
-            // 1. 验证 Token
+
             if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
                 Long userId = jwtUtil.getUserIdFromToken(token);
                 String openid = jwtUtil.getOpenidFromToken(token);
 
-                // 2. 构建认证对象
-                // 关键点：我们将 userId 作为了 principal (主体)
-                // 这样在业务代码里就可以直接强转为 Long 获取 ID
+                List<SimpleGrantedAuthority> authorities;
+                if (openid != null && openid.startsWith("admin:")) {
+                    String role = openid.substring(6);
+                    authorities = List.of(
+                            new SimpleGrantedAuthority("ROLE_ADMIN"),
+                            new SimpleGrantedAuthority("ROLE_" + role)
+                    );
+                } else {
+                    authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+                }
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                userId,  // <--- 这里放 userId，而不是 User 对象或 String
-                                null,    // credentials (密码位，通常留空)
-                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                                userId,
+                                null,
+                                authorities
                         );
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // 3. 存入上下文
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                log.info("用户认证成功: userId={}, token={}", userId, token.substring(0, Math.min(20, token.length())) + "...");
-            } else {
-                log.debug("Token验证失败: token={}", token);
             }
         } catch (Exception e) {
             log.error("无法设置用户认证: {}", e.getMessage(), e);
@@ -66,11 +67,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * 从请求中提取Token
-     * @param request HttpServletRequest
-     * @return Token字符串
-     */
     private String getTokenFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
 

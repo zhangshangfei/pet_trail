@@ -6,42 +6,27 @@
         <view class="nav-back-arrow"></view>
       </view>
       <text class="nav-title">消息通知</text>
-      <view v-if="notificationList.length > 0" class="nav-action" @click="onMarkAllRead">
-        <text class="nav-action-text">全部已读</text>
+      <view class="nav-actions">
+        <view v-if="notificationList.length > 0" class="nav-action" @click="onMarkAllRead">
+          <text class="nav-action-text">全部已读</text>
+        </view>
+        <view v-if="notificationList.length > 0" class="nav-action" @click="onClearAll">
+          <text class="nav-action-text nav-action-text--danger">清空</text>
+        </view>
       </view>
-      <view v-else class="nav-action"></view>
     </view>
-
-    <scroll-view
-      scroll-y
-      class="notification-list"
-      :style="{ height: scrollHeight + 'px' }"
-      @scrolltolower="loadMore"
-    >
+    <scroll-view scroll-y class="notification-list" :style="{ height: scrollHeight + 'px' }" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
       <view v-if="loading && notificationList.length === 0" class="loading-state">
         <text class="loading-text">加载中...</text>
       </view>
-
       <view v-else-if="notificationList.length === 0" class="empty-state">
         <text class="empty-emoji">🔔</text>
         <text class="empty-text">暂无通知</text>
       </view>
-
       <view v-else>
-        <view
-          v-for="item in notificationList"
-          :key="item.id"
-          class="notification-item"
-          :class="{ 'notification-item--unread': !item.isRead }"
-          @click="onNotificationTap(item)"
-        >
+        <view v-for="item in notificationList" :key="item.id" class="notification-item" :class="{ 'notification-item--unread': !item.isRead }" @click="onNotificationTap(item)" @longpress="onNotificationLongPress(item)">
           <view class="notification-avatar-wrap">
-            <image
-              v-if="item.fromUserAvatar"
-              class="notification-avatar"
-              :src="item.fromUserAvatar"
-              mode="aspectFill"
-            />
+            <image v-if="item.fromUserAvatar" class="notification-avatar" :src="item.fromUserAvatar" mode="aspectFill" />
             <view v-else class="notification-avatar-placeholder">
               <text class="notification-avatar-icon">{{ getTypeIcon(item.type) }}</text>
             </view>
@@ -58,7 +43,6 @@
           </view>
           <view v-if="!item.isRead" class="notification-dot"></view>
         </view>
-
         <view v-if="loading" class="loading-more">
           <text class="loading-more-text">加载中...</text>
         </view>
@@ -82,6 +66,7 @@ export default {
       page: 1,
       size: 20,
       loading: false,
+      refreshing: false,
       hasMore: true
     }
   },
@@ -98,9 +83,7 @@ export default {
   },
   onShow() {
     if (this.notificationList.length > 0) {
-      this.page = 1
-      this.hasMore = true
-      this.loadNotifications()
+      this.refreshList()
     }
   },
   methods: {
@@ -129,6 +112,18 @@ export default {
     loadMore() {
       this.loadNotifications()
     },
+    async onRefresh() {
+      this.refreshing = true
+      this.page = 1
+      this.hasMore = true
+      await this.loadNotifications()
+      this.refreshing = false
+    },
+    refreshList() {
+      this.page = 1
+      this.hasMore = true
+      this.loadNotifications()
+    },
     async onNotificationTap(item) {
       if (!item.isRead) {
         try {
@@ -140,30 +135,73 @@ export default {
       }
       if (item.type === 'like' || item.type === 'comment' || item.type === 'favorite') {
         if (item.targetId) {
-          uni.navigateTo({ url: `/pages/post/detail?id=${item.targetId}` })
+          uni.navigateTo({ url: '/pages/post/detail?id=' + item.targetId })
         }
       } else if (item.type === 'follow') {
         if (item.fromUserId) {
-          uni.navigateTo({ url: `/pages/user/detail?id=${item.fromUserId}` })
+          uni.navigateTo({ url: '/pages/user/detail?id=' + item.fromUserId })
         }
+      } else if (item.type === 'system') {
+        if (item.targetId) {
+          uni.navigateTo({ url: '/pages/pets/detail?id=' + item.targetId })
+        }
+      }
+    },
+    onNotificationLongPress(item) {
+      const that = this
+      uni.showActionSheet({
+        itemList: ['删除该通知'],
+        success: function (res) {
+          if (res.tapIndex === 0) {
+            that.deleteNotification(item)
+          }
+        }
+      })
+    },
+    async deleteNotification(item) {
+      try {
+        await notificationApi.deleteNotification(item.id)
+        this.notificationList = this.notificationList.filter(function (n) { return n.id !== item.id })
+        uni.showToast({ title: '已删除', icon: 'none' })
+      } catch (e) {
+        console.error('删除通知失败:', e)
+        uni.showToast({ title: '删除失败', icon: 'none' })
       }
     },
     async onMarkAllRead() {
       try {
         await notificationApi.markAllAsRead()
-        this.notificationList.forEach(item => {
-          item.isRead = true
-        })
+        this.notificationList.forEach(function (item) { item.isRead = true })
         uni.showToast({ title: '已全部标记为已读', icon: 'none' })
       } catch (e) {
         console.error('全部已读失败:', e)
       }
     },
+    async onClearAll() {
+      const that = this
+      uni.showModal({
+        title: '确认清空',
+        content: '确定要清空所有通知吗？此操作不可恢复',
+        confirmColor: '#ff4d4f',
+        success: async function (res) {
+          if (res.confirm) {
+            try {
+              await notificationApi.clearAllNotifications()
+              that.notificationList = []
+              uni.showToast({ title: '已清空', icon: 'none' })
+            } catch (e) {
+              console.error('清空通知失败:', e)
+              uni.showToast({ title: '清空失败', icon: 'none' })
+            }
+          }
+        }
+      })
+    },
     goBack() {
       uni.navigateBack()
     },
     getTypeIcon(type) {
-      const map = {
+      var map = {
         like: '❤️',
         favorite: '⭐',
         comment: '💬',
@@ -174,19 +212,18 @@ export default {
     },
     formatTime(timeStr) {
       if (!timeStr) return ''
-      const date = new Date(timeStr)
-      const now = new Date()
-      const diff = now - date
-      const minute = 60 * 1000
-      const hour = 60 * minute
-      const day = 24 * hour
-
+      var date = new Date(timeStr)
+      var now = new Date()
+      var diff = now - date
+      var minute = 60 * 1000
+      var hour = 60 * minute
+      var day = 24 * hour
       if (diff < minute) return '刚刚'
       if (diff < hour) return Math.floor(diff / minute) + '分钟前'
       if (diff < day) return Math.floor(diff / hour) + '小时前'
       if (diff < 7 * day) return Math.floor(diff / day) + '天前'
-      const m = date.getMonth() + 1
-      const d = date.getDate()
+      var m = date.getMonth() + 1
+      var d = date.getDate()
       return m + '月' + d + '日'
     }
   }
@@ -198,12 +235,10 @@ export default {
   min-height: 100vh;
   background: #f5f5f5;
 }
-
 .status-bar {
   width: 100%;
   background: #fff;
 }
-
 .nav-bar {
   height: 92rpx;
   background: #fff;
@@ -213,7 +248,6 @@ export default {
   padding: 0 28rpx;
   border-bottom: 1rpx solid #f0f0f0;
 }
-
 .nav-back {
   width: 64rpx;
   height: 64rpx;
@@ -224,12 +258,10 @@ export default {
   justify-content: center;
   transition: background 0.2s, transform 0.15s;
 }
-
 .nav-back:active {
   background: rgba(0, 0, 0, 0.1);
   transform: scale(0.92);
 }
-
 .nav-back-arrow {
   width: 18rpx;
   height: 18rpx;
@@ -237,25 +269,27 @@ export default {
   border-bottom: 4rpx solid #333;
   transform: rotate(45deg) translate(2rpx, -2rpx);
 }
-
 .nav-title {
   font-size: 34rpx;
   font-weight: 600;
   color: #333;
 }
-
-.nav-action {
-  min-width: 60rpx;
+.nav-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  gap: 16rpx;
 }
-
+.nav-action {
+  display: flex;
+  align-items: center;
+}
 .nav-action-text {
   font-size: 26rpx;
   color: #ff6a3d;
 }
-
+.nav-action-text--danger {
+  color: #ff4d4f;
+}
 .loading-state,
 .empty-state {
   display: flex;
@@ -264,22 +298,18 @@ export default {
   justify-content: center;
   padding: 200rpx 0;
 }
-
 .loading-text {
   font-size: 28rpx;
   color: #999;
 }
-
 .empty-emoji {
   font-size: 80rpx;
   margin-bottom: 16rpx;
 }
-
 .empty-text {
   font-size: 28rpx;
   color: #9ca3af;
 }
-
 .notification-item {
   display: flex;
   align-items: center;
@@ -288,23 +318,19 @@ export default {
   border-bottom: 1rpx solid #f5f5f5;
   position: relative;
 }
-
 .notification-item--unread {
   background: #fff8f5;
 }
-
 .notification-avatar-wrap {
   position: relative;
   margin-right: 20rpx;
   flex-shrink: 0;
 }
-
 .notification-avatar {
   width: 80rpx;
   height: 80rpx;
   border-radius: 50%;
 }
-
 .notification-avatar-placeholder {
   width: 80rpx;
   height: 80rpx;
@@ -314,11 +340,9 @@ export default {
   align-items: center;
   justify-content: center;
 }
-
 .notification-avatar-icon {
   font-size: 36rpx;
 }
-
 .notification-type-badge {
   position: absolute;
   bottom: -4rpx;
@@ -332,23 +356,19 @@ export default {
   justify-content: center;
   border: 2rpx solid #fff;
 }
-
 .notification-type-icon {
   font-size: 18rpx;
 }
-
 .notification-content {
   flex: 1;
   min-width: 0;
 }
-
 .notification-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 6rpx;
 }
-
 .notification-name {
   font-size: 28rpx;
   font-weight: 600;
@@ -358,14 +378,12 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .notification-time {
   font-size: 22rpx;
   color: #999;
   margin-left: 16rpx;
   flex-shrink: 0;
 }
-
 .notification-text {
   font-size: 26rpx;
   color: #666;
@@ -373,7 +391,6 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .notification-dot {
   width: 16rpx;
   height: 16rpx;
@@ -382,7 +399,6 @@ export default {
   flex-shrink: 0;
   margin-left: 12rpx;
 }
-
 .loading-more,
 .no-more {
   padding: 24rpx 0;
@@ -390,7 +406,6 @@ export default {
   align-items: center;
   justify-content: center;
 }
-
 .loading-more-text,
 .no-more-text {
   font-size: 24rpx;
