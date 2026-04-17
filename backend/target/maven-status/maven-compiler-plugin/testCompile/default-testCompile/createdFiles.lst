@@ -1,0 +1,3 @@
+com\pettrail\pettrailbackend\service\NotificationServiceTest.class
+com\pettrail\pettrailbackend\util\NicknameUtilTest.class
+com\pettrail\pettrailbackend\util\JwtUtilTest.class
