@@ -37,8 +37,7 @@
       "path": "pages/pets/detail",
       "style": {
         "navigationBarTitleText": "宠物详情",
-        "navigationBarBackgroundColor": "#ff6a3d",
-        "navigationBarTextStyle": "white"
+        "navigationStyle": "custom"
       }
     },
     {
@@ -48,31 +47,6 @@
         "navigationStyle": "custom",
         "enablePullDownRefresh": true,
         "backgroundTextStyle": "dark"
-      }
-    },
-    {
-      "path": "pages/health/record",
-      "style": {
-        "navigationBarTitleText": "体重记录",
-        "navigationBarBackgroundColor": "#ff6a3d",
-        "navigationBarTextStyle": "white",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/health/vaccine",
-      "style": {
-        "navigationBarTitleText": "疫苗提醒",
-        "navigationBarBackgroundColor": "#ff6a3d",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/health/parasite",
-      "style": {
-        "navigationBarTitleText": "驱虫提醒",
-        "navigationBarBackgroundColor": "#ff6a3d",
-        "navigationBarTextStyle": "white"
       }
     },
     {

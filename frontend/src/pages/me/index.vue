@@ -99,71 +99,24 @@
       </view>
     </scroll-view>
 
-    <view v-if="showAddPetModal" class="modal-mask" @tap="closeAddPetModal">
-      <view class="modal-card" @tap.stop>
-        <view class="modal-header">
-          <text class="modal-title">添加宠物</text>
-          <text class="modal-close" @tap="closeAddPetModal">✕</text>
-        </view>
-
-        <view class="modal-avatar-area" @tap="onPickAvatar">
-          <view v-if="!addPetForm.avatar" class="modal-avatar-empty">
-            <text class="modal-avatar-icon">📷</text>
-            <text class="modal-avatar-tip">点击上传头像</text>
-          </view>
-          <image v-else class="modal-avatar-img" :src="addPetForm.avatar" mode="aspectFill" />
-        </view>
-
-        <view class="modal-grid">
-          <view class="modal-field modal-field-full">
-            <text class="modal-label">宠物昵称</text>
-            <input class="modal-input" v-model="addPetForm.name" placeholder="请输入昵称" />
-          </view>
-          <view class="modal-field">
-            <text class="modal-label">宠物品种</text>
-            <input class="modal-input" v-model="addPetForm.breed" placeholder="请选择品种" />
-          </view>
-          <view class="modal-field">
-            <text class="modal-label">体重 (kg)</text>
-            <input class="modal-input" type="digit" v-model="addPetForm.weight" placeholder="输入体重" />
-          </view>
-          <view class="modal-field">
-            <text class="modal-label">性别</text>
-            <picker :range="genderLabels" :value="genderIndex" @change="onGenderChange">
-              <view class="modal-select">
-                <text v-if="genderIndex >= 0">{{ genderLabels[genderIndex] }}</text>
-                <text v-else class="modal-placeholder">请选择</text>
-              </view>
-            </picker>
-          </view>
-          <view class="modal-field">
-            <text class="modal-label">生日</text>
-            <picker mode="date" :value="addPetForm.birthday" @change="onBirthdayChange">
-              <view class="modal-select">
-                <text v-if="addPetForm.birthday">{{ addPetForm.birthday }}</text>
-                <text v-else class="modal-placeholder">请选择</text>
-              </view>
-            </picker>
-          </view>
-        </view>
-
-        <view class="modal-actions">
-          <text class="modal-btn modal-btn-cancel" @tap="closeAddPetModal">取消</text>
-          <text class="modal-btn modal-btn-save" @tap="submitAddPet(addPetForm)">保存</text>
-        </view>
-      </view>
-    </view>
+    <AddPetModal
+      v-if="showAddPetModal"
+      :initialForm="addPetForm"
+      @close="closeAddPetModal"
+      @save="submitAddPet"
+    />
   </view>
 </template>
 
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
-import { uploadImage } from '@/api/pet'
+import AddPetModal from '@/components/AddPetModal.vue'
 import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
 
 export default {
   components: {
-    UserTopBar
+    UserTopBar,
+    AddPetModal
   },
   data() {
     return {
@@ -182,20 +135,13 @@ export default {
         birthday: "",
         weight: "",
         color: "",
-        avatar: ""
+        avatar: "",
+        category: 0,
+        sterilized: 0
       }
     };
   },
-  computed: {
-    genderLabels() {
-      return ["❓ 未知", "♂ 弟弟", "♀ 妹妹"];
-    },
-    genderIndex() {
-      if (this.addPetForm.gender === 1) return 1;
-      if (this.addPetForm.gender === 2) return 2;
-      return 0;
-    }
-  },
+  computed: {},
   onShow() {
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: false });
@@ -289,49 +235,14 @@ export default {
         birthday: "",
         weight: "",
         color: "",
-        avatar: ""
+        avatar: "",
+        category: 0,
+        sterilized: 0
       };
       this.showAddPetModal = true;
     },
     closeAddPetModal() {
       this.showAddPetModal = false;
-    },
-    onGenderChange(e) {
-      const idx = Number(e.detail.value);
-      this.addPetForm.gender = idx === 1 ? 1 : idx === 2 ? 2 : 0;
-    },
-    onBirthdayChange(e) {
-      this.addPetForm.birthday = e.detail.value;
-    },
-    onPickAvatar() {
-      uni.showActionSheet({
-        itemList: ["从相册选择", "拍照"],
-        success: (res) => {
-          const sourceType = res.tapIndex === 1 ? ["camera"] : ["album"];
-          uni.chooseImage({
-            count: 1,
-            sourceType,
-            success: async (imgRes) => {
-              const path = imgRes.tempFilePaths && imgRes.tempFilePaths[0];
-              if (!path) return;
-              uni.showLoading({ title: "上传中..." });
-              try {
-                const up = await uploadImage(path);
-                if (up && up.success && up.data && up.data.url) {
-                  this.addPetForm.avatar = up.data.url;
-                  uni.showToast({ title: "头像已上传", icon: "success" });
-                } else {
-                  throw new Error((up && up.message) || "上传失败");
-                }
-              } catch (e) {
-                uni.showToast({ title: (e && e.message) || "上传失败", icon: "none" });
-              } finally {
-                uni.hideLoading();
-              }
-            }
-          });
-        }
-      });
     },
     async submitAddPet(payload) {
       const loggedIn = await checkLogin('请先登录后再添加宠物')
@@ -604,141 +515,5 @@ export default {
 .option-arrow {
   font-size: 32rpx;
   color: #d1d5db;
-}
-
-.modal-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40rpx;
-}
-
-.modal-card {
-  width: 100%;
-  background: #fff;
-  border-radius: 24rpx;
-  padding: 28rpx 24rpx;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24rpx;
-}
-
-.modal-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #111827;
-}
-
-.modal-close {
-  font-size: 32rpx;
-  color: #9ca3af;
-  padding: 8rpx;
-}
-
-.modal-avatar-area {
-  width: 160rpx;
-  height: 160rpx;
-  margin: 0 auto 24rpx;
-  border-radius: 50%;
-  border: 2rpx dashed #d1d5db;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f9fafb;
-}
-
-.modal-avatar-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.modal-avatar-icon {
-  font-size: 40rpx;
-  margin-bottom: 8rpx;
-}
-
-.modal-avatar-tip {
-  font-size: 20rpx;
-  color: #9ca3af;
-}
-
-.modal-avatar-img {
-  width: 100%;
-  height: 100%;
-}
-
-.modal-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16rpx;
-}
-
-.modal-field {
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-field-full {
-  grid-column: 1 / -1;
-}
-
-.modal-label {
-  font-size: 22rpx;
-  color: #6b7280;
-  margin-bottom: 8rpx;
-}
-
-.modal-input,
-.modal-select {
-  border: 2rpx solid #e5e7eb;
-  border-radius: 12rpx;
-  padding: 16rpx;
-  font-size: 26rpx;
-  background: #f9fafb;
-}
-
-.modal-placeholder {
-  color: #9ca3af;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 16rpx;
-  margin-top: 24rpx;
-}
-
-.modal-btn {
-  flex: 1;
-  height: 80rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999rpx;
-  font-size: 28rpx;
-  font-weight: 600;
-}
-
-.modal-btn-cancel {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.modal-btn-save {
-  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
-  color: #fff;
-  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
 }
 </style>
