@@ -84,15 +84,14 @@ function cloudRequest(options = {}) {
           }, 1500)
           reject(res)
         } else if (res.statusCode === 403) {
-          uni.showToast({ title: '无权限访问', icon: 'none', duration: 2000 })
           reject(res)
         } else if (res.statusCode === 404) {
           uni.showToast({ title: '请求的资源不存在', icon: 'none', duration: 2000 })
           reject(res)
+        } else if (res.statusCode >= 500) {
+          uni.showToast({ title: '服务器开小差了', icon: 'none', duration: 2000 })
+          reject(res)
         } else {
-          const errorCode = res.data && res.data.code;
-          const errorMessage = (res.data && res.data.message) || `请求失败：${res.statusCode}`;
-          uni.showToast({ title: errorMessage, icon: 'none', duration: 3000 })
           reject(res)
         }
       },
@@ -154,15 +153,14 @@ function httpRequest(options = {}) {
           }, 1500)
           reject(res)
         } else if (res.statusCode === 403) {
-          uni.showToast({ title: '无权限访问', icon: 'none', duration: 2000 })
           reject(res)
         } else if (res.statusCode === 404) {
           uni.showToast({ title: '请求的资源不存在', icon: 'none', duration: 2000 })
           reject(res)
+        } else if (res.statusCode >= 500) {
+          uni.showToast({ title: '服务器开小差了', icon: 'none', duration: 2000 })
+          reject(res)
         } else {
-          const errorCode = res.data && res.data.code;
-          const errorMessage = (res.data && res.data.message) || `请求失败：${res.statusCode}`;
-          uni.showToast({ title: errorMessage, icon: 'none', duration: 3000 })
           reject(res)
         }
       },

@@ -14,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -47,6 +48,13 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/error"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/posts/*",
+                                "/api/posts/*/comments",
+                                "/api/users/profile/*",
+                                "/api/users/*",
+                                "/api/pets/*"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

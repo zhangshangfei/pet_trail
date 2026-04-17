@@ -81,7 +81,7 @@
           <view class="option-list">
             <view class="option-item" @tap="goToAbout">
               <text class="option-icon">ℹ️</text>
-              <text class="option-text">关于宠迹</text>
+              <text class="option-text">关于我们</text>
               <text class="option-arrow">›</text>
             </view>
             <view class="option-item" @tap="goToFeedback">
@@ -376,7 +376,7 @@ export default {
       uni.navigateTo({ url: '/pages/discover/index' });
     },
     goToAbout() {
-      uni.showToast({ title: "关于宠迹未实现", icon: "none" });
+      uni.showToast({ title: "关于我们未实现", icon: "none" });
     },
     goToFeedback() {
       uni.showToast({ title: "意见反馈未实现", icon: "none" });

@@ -215,7 +215,12 @@
     </scroll-view>
 
     <view class="fab" @tap="addRecord">
-      <text class="fab-text">＋</text>
+      <view class="fab-inner">
+        <view class="fab-icon-wrapper">
+          <view class="fab-hbar"></view>
+          <view class="fab-vbar"></view>
+        </view>
+      </view>
     </view>
 
     <view class="board-tabbar-safe">
@@ -1110,25 +1115,56 @@ export default {
 
 .fab {
   position: fixed;
-  right: 24rpx;
+  right: 28rpx;
   bottom: calc(env(safe-area-inset-bottom) + 250rpx);
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 48rpx;
-  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba(255, 106, 61, 0.35);
   z-index: 45;
 }
 
-.fab-text {
-  font-size: 48rpx;
-  color: #fff;
-  font-weight: 300;
-  line-height: 1;
+.fab-inner {
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 30rpx;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 32rpx rgba(255, 77, 79, 0.4), 0 2rpx 8rpx rgba(255, 77, 79, 0.2);
+  backdrop-filter: blur(12px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fab:active .fab-inner {
+  transform: scale(0.92);
+  box-shadow: 0 4rpx 16rpx rgba(255, 77, 79, 0.3);
+}
+
+.fab-icon-wrapper {
+  position: relative;
+  width: 38rpx;
+  height: 38rpx;
+}
+
+.fab-hbar,
+.fab-vbar {
+  position: absolute;
+  background: #fff;
+  border-radius: 4rpx;
+}
+
+.fab-hbar {
+  top: 50%;
+  left: 0;
+  width: 38rpx;
+  height: 5rpx;
+  transform: translateY(-50%);
+}
+
+.fab-vbar {
+  left: 50%;
+  top: 0;
+  width: 5rpx;
+  height: 38rpx;
+  transform: translateX(-50%);
 }
 
 .board-tabbar-safe {

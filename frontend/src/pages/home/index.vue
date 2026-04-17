@@ -207,7 +207,12 @@
 
     <!-- 悬浮发布按钮 -->
     <view class="fab-button" @click="onPublishTap">
-      <text class="fab-icon">+</text>
+      <view class="fab-inner">
+        <view class="fab-icon-wrapper">
+          <view class="fab-hbar"></view>
+          <view class="fab-vbar"></view>
+        </view>
+      </view>
     </view>
 
     <!-- 视频播放弹窗 -->
@@ -735,13 +740,16 @@ export default {
   left: 0;
   right: 0;
   z-index: 90;
-  background: #fff;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
+  padding-bottom: 24rpx;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .segmented-control {
   display: flex;
   margin: 4rpx 24rpx 8rpx;
-  background: #f3f4f6;
+  background: rgba(243, 244, 246, 0.6);
   border-radius: 999rpx;
   padding: 6rpx;
 }
@@ -757,8 +765,8 @@ export default {
 }
 
 .segment-item.active {
-  background: #fff;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
 
   .segment-text {
     color: #111827;
@@ -1126,27 +1134,56 @@ export default {
 
 .fab-button {
   position: fixed;
-  right: 40rpx;
-  bottom: calc(env(safe-area-inset-bottom) + 160rpx);
-  width: 100rpx;
-  height: 100rpx;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba(59, 130, 246, 0.4);
+  right: 28rpx;
+  bottom: calc(env(safe-area-inset-bottom) + 250rpx);
   z-index: 99;
 }
 
-.fab-button:active {
-  transform: scale(0.95);
+.fab-inner {
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 30rpx;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 32rpx rgba(255, 77, 79, 0.4), 0 2rpx 8rpx rgba(255, 77, 79, 0.2);
+  backdrop-filter: blur(12px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.fab-icon {
-  font-size: 56rpx;
-  color: #fff;
-  font-weight: 300;
+.fab-button:active .fab-inner {
+  transform: scale(0.92);
+  box-shadow: 0 4rpx 16rpx rgba(255, 77, 79, 0.3);
+}
+
+.fab-icon-wrapper {
+  position: relative;
+  width: 38rpx;
+  height: 38rpx;
+}
+
+.fab-hbar,
+.fab-vbar {
+  position: absolute;
+  background: #fff;
+  border-radius: 4rpx;
+}
+
+.fab-hbar {
+  top: 50%;
+  left: 0;
+  width: 38rpx;
+  height: 5rpx;
+  transform: translateY(-50%);
+}
+
+.fab-vbar {
+  left: 50%;
+  top: 0;
+  width: 5rpx;
+  height: 38rpx;
+  transform: translateX(-50%);
 }
 
 .video-player-mask {

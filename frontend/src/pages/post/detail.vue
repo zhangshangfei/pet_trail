@@ -157,6 +157,7 @@
           class="comment-input"
           v-model="newComment"
           :placeholder="replyTarget ? `回复 ${replyTarget.userName}...` : '写评论...'"
+          @focus="onCommentInputFocus"
           @confirm="addComment"
         />
         <text class="send-btn" @click="addComment">发送</text>
@@ -388,7 +389,9 @@ export default {
       }
     },
 
-    onReplyTap(comment, parentComment) {
+    async onReplyTap(comment, parentComment) {
+      const loggedIn = await checkLogin('请先登录后再回复')
+      if (!loggedIn) return
       this.replyTarget = comment
       this.replyParentComment = parentComment || comment
     },
@@ -401,6 +404,15 @@ export default {
 
     focusCommentInput() {
       this.cancelReply()
+    },
+
+    async onCommentInputFocus() {
+      const token = uni.getStorageSync('token')
+      if (!token) {
+        uni.hideKeyboard()
+        const loggedIn = await checkLogin('请先登录后再评论')
+        if (!loggedIn) return
+      }
     },
 
     async addComment() {
@@ -495,7 +507,9 @@ export default {
       this.showDeleteModal = true
     },
 
-    onReportTap() {
+    async onReportTap() {
+      const loggedIn = await checkLogin('请先登录后再举报')
+      if (!loggedIn) return
       this.reportReason = ''
       this.reportDesc = ''
       this.showReportModal = true
@@ -506,7 +520,9 @@ export default {
       return currentUserId && Number(currentUserId) === Number(comment.userId)
     },
 
-    onReportComment(comment) {
+    async onReportComment(comment) {
+      const loggedIn = await checkLogin('请先登录后再举报')
+      if (!loggedIn) return
       uni.showActionSheet({
         itemList: ['垃圾广告', '色情低俗', '虚假信息', '违法违规', '人身攻击', '其他'],
         success: async (res) => {

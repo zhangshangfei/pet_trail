@@ -107,12 +107,6 @@ const cloudRequest = (options = {}) => {
 
           reject(res)
         } else if (res.statusCode === 403) {
-          // 无权限
-          uni.showToast({
-            title: '无权限访问',
-            icon: 'none',
-            duration: 2000
-          })
           reject(res)
         } else if (res.statusCode === 404) {
           // 资源不存在
@@ -122,13 +116,14 @@ const cloudRequest = (options = {}) => {
             duration: 2000
           })
           reject(res)
-        } else {
-          // 其他 HTTP 错误
+        } else if (res.statusCode >= 500) {
           uni.showToast({
-            title: `请求失败：${res.statusCode}`,
+            title: '服务器开小差了',
             icon: 'none',
             duration: 2000
           })
+          reject(res)
+        } else {
           reject(res)
         }
       },
@@ -215,28 +210,22 @@ const httpRequest = (options = {}) => {
 
           reject(res)
         } else if (res.statusCode === 403) {
-          // 无权限
-          uni.showToast({
-            title: '无权限访问',
-            icon: 'none',
-            duration: 2000
-          })
           reject(res)
         } else if (res.statusCode === 404) {
-          // 资源不存在
           uni.showToast({
             title: '请求的资源不存在',
             icon: 'none',
             duration: 2000
           })
           reject(res)
-        } else {
-          const errorMessage = (res.data && res.data.message) || `请求失败：${res.statusCode}`;
+        } else if (res.statusCode >= 500) {
           uni.showToast({
-            title: errorMessage,
+            title: '服务器开小差了',
             icon: 'none',
-            duration: 3000
+            duration: 2000
           })
+          reject(res)
+        } else {
           reject(res)
         }
       },

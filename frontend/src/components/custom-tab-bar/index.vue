@@ -65,14 +65,16 @@ onShow(() => {
   bottom: 0;
   z-index: 1000;
   padding-bottom: env(safe-area-inset-bottom);
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0) 100%);
+  padding-top: 50rpx;
 }
 
 .tab-bar {
   margin: 0 24rpx 18rpx;
   height: 120rpx;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.35);
   border-radius: 60rpx;
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.06);
   display: flex;
   align-items: center;
   padding: 0 16rpx;
