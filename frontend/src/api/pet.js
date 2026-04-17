@@ -54,35 +54,17 @@ function getFileInfo(filePath) {
   })
 }
 
-async function ensureCompressed(filePath, maxSizeKB = 3072) {
+async function ensureCompressed(filePath, maxSizeKB = 2048) {
   const size = await getFileInfo(filePath)
   if (size <= maxSizeKB * 1024) return filePath
-  let quality = 60
-  if (size > maxSizeKB * 1024 * 2) quality = 40
+  let quality = 50
+  if (size > maxSizeKB * 1024 * 2) quality = 30
   try {
     const compressed = await compressImage(filePath, quality)
-    const newSize = await getFileInfo(compressed)
-    if (newSize > 0 && newSize <= maxSizeKB * 1024) return compressed
     return compressed
   } catch (e) {
     return filePath
   }
-}
-
-async function doUploadCloud(filePath) {
-  const fileName = getFileName(filePath)
-  const contentType = guessContentType(fileName)
-  let uploadPath = filePath
-  if (contentType.startsWith('image/')) {
-    uploadPath = await ensureCompressed(filePath)
-  }
-  const base64Data = await readFileAsBase64(uploadPath)
-  const result = await request.post('/api/upload/base64', {
-    fileBase64: base64Data,
-    fileName,
-    contentType
-  })
-  return result
 }
 
 function doUploadHttp(filePath) {
@@ -126,11 +108,41 @@ function doUploadHttp(filePath) {
   })
 }
 
-function doUpload(filePath) {
-  if (BASE_URL === 'cloud') {
-    return doUploadCloud(filePath)
+async function doUploadBase64(filePath) {
+  const fileName = getFileName(filePath)
+  const contentType = guessContentType(fileName)
+  let uploadPath = filePath
+  if (contentType.startsWith('image/')) {
+    uploadPath = await ensureCompressed(filePath, 2048)
   }
-  return doUploadHttp(filePath)
+  const fileSize = await getFileInfo(uploadPath)
+  if (fileSize > 2 * 1024 * 1024) {
+    throw new Error('文件过大，请选择更小的图片')
+  }
+  const base64Data = await readFileAsBase64(uploadPath)
+  const result = await request.post('/api/upload/base64', {
+    fileBase64: base64Data,
+    fileName,
+    contentType
+  })
+  return result
+}
+
+async function doUpload(filePath) {
+  try {
+    return await doUploadHttp(filePath)
+  } catch (httpError) {
+    console.warn('HTTP上传失败，尝试base64方式:', httpError.message)
+    if (BASE_URL === 'cloud') {
+      try {
+        return await doUploadBase64(filePath)
+      } catch (base64Error) {
+        console.error('base64上传也失败:', base64Error.message)
+        throw base64Error
+      }
+    }
+    throw httpError
+  }
 }
 
 export const uploadImage = (filePath) => {
