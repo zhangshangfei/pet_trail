@@ -16,16 +16,82 @@ export const getPetList = () => {
   return request.get('/api/pets')
 }
 
-function doUpload(filePath) {
+function readFileAsBase64(filePath) {
+  return new Promise((resolve, reject) => {
+    uni.getFileSystemManager().readFile({
+      filePath,
+      encoding: 'base64',
+      success: (res) => resolve(res.data),
+      fail: (err) => reject(new Error(err.errMsg || '读取文件失败'))
+    })
+  })
+}
+
+function getFileName(filePath) {
+  if (!filePath) return 'upload.jpg'
+  const parts = filePath.replace(/\\/g, '/').split('/')
+  const name = parts[parts.length - 1] || 'upload.jpg'
+  return name
+}
+
+function guessContentType(fileName) {
+  const ext = (fileName.split('.').pop() || '').toLowerCase()
+  const map = {
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+    gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp',
+    mp4: 'video/mp4', mov: 'video/quicktime', avi: 'video/x-msvideo'
+  }
+  return map[ext] || 'application/octet-stream'
+}
+
+function getFileInfo(filePath) {
+  return new Promise((resolve) => {
+    uni.getFileInfo({
+      filePath,
+      success: (res) => resolve(res.size),
+      fail: () => resolve(0)
+    })
+  })
+}
+
+async function ensureCompressed(filePath, maxSizeKB = 3072) {
+  const size = await getFileInfo(filePath)
+  if (size <= maxSizeKB * 1024) return filePath
+  let quality = 60
+  if (size > maxSizeKB * 1024 * 2) quality = 40
+  try {
+    const compressed = await compressImage(filePath, quality)
+    const newSize = await getFileInfo(compressed)
+    if (newSize > 0 && newSize <= maxSizeKB * 1024) return compressed
+    return compressed
+  } catch (e) {
+    return filePath
+  }
+}
+
+async function doUploadCloud(filePath) {
+  const fileName = getFileName(filePath)
+  const contentType = guessContentType(fileName)
+  let uploadPath = filePath
+  if (contentType.startsWith('image/')) {
+    uploadPath = await ensureCompressed(filePath)
+  }
+  const base64Data = await readFileAsBase64(uploadPath)
+  const result = await request.post('/api/upload/base64', {
+    fileBase64: base64Data,
+    fileName,
+    contentType
+  })
+  return result
+}
+
+function doUploadHttp(filePath) {
   return new Promise((resolve, reject) => {
     const uploadUrl = resolveUploadUrl()
     const token = uni.getStorageSync('token') || ''
     const header = {}
     if (token) {
       header.Authorization = `Bearer ${token}`
-    }
-    if (BASE_URL === 'cloud') {
-      header['X-WX-SERVICE'] = config.VITE_CLOUD_CONFIG.service
     }
 
     uni.uploadFile({
@@ -58,6 +124,13 @@ function doUpload(filePath) {
       }
     })
   })
+}
+
+function doUpload(filePath) {
+  if (BASE_URL === 'cloud') {
+    return doUploadCloud(filePath)
+  }
+  return doUploadHttp(filePath)
 }
 
 export const uploadImage = (filePath) => {

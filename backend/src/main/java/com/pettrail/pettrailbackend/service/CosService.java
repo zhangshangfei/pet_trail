@@ -46,6 +46,8 @@ public class CosService {
     public String uploadFileBase64(InputStream inputStream, String fileName, String contentType, int size) throws IOException {
         if (fileName == null || fileName.isEmpty()) {
             fileName = generateFileName("image.jpg");
+        } else {
+            fileName = generateFileName(fileName);
         }
         String folder = resolveFolder(contentType);
         return uploadToCos(inputStream, fileName, contentType, size, folder);
