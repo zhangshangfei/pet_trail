@@ -1,3 +1,15 @@
+# === 前端依赖 ===
+node_modules/
+.npm-cache/
+
+# === 前端构建产物 ===
+dist/
+unpackage/
+
+# === 环境配置 ===
+.env
+!.env.example
+
 # === 编译产物 ===
 *.class
 /target/

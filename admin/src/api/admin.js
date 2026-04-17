@@ -1,0 +1,18 @@
+import request from '../utils/request'
+
+export const login = (data) => request.post('/api/admin/auth/login', data)
+export const getProfile = () => request.get('/api/admin/auth/profile')
+export const getDashboardStats = () => request.get('/api/admin/dashboard/stats')
+export const getTodayStats = () => request.get('/api/admin/dashboard/today')
+export const getUserList = (params) => request.get('/api/admin/users', { params })
+export const getUserDetail = (id) => request.get(`/api/admin/users/${id}`)
+export const updateUserStatus = (id, status) => request.put(`/api/admin/users/${id}/status`, { status })
+export const getPostList = (params) => request.get('/api/admin/posts', { params })
+export const getPostDetail = (id) => request.get(`/api/admin/posts/${id}`)
+export const auditPost = (id, data) => request.put(`/api/admin/posts/${id}/audit`, data)
+export const deletePost = (id) => request.delete(`/api/admin/posts/${id}`)
+export const getReportList = (params) => request.get('/api/admin/reports', { params })
+export const handleReport = (id, data) => request.put(`/api/admin/reports/${id}/handle`, data)
+export const getNotificationList = (params) => request.get('/api/admin/notifications', { params })
+export const sendNotification = (data) => request.post('/api/admin/notifications', data)
+export const broadcastNotification = (data) => request.post('/api/admin/notifications/broadcast', data)
