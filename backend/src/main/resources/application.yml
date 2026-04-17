@@ -8,17 +8,19 @@ spring:
   # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:pet_trail}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: ${MYSQL_USERNAME:root}
-    password: ${MYSQL_PASSWORD:}
+    url: jdbc:mysql://sh-cynosdbmysql-grp-768g91ci.sql.tencentcdb.com:22746/pet_trail?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+#    url: jdbc:mysql://localhost:3306/pet_trail?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: ${MYSQL_PASSWORD:CD2wkKmj}
+#    password: ${MYSQL_PASSWORD:root123654}
 
   # Redis 配置
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      database: ${REDIS_DATABASE:0}
+      host: mdaeiviu.redis.6f1dix0k.gah2912p.com
+      port: 6379
+      password:
+      database: 0
       timeout: 3000ms
       lettuce:
         pool:
@@ -32,6 +34,18 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+
+  # RabbitMQ 配置（已注释，改用 Spring Event + 定时任务兜底）
+  # rabbitmq:
+  #   host: ${RABBITMQ_HOST:localhost}
+  #   port: ${RABBITMQ_PORT:5672}
+  #   username: ${RABBITMQ_USERNAME:guest}
+  #   password: ${RABBITMQ_PASSWORD:guest}
+  #   virtual-host: ${RABBITMQ_VHOST:/}
+  #   listener:
+  #     simple:
+  #       acknowledge-mode: manual
+  #       prefetch: 10
 
 # MyBatis-Plus 配置
 mybatis-plus:
@@ -49,21 +63,21 @@ mybatis-plus:
 # 腾讯云 COS 配置 (微信云托管推荐)
 tencent:
   cos:
-    bucket-name: ${TENCENT_COS_BUCKET_NAME:}
-    region: ${TENCENT_COS_REGION:ap-shanghai}
-    secret-id: ${TENCENT_COS_SECRET_ID:}
-    secret-key: ${TENCENT_COS_SECRET_KEY:}
+#    bucket-name: jinttianchongleme-1419682950
+    bucket-name: 7072-prod-3gyc3tpg28270da6-1419682950
+    # 你的地域，通常是 ap-guangzhou 或 ap-shanghai
+    region: ap-shanghai
 
 # JWT 配置
 jwt:
-  secret: ${JWT_SECRET:}
-  expiration: ${JWT_EXPIRATION:604800}
+  secret: ${JWT_SECRET:pet-trail-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256}
+  expiration: 604800  # 7 天 (秒)
 
 # 微信配置
 wechat:
   miniapp:
-    app-id: ${WECHAT_MINIAPP_APP_ID:}
-    app-secret: ${WECHAT_MINIAPP_APP_SECRET:}
+    app-id: ${WECHAT_MINIAPP_APP_ID:wx252292b9bfa1ccc6}
+    app-secret: ${WECHAT_MINIAPP_APP_SECRET:3e17aa26e200c87c0fd22fa855a5348a}
 
 # Sentinel 配置（可选，需要单独安装 Sentinel Dashboard）
 # spring.cloud:
@@ -72,21 +86,11 @@ wechat:
 #       dashboard: localhost:8080
 #       port: 8719
 
-# SpringDoc 配置
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    tags-sorter: alpha
-    operations-sorter: method
-  packages-to-scan: com.pettrail.pettrailbackend.controller
-  default-flat-param-object: true
-
 # 日志配置
 logging:
   level:
     com.pettrail.pettrailbackend: debug
     com.pettrail.pettrailbackend.mapper: debug
+    # org.springframework.amqp: info  # 已注释 RabbitMQ
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
