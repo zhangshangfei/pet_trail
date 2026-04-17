@@ -26,10 +26,15 @@ public class ReportController {
             return Result.error(401, "用户未登录");
         }
 
-        Long targetId = data.get("targetId") != null ? Long.valueOf(data.get("targetId").toString()) : null;
-        String targetType = (String) data.get("targetType");
-        String reason = (String) data.get("reason");
-        String description = (String) data.get("description");
+        Long targetId = null;
+        try {
+            targetId = data.get("targetId") != null ? Long.valueOf(data.get("targetId").toString()) : null;
+        } catch (NumberFormatException e) {
+            return Result.error(400, "targetId 格式无效");
+        }
+        String targetType = data.get("targetType") != null ? data.get("targetType").toString() : null;
+        String reason = data.get("reason") != null ? data.get("reason").toString() : null;
+        String description = data.get("description") != null ? data.get("description").toString() : null;
 
         if (targetId == null || targetType == null || reason == null) {
             return Result.error(400, "缺少必要参数");

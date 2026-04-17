@@ -35,13 +35,23 @@ public class PostService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
+    private final ContentAuditService contentAuditService;
 
-    /**
-     * 创建动态
-     */
     @Transactional(rollbackFor = Exception.class)
     public Post createPost(Long userId, Long petId, String content, List<String> images, List<String> videos,
                            List<String> stickers, Map<String, String> bubble, String location) {
+        if (!contentAuditService.auditText(content)) {
+            throw new RuntimeException("内容包含违规信息，请修改后重新发布");
+        }
+
+        if (images != null) {
+            for (String imageUrl : images) {
+                if (!contentAuditService.auditImage(imageUrl)) {
+                    throw new RuntimeException("图片包含违规内容，请更换后重新发布");
+                }
+            }
+        }
+
         Post post = new Post();
         post.setUserId(userId);
         post.setPetId(petId);

@@ -78,7 +78,7 @@ public class PostAuditScheduledTask {
         log.info("开始审核动态：postId={}", post.getId());
 
         // 1. 内容审核
-        boolean contentAuditPassed = contentAuditService.audit(post.getContent());
+        boolean contentAuditPassed = contentAuditService.auditText(post.getContent());
         if (!contentAuditPassed) {
             log.warn("动态内容审核不通过：postId={}", post.getId());
             // TODO: 更新状态为审核不通过

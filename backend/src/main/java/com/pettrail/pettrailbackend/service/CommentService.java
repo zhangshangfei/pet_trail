@@ -27,12 +27,17 @@ public class CommentService {
     private final PostMapper postMapper;
     private final UserMapper userMapper;
     private final NotificationService notificationService;
+    private final ContentAuditService contentAuditService;
 
     @Transactional(rollbackFor = Exception.class)
     public CommentVO createComment(Long postId, Long userId, String content, Long parentId, Long replyToId) {
         Post post = postMapper.selectById(postId);
         if (post == null) {
             throw new RuntimeException("动态不存在");
+        }
+
+        if (!contentAuditService.auditText(content)) {
+            throw new RuntimeException("评论内容包含违规信息，请修改后重新发布");
         }
 
         PostComment comment = new PostComment();
@@ -82,6 +87,47 @@ public class CommentService {
                 .eq(PostComment::getPostId, postId)
                 .eq(PostComment::getStatus, 1);
         return Math.toIntExact(commentMapper.selectCount(wrapper));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteComment(Long commentId, Long userId) {
+        PostComment comment = commentMapper.selectById(commentId);
+        if (comment == null || comment.getStatus() == 0) {
+            throw new RuntimeException("评论不存在");
+        }
+
+        Post post = postMapper.selectById(comment.getPostId());
+        boolean isCommentAuthor = comment.getUserId().equals(userId);
+        boolean isPostAuthor = post != null && post.getUserId().equals(userId);
+        if (!isCommentAuthor && !isPostAuthor) {
+            throw new RuntimeException("无权删除该评论");
+        }
+
+        comment.setStatus(0);
+        commentMapper.updateById(comment);
+
+        if (post != null && post.getCommentCount() != null && post.getCommentCount() > 0) {
+            post.setCommentCount(post.getCommentCount() - 1);
+            postMapper.updateById(post);
+        }
+
+        LambdaQueryWrapper<PostComment> replyWrapper = new LambdaQueryWrapper<PostComment>()
+                .eq(PostComment::getParentId, commentId)
+                .eq(PostComment::getStatus, 1);
+        long replyCount = commentMapper.selectCount(replyWrapper);
+        if (replyCount > 0) {
+            List<PostComment> replies = commentMapper.selectList(replyWrapper);
+            for (PostComment reply : replies) {
+                reply.setStatus(0);
+                commentMapper.updateById(reply);
+            }
+            if (post != null) {
+                post.setCommentCount(Math.max(0, post.getCommentCount() - (int) replyCount));
+                postMapper.updateById(post);
+            }
+        }
+
+        log.info("评论已删除：commentId={}, userId={}, repliesRemoved={}", commentId, userId, replyCount);
     }
 
     private List<CommentVO> buildCommentTree(List<PostComment> comments) {

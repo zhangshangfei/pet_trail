@@ -74,12 +74,16 @@ public class PostController {
 
         String location = data.getString("location");
 
-        Post post = postService.createPost(userId, petId, content, images, videos, stickers, bubble, location);
-
-        // 异步发送消息（内容审核、推送粉丝等）
-        postService.publishPostCreateEvent(post);
-
-        return Result.success(post);
+        try {
+            Post post = postService.createPost(userId, petId, content, images, videos, stickers, bubble, location);
+            postService.publishPostCreateEvent(post);
+            return Result.success(post);
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("违规")) {
+                return Result.error(451, e.getMessage());
+            }
+            throw e;
+        }
     }
 
     /**
@@ -152,7 +156,7 @@ public class PostController {
         vo.setShareCount(post.getShareCount());
         vo.setLocation(post.getLocation());
 
-        if (post.getStickers() != null && !post.getStickers().equals("null")) {
+        if (post.getStickers() != null && !post.getStickers().trim().isEmpty() && !post.getStickers().equals("null")) {
             try {
                 vo.setStickers(JSON.parseArray(post.getStickers(), String.class));
             } catch (Exception e) {
@@ -162,7 +166,7 @@ public class PostController {
             vo.setStickers(List.of());
         }
 
-        if (post.getBubble() != null && !post.getBubble().equals("null")) {
+        if (post.getBubble() != null && !post.getBubble().trim().isEmpty() && !post.getBubble().equals("null")) {
             try {
                 vo.setBubble(JSON.parseObject(post.getBubble(), PostVO.BubbleVO.class));
             } catch (Exception e) {
@@ -174,7 +178,7 @@ public class PostController {
         vo.setCreatedAt(post.getCreatedAt());
         vo.setUpdatedAt(post.getUpdatedAt());
 
-        if (post.getImages() != null && !post.getImages().equals("null")) {
+        if (post.getImages() != null && !post.getImages().trim().isEmpty() && !post.getImages().equals("null")) {
             try {
                 vo.setImageList(JSON.parseArray(post.getImages(), String.class));
             } catch (Exception e) {
@@ -185,7 +189,7 @@ public class PostController {
         }
 
         vo.setVideos(post.getVideos());
-        if (post.getVideos() != null && !post.getVideos().equals("null")) {
+        if (post.getVideos() != null && !post.getVideos().trim().isEmpty() && !post.getVideos().equals("null")) {
             try {
                 vo.setVideoList(JSON.parseArray(post.getVideos(), String.class));
             } catch (Exception e) {
@@ -389,8 +393,15 @@ public class PostController {
         Long parentId = data.getLong("parentId");
         Long replyToId = data.getLong("replyToId");
 
-        CommentVO comment = commentService.createComment(id, userId, content.trim(), parentId, replyToId);
-        return Result.success(comment);
+        try {
+            CommentVO comment = commentService.createComment(id, userId, content.trim(), parentId, replyToId);
+            return Result.success(comment);
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("违规")) {
+                return Result.error(451, e.getMessage());
+            }
+            throw e;
+        }
     }
 
     @GetMapping("/{id}/comments")
@@ -400,6 +411,29 @@ public class PostController {
             @RequestParam(defaultValue = "20") int size) {
         List<CommentVO> comments = commentService.getComments(id, page, size);
         return Result.success(comments);
+    }
+
+    @DeleteMapping("/{id}/comments/{commentId}")
+    public Result<String> deleteComment(@PathVariable Long id, @PathVariable Long commentId) {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+        try {
+            commentService.deleteComment(commentId, userId);
+            return Result.success("删除成功");
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("无权")) {
+                return Result.error(403, e.getMessage());
+            }
+            if (e.getMessage() != null && e.getMessage().contains("不存在")) {
+                return Result.error(404, e.getMessage());
+            }
+            return Result.error("删除失败：" + e.getMessage());
+        } catch (Exception e) {
+            log.error("删除评论失败：{}", e.getMessage(), e);
+            return Result.error("删除失败：" + e.getMessage());
+        }
     }
 
     @PostMapping("/{id}/share")

@@ -97,3 +97,7 @@ export const sharePost = (id) => {
 export const deletePost = (id) => {
   return request.delete(`/api/posts/${id}`)
 }
+
+export const deleteComment = (postId, commentId) => {
+  return request.delete(`/api/posts/${postId}/comments/${commentId}`)
+}

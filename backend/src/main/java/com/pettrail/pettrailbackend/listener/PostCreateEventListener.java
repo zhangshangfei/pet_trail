@@ -31,7 +31,7 @@ public class PostCreateEventListener {
             log.info("收到动态创建事件：postId={}, userId={}", post.getId(), post.getUserId());
 
             // 1. 内容审核
-            boolean auditPassed = contentAuditService.audit(post.getContent());
+            boolean auditPassed = contentAuditService.auditText(post.getContent());
             if (!auditPassed) {
                 log.warn("动态内容审核不通过：postId={}", post.getId());
                 // TODO: 更新动态状态为审核不通过

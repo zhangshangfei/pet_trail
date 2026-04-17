@@ -111,6 +111,9 @@
                 <view class="comment-footer">
                   <text class="comment-time">{{ comment.relativeTime }}</text>
                   <text class="comment-reply-btn" @click="onReplyTap(comment)">回复</text>
+                  <text v-if="isCommentOwner(comment)" class="comment-delete-btn" @click="onDeleteComment(comment)">删除</text>
+                  <text v-else-if="isOwner" class="comment-delete-btn" @click="onDeleteComment(comment)">删除</text>
+                  <text v-if="!isCommentOwner(comment)" class="comment-report-btn" @click="onReportComment(comment)">举报</text>
                 </view>
 
                 <view v-if="comment.replies && comment.replies.length" class="reply-list">
@@ -130,6 +133,9 @@
                       <view class="comment-footer">
                         <text class="comment-time">{{ getRelativeTime(reply.createdAt) }}</text>
                         <text class="comment-reply-btn" @click="onReplyTap(reply, comment)">回复</text>
+                        <text v-if="isCommentOwner(reply)" class="comment-delete-btn" @click="onDeleteComment(reply)">删除</text>
+                        <text v-else-if="isOwner" class="comment-delete-btn" @click="onDeleteComment(reply)">删除</text>
+                        <text v-if="!isCommentOwner(reply)" class="comment-report-btn" @click="onReportComment(reply)">举报</text>
                       </view>
                     </view>
                   </view>
@@ -493,6 +499,70 @@ export default {
       this.reportReason = ''
       this.reportDesc = ''
       this.showReportModal = true
+    },
+
+    isCommentOwner(comment) {
+      const currentUserId = uni.getStorageSync('userInfo')?.id
+      return currentUserId && Number(currentUserId) === Number(comment.userId)
+    },
+
+    onReportComment(comment) {
+      uni.showActionSheet({
+        itemList: ['垃圾广告', '色情低俗', '虚假信息', '违法违规', '人身攻击', '其他'],
+        success: async (res) => {
+          const reasons = ['spam', 'porn', 'fake', 'illegal', 'abuse', 'other']
+          const reason = reasons[res.tapIndex]
+          try {
+            const result = await reportApi.createReport({
+              targetId: comment.id,
+              targetType: 'comment',
+              reason: reason
+            })
+            if (result.success) {
+              uni.showToast({ title: '举报已提交', icon: 'success' })
+            } else {
+              uni.showToast({ title: result.message || '举报失败', icon: 'none' })
+            }
+          } catch (error) {
+            console.error('举报失败:', error)
+            uni.showToast({ title: '举报失败', icon: 'none' })
+          }
+        }
+      })
+    },
+
+    onDeleteComment(comment) {
+      uni.showModal({
+        title: '确认删除',
+        content: '删除后不可恢复，确定要删除这条评论吗？',
+        confirmColor: '#ff4d4f',
+        success: async (res) => {
+          if (res.confirm) {
+            try {
+              const result = await postApi.deleteComment(this.postId, comment.id)
+              if (result.success) {
+                uni.showToast({ title: '已删除', icon: 'success' })
+                this.commentList = this.removeCommentFromList(this.commentList, comment.id)
+              } else {
+                uni.showToast({ title: result.message || '删除失败', icon: 'none' })
+              }
+            } catch (error) {
+              console.error('删除评论失败:', error)
+              uni.showToast({ title: '删除失败', icon: 'none' })
+            }
+          }
+        }
+      })
+    },
+
+    removeCommentFromList(comments, commentId) {
+      return comments.filter(c => {
+        if (c.id === commentId) return false
+        if (c.replies && c.replies.length) {
+          c.replies = c.replies.filter(r => r.id !== commentId)
+        }
+        return true
+      })
     },
 
     async confirmReport() {
@@ -974,6 +1044,18 @@ export default {
 .comment-reply-btn {
   font-size: 22rpx;
   color: #ff6a3d;
+}
+
+.comment-report-btn {
+  font-size: 22rpx;
+  color: #9ca3af;
+  margin-left: 16rpx;
+}
+
+.comment-delete-btn {
+  font-size: 22rpx;
+  color: #ff4d4f;
+  margin-left: 16rpx;
 }
 
 .reply-list {

@@ -93,6 +93,10 @@ public class RecommendService {
     }
 
     private List<Map<String, Object>> recommendForAnonymous(int page, int size) {
+        if (page < 1) page = 1;
+        if (size < 1) size = 20;
+        if (size > 50) size = 50;
+
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getStatus, 1);
         wrapper.orderByDesc(User::getCreatedAt);

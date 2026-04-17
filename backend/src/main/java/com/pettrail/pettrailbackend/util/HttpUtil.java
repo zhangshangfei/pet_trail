@@ -4,27 +4,18 @@ import javax.net.ssl.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
 
-/**
- * @program: pet-trail
- * @description: HTTP 工具类
- * @author: zsf
- * @create: 2026-03-27 13:38
- **/
 public class HttpUtil {
 
-    // 静态初始化块，配置信任所有 SSL 证书
     static {
         trustAllCertificates();
     }
 
-    /**
-     * 配置信任所有 SSL 证书
-     */
     private static void trustAllCertificates() {
         try {
             TrustManager[] trustAllCerts = new TrustManager[]{
@@ -48,29 +39,18 @@ public class HttpUtil {
         }
     }
 
-    /**
-     * 发送 GET 请求
-     *
-     * @param url 请求地址
-     * @return 响应结果的字符串
-     * @throws IOException 网络异常时抛出
-     */
     public static String doGet(String url) throws IOException {
         URL realUrl = new URL(url);
-        // 打开和 URL 之间的连接
         HttpURLConnection connection = (HttpURLConnection) realUrl.openConnection();
 
-        // 设置通用的请求属性
         connection.setRequestMethod("GET");
-        connection.setConnectTimeout(5000); // 连接超时时间 5 秒
-        connection.setReadTimeout(5000);    // 读取超时时间 5 秒
-        connection.setDoInput(true); // 允许输入
-        connection.setDoOutput(false); // GET 请求不允许输出
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(5000);
+        connection.setDoInput(true);
+        connection.setDoOutput(false);
 
-        // 建立实际的连接
         connection.connect();
 
-        // 定义 BufferedReader 输入流来读取 URL 的响应
         StringBuilder result = new StringBuilder();
         try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
             String line;
@@ -79,11 +59,43 @@ public class HttpUtil {
             }
         }
 
-        // 断开连接
         connection.disconnect();
 
         return result.toString();
     }
 
+    public static String doPost(String url, String body) throws IOException {
+        return doPost(url, body, "application/json");
+    }
 
+    public static String doPost(String url, String body, String contentType) throws IOException {
+        URL realUrl = new URL(url);
+        HttpURLConnection connection = (HttpURLConnection) realUrl.openConnection();
+
+        connection.setRequestMethod("POST");
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(5000);
+        connection.setDoInput(true);
+        connection.setDoOutput(true);
+        connection.setRequestProperty("Content-Type", contentType);
+
+        if (body != null && !body.isEmpty()) {
+            try (OutputStream os = connection.getOutputStream()) {
+                os.write(body.getBytes(StandardCharsets.UTF_8));
+                os.flush();
+            }
+        }
+
+        StringBuilder result = new StringBuilder();
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = in.readLine()) != null) {
+                result.append(line);
+            }
+        }
+
+        connection.disconnect();
+
+        return result.toString();
+    }
 }
