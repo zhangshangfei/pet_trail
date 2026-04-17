@@ -1,4 +1,5 @@
 com\pettrail\pettrailbackend\entity\PostLike.class
+com\pettrail\pettrailbackend\entity\Report.class
 com\pettrail\pettrailbackend\service\UserService.class
 com\pettrail\pettrailbackend\entity\Follow.class
 com\pettrail\pettrailbackend\mapper\CheckinStatsMapper.class
@@ -26,6 +27,7 @@ com\pettrail\pettrailbackend\entity\User.class
 com\pettrail\pettrailbackend\service\VaccineReminderService.class
 com\pettrail\pettrailbackend\config\CacheConfig.class
 com\pettrail\pettrailbackend\task\PostAuditScheduledTask.class
+com\pettrail\pettrailbackend\service\ReportService.class
 com\pettrail\pettrailbackend\PetTrailBackendApplication.class
 com\pettrail\pettrailbackend\config\SentinelConfig.class
 com\pettrail\pettrailbackend\service\FollowService.class
@@ -39,6 +41,7 @@ com\pettrail\pettrailbackend\config\CacheEnableConfig.class
 com\pettrail\pettrailbackend\service\WeightRecordService.class
 com\pettrail\pettrailbackend\entity\CheckinRecord.class
 com\pettrail\pettrailbackend\entity\PostEe.class
+com\pettrail\pettrailbackend\controller\ReportController.class
 com\pettrail\pettrailbackend\entity\CheckinStats.class
 com\pettrail\pettrailbackend\mapper\PostEeMapper.class
 com\pettrail\pettrailbackend\AppModule.class
@@ -58,6 +61,7 @@ com\pettrail\pettrailbackend\service\ContentAuditService.class
 com\pettrail\pettrailbackend\mapper\CheckinRecordMapper.class
 com\pettrail\pettrailbackend\mapper\FollowMapper.class
 com\pettrail\pettrailbackend\mapper\ParasiteReminderMapper.class
+com\pettrail\pettrailbackend\mapper\ReportMapper.class
 com\pettrail\pettrailbackend\controller\HealthRecordController.class
 com\pettrail\pettrailbackend\service\PetService.class
 com\pettrail\pettrailbackend\service\ParasiteReminderService.class

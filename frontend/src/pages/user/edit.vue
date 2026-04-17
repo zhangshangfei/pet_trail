@@ -3,7 +3,7 @@
     <view class="edit-header">
       <view class="edit-header-bar" :style="{ paddingTop: statusBarHeight + 'px' }">
         <view class="edit-back" @tap="goBack">
-          <text class="edit-back-icon">←</text>
+          <view class="edit-back-arrow"></view>
         </view>
         <text class="edit-title">编辑资料</text>
         <view class="edit-header-right"></view>
@@ -206,17 +206,30 @@ export default {
 }
 
 .edit-back {
-  width: 56rpx;
-  height: 56rpx;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+  transition: background 0.2s, transform 0.15s;
 }
 
-.edit-back-icon {
-  color: #fff;
-  font-size: 36rpx;
-  font-weight: 700;
+.edit-back:active {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0.92);
+}
+
+.edit-back-arrow {
+  width: 18rpx;
+  height: 18rpx;
+  border-left: 4rpx solid #fff;
+  border-bottom: 4rpx solid #fff;
+  transform: rotate(45deg) translate(2rpx, -2rpx);
 }
 
 .edit-title {
@@ -226,7 +239,7 @@ export default {
 }
 
 .edit-header-right {
-  width: 56rpx;
+  width: 64rpx;
 }
 
 .edit-scroll {

@@ -331,6 +331,25 @@ CREATE TABLE IF NOT EXISTS `notifications` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='通知表';
 
 -- ========================================
+-- 举报表
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS `reports` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `reporter_id` bigint(20) NOT NULL COMMENT '举报人ID',
+  `target_id` bigint(20) NOT NULL COMMENT '被举报目标ID',
+  `target_type` varchar(20) NOT NULL COMMENT '目标类型：post/user/comment',
+  `reason` varchar(50) NOT NULL COMMENT '举报原因',
+  `description` varchar(500) DEFAULT NULL COMMENT '补充描述',
+  `status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '状态：0-待处理 1-已处理 2-已驳回',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_reporter_target` (`reporter_id`, `target_id`, `target_type`),
+  KEY `idx_target` (`target_type`, `target_id`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='举报表';
+
+-- ========================================
 -- 初始化数据
 -- ========================================
 

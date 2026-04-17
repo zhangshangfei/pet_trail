@@ -416,4 +416,23 @@ public class PostController {
             return Result.error("分享失败：" + e.getMessage());
         }
     }
+
+    @DeleteMapping("/{id}")
+    public Result<String> deletePost(@PathVariable Long id) {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+        try {
+            postService.deletePost(id, userId);
+            return Result.success("删除成功");
+        } catch (NotFoundException e) {
+            return Result.error(404, "动态不存在");
+        } catch (RuntimeException e) {
+            return Result.error(403, e.getMessage());
+        } catch (Exception e) {
+            log.error("删除动态失败：{}", e.getMessage(), e);
+            return Result.error("删除失败：" + e.getMessage());
+        }
+    }
 }

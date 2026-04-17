@@ -93,3 +93,7 @@ export const getUserLikedPosts = (userId, page = 1, size = 20) => {
 export const sharePost = (id) => {
   return request.post(`/api/posts/${id}/share`)
 }
+
+export const deletePost = (id) => {
+  return request.delete(`/api/posts/${id}`)
+}

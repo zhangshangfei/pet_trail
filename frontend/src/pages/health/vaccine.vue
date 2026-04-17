@@ -4,7 +4,7 @@
       <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
       <view class="nav-bar">
         <view class="nav-back" @tap="goBack">
-          <text class="nav-back-icon">←</text>
+          <view class="nav-back-arrow"></view>
         </view>
         <text class="nav-title">疫苗提醒</text>
         <view class="nav-placeholder"></view>
@@ -358,21 +358,34 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16rpx;
+  padding: 0 28rpx;
 }
 
 .nav-back {
-  width: 68rpx;
-  height: 56rpx;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+  transition: background 0.2s, transform 0.15s;
 }
 
-.nav-back-icon {
-  font-size: 36rpx;
-  color: #fff;
-  font-weight: 600;
+.nav-back:active {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0.92);
+}
+
+.nav-back-arrow {
+  width: 18rpx;
+  height: 18rpx;
+  border-left: 4rpx solid #fff;
+  border-bottom: 4rpx solid #fff;
+  transform: rotate(45deg) translate(2rpx, -2rpx);
 }
 
 .nav-title {
@@ -382,7 +395,7 @@ export default {
 }
 
 .nav-placeholder {
-  width: 68rpx;
+  width: 64rpx;
 }
 
 .vaccine-scroll {

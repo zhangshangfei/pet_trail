@@ -3,7 +3,7 @@
     <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
     <view class="nav-bar">
       <view class="nav-back" @click="goBack">
-        <text class="nav-back-icon">←</text>
+        <view class="nav-back-arrow"></view>
       </view>
       <text class="nav-title">消息通知</text>
       <view v-if="notificationList.length > 0" class="nav-action" @click="onMarkAllRead">
@@ -205,26 +205,37 @@ export default {
 }
 
 .nav-bar {
-  height: 44px;
+  height: 92rpx;
   background: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 28rpx;
   border-bottom: 1rpx solid #f0f0f0;
 }
 
 .nav-back {
-  width: 60rpx;
-  height: 60rpx;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  background: rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.2s, transform 0.15s;
 }
 
-.nav-back-icon {
-  font-size: 36rpx;
-  color: #333;
+.nav-back:active {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(0.92);
+}
+
+.nav-back-arrow {
+  width: 18rpx;
+  height: 18rpx;
+  border-left: 4rpx solid #333;
+  border-bottom: 4rpx solid #333;
+  transform: rotate(45deg) translate(2rpx, -2rpx);
 }
 
 .nav-title {

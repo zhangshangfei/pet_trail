@@ -305,4 +305,27 @@ public class PostService {
 
         return newCount;
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deletePost(Long postId, Long userId) {
+        Post post = postMapper.selectById(postId);
+        if (post == null) {
+            throw new NotFoundException("动态不存在");
+        }
+        if (!post.getUserId().equals(userId)) {
+            throw new RuntimeException("无权删除他人动态");
+        }
+        post.setStatus(0);
+        postMapper.updateById(post);
+
+        String cacheKey = "post:detail:" + postId;
+        redisTemplate.delete(cacheKey);
+
+        String likeKey = "post:like:" + postId;
+        String eeKey = "post:ee:" + postId;
+        redisTemplate.delete(likeKey);
+        redisTemplate.delete(eeKey);
+
+        log.info("动态已删除：postId={}, userId={}", postId, userId);
+    }
 }

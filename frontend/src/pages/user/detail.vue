@@ -6,7 +6,10 @@
         <view class="back-btn" @tap="goBack">
           <view class="back-arrow"></view>
         </view>
-        <view class="header-placeholder"></view>
+        <view class="header-placeholder" v-if="isSelf"></view>
+        <view v-else class="header-report" @tap="onReportUser">
+          <text class="header-report-text">举报</text>
+        </view>
       </view>
 
       <view class="user-info-section">
@@ -168,6 +171,9 @@
                 <text class="action-count">{{ post.commentCount || 0 }}</text>
               </view>
             </view>
+            <view v-if="isSelf" class="action-item delete-action" @click="onDeletePost(post)">
+              <text class="action-icon delete-icon">🗑️</text>
+            </view>
           </view>
         </view>
 
@@ -201,6 +207,7 @@
 
 <script>
 import * as postApi from '@/api/post'
+import * as reportApi from '@/api/report'
 import { getUserById } from '@/api/auth'
 import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 
@@ -262,6 +269,30 @@ export default {
     getUserAvatar,
     goBack() {
       uni.navigateBack({ delta: 1 })
+    },
+    onReportUser() {
+      uni.showActionSheet({
+        itemList: ['垃圾广告', '色情低俗', '虚假信息', '违法违规', '人身攻击', '其他'],
+        success: async (res) => {
+          const reasons = ['spam', 'porn', 'fake', 'illegal', 'abuse', 'other']
+          const reason = reasons[res.tapIndex]
+          try {
+            const result = await reportApi.createReport({
+              targetId: this.userId,
+              targetType: 'user',
+              reason: reason
+            })
+            if (result.success) {
+              uni.showToast({ title: '举报已提交', icon: 'success' })
+            } else {
+              uni.showToast({ title: result.message || '举报失败', icon: 'none' })
+            }
+          } catch (error) {
+            console.error('举报失败:', error)
+            uni.showToast({ title: '举报失败', icon: 'none' })
+          }
+        }
+      })
     },
     async loadUserInfo() {
       try {
@@ -378,6 +409,29 @@ export default {
     openPostDetail(post) {
       uni.navigateTo({ url: `/pages/post/detail?id=${post.id}` })
     },
+    onDeletePost(post) {
+      uni.showModal({
+        title: '确认删除',
+        content: '删除后不可恢复，确定要删除这条动态吗？',
+        confirmColor: '#ff4d4f',
+        success: async (res) => {
+          if (res.confirm) {
+            try {
+              const result = await postApi.deletePost(post.id)
+              if (result.success) {
+                uni.showToast({ title: '已删除', icon: 'success' })
+                this.postList = this.postList.filter(p => p.id !== post.id)
+              } else {
+                uni.showToast({ title: result.message || '删除失败', icon: 'none' })
+              }
+            } catch (error) {
+              console.error('删除动态失败:', error)
+              uni.showToast({ title: '删除失败', icon: 'none' })
+            }
+          }
+        }
+      })
+    },
     toggleExpand(postId) {
       this.$set(this.expandedPosts, postId, true)
     },
@@ -461,7 +515,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24rpx;
+  padding: 0 28rpx;
   padding-top: calc(var(--status-bar-height, 20px) + 12rpx);
   height: 92rpx;
 }
@@ -495,6 +549,30 @@ export default {
 
 .header-placeholder {
   width: 64rpx;
+}
+
+.header-report {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.header-report:active {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0.92);
+}
+
+.header-report-text {
+  font-size: 22rpx;
+  color: #fff;
+  font-weight: 600;
 }
 
 .avatar-wrap {
@@ -855,6 +933,14 @@ export default {
   &--liked {
     animation: likeAnim 0.3s ease;
   }
+}
+
+.delete-action {
+  opacity: 0.6;
+}
+
+.delete-icon {
+  font-size: 26rpx;
 }
 
 @keyframes likeAnim {

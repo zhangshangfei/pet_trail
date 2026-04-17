@@ -3,10 +3,15 @@
     <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
     <view class="nav-bar">
       <view class="nav-back" @click="goBack">
-        <text class="nav-back-icon">←</text>
+        <view class="nav-back-arrow"></view>
       </view>
       <text class="nav-title">动态详情</text>
-      <view class="nav-placeholder"></view>
+      <view v-if="isOwner" class="nav-delete" @click="onDeleteTap">
+        <text class="nav-delete-text">删除</text>
+      </view>
+      <view v-else class="nav-report" @click="onReportTap">
+        <text class="nav-report-text">举报</text>
+      </view>
     </view>
 
     <view v-if="loading" class="loading-wrap">
@@ -151,11 +156,58 @@
         <text class="send-btn" @click="addComment">发送</text>
       </view>
     </view>
+
+    <view v-if="showDeleteModal" class="modal-mask" @click="showDeleteModal = false">
+      <view class="modal-dialog" @click.stop>
+        <text class="modal-title">确认删除</text>
+        <text class="modal-desc">删除后不可恢复，确定要删除这条动态吗？</text>
+        <view class="modal-btns">
+          <view class="modal-btn modal-btn-cancel" @click="showDeleteModal = false">
+            <text class="modal-btn-text-cancel">取消</text>
+          </view>
+          <view class="modal-btn modal-btn-confirm" @click="confirmDelete">
+            <text class="modal-btn-text-confirm">删除</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view v-if="showReportModal" class="modal-mask" @click="showReportModal = false">
+      <view class="modal-dialog report-dialog" @click.stop>
+        <text class="modal-title">举报</text>
+        <view class="report-reasons">
+          <view
+            v-for="item in reportReasons"
+            :key="item.value"
+            class="report-reason-item"
+            :class="{ 'report-reason-item--active': reportReason === item.value }"
+            @click="reportReason = item.value"
+          >
+            <text class="report-reason-text">{{ item.label }}</text>
+          </view>
+        </view>
+        <textarea
+          v-model="reportDesc"
+          class="report-textarea"
+          placeholder="补充说明（选填）"
+          maxlength="200"
+        />
+        <view class="modal-btns">
+          <view class="modal-btn modal-btn-cancel" @click="showReportModal = false">
+            <text class="modal-btn-text-cancel">取消</text>
+          </view>
+          <view class="modal-btn modal-btn-confirm" @click="confirmReport">
+            <text class="modal-btn-text-confirm">提交</text>
+          </view>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
 <script>
 import * as postApi from '@/api/post'
+import * as reportApi from '@/api/report'
 import { checkLogin, getUserAvatar as resolveUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 
 export default {
@@ -171,7 +223,26 @@ export default {
       statusBarHeight: 20,
       navHeight: 64,
       replyTarget: null,
-      replyParentComment: null
+      replyParentComment: null,
+      showDeleteModal: false,
+      showReportModal: false,
+      reportReason: '',
+      reportDesc: '',
+      reportReasons: [
+        { label: '垃圾广告', value: 'spam' },
+        { label: '色情低俗', value: 'porn' },
+        { label: '虚假信息', value: 'fake' },
+        { label: '违法违规', value: 'illegal' },
+        { label: '人身攻击', value: 'abuse' },
+        { label: '其他', value: 'other' }
+      ]
+    }
+  },
+  computed: {
+    isOwner() {
+      if (!this.post) return false
+      const currentUserId = uni.getStorageSync('userInfo')?.id
+      return currentUserId && Number(currentUserId) === Number(this.post.userId)
     }
   },
   onLoad(options) {
@@ -412,6 +483,63 @@ export default {
       } else {
         uni.switchTab({ url: '/pages/home/index' })
       }
+    },
+
+    onDeleteTap() {
+      this.showDeleteModal = true
+    },
+
+    onReportTap() {
+      this.reportReason = ''
+      this.reportDesc = ''
+      this.showReportModal = true
+    },
+
+    async confirmReport() {
+      if (!this.reportReason) {
+        uni.showToast({ title: '请选择举报原因', icon: 'none' })
+        return
+      }
+      this.showReportModal = false
+      try {
+        const res = await reportApi.createReport({
+          targetId: this.postId,
+          targetType: 'post',
+          reason: this.reportReason,
+          description: this.reportDesc
+        })
+        if (res.success) {
+          uni.showToast({ title: '举报已提交', icon: 'success' })
+        } else {
+          uni.showToast({ title: res.message || '举报失败', icon: 'none' })
+        }
+      } catch (error) {
+        console.error('举报失败:', error)
+        uni.showToast({ title: '举报失败', icon: 'none' })
+      }
+    },
+
+    async confirmDelete() {
+      this.showDeleteModal = false
+      try {
+        const res = await postApi.deletePost(this.postId)
+        if (res.success) {
+          uni.showToast({ title: '已删除', icon: 'success' })
+          setTimeout(() => {
+            const pages = getCurrentPages()
+            if (pages.length > 1) {
+              uni.navigateBack()
+            } else {
+              uni.switchTab({ url: '/pages/home/index' })
+            }
+          }, 1000)
+        } else {
+          uni.showToast({ title: res.message || '删除失败', icon: 'none' })
+        }
+      } catch (error) {
+        console.error('删除动态失败:', error)
+        uni.showToast({ title: '删除失败', icon: 'none' })
+      }
     }
   }
 }
@@ -429,25 +557,39 @@ export default {
 }
 
 .nav-bar {
-  height: 44px;
+  height: 92rpx;
   background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 100%);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 28rpx;
 }
 
 .nav-back {
-  width: 60rpx;
-  height: 60rpx;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+  transition: background 0.2s, transform 0.15s;
 }
 
-.nav-back-icon {
-  font-size: 36rpx;
-  color: #fff;
+.nav-back:active {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0.92);
+}
+
+.nav-back-arrow {
+  width: 18rpx;
+  height: 18rpx;
+  border-left: 4rpx solid #fff;
+  border-bottom: 4rpx solid #fff;
+  transform: rotate(45deg) translate(2rpx, -2rpx);
 }
 
 .nav-title {
@@ -457,7 +599,55 @@ export default {
 }
 
 .nav-placeholder {
-  width: 60rpx;
+  width: 64rpx;
+}
+
+.nav-delete {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.nav-delete:active {
+  background: rgba(255, 77, 77, 0.5);
+  transform: scale(0.92);
+}
+
+.nav-delete-text {
+  font-size: 24rpx;
+  color: #fff;
+  font-weight: 600;
+}
+
+.nav-report {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.nav-report:active {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0.92);
+}
+
+.nav-report-text {
+  font-size: 22rpx;
+  color: #fff;
+  font-weight: 600;
 }
 
 .loading-wrap {
@@ -904,5 +1094,123 @@ export default {
   font-size: 28rpx;
   font-weight: 600;
   box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
+}
+
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-dialog {
+  width: 560rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 48rpx 40rpx 32rpx;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.15);
+}
+
+.modal-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #111827;
+  text-align: center;
+  margin-bottom: 16rpx;
+}
+
+.modal-desc {
+  display: block;
+  font-size: 26rpx;
+  color: #6b7280;
+  text-align: center;
+  margin-bottom: 40rpx;
+  line-height: 40rpx;
+}
+
+.modal-btns {
+  display: flex;
+  gap: 24rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-btn-cancel {
+  background: #f3f4f6;
+}
+
+.modal-btn-confirm {
+  background: linear-gradient(135deg, #ff4d4f 0%, #ff7a3d 100%);
+  box-shadow: 0 4rpx 12rpx rgba(255, 77, 79, 0.3);
+}
+
+.modal-btn-text-cancel {
+  font-size: 28rpx;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.modal-btn-text-confirm {
+  font-size: 28rpx;
+  color: #fff;
+  font-weight: 600;
+}
+
+.report-dialog {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.report-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.report-reason-item {
+  padding: 12rpx 24rpx;
+  border-radius: 32rpx;
+  background: #f3f4f6;
+  transition: all 0.2s;
+}
+
+.report-reason-item--active {
+  background: linear-gradient(135deg, #ff4d4f 0%, #ff7a3d 100%);
+}
+
+.report-reason-text {
+  font-size: 24rpx;
+  color: #374151;
+}
+
+.report-reason-item--active .report-reason-text {
+  color: #fff;
+}
+
+.report-textarea {
+  width: 100%;
+  height: 120rpx;
+  padding: 16rpx;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 12rpx;
+  font-size: 24rpx;
+  color: #374151;
+  margin-bottom: 24rpx;
+  box-sizing: border-box;
 }
 </style>
