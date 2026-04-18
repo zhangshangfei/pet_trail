@@ -116,14 +116,26 @@
         </view>
       </view>
     </view>
+
+    <image-cropper
+      :visible="showCropper"
+      :image-src="cropperImageSrc"
+      :circular="true"
+      @confirm="onCropConfirm"
+      @cancel="onCropCancel"
+    />
   </view>
 </template>
 
 <script>
 import api from '@/api'
+import ImageCropper from '@/components/ImageCropper.vue'
 
 export default {
   name: "AddPetModal",
+  components: {
+    ImageCropper
+  },
   props: {
     initialForm: {
       type: Object,
@@ -134,6 +146,8 @@ export default {
     return {
       showCameraModal: false,
       uploading: false,
+      showCropper: false,
+      cropperImageSrc: '',
       localForm: this.normalizeForm(this.initialForm)
     };
   },
@@ -245,7 +259,10 @@ export default {
         sourceType: ["album"],
         success: (res) => {
           const file = res.tempFilePaths && res.tempFilePaths[0];
-          if (file) this.uploadImageToServer(file);
+          if (file) {
+            this.cropperImageSrc = file
+            this.showCropper = true
+          }
           this.showCameraModal = false;
         },
         fail: () => { this.showCameraModal = false; }
@@ -257,11 +274,21 @@ export default {
         sourceType: ["camera"],
         success: (res) => {
           const file = res.tempFilePaths && res.tempFilePaths[0];
-          if (file) this.uploadImageToServer(file);
+          if (file) {
+            this.cropperImageSrc = file
+            this.showCropper = true
+          }
           this.showCameraModal = false;
         },
         fail: () => { this.showCameraModal = false; }
       });
+    },
+    async onCropConfirm(croppedPath) {
+      this.showCropper = false
+      this.uploadImageToServer(croppedPath)
+    },
+    onCropCancel() {
+      this.showCropper = false
     },
     async uploadImageToServer(filePath) {
       this.uploading = true;

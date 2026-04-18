@@ -140,18 +140,32 @@
         删除宠物
       </button>
     </view>
+
+    <image-cropper
+      :visible="showCropper"
+      :image-src="cropperImageSrc"
+      :circular="true"
+      @confirm="onCropConfirm"
+      @cancel="onCropCancel"
+    />
   </view>
 </template>
 
 <script>
 import api from '@/api'
+import ImageCropper from '@/components/ImageCropper.vue'
 
 export default {
+  components: {
+    ImageCropper
+  },
   data() {
     return {
       petId: null,
       loading: false,
       uploading: false,
+      showCropper: false,
+      cropperImageSrc: '',
       form: {
         name: '',
         breed: '',
@@ -213,9 +227,19 @@ export default {
         sourceType: ['album', 'camera'],
         success: (res) => {
           const tempFilePath = res.tempFilePaths[0]
-          this.uploadAvatar(tempFilePath)
+          this.cropperImageSrc = tempFilePath
+          this.showCropper = true
         }
       })
+    },
+
+    async onCropConfirm(croppedPath) {
+      this.showCropper = false
+      this.uploadAvatar(croppedPath)
+    },
+
+    onCropCancel() {
+      this.showCropper = false
     },
 
     // 上传图片

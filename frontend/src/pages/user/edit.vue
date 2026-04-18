@@ -48,6 +48,14 @@
         <text class="save-btn-text">{{ saving ? '保存中...' : '保存修改' }}</text>
       </view>
     </view>
+
+    <image-cropper
+      :visible="showCropper"
+      :image-src="cropperImageSrc"
+      :circular="true"
+      @confirm="onCropConfirm"
+      @cancel="onCropCancel"
+    />
   </view>
 </template>
 
@@ -55,12 +63,18 @@
 import { getProfile, updateProfile } from '@/api/auth'
 import { uploadImage } from '@/api/pet'
 import { getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
+import ImageCropper from '@/components/ImageCropper.vue'
 
 export default {
+  components: {
+    ImageCropper
+  },
   data() {
     return {
       statusBarHeight: 20,
       defaultAvatar: DEFAULT_USER_AVATAR,
+      showCropper: false,
+      cropperImageSrc: '',
       form: {
         nickname: '',
         avatar: '',
@@ -120,26 +134,35 @@ export default {
         count: 1,
         sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
-        success: async (res) => {
+        success: (res) => {
           if (res.tempFilePaths && res.tempFilePaths.length > 0) {
-            const filePath = res.tempFilePaths[0]
-            uni.showLoading({ title: '上传中...' })
-            try {
-              const uploadRes = await uploadImage(filePath)
-              if (uploadRes && uploadRes.success && uploadRes.data) {
-                this.form.avatar = uploadRes.data.url
-              } else {
-                uni.showToast({ title: '上传失败', icon: 'none' })
-              }
-            } catch (err) {
-              console.error('上传头像失败:', err)
-              uni.showToast({ title: '上传失败', icon: 'none' })
-            } finally {
-              uni.hideLoading()
-            }
+            this.cropperImageSrc = res.tempFilePaths[0]
+            this.showCropper = true
           }
         }
       })
+    },
+
+    async onCropConfirm(croppedPath) {
+      this.showCropper = false
+      uni.showLoading({ title: '上传中...' })
+      try {
+        const uploadRes = await uploadImage(croppedPath)
+        if (uploadRes && uploadRes.success && uploadRes.data) {
+          this.form.avatar = uploadRes.data.url
+        } else {
+          uni.showToast({ title: '上传失败', icon: 'none' })
+        }
+      } catch (err) {
+        console.error('上传头像失败:', err)
+        uni.showToast({ title: '上传失败', icon: 'none' })
+      } finally {
+        uni.hideLoading()
+      }
+    },
+
+    onCropCancel() {
+      this.showCropper = false
     },
 
     async onSave() {
