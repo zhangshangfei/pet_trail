@@ -305,7 +305,6 @@ export default {
     })
   },
   onHide() {
-    uni.$off('loginSuccess')
   },
   onUnload() {
     uni.$off('loginSuccess')
@@ -383,6 +382,12 @@ export default {
         this.avatarUrl = DEFAULT_USER_AVATAR;
         return;
       }
+      const cachedUserInfo = uni.getStorageSync('userInfo');
+      if (cachedUserInfo) {
+        this.isLoggedIn = true;
+        this.userName = cachedUserInfo.nickname || '萌宠主人';
+        this.avatarUrl = getUserAvatar(cachedUserInfo.id, cachedUserInfo.avatar);
+      }
       try {
         const res = await uni.$request.get('/api/users/profile');
         if (res.success) {
@@ -391,16 +396,18 @@ export default {
           this.userName = userData.nickname || '萌宠主人';
           this.avatarUrl = getUserAvatar(userData.id, userData.avatar);
           uni.setStorageSync('userInfo', userData);
-        } else {
+        } else if (!cachedUserInfo) {
           this.isLoggedIn = false;
           this.userName = '请登录';
           this.avatarUrl = DEFAULT_USER_AVATAR;
         }
       } catch (error) {
         console.error('获取用户资料失败:', error);
-        this.isLoggedIn = false;
-        this.userName = '请登录';
-        this.avatarUrl = DEFAULT_USER_AVATAR;
+        if (!cachedUserInfo) {
+          this.isLoggedIn = false;
+          this.userName = '请登录';
+          this.avatarUrl = DEFAULT_USER_AVATAR;
+        }
       }
     },
 
@@ -441,6 +448,7 @@ export default {
                 const userInfo = responseData.user;
 
                 uni.setStorageSync('token', token);
+                uni.setStorageSync('tokenExpireTime', Date.now() + 7 * 24 * 60 * 60 * 1000);
                 uni.setStorageSync('userInfo', userInfo);
 
                 self.isLoggedIn = true;

@@ -369,7 +369,6 @@ export default {
   onHide() {
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar && tabBar.setData) tabBar.setData({ hidden: false });
-    uni.$off('loginSuccess')
   },
   onUnload() {
     const tabBar = this.getTabBar && this.getTabBar();

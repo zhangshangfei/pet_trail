@@ -153,7 +153,6 @@ export default {
     })
   },
   onHide() {
-    uni.$off('loginSuccess')
   },
   onUnload() {
     uni.$off('loginSuccess')

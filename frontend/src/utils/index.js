@@ -209,6 +209,7 @@ export const wechatLogin = () => {
             uni.hideLoading()
             if (loginRes.success) {
               uni.setStorageSync('token', loginRes.data.token)
+              uni.setStorageSync('tokenExpireTime', Date.now() + 7 * 24 * 60 * 60 * 1000)
               uni.setStorageSync('userInfo', loginRes.data.user)
               uni.showToast({ title: '登录成功', icon: 'success' })
               uni.$emit('loginSuccess')
