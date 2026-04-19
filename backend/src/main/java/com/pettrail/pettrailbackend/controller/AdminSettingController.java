@@ -28,6 +28,7 @@ public class AdminSettingController {
     }
 
     @PutMapping
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "setting", action = "batch_update", detail = "批量更新设置")
     @Operation(summary = "批量更新设置")
     public Result<Void> batchUpdate(@RequestBody Map<String, Object> body) {
         List<Map<String, String>> settings = (List<Map<String, String>>) body.get("settings");
@@ -56,6 +57,7 @@ public class AdminSettingController {
     }
 
     @PutMapping("/{key}")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "setting", action = "update", detail = "更新设置")
     @Operation(summary = "更新单个设置")
     public Result<Void> update(@PathVariable String key, @RequestBody Map<String, String> body) {
         SystemSetting existing = settingMapper.selectOne(

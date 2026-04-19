@@ -5,13 +5,11 @@
       <view class="nav-bar">
         <view class="nav-back" @tap="goBack"><view class="nav-back-arrow"></view></view>
         <text class="nav-title">喂食提醒</text>
-        <view class="nav-action" @tap="showAddModal = true">
-          <text class="nav-action-text">添加</text>
-        </view>
+        <view class="nav-placeholder"></view>
       </view>
     </view>
 
-    <scroll-view scroll-y class="page-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px' }">
+    <scroll-view scroll-y class="page-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px', paddingBottom: '160rpx' }">
       <view class="page-content">
 
         <view v-if="pets.length === 0" class="empty-pet">
@@ -87,6 +85,14 @@
         </view>
       </view>
     </scroll-view>
+
+    <view class="bottom-bar">
+      <view class="bottom-bar-inner" :style="{ paddingBottom: 'max(16rpx, env(safe-area-inset-bottom))' }">
+        <view class="add-btn" @tap="showAddModal = true">
+          <text class="add-btn-text">＋ 添加喂食提醒</text>
+        </view>
+      </view>
+    </view>
 
     <view v-if="showAddModal" class="popup-mask" @tap="showAddModal = false">
       <view class="popup-content" @tap.stop>
@@ -364,8 +370,7 @@ $text-light: #999999;
 .nav-back { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; }
 .nav-back-arrow { width: 20rpx; height: 20rpx; border-left: 4rpx solid $text-primary; border-bottom: 4rpx solid $text-primary; transform: rotate(45deg); }
 .nav-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
-.nav-action { padding: 8rpx 24rpx; }
-.nav-action-text { font-size: 28rpx; color: $primary; font-weight: 600; }
+.nav-placeholder { width: 60rpx; }
 .page-scroll { height: 100vh; }
 .page-content { padding: 24rpx; }
 
@@ -513,4 +518,17 @@ $text-light: #999999;
 .popup-btn.confirm { background: $primary; }
 .popup-btn-text { font-size: 30rpx; color: $text-secondary; }
 .confirm-text { color: #fff; font-weight: 600; }
+
+.bottom-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
+  background: #fff; border-top: 1rpx solid #f0f0f0;
+}
+.bottom-bar-inner { padding: 16rpx 32rpx; }
+.add-btn {
+  height: 96rpx; border-radius: 48rpx; display: flex;
+  align-items: center; justify-content: center; background: $primary;
+  box-shadow: 0 8rpx 24rpx rgba(255,106,61,0.3);
+}
+.add-btn:active { opacity: 0.9; }
+.add-btn-text { font-size: 30rpx; font-weight: 600; color: #fff; }
 </style>

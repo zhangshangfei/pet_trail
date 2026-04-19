@@ -55,6 +55,7 @@ public class AdminPetController {
     }
 
     @DeleteMapping("/{id}")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "pet", action = "delete", detail = "删除宠物")
     @Operation(summary = "删除宠物")
     @RequireRole("SUPER_ADMIN")
     public Result<Void> delete(@PathVariable Long id) {

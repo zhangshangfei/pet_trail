@@ -67,7 +67,7 @@
               <view class="post-pet-info">
                 <text class="pet-icon">{{ getPetIcon(post.petType) }}</text>
                 <text class="pet-name">{{ post.petName || '未知宠物' }}</text>
-                <text class="pet-age" v-if="post.petAge"> | {{ post.petAge }}岁</text>
+                <text class="pet-age" v-if="post.petAge"> | {{ post.petAge }}</text>
               </view>
             </view>
             <text class="post-time">{{ post.time }}</text>

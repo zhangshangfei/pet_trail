@@ -47,6 +47,7 @@ public class AdminAdminController {
     }
 
     @PostMapping
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "admin", action = "create", detail = "创建管理员")
     @Operation(summary = "新增管理员")
     @RequireRole("SUPER_ADMIN")
     public Result<Void> create(@RequestBody Map<String, String> body) {
@@ -80,6 +81,7 @@ public class AdminAdminController {
     }
 
     @PutMapping("/{id}")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "admin", action = "update", detail = "更新管理员")
     @Operation(summary = "编辑管理员")
     @RequireRole("SUPER_ADMIN")
     public Result<Void> update(@PathVariable Long id, @RequestBody Map<String, String> body) {
@@ -106,6 +108,7 @@ public class AdminAdminController {
     }
 
     @PutMapping("/{id}/status")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "admin", action = "update_status", detail = "更新管理员状态")
     @Operation(summary = "启用/禁用管理员")
     @RequireRole("SUPER_ADMIN")
     public Result<Void> updateStatus(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
@@ -127,6 +130,7 @@ public class AdminAdminController {
     }
 
     @PutMapping("/{id}/reset-pwd")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "admin", action = "reset_pwd", detail = "重置密码")
     @Operation(summary = "重置管理员密码")
     @RequireRole("SUPER_ADMIN")
     public Result<Void> resetPassword(@PathVariable Long id) {
@@ -143,6 +147,7 @@ public class AdminAdminController {
     }
 
     @PutMapping("/password")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "admin", action = "change_pwd", detail = "修改密码")
     @Operation(summary = "修改自己的密码")
     public Result<Void> changePassword(@RequestBody Map<String, String> body) {
         Long currentId = UserContext.getCurrentUserId();

@@ -5,13 +5,11 @@
       <view class="nav-bar">
         <view class="nav-back" @tap="goBack"><view class="nav-back-arrow"></view></view>
         <text class="nav-title">添加打卡项</text>
-        <view class="nav-save" @tap="onSave">
-          <text class="nav-save-text">保存</text>
-        </view>
+        <view class="nav-placeholder"></view>
       </view>
     </view>
 
-    <scroll-view scroll-y class="page-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px' }">
+    <scroll-view scroll-y class="page-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px', paddingBottom: '160rpx' }">
       <view class="page-content">
 
         <view class="preview-card">
@@ -76,6 +74,14 @@
 
       </view>
     </scroll-view>
+
+    <view class="bottom-bar">
+      <view class="bottom-bar-inner" :style="{ paddingBottom: 'max(16rpx, env(safe-area-inset-bottom))' }">
+        <view class="save-btn" @tap="onSave">
+          <text class="save-btn-text">保存</text>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -169,8 +175,7 @@ $text-light: #999999;
 .nav-back { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; }
 .nav-back-arrow { width: 20rpx; height: 20rpx; border-left: 4rpx solid $text-primary; border-bottom: 4rpx solid $text-primary; transform: rotate(45deg); }
 .nav-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
-.nav-save { padding: 12rpx 28rpx; border-radius: 28rpx; background: $primary; }
-.nav-save-text { font-size: 28rpx; color: #fff; font-weight: 600; }
+.nav-placeholder { width: 60rpx; }
 
 .page-scroll { height: 100vh; }
 .page-content { padding: 24rpx; }
@@ -234,4 +239,17 @@ $text-light: #999999;
 }
 .tip-icon { font-size: 28rpx; margin-right: 12rpx; flex-shrink: 0; }
 .tip-text { font-size: 24rpx; color: #b8860b; line-height: 1.6; }
+
+.bottom-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
+  background: #fff; border-top: 1rpx solid #f0f0f0;
+}
+.bottom-bar-inner { padding: 16rpx 32rpx; }
+.save-btn {
+  height: 96rpx; border-radius: 48rpx; display: flex;
+  align-items: center; justify-content: center; background: $primary;
+  box-shadow: 0 8rpx 24rpx rgba(255,106,61,0.3);
+}
+.save-btn:active { opacity: 0.9; }
+.save-btn-text { font-size: 32rpx; font-weight: 600; color: #fff; }
 </style>

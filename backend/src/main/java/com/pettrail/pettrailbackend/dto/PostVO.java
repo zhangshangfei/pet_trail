@@ -65,7 +65,7 @@ public class PostVO {
 
     private Integer petType;
 
-    private Integer petAge;
+    private String petAge;
 
     @Data
     public static class BubbleVO {

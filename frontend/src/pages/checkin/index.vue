@@ -68,7 +68,7 @@
               <text class="section-date">{{ today }}</text>
             </view>
             <view class="section-actions">
-              <view class="section-action" @tap="showManagePopup = true">
+              <view class="section-action" @tap="goManageItems">
                 <text class="section-action-icon">⚙</text>
                 <text class="section-action-text">管理</text>
               </view>
@@ -146,60 +146,6 @@
       </view>
     </scroll-view>
 
-    <view v-if="showManagePopup" class="popup-mask" @tap="showManagePopup = false">
-      <view class="popup-content manage-popup" @tap.stop>
-        <view class="popup-header">
-          <text class="popup-title">管理打卡项</text>
-          <view class="popup-close" @tap="showManagePopup = false">
-            <text class="popup-close-icon">✕</text>
-          </view>
-        </view>
-        <scroll-view scroll-y class="manage-scroll">
-          <view class="manage-section">
-            <text class="manage-section-title">默认打卡项</text>
-            <view class="manage-list">
-              <view v-for="item in defaultItems" :key="item.id" class="manage-item">
-                <text class="manage-item-icon">{{ item.emoji || '📋' }}</text>
-                <text class="manage-item-name">{{ item.label }}</text>
-                <view class="manage-item-status">
-                  <text v-if="item.hidden" class="status-tag status-hidden">已隐藏</text>
-                  <text v-else class="status-tag status-visible">显示中</text>
-                </view>
-                <switch
-                  :checked="!item.hidden"
-                  @change="onToggleItemVisibility(item)"
-                  color="#ff6a3d"
-                  style="transform: scale(0.8);"
-                />
-              </view>
-            </view>
-          </view>
-          <view class="manage-section" v-if="customItems.length">
-            <text class="manage-section-title">自定义打卡项</text>
-            <view class="manage-list">
-              <view v-for="item in customItems" :key="item.id" class="manage-item">
-                <text class="manage-item-icon">{{ item.emoji || '📋' }}</text>
-                <text class="manage-item-name">{{ item.label }}</text>
-                <view class="manage-item-status">
-                  <text v-if="item.hidden" class="status-tag status-hidden">已隐藏</text>
-                  <text v-else class="status-tag status-visible">显示中</text>
-                </view>
-                <switch
-                  :checked="!item.hidden"
-                  @change="onToggleItemVisibility(item)"
-                  color="#ff6a3d"
-                  style="transform: scale(0.8);"
-                />
-                <view class="manage-btn manage-btn-del" @tap="onDeleteCustomItem(item)">
-                  <text class="manage-btn-text">删除</text>
-                </view>
-              </view>
-            </view>
-          </view>
-        </scroll-view>
-      </view>
-    </view>
-
     <view class="checkin-animation" :class="{ show: showSuccessAnimation }">
       <view class="success-bubble">
         <text class="success-emoji">🎉</text>
@@ -211,7 +157,6 @@
 
 <script>
 import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
-import { deleteCheckinItem, hideCheckinItem, showCheckinItem } from '@/api/checkin'
 
 const DEFAULT_PET_AVATAR = '/static/images/default-pet-avatar.png'
 
@@ -236,7 +181,6 @@ export default {
       recentRecords: [],
       showSuccessAnimation: false,
       animationTimer: null,
-      showManagePopup: false,
     }
   },
   computed: {
@@ -256,12 +200,6 @@ export default {
     },
     todayCompleted() {
       return this.visibleItems.filter((item) => item.checked).length
-    },
-    defaultItems() {
-      return this.allItems.filter((i) => i.isDefault)
-    },
-    customItems() {
-      return this.allItems.filter((i) => i.isCustom)
     }
   },
   onLoad(options) {
@@ -275,6 +213,7 @@ export default {
   },
   async onShow() {
     await this.loadPets()
+    await this.loadCheckinItems()
     await this.refreshPageData()
   },
   onUnload() {
@@ -506,52 +445,8 @@ export default {
         uni.showToast({ title: (error && error.message) || '打卡失败', icon: 'none' })
       }
     },
-    async onToggleItemVisibility(item) {
-      const loggedIn = await checkLogin('请先登录')
-      if (!loggedIn) return
-
-      try {
-        if (item.hidden) {
-          const res = await showCheckinItem(item.id)
-          if (res && res.success) {
-            item.hidden = false
-            uni.showToast({ title: '已显示', icon: 'success' })
-          }
-        } else {
-          const res = await hideCheckinItem(item.id)
-          if (res && res.success) {
-            item.hidden = true
-            uni.showToast({ title: '已隐藏', icon: 'success' })
-          }
-        }
-        this.visibleItems = this.allItems.filter((i) => !i.hidden)
-        this.syncPageState()
-      } catch (e) {
-        console.error('操作失败:', e)
-        uni.showToast({ title: '操作失败', icon: 'none' })
-      }
-    },
-    onDeleteCustomItem(item) {
-      const self = this
-      uni.showModal({
-        title: '删除打卡项',
-        content: `确定删除"${item.label}"吗？删除后不可恢复。`,
-        confirmColor: '#ff6a3d',
-        async success(res) {
-          if (!res.confirm) return
-          try {
-            const result = await deleteCheckinItem(item.id)
-            if (result && result.success) {
-              uni.showToast({ title: '已删除', icon: 'success' })
-              await self.loadCheckinItems()
-              await self.refreshPageData()
-            }
-          } catch (e) {
-            console.error('删除打卡项失败:', e)
-            uni.showToast({ title: '删除失败', icon: 'none' })
-          }
-        }
-      })
+    goManageItems() {
+      uni.navigateTo({ url: '/pages/checkin/manage-items' })
     },
     goAddItem() {
       uni.navigateTo({ url: '/pages/checkin/add-item' })
@@ -840,58 +735,6 @@ $radius: 24rpx;
 .empty-records-icon { font-size: 64rpx; margin-bottom: 16rpx; }
 .empty-records-text { font-size: 28rpx; color: $text-light; }
 .page-bottom-safe { height: calc(24rpx + env(safe-area-inset-bottom)); }
-
-.popup-mask {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: flex-end;
-}
-.popup-content {
-  width: 100%; background: #fff; border-radius: 32rpx 32rpx 0 0;
-  max-height: 80vh;
-}
-.manage-popup .manage-scroll { max-height: 60vh; }
-.add-scroll { max-height: 50vh; }
-.popup-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 32rpx 32rpx 16rpx;
-}
-.popup-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
-.popup-close {
-  width: 56rpx; height: 56rpx; display: flex;
-  align-items: center; justify-content: center;
-  border-radius: 28rpx; background: #f5f5f5;
-}
-.popup-close-icon { font-size: 28rpx; color: $text-secondary; }
-
-.manage-section { padding: 0 32rpx 24rpx; }
-.manage-section-title {
-  font-size: 26rpx; font-weight: 600; color: $text-light;
-  margin-bottom: 16rpx; padding-bottom: 8rpx; border-bottom: 1rpx solid #f0f0f0;
-}
-.manage-list { display: flex; flex-direction: column; gap: 12rpx; }
-.manage-item {
-  display: flex; align-items: center; padding: 16rpx 0;
-  border-bottom: 1rpx solid #f8f8f8;
-}
-.manage-item-icon { font-size: 36rpx; margin-right: 16rpx; flex-shrink: 0; }
-.manage-item-name { flex: 1; font-size: 28rpx; color: $text-primary; }
-.manage-item-status { flex-shrink: 0; margin-right: 12rpx; }
-.status-tag {
-  font-size: 22rpx; padding: 4rpx 12rpx; border-radius: 8rpx; font-weight: 500;
-}
-.status-visible { background: $green-light; color: $green; }
-.status-hidden { background: #f5f5f5; color: $text-light; }
-.manage-item-actions { display: flex; gap: 12rpx; flex-shrink: 0; }
-.manage-btn {
-  padding: 8rpx 20rpx; border-radius: 20rpx; background: $primary-light;
-}
-.manage-btn-show { background: $green-light; }
-.manage-btn-off { background: #f0f0f0; }
-.manage-btn-del { background: #fef2f2; }
-.manage-btn-text { font-size: 24rpx; color: $primary; font-weight: 500; }
-.manage-btn-show .manage-btn-text { color: $green; }
-.manage-btn-off .manage-btn-text { color: $text-secondary; }
-.manage-btn-del .manage-btn-text { color: #ef4444; }
 
 .checkin-animation {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;

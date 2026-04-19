@@ -120,11 +120,15 @@
         <view class="dash-section">
           <view class="section-header">
             <text class="section-title">💉 疫苗提醒</text>
+            <view v-if="vaccineCards.length > 3" class="view-all-btn" @tap="goVaccineList">
+              <text class="view-all-text">查看全部</text>
+              <text class="view-all-arrow">›</text>
+            </view>
           </view>
 
           <view v-if="vaccineCards.length" class="vaccine-list">
             <view
-              v-for="item in vaccineCards"
+              v-for="item in vaccineCardsLimited"
               :key="item.id"
               class="dash-card vaccine-card"
               :class="{ urgent: item.isUrgent }"
@@ -168,11 +172,15 @@
         <view class="dash-section">
           <view class="section-header">
             <text class="section-title">💊 驱虫提醒</text>
+            <view v-if="parasiteCards.length > 3" class="view-all-btn" @tap="goParasiteList">
+              <text class="view-all-text">查看全部</text>
+              <text class="view-all-arrow">›</text>
+            </view>
           </view>
 
           <view v-if="parasiteCards.length" class="vaccine-list">
             <view
-              v-for="item in parasiteCards"
+              v-for="item in parasiteCardsLimited"
               :key="item.id"
               class="dash-card vaccine-card"
               :class="{ urgent: item.isUrgent }"
@@ -361,6 +369,9 @@ export default {
         };
       });
     },
+    vaccineCardsLimited() {
+      return this.vaccineCards.slice(0, 3);
+    },
     parasiteCards() {
       const petId = this.selectedPet && this.selectedPet.id;
       if (!petId || !Array.isArray(this.parasiteReminders)) return [];
@@ -382,6 +393,9 @@ export default {
           isUrgent: !done && rawDays <= 7
         };
       });
+    },
+    parasiteCardsLimited() {
+      return this.parasiteCards.slice(0, 3);
     }
   },
   onShow() {
@@ -676,6 +690,14 @@ export default {
       const loggedIn = await checkLogin('请先登录后再添加记录')
       if (!loggedIn) return
       uni.navigateTo({ url: "/pages/health/index" });
+    },
+    goVaccineList() {
+      if (!this.selectedPet || !this.selectedPet.id) return
+      uni.navigateTo({ url: `/pages/health/vaccine-list?petId=${this.selectedPet.id}` })
+    },
+    goParasiteList() {
+      if (!this.selectedPet || !this.selectedPet.id) return
+      uni.navigateTo({ url: `/pages/health/parasite-list?petId=${this.selectedPet.id}` })
     }
   }
 };
@@ -813,6 +835,28 @@ export default {
   font-size: 32rpx;
   font-weight: 600;
   color: #111827;
+}
+
+.view-all-btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 8rpx 20rpx;
+  background: rgba(255, 122, 61, 0.08);
+  border-radius: 30rpx;
+}
+
+.view-all-text {
+  font-size: 24rpx;
+  color: #ff7a3d;
+  font-weight: 500;
+}
+
+.view-all-arrow {
+  font-size: 28rpx;
+  color: #ff7a3d;
+  margin-left: 4rpx;
+  font-weight: 600;
 }
 
 .chart-switch {

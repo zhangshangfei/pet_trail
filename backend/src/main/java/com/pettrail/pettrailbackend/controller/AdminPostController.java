@@ -56,6 +56,7 @@ public class AdminPostController {
 
     @PutMapping("/{id}/audit")
     @Operation(summary = "审核动态（通过/拒绝）")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "post", action = "audit", detail = "审核动态")
     public Result<Void> audit(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         Post post = postMapper.selectById(id);
         if (post == null) {
@@ -85,6 +86,7 @@ public class AdminPostController {
 
     @PutMapping("/batch-audit")
     @Operation(summary = "批量审核动态")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "post", action = "batch_audit", detail = "批量审核动态")
     public Result<Void> batchAudit(@RequestBody Map<String, Object> body) {
         List<Integer> postIds = (List<Integer>) body.get("postIds");
         Integer auditStatus = (Integer) body.get("auditStatus");
@@ -123,6 +125,7 @@ public class AdminPostController {
     @PutMapping("/{id}/restore")
     @Operation(summary = "恢复已删除动态")
     @RequireRole("SUPER_ADMIN")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "post", action = "restore", detail = "恢复动态")
     public Result<Void> restore(@PathVariable Long id) {
         Post post = postMapper.selectById(id);
         if (post == null) {

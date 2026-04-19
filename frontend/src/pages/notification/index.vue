@@ -6,13 +6,14 @@
         <view class="nav-back-arrow"></view>
       </view>
       <text class="nav-title">消息通知</text>
-      <view class="nav-actions">
-        <view v-if="notificationList.length > 0" class="nav-action" @click="onMarkAllRead">
-          <text class="nav-action-text">全部已读</text>
-        </view>
-        <view v-if="notificationList.length > 0" class="nav-action" @click="onClearAll">
-          <text class="nav-action-text nav-action-text--danger">清空</text>
-        </view>
+      <view class="nav-placeholder"></view>
+    </view>
+    <view v-if="notificationList.length > 0" class="action-bar">
+      <view class="action-btn" @click="onMarkAllRead">
+        <text class="action-btn-text">全部已读</text>
+      </view>
+      <view class="action-btn action-btn--danger" @click="onClearAll">
+        <text class="action-btn-text action-btn-text--danger">清空</text>
       </view>
     </view>
     <scroll-view scroll-y class="notification-list" :style="{ height: scrollHeight + 'px' }" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
@@ -274,22 +275,18 @@ export default {
   font-weight: 600;
   color: #333;
 }
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
+.nav-placeholder { width: 60rpx; }
+.action-bar {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 16rpx; padding: 16rpx 28rpx; background: #fff;
+  border-bottom: 1rpx solid #f0f0f0;
 }
-.nav-action {
-  display: flex;
-  align-items: center;
+.action-btn {
+  padding: 10rpx 24rpx; border-radius: 24rpx; background: #fff0ea;
 }
-.nav-action-text {
-  font-size: 26rpx;
-  color: #ff6a3d;
-}
-.nav-action-text--danger {
-  color: #ff4d4f;
-}
+.action-btn--danger { background: #fef2f2; }
+.action-btn-text { font-size: 24rpx; color: #ff6a3d; font-weight: 500; }
+.action-btn-text--danger { color: #ff4d4f; }
 .loading-state,
 .empty-state {
   display: flex;

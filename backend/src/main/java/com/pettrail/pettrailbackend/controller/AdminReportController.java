@@ -40,6 +40,7 @@ public class AdminReportController {
     }
 
     @PutMapping("/{id}/handle")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "report", action = "handle", detail = "处理举报")
     @Operation(summary = "处理举报")
     public Result<Void> handle(@PathVariable Long id, @RequestBody java.util.Map<String, Object> body) {
         Report report = reportMapper.selectById(id);

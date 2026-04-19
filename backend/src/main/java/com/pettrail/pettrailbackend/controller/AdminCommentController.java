@@ -45,6 +45,7 @@ public class AdminCommentController {
     }
 
     @DeleteMapping("/{id}")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "comment", action = "delete", detail = "删除评论")
     @Operation(summary = "删除评论（逻辑删除）")
     @RequireRole("SUPER_ADMIN")
     public Result<Void> delete(@PathVariable Long id) {
@@ -58,6 +59,7 @@ public class AdminCommentController {
     }
 
     @PutMapping("/{id}/restore")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "comment", action = "restore", detail = "恢复评论")
     @Operation(summary = "恢复评论")
     @RequireRole("SUPER_ADMIN")
     public Result<Void> restore(@PathVariable Long id) {

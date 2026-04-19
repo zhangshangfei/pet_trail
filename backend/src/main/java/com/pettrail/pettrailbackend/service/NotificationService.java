@@ -183,7 +183,7 @@ public class NotificationService {
         return vo;
     }
 
-    private void invalidateUnreadCache(Long userId) {
+    public void invalidateUnreadCache(Long userId) {
         try {
             redisTemplate.delete(UNREAD_COUNT_PREFIX + userId);
         } catch (Exception e) {

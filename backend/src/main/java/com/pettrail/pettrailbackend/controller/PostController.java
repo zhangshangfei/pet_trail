@@ -222,29 +222,37 @@ public class PostController {
                     vo.setPetAvatar(pet.getAvatar() != null ? pet.getAvatar() : "");
                     vo.setPetType(pet.getCategory());
                     if (pet.getBirthday() != null) {
-                        int age = Period.between(pet.getBirthday(), LocalDate.now()).getYears();
-                        vo.setPetAge(Math.max(age, 0));
+                        Period period = Period.between(pet.getBirthday(), LocalDate.now());
+                        int years = period.getYears();
+                        int months = period.getMonths();
+                        if (years > 0) {
+                            vo.setPetAge(months > 0 ? years + "岁" + months + "个月" : years + "岁");
+                        } else if (months > 0) {
+                            vo.setPetAge(months + "个月");
+                        } else {
+                            vo.setPetAge(Math.max(period.getDays(), 0) + "天");
+                        }
                     } else {
-                        vo.setPetAge(0);
+                        vo.setPetAge("");
                     }
                 } else {
                     vo.setPetName("未知宠物");
                     vo.setPetAvatar("");
                     vo.setPetType(0);
-                    vo.setPetAge(0);
+                    vo.setPetAge("");
                 }
             } catch (Exception e) {
                 log.error("查询宠物信息失败：petId={}", post.getPetId(), e);
                 vo.setPetName("未知宠物");
                 vo.setPetAvatar("");
                 vo.setPetType(0);
-                vo.setPetAge(0);
+                vo.setPetAge("");
             }
         } else {
             vo.setPetName("");
             vo.setPetAvatar("");
             vo.setPetType(0);
-            vo.setPetAge(0);
+            vo.setPetAge("");
         }
 
         if (userId != null) {

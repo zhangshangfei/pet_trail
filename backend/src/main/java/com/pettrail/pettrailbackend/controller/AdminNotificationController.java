@@ -8,6 +8,7 @@ import com.pettrail.pettrailbackend.entity.Notification;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.NotificationMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
+import com.pettrail.pettrailbackend.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class AdminNotificationController {
 
     private final NotificationMapper notificationMapper;
     private final UserMapper userMapper;
+    private final NotificationService notificationService;
 
     @GetMapping
     @Operation(summary = "分页查询通知列表")
@@ -53,6 +55,7 @@ public class AdminNotificationController {
 
     @PostMapping
     @Operation(summary = "发送系统通知")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "notification", action = "send", detail = "发送系统通知")
     public Result<Void> sendNotification(@RequestBody Map<String, Object> body) {
         Long userId = Long.valueOf(body.get("userId").toString());
         String content = body.get("content").toString();
@@ -65,6 +68,7 @@ public class AdminNotificationController {
         notification.setContent(content);
         notification.setIsRead(false);
         notificationMapper.insert(notification);
+        notificationService.invalidateUnreadCache(userId);
 
         return Result.success(null);
     }
@@ -72,6 +76,7 @@ public class AdminNotificationController {
     @PostMapping("/broadcast")
     @Operation(summary = "广播通知（发送给所有用户）")
     @RequireRole("SUPER_ADMIN")
+    @com.pettrail.pettrailbackend.annotation.OperationLog(module = "notification", action = "broadcast", detail = "广播通知")
     public Result<Map<String, Object>> broadcast(@RequestBody Map<String, String> body) {
         String content = body.get("content");
         String title = body.getOrDefault("title", "系统通知");
@@ -106,6 +111,10 @@ public class AdminNotificationController {
             for (Notification n : batch) {
                 notificationMapper.insert(n);
             }
+        }
+
+        for (User user : users) {
+            notificationService.invalidateUnreadCache(user.getId());
         }
 
         return Result.success(Map.of("sentCount", count));
