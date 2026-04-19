@@ -109,6 +109,21 @@ CREATE TABLE IF NOT EXISTS `user_hidden_items` (
   UNIQUE KEY `uk_user_item` (`user_id`, `item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户隐藏的打卡项';
 
+CREATE TABLE IF NOT EXISTS `feedbacks` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL,
+  `type` varchar(50) DEFAULT 'other' COMMENT '类型：bug/feature/experience/other',
+  `content` text NOT NULL COMMENT '反馈内容',
+  `contact` varchar(100) DEFAULT NULL COMMENT '联系方式',
+  `images` text DEFAULT NULL COMMENT '截图',
+  `status` tinyint(4) DEFAULT '0' COMMENT '状态：0-待处理 1-已处理',
+  `reply` text DEFAULT NULL COMMENT '回复',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='意见反馈';
+
 -- ========================================
 -- 社交模块（动态、点赞、评论）
 -- ========================================

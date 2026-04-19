@@ -110,6 +110,34 @@
         "enablePullDownRefresh": true,
         "backgroundTextStyle": "dark"
       }
+    },
+    {
+      "path": "pages/me/about",
+      "style": {
+        "navigationBarTitleText": "关于我们",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/me/feedback",
+      "style": {
+        "navigationBarTitleText": "意见反馈",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/me/settings",
+      "style": {
+        "navigationBarTitleText": "设置",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/me/feeding-reminder",
+      "style": {
+        "navigationBarTitleText": "喂食提醒",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

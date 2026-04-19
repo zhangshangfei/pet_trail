@@ -161,13 +161,24 @@
               <view v-for="item in allItems.filter(i => i.isDefault)" :key="item.id" class="manage-item">
                 <text class="manage-item-icon">{{ item.emoji || '📋' }}</text>
                 <text class="manage-item-name">{{ item.label }}</text>
+                <view class="manage-item-status">
+                  <text v-if="item.hidden" class="status-tag status-hidden">已隐藏</text>
+                  <text v-else class="status-tag status-visible">显示中</text>
+                </view>
                 <view class="manage-item-actions">
                   <view
-                    class="manage-btn"
-                    :class="{ 'manage-btn-off': !item.hidden }"
+                    v-if="item.hidden"
+                    class="manage-btn manage-btn-show"
                     @tap="onToggleItemVisibility(item)"
                   >
-                    <text class="manage-btn-text">{{ item.hidden ? '显示' : '隐藏' }}</text>
+                    <text class="manage-btn-text">显示</text>
+                  </view>
+                  <view
+                    v-else
+                    class="manage-btn manage-btn-off"
+                    @tap="onToggleItemVisibility(item)"
+                  >
+                    <text class="manage-btn-text">隐藏</text>
                   </view>
                 </view>
               </view>
@@ -179,13 +190,24 @@
               <view v-for="item in allItems.filter(i => i.isCustom)" :key="item.id" class="manage-item">
                 <text class="manage-item-icon">{{ item.emoji || '📋' }}</text>
                 <text class="manage-item-name">{{ item.label }}</text>
+                <view class="manage-item-status">
+                  <text v-if="item.hidden" class="status-tag status-hidden">已隐藏</text>
+                  <text v-else class="status-tag status-visible">显示中</text>
+                </view>
                 <view class="manage-item-actions">
                   <view
-                    class="manage-btn"
-                    :class="{ 'manage-btn-off': !item.hidden }"
+                    v-if="item.hidden"
+                    class="manage-btn manage-btn-show"
                     @tap="onToggleItemVisibility(item)"
                   >
-                    <text class="manage-btn-text">{{ item.hidden ? '显示' : '隐藏' }}</text>
+                    <text class="manage-btn-text">显示</text>
+                  </view>
+                  <view
+                    v-else
+                    class="manage-btn manage-btn-off"
+                    @tap="onToggleItemVisibility(item)"
+                  >
+                    <text class="manage-btn-text">隐藏</text>
                   </view>
                   <view class="manage-btn manage-btn-del" @tap="onDeleteCustomItem(item)">
                     <text class="manage-btn-text">删除</text>
@@ -240,12 +262,12 @@
             </view>
           </view>
         </scroll-view>
-        <view class="popup-footer">
+        <view class="popup-footer" :style="{ paddingBottom: 'max(32rpx, env(safe-area-inset-bottom))' }">
           <view class="popup-btn cancel" @tap="showAddItemPopup = false">
             <text class="popup-btn-text">取消</text>
           </view>
           <view class="popup-btn confirm" @tap="onAddCustomItem">
-            <text class="popup-btn-text confirm-text">添加</text>
+            <text class="popup-btn-text confirm-text">保存</text>
           </view>
         </view>
       </view>
@@ -934,7 +956,6 @@ $radius: 24rpx;
 }
 .popup-content {
   width: 100%; background: #fff; border-radius: 32rpx 32rpx 0 0;
-  padding-bottom: env(safe-area-inset-bottom);
   max-height: 80vh;
 }
 .manage-popup .manage-scroll { max-height: 60vh; }
@@ -963,13 +984,21 @@ $radius: 24rpx;
 }
 .manage-item-icon { font-size: 36rpx; margin-right: 16rpx; flex-shrink: 0; }
 .manage-item-name { flex: 1; font-size: 28rpx; color: $text-primary; }
+.manage-item-status { flex-shrink: 0; margin-right: 12rpx; }
+.status-tag {
+  font-size: 22rpx; padding: 4rpx 12rpx; border-radius: 8rpx; font-weight: 500;
+}
+.status-visible { background: $green-light; color: $green; }
+.status-hidden { background: #f5f5f5; color: $text-light; }
 .manage-item-actions { display: flex; gap: 12rpx; flex-shrink: 0; }
 .manage-btn {
   padding: 8rpx 20rpx; border-radius: 20rpx; background: $primary-light;
 }
+.manage-btn-show { background: $green-light; }
 .manage-btn-off { background: #f0f0f0; }
 .manage-btn-del { background: #fef2f2; }
 .manage-btn-text { font-size: 24rpx; color: $primary; font-weight: 500; }
+.manage-btn-show .manage-btn-text { color: $green; }
 .manage-btn-off .manage-btn-text { color: $text-secondary; }
 .manage-btn-del .manage-btn-text { color: #ef4444; }
 

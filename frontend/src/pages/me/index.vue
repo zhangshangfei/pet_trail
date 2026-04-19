@@ -268,7 +268,7 @@ export default {
       uni.switchTab({ url: "/pages/dashboard/index" });
     },
     goToFeedingReminder() {
-      uni.showToast({ title: "喂食提醒未实现", icon: "none" });
+      uni.navigateTo({ url: '/pages/me/feeding-reminder' });
     },
     goToHealth() {
       uni.navigateTo({ url: "/pages/health/index" });
@@ -286,13 +286,13 @@ export default {
       uni.navigateTo({ url: '/pages/discover/index' });
     },
     goToAbout() {
-      uni.showToast({ title: "关于我们未实现", icon: "none" });
+      uni.navigateTo({ url: '/pages/me/about' });
     },
     goToFeedback() {
-      uni.showToast({ title: "意见反馈未实现", icon: "none" });
+      uni.navigateTo({ url: '/pages/me/feedback' });
     },
     goToSettings() {
-      uni.showToast({ title: "设置未实现", icon: "none" });
+      uni.navigateTo({ url: '/pages/me/settings' });
     }
   }
 };
