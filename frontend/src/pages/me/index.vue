@@ -4,10 +4,9 @@
       :status-bar-height="statusBarHeight"
       :avatar="avatarUrl"
       :name="userName"
-      right-icon="🔔"
-      @rightTap="onBellTap"
+      :show-discover="false"
+      :show-bell="false"
       @userTap="onTopUserTap"
-      @discoverTap="onDiscoverTap"
     />
 
     <scroll-view scroll-y class="me-scroll" :style="{ height: scrollHeight + 'px', paddingTop: headerHeight + 'px' }">

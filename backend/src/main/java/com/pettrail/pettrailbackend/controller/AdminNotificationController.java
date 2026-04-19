@@ -70,6 +70,7 @@ public class AdminNotificationController {
         notification.setFromUserId(0L);
         notification.setType("system");
         notification.setContent(content);
+        notification.setTitle(body.getOrDefault("title", "系统通知").toString());
         notification.setIsRead(false);
         notificationMapper.insert(notification);
         notificationService.invalidateUnreadCache(userId);
@@ -99,6 +100,7 @@ public class AdminNotificationController {
             notification.setFromUserId(0L);
             notification.setType("system");
             notification.setContent(content);
+            notification.setTitle(title);
             notification.setIsRead(false);
             batch.add(notification);
             count++;

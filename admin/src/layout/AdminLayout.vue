@@ -41,6 +41,10 @@
           <el-icon><Bell /></el-icon>
           <template #title>通知管理</template>
         </el-menu-item>
+        <el-menu-item index="/feedbacks">
+          <el-icon><ChatLineSquare /></el-icon>
+          <template #title>反馈管理</template>
+        </el-menu-item>
         <el-menu-item v-if="isSuperAdmin" index="/admins">
           <el-icon><UserFilled /></el-icon>
           <template #title>管理员管理</template>

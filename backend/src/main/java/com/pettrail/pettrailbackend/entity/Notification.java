@@ -19,6 +19,7 @@ public class Notification {
     private String type;
     private Long targetId;
     private String content;
+    private String title;
     private Boolean isRead;
     private LocalDateTime createdAt;
 

@@ -19,6 +19,7 @@ const routes = [
       { path: 'comments', name: 'Comments', component: () => import('../views/Comments.vue'), meta: { title: '评论管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
       { path: 'reports', name: 'Reports', component: () => import('../views/Reports.vue'), meta: { title: '举报管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
       { path: 'notifications', name: 'Notifications', component: () => import('../views/Notifications.vue'), meta: { title: '通知管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
+      { path: 'feedbacks', name: 'Feedbacks', component: () => import('../views/Feedbacks.vue'), meta: { title: '反馈管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
       { path: 'admins', name: 'Admins', component: () => import('../views/Admins.vue'), meta: { title: '管理员管理', roles: ['SUPER_ADMIN'] } },
       { path: 'logs', name: 'Logs', component: () => import('../views/Logs.vue'), meta: { title: '操作日志', roles: ['ADMIN', 'SUPER_ADMIN'] } },
       { path: 'settings', name: 'Settings', component: () => import('../views/Settings.vue'), meta: { title: '系统设置', roles: ['SUPER_ADMIN'] } }

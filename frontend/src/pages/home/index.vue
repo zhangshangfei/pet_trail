@@ -51,7 +51,7 @@
         <text class="sys-notice-icon">📢</text>
         <swiper class="sys-notice-swiper" vertical autoplay circular :interval="3000" :duration="500">
           <swiper-item v-for="(msg, idx) in sysNoticeList" :key="idx">
-            <text class="sys-notice-text" @tap="onSysNoticeTap(msg)">{{ msg.content }}</text>
+            <text class="sys-notice-text" @tap="onSysNoticeTap(msg)">{{ msg.title ? msg.title + '：' + msg.content : msg.content }}</text>
           </swiper-item>
         </swiper>
         <view class="sys-notice-close" @tap="closeSysNotice">

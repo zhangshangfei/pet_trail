@@ -157,6 +157,7 @@ public class NotificationService {
         vo.setType(notification.getType());
         vo.setTargetId(notification.getTargetId());
         vo.setContent(notification.getContent());
+        vo.setTitle(notification.getTitle());
         vo.setIsRead(notification.getIsRead());
         vo.setCreatedAt(notification.getCreatedAt());
 

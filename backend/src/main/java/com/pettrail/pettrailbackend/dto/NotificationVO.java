@@ -19,6 +19,8 @@ public class NotificationVO {
 
     private String content;
 
+    private String title;
+
     private Boolean isRead;
 
     private LocalDateTime createdAt;

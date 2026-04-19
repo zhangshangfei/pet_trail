@@ -37,6 +37,12 @@ export const getNotificationList = (params) => request.get('/api/admin/notificat
 export const sendNotification = (data) => request.post('/api/admin/notifications', data)
 export const broadcastNotification = (data) => request.post('/api/admin/notifications/broadcast', data)
 
+export const getFeedbackList = (params) => request.get('/api/admin/feedbacks', { params })
+export const getFeedbackDetail = (id) => request.get(`/api/admin/feedbacks/${id}`)
+export const replyFeedback = (id, data) => request.put(`/api/admin/feedbacks/${id}/reply`, data)
+export const updateFeedbackStatus = (id, status) => request.put(`/api/admin/feedbacks/${id}/status`, { status })
+export const deleteFeedback = (id) => request.delete(`/api/admin/feedbacks/${id}`)
+
 export const getAdminList = (params) => request.get('/api/admin/admins', { params })
 export const createAdmin = (data) => request.post('/api/admin/admins', data)
 export const updateAdmin = (id, data) => request.put(`/api/admin/admins/${id}`, data)
