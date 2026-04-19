@@ -1,15 +1,13 @@
 package com.pettrail.pettrailbackend.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/**
- * 打卡项实体
- */
 @Data
 @TableName("checkin_items")
 public class CheckinItem {
@@ -36,4 +34,7 @@ public class CheckinItem {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    @TableField(exist = false)
+    private Boolean hidden;
 }

@@ -72,7 +72,7 @@
                 <text class="section-action-icon">⚙</text>
                 <text class="section-action-text">管理</text>
               </view>
-              <view class="section-action primary" @tap="openAddPopup">
+              <view class="section-action primary" @tap="goAddItem">
                 <text class="section-action-icon">＋</text>
                 <text class="section-action-text">添加</text>
               </view>
@@ -158,118 +158,45 @@
           <view class="manage-section">
             <text class="manage-section-title">默认打卡项</text>
             <view class="manage-list">
-              <view v-for="item in allItems.filter(i => i.isDefault)" :key="item.id" class="manage-item">
+              <view v-for="item in defaultItems" :key="item.id" class="manage-item">
                 <text class="manage-item-icon">{{ item.emoji || '📋' }}</text>
                 <text class="manage-item-name">{{ item.label }}</text>
                 <view class="manage-item-status">
                   <text v-if="item.hidden" class="status-tag status-hidden">已隐藏</text>
                   <text v-else class="status-tag status-visible">显示中</text>
                 </view>
-                <view class="manage-item-actions">
-                  <view
-                    v-if="item.hidden"
-                    class="manage-btn manage-btn-show"
-                    @tap="onToggleItemVisibility(item)"
-                  >
-                    <text class="manage-btn-text">显示</text>
-                  </view>
-                  <view
-                    v-else
-                    class="manage-btn manage-btn-off"
-                    @tap="onToggleItemVisibility(item)"
-                  >
-                    <text class="manage-btn-text">隐藏</text>
-                  </view>
-                </view>
+                <switch
+                  :checked="!item.hidden"
+                  @change="onToggleItemVisibility(item)"
+                  color="#ff6a3d"
+                  style="transform: scale(0.8);"
+                />
               </view>
             </view>
           </view>
-          <view class="manage-section" v-if="allItems.filter(i => i.isCustom).length">
+          <view class="manage-section" v-if="customItems.length">
             <text class="manage-section-title">自定义打卡项</text>
             <view class="manage-list">
-              <view v-for="item in allItems.filter(i => i.isCustom)" :key="item.id" class="manage-item">
+              <view v-for="item in customItems" :key="item.id" class="manage-item">
                 <text class="manage-item-icon">{{ item.emoji || '📋' }}</text>
                 <text class="manage-item-name">{{ item.label }}</text>
                 <view class="manage-item-status">
                   <text v-if="item.hidden" class="status-tag status-hidden">已隐藏</text>
                   <text v-else class="status-tag status-visible">显示中</text>
                 </view>
-                <view class="manage-item-actions">
-                  <view
-                    v-if="item.hidden"
-                    class="manage-btn manage-btn-show"
-                    @tap="onToggleItemVisibility(item)"
-                  >
-                    <text class="manage-btn-text">显示</text>
-                  </view>
-                  <view
-                    v-else
-                    class="manage-btn manage-btn-off"
-                    @tap="onToggleItemVisibility(item)"
-                  >
-                    <text class="manage-btn-text">隐藏</text>
-                  </view>
-                  <view class="manage-btn manage-btn-del" @tap="onDeleteCustomItem(item)">
-                    <text class="manage-btn-text">删除</text>
-                  </view>
+                <switch
+                  :checked="!item.hidden"
+                  @change="onToggleItemVisibility(item)"
+                  color="#ff6a3d"
+                  style="transform: scale(0.8);"
+                />
+                <view class="manage-btn manage-btn-del" @tap="onDeleteCustomItem(item)">
+                  <text class="manage-btn-text">删除</text>
                 </view>
               </view>
             </view>
           </view>
         </scroll-view>
-      </view>
-    </view>
-
-    <view v-if="showAddItemPopup" class="popup-mask" @tap="showAddItemPopup = false">
-      <view class="popup-content" @tap.stop>
-        <view class="popup-header">
-          <text class="popup-title">添加自定义打卡项</text>
-          <view class="popup-close" @tap="showAddItemPopup = false">
-            <text class="popup-close-icon">✕</text>
-          </view>
-        </view>
-        <scroll-view scroll-y class="add-scroll">
-          <view class="form-group">
-            <text class="form-label">名称</text>
-            <input class="form-input" v-model="newItem.name" placeholder="如：喂零食" maxlength="10" />
-          </view>
-          <view class="form-group">
-            <text class="form-label">图标</text>
-            <view class="emoji-picker">
-              <view
-                v-for="emoji in emojiOptions"
-                :key="emoji"
-                class="emoji-option"
-                :class="{ active: newItem.icon === emoji }"
-                @tap="newItem.icon = emoji"
-              >
-                <text class="emoji-text">{{ emoji }}</text>
-              </view>
-            </view>
-          </view>
-          <view class="form-group">
-            <text class="form-label">类型</text>
-            <view class="type-picker">
-              <view
-                v-for="t in typeOptions"
-                :key="t.value"
-                class="type-option"
-                :class="{ active: newItem.type === t.value }"
-                @tap="newItem.type = t.value"
-              >
-                <text class="type-text">{{ t.label }}</text>
-              </view>
-            </view>
-          </view>
-        </scroll-view>
-        <view class="popup-footer" :style="{ paddingBottom: 'max(32rpx, env(safe-area-inset-bottom))' }">
-          <view class="popup-btn cancel" @tap="showAddItemPopup = false">
-            <text class="popup-btn-text">取消</text>
-          </view>
-          <view class="popup-btn confirm" @tap="onAddCustomItem">
-            <text class="popup-btn-text confirm-text">保存</text>
-          </view>
-        </view>
       </view>
     </view>
 
@@ -284,21 +211,9 @@
 
 <script>
 import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
-import { createCheckinItem, deleteCheckinItem, hideCheckinItem, showCheckinItem } from '@/api/checkin'
+import { deleteCheckinItem, hideCheckinItem, showCheckinItem } from '@/api/checkin'
 
 const DEFAULT_PET_AVATAR = '/static/images/default-pet-avatar.png'
-
-const EMOJI_OPTIONS = [
-  '🍖', '🦴', '🚶', '🧹', '💊', '🛁', '🎾', '🎓',
-  '🪮', '🪥', '🩺', '💉', '🏠', '🥛', '💤', '🐕',
-  '🐈', '🐹', '🐰', '🦜', '🐢', '🐟', '🐍', '🦎'
-]
-
-const TYPE_OPTIONS = [
-  { value: 1, label: '日常' },
-  { value: 2, label: '健康' },
-  { value: 3, label: '训练' }
-]
 
 export default {
   data() {
@@ -322,10 +237,6 @@ export default {
       showSuccessAnimation: false,
       animationTimer: null,
       showManagePopup: false,
-      showAddItemPopup: false,
-      newItem: { name: '', icon: '🍖', type: 1 },
-      emojiOptions: EMOJI_OPTIONS,
-      typeOptions: TYPE_OPTIONS
     }
   },
   computed: {
@@ -345,6 +256,12 @@ export default {
     },
     todayCompleted() {
       return this.visibleItems.filter((item) => item.checked).length
+    },
+    defaultItems() {
+      return this.allItems.filter((i) => i.isDefault)
+    },
+    customItems() {
+      return this.allItems.filter((i) => i.isCustom)
     }
   },
   onLoad(options) {
@@ -434,7 +351,7 @@ export default {
             type: item.type || 1,
             isCustom: item.isDefault === 0,
             isDefault: item.isDefault === 1,
-            hidden: false,
+            hidden: item.hidden === true,
             checked: false,
             checkTime: ''
           }))
@@ -597,16 +514,18 @@ export default {
         if (item.hidden) {
           const res = await showCheckinItem(item.id)
           if (res && res.success) {
+            item.hidden = false
             uni.showToast({ title: '已显示', icon: 'success' })
           }
         } else {
           const res = await hideCheckinItem(item.id)
           if (res && res.success) {
+            item.hidden = true
             uni.showToast({ title: '已隐藏', icon: 'success' })
           }
         }
-        await this.loadCheckinItems()
-        await this.refreshPageData()
+        this.visibleItems = this.allItems.filter((i) => !i.hidden)
+        this.syncPageState()
       } catch (e) {
         console.error('操作失败:', e)
         uni.showToast({ title: '操作失败', icon: 'none' })
@@ -634,36 +553,8 @@ export default {
         }
       })
     },
-    openAddPopup() {
-      this.newItem = { name: '', icon: '🍖', type: 1 }
-      this.showAddItemPopup = true
-    },
-    async onAddCustomItem() {
-      if (!this.newItem.name.trim()) {
-        uni.showToast({ title: '请输入名称', icon: 'none' })
-        return
-      }
-      const loggedIn = await checkLogin('请先登录')
-      if (!loggedIn) return
-
-      try {
-        const res = await createCheckinItem({
-          name: this.newItem.name.trim(),
-          icon: this.newItem.icon,
-          type: this.newItem.type
-        })
-        if (res && res.success) {
-          uni.showToast({ title: '添加成功', icon: 'success' })
-          this.showAddItemPopup = false
-          await this.loadCheckinItems()
-          await this.refreshPageData()
-        } else {
-          uni.showToast({ title: (res && res.message) || '添加失败', icon: 'none' })
-        }
-      } catch (e) {
-        console.error('添加自定义打卡项失败:', e)
-        uni.showToast({ title: '添加失败', icon: 'none' })
-      }
+    goAddItem() {
+      uni.navigateTo({ url: '/pages/checkin/add-item' })
     },
     showSuccessFeedback() {
       this.showSuccessAnimation = true
@@ -1001,47 +892,6 @@ $radius: 24rpx;
 .manage-btn-show .manage-btn-text { color: $green; }
 .manage-btn-off .manage-btn-text { color: $text-secondary; }
 .manage-btn-del .manage-btn-text { color: #ef4444; }
-
-.popup-body { padding: 16rpx 32rpx 32rpx; }
-.form-group { margin-bottom: 28rpx; }
-.form-label {
-  display: block; font-size: 28rpx; font-weight: 600;
-  color: $text-primary; margin-bottom: 16rpx;
-}
-.form-input {
-  width: 100%; height: 80rpx; border: 2rpx solid #e8e8e8;
-  border-radius: 16rpx; padding: 0 24rpx; font-size: 28rpx;
-  color: $text-primary; box-sizing: border-box;
-}
-.emoji-picker { display: flex; flex-wrap: wrap; gap: 16rpx; }
-.emoji-option {
-  width: 72rpx; height: 72rpx; display: flex;
-  align-items: center; justify-content: center;
-  border-radius: 16rpx; background: #f5f5f5;
-  border: 2rpx solid transparent; transition: all 0.2s;
-}
-.emoji-option.active { border-color: $primary; background: $primary-light; }
-.emoji-text { font-size: 36rpx; }
-.type-picker { display: flex; gap: 16rpx; }
-.type-option {
-  flex: 1; height: 72rpx; display: flex;
-  align-items: center; justify-content: center;
-  border-radius: 16rpx; background: #f5f5f5;
-  border: 2rpx solid transparent; transition: all 0.2s;
-}
-.type-option.active { border-color: $primary; background: $primary-light; }
-.type-text { font-size: 28rpx; color: $text-primary; }
-.type-option.active .type-text { color: $primary; font-weight: 600; }
-
-.popup-footer { display: flex; gap: 16rpx; padding: 16rpx 32rpx 32rpx; }
-.popup-btn {
-  flex: 1; height: 88rpx; display: flex;
-  align-items: center; justify-content: center; border-radius: 44rpx;
-}
-.popup-btn.cancel { background: #f5f5f5; }
-.popup-btn.confirm { background: $primary; }
-.popup-btn-text { font-size: 30rpx; color: $text-secondary; }
-.confirm-text { color: #fff; font-weight: 600; }
 
 .checkin-animation {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;

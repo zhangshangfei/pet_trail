@@ -57,6 +57,13 @@
       }
     },
     {
+      "path": "pages/checkin/add-item",
+      "style": {
+        "navigationBarTitleText": "添加打卡项",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/publish/index",
       "style": {
         "navigationBarTitleText": "发布动态",

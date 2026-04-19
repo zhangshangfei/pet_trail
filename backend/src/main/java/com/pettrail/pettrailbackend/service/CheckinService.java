@@ -54,9 +54,13 @@ public class CheckinService {
 
             Set<Long> hiddenIds = userHiddenItemMapper.selectHiddenItemIdsByUserId(userId)
                     .stream().collect(Collectors.toSet());
-            defaultItems = defaultItems.stream()
-                    .filter(item -> !hiddenIds.contains(item.getId()))
-                    .collect(Collectors.toList());
+            for (CheckinItem item : defaultItems) {
+                item.setHidden(hiddenIds.contains(item.getId()));
+            }
+        } else {
+            for (CheckinItem item : defaultItems) {
+                item.setHidden(false);
+            }
         }
         return defaultItems;
     }
