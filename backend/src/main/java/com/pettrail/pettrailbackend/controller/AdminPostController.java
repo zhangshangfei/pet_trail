@@ -2,6 +2,8 @@ package com.pettrail.pettrailbackend.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pettrail.pettrailbackend.annotation.OperationLog;
+import com.pettrail.pettrailbackend.annotation.RequireRole;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
@@ -9,6 +11,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/posts")
@@ -51,13 +56,13 @@ public class AdminPostController {
 
     @PutMapping("/{id}/audit")
     @Operation(summary = "审核动态（通过/拒绝）")
-    public Result<Void> audit(@PathVariable Long id, @RequestBody java.util.Map<String, Integer> body) {
+    public Result<Void> audit(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         Post post = postMapper.selectById(id);
         if (post == null) {
             return Result.error(404, "动态不存在");
         }
-        post.setAuditStatus(body.get("auditStatus"));
-        if (body.containsKey("auditRemark")) {
+        post.setAuditStatus(Integer.valueOf(body.get("auditStatus").toString()));
+        if (body.containsKey("auditRemark") && body.get("auditRemark") != null) {
             post.setAuditRemark(body.get("auditRemark").toString());
         }
         postMapper.updateById(post);
@@ -66,12 +71,64 @@ public class AdminPostController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除动态")
+    @RequireRole("SUPER_ADMIN")
+    @OperationLog(module = "post", action = "delete", detail = "删除动态")
     public Result<Void> delete(@PathVariable Long id) {
         Post post = postMapper.selectById(id);
         if (post == null) {
             return Result.error(404, "动态不存在");
         }
         post.setDeleted(1);
+        postMapper.updateById(post);
+        return Result.success(null);
+    }
+
+    @PutMapping("/batch-audit")
+    @Operation(summary = "批量审核动态")
+    public Result<Void> batchAudit(@RequestBody Map<String, Object> body) {
+        List<Integer> postIds = (List<Integer>) body.get("postIds");
+        Integer auditStatus = (Integer) body.get("auditStatus");
+        String auditRemark = body.get("auditRemark") != null ? body.get("auditRemark").toString() : null;
+
+        if (postIds == null || postIds.isEmpty() || auditStatus == null) {
+            return Result.error(400, "参数不完整");
+        }
+
+        for (Integer postId : postIds) {
+            Post post = postMapper.selectById(postId.longValue());
+            if (post != null) {
+                post.setAuditStatus(auditStatus);
+                if (auditRemark != null) {
+                    post.setAuditRemark(auditRemark);
+                }
+                postMapper.updateById(post);
+            }
+        }
+
+        return Result.success(null);
+    }
+
+    @GetMapping("/deleted")
+    @Operation(summary = "查询已删除动态")
+    public Result<Page<Post>> deletedList(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<Post> pageParam = new Page<>(page, size);
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Post::getDeleted, 1);
+        wrapper.orderByDesc(Post::getCreatedAt);
+        return Result.success(postMapper.selectPage(pageParam, wrapper));
+    }
+
+    @PutMapping("/{id}/restore")
+    @Operation(summary = "恢复已删除动态")
+    @RequireRole("SUPER_ADMIN")
+    public Result<Void> restore(@PathVariable Long id) {
+        Post post = postMapper.selectById(id);
+        if (post == null) {
+            return Result.error(404, "动态不存在");
+        }
+        post.setDeleted(0);
         postMapper.updateById(post);
         return Result.success(null);
     }

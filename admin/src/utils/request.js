@@ -29,18 +29,31 @@ request.interceptors.response.use(
       ElMessage.error(res.message || '请求失败')
       if (res.code === 401) {
         localStorage.removeItem('admin_token')
+        localStorage.removeItem('admin_info')
         router.push('/login')
+      }
+      if (res.code === 403) {
+        ElMessage.error('权限不足')
       }
       return Promise.reject(new Error(res.message))
     }
     return res
   },
   error => {
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('admin_token')
-      router.push('/login')
+    if (error.response) {
+      if (error.response.status === 401) {
+        localStorage.removeItem('admin_token')
+        localStorage.removeItem('admin_info')
+        ElMessage.error('登录已过期，请重新登录')
+        router.push('/login')
+      } else if (error.response.status === 403) {
+        ElMessage.error('权限不足')
+      } else {
+        ElMessage.error(error.response.data?.message || '请求失败')
+      }
+    } else {
+      ElMessage.error('网络错误，请检查网络连接')
     }
-    ElMessage.error(error.message || '网络错误')
     return Promise.reject(error)
   }
 )

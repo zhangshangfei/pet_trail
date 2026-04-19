@@ -29,7 +29,7 @@ public class JwtUtil {
      */
     public String generateToken(Long userId, String openid) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expiration);
+        Date expiryDate = new Date(now.getTime() + expiration * 1000);
 
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))

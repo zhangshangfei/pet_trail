@@ -391,3 +391,42 @@ INSERT INTO `achievements` (`name`, `description`, `icon`, `type`, `condition_ty
 
 ALTER TABLE posts ADD COLUMN ee_count INT DEFAULT 0 COMMENT '收藏数' AFTER share_count;
 
+-- ========================================
+-- 后台管理扩展表
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS `admin_operation_logs` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `admin_id` bigint(20) DEFAULT NULL COMMENT '操作管理员ID',
+  `admin_name` varchar(50) DEFAULT NULL COMMENT '操作管理员名称',
+  `module` varchar(30) DEFAULT NULL COMMENT '操作模块',
+  `action` varchar(30) DEFAULT NULL COMMENT '操作动作',
+  `target_type` varchar(30) DEFAULT NULL COMMENT '目标类型',
+  `target_id` bigint(20) DEFAULT NULL COMMENT '目标ID',
+  `detail` varchar(500) DEFAULT NULL COMMENT '操作详情',
+  `ip` varchar(50) DEFAULT NULL COMMENT 'IP地址',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_admin_id` (`admin_id`),
+  KEY `idx_module` (`module`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='管理员操作日志';
+
+CREATE TABLE IF NOT EXISTS `system_settings` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `setting_key` varchar(100) NOT NULL COMMENT '设置键',
+  `setting_value` text COMMENT '设置值',
+  `description` varchar(200) DEFAULT NULL COMMENT '描述',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_setting_key` (`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统设置';
+
+INSERT IGNORE INTO `system_settings` (`setting_key`, `setting_value`, `description`) VALUES
+('content_audit_mode', 'auto', '内容审核模式: auto-自动, manual-人工'),
+('audit_block_words', '', '屏蔽词列表，逗号分隔'),
+('app_version', '1.0.0', '小程序版本号'),
+('notification_enabled', 'true', '全局通知开关'),
+('registration_enabled', 'true', '新用户注册开关');
+

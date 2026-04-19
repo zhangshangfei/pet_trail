@@ -43,10 +43,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="注册时间" width="180" />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="row.status === 1" type="danger" size="small" text @click="handleStatus(row, 0)">禁用</el-button>
-            <el-button v-else type="success" size="small" text @click="handleStatus(row, 1)">启用</el-button>
+            <el-button size="small" text @click="viewDetail(row)">详情</el-button>
+            <el-button v-if="row.status === 1 && isSuperAdmin" type="danger" size="small" text @click="handleStatus(row, 0)">禁用</el-button>
+            <el-button v-if="row.status !== 1 && isSuperAdmin" type="success" size="small" text @click="handleStatus(row, 1)">启用</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -54,13 +55,36 @@
         <el-pagination v-model:current-page="page" v-model:page-size="size" :total="total" :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next" @size-change="loadData" @current-change="loadData" />
       </div>
     </el-card>
+
+    <el-dialog v-model="showDetail" title="用户详情" width="600px">
+      <el-descriptions :column="2" border v-if="detailUser">
+        <el-descriptions-item label="ID">{{ detailUser.id }}</el-descriptions-item>
+        <el-descriptions-item label="昵称">{{ detailUser.nickname || '未设置' }}</el-descriptions-item>
+        <el-descriptions-item label="性别">{{ detailUser.gender === 1 ? '男' : detailUser.gender === 2 ? '女' : '未知' }}</el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <el-tag :type="detailUser.status === 1 ? 'success' : 'danger'" size="small">{{ detailUser.status === 1 ? '正常' : '已禁用' }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="OpenID" :span="2">{{ detailUser.openid }}</el-descriptions-item>
+        <el-descriptions-item label="注册时间">{{ detailUser.createdAt }}</el-descriptions-item>
+        <el-descriptions-item label="最后登录">{{ detailUser.lastLoginAt || '-' }}</el-descriptions-item>
+      </el-descriptions>
+      <el-divider>用户统计</el-divider>
+      <el-row :gutter="16" v-if="userStats">
+        <el-col :span="8" v-for="item in userStatCards" :key="item.key">
+          <div class="stat-mini">
+            <div class="stat-mini-value">{{ item.value }}</div>
+            <div class="stat-mini-label">{{ item.label }}</div>
+          </div>
+        </el-col>
+      </el-row>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUserList, updateUserStatus } from '../api/admin'
+import { getUserList, getUserStats, updateUserStatus } from '../api/admin'
 
 const tableData = ref([])
 const loading = ref(false)
@@ -69,6 +93,20 @@ const size = ref(20)
 const total = ref(0)
 const keyword = ref('')
 const statusFilter = ref(null)
+const showDetail = ref(false)
+const detailUser = ref(null)
+const userStats = ref(null)
+
+const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}')
+const isSuperAdmin = computed(() => adminInfo.role === 'SUPER_ADMIN')
+
+const userStatCards = computed(() => [
+  { key: 'pets', label: '宠物数', value: userStats.value?.petCount || 0 },
+  { key: 'posts', label: '动态数', value: userStats.value?.postCount || 0 },
+  { key: 'likes', label: '获赞数', value: userStats.value?.likeCount || 0 },
+  { key: 'followers', label: '粉丝数', value: userStats.value?.followerCount || 0 },
+  { key: 'following', label: '关注数', value: userStats.value?.followingCount || 0 }
+])
 
 const loadData = async () => {
   loading.value = true
@@ -81,6 +119,16 @@ const loadData = async () => {
   } catch (e) {} finally {
     loading.value = false
   }
+}
+
+const viewDetail = async (row) => {
+  detailUser.value = row
+  userStats.value = null
+  showDetail.value = true
+  try {
+    const res = await getUserStats(row.id)
+    if (res.data) userStats.value = res.data
+  } catch (e) {}
 }
 
 const handleStatus = async (row, status) => {
@@ -105,4 +153,7 @@ onMounted(loadData)
 .user-name { font-size: 14px; font-weight: 500; }
 .user-id { font-size: 12px; color: #999; }
 .pagination-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
+.stat-mini { text-align: center; padding: 12px 0; background: #f8f9fa; border-radius: 8px; }
+.stat-mini-value { font-size: 24px; font-weight: 700; color: #333; }
+.stat-mini-label { font-size: 12px; color: #999; margin-top: 4px; }
 </style>

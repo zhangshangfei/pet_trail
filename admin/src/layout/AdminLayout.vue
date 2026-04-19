@@ -21,9 +21,17 @@
           <el-icon><User /></el-icon>
           <template #title>用户管理</template>
         </el-menu-item>
+        <el-menu-item index="/pets">
+          <el-icon><Guide /></el-icon>
+          <template #title>宠物管理</template>
+        </el-menu-item>
         <el-menu-item index="/posts">
           <el-icon><Document /></el-icon>
           <template #title>动态管理</template>
+        </el-menu-item>
+        <el-menu-item index="/comments">
+          <el-icon><ChatDotRound /></el-icon>
+          <template #title>评论管理</template>
         </el-menu-item>
         <el-menu-item index="/reports">
           <el-icon><Warning /></el-icon>
@@ -32,6 +40,18 @@
         <el-menu-item index="/notifications">
           <el-icon><Bell /></el-icon>
           <template #title>通知管理</template>
+        </el-menu-item>
+        <el-menu-item v-if="isSuperAdmin" index="/admins">
+          <el-icon><UserFilled /></el-icon>
+          <template #title>管理员管理</template>
+        </el-menu-item>
+        <el-menu-item index="/logs">
+          <el-icon><List /></el-icon>
+          <template #title>操作日志</template>
+        </el-menu-item>
+        <el-menu-item v-if="isSuperAdmin" index="/settings">
+          <el-icon><Setting /></el-icon>
+          <template #title>系统设置</template>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -52,10 +72,12 @@
             <span class="admin-info">
               <el-avatar :size="32" icon="UserFilled" />
               <span class="admin-name">{{ adminName }}</span>
+              <el-tag v-if="isSuperAdmin" type="danger" size="small" style="margin-left: 6px;">超管</el-tag>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                <el-dropdown-item command="changePassword">修改密码</el-dropdown-item>
+                <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -65,33 +87,93 @@
         <router-view />
       </el-main>
     </el-container>
+
+    <el-dialog v-model="showChangePwd" title="修改密码" width="400px">
+      <el-form :model="pwdForm" label-width="80px">
+        <el-form-item label="旧密码">
+          <el-input v-model="pwdForm.oldPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item label="新密码">
+          <el-input v-model="pwdForm.newPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item label="确认密码">
+          <el-input v-model="pwdForm.confirmPassword" type="password" show-password />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showChangePwd = false">取消</el-button>
+        <el-button type="primary" @click="submitChangePwd">确认修改</el-button>
+      </template>
+    </el-dialog>
   </el-container>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getProfile } from '../api/admin'
+import { getProfile, changePassword } from '../api/admin'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
 const isCollapse = ref(false)
 const adminName = ref('管理员')
+const adminRole = ref('')
+const showChangePwd = ref(false)
+const pwdForm = ref({ oldPassword: '', newPassword: '', confirmPassword: '' })
 
 const activeMenu = computed(() => route.path)
+const isSuperAdmin = computed(() => adminRole.value === 'SUPER_ADMIN')
 
 const handleCommand = (command) => {
   if (command === 'logout') {
     localStorage.removeItem('admin_token')
+    localStorage.removeItem('admin_info')
     router.push('/login')
+  } else if (command === 'changePassword') {
+    pwdForm.value = { oldPassword: '', newPassword: '', confirmPassword: '' }
+    showChangePwd.value = true
   }
 }
 
+const submitChangePwd = async () => {
+  if (!pwdForm.value.oldPassword || !pwdForm.value.newPassword) {
+    ElMessage.warning('请填写完整')
+    return
+  }
+  if (pwdForm.value.newPassword !== pwdForm.value.confirmPassword) {
+    ElMessage.warning('两次密码不一致')
+    return
+  }
+  if (pwdForm.value.newPassword.length < 6) {
+    ElMessage.warning('密码至少6位')
+    return
+  }
+  try {
+    await changePassword(pwdForm.value)
+    ElMessage.success('密码修改成功，请重新登录')
+    showChangePwd.value = false
+    localStorage.removeItem('admin_token')
+    localStorage.removeItem('admin_info')
+    router.push('/login')
+  } catch (e) {}
+}
+
 onMounted(async () => {
+  const cached = localStorage.getItem('admin_info')
+  if (cached) {
+    try {
+      const info = JSON.parse(cached)
+      adminName.value = info.nickname || info.username || '管理员'
+      adminRole.value = info.role || ''
+    } catch (e) {}
+  }
   try {
     const res = await getProfile()
     if (res.data) {
       adminName.value = res.data.nickname || res.data.username || '管理员'
+      adminRole.value = res.data.role || ''
+      localStorage.setItem('admin_info', JSON.stringify(res.data))
     }
   } catch (e) {}
 })
