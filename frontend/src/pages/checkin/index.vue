@@ -43,7 +43,7 @@
               </view>
               <view class="stat-divider"></view>
               <view class="stat-item">
-                <text class="stat-value">{{ todayCompleted }}/{{ checkinItems.length }}</text>
+                <text class="stat-value">{{ todayCompleted }}/{{ visibleItems.length }}</text>
                 <text class="stat-label">今日完成</text>
               </view>
               <view class="stat-divider"></view>
@@ -67,28 +67,33 @@
               <text class="section-title">今日打卡</text>
               <text class="section-date">{{ today }}</text>
             </view>
-            <view class="section-action" @tap="showAddItemPopup = true">
-              <text class="section-action-icon">＋</text>
-              <text class="section-action-text">自定义</text>
+            <view class="section-actions">
+              <view class="section-action" @tap="showManagePopup = true">
+                <text class="section-action-icon">⚙</text>
+                <text class="section-action-text">管理</text>
+              </view>
+              <view class="section-action primary" @tap="openAddPopup">
+                <text class="section-action-icon">＋</text>
+                <text class="section-action-text">添加</text>
+              </view>
             </view>
           </view>
 
-          <view class="checkin-grid" v-if="checkinItems.length">
+          <view class="checkin-grid" v-if="visibleItems.length">
             <view
-              v-for="item in checkinItems"
-              :key="item.id || item.code"
+              v-for="item in visibleItems"
+              :key="item.id"
               class="checkin-item"
-              :class="{ checked: item.checked, custom: item.isCustom }"
+              :class="{ checked: item.checked }"
               @tap="onCheckIn(item)"
-              @longpress="onItemLongPress(item)"
             >
               <view class="item-icon-box">
-                <text class="item-emoji">{{ item.emoji || item.icon || '📋' }}</text>
+                <text class="item-emoji">{{ item.emoji || '📋' }}</text>
                 <view v-if="item.checked" class="item-check-mark">
                   <text class="check-mark-icon">✓</text>
                 </view>
               </view>
-              <text class="item-name">{{ item.label || item.name }}</text>
+              <text class="item-name">{{ item.label }}</text>
               <text v-if="item.checked" class="item-time">{{ item.checkTime }}</text>
               <text v-else class="item-time-hint">点击打卡</text>
             </view>
@@ -120,12 +125,12 @@
               <view class="record-items">
                 <view
                   v-for="recordItem in record.items"
-                  :key="record.date + '-' + (recordItem.id || recordItem.code)"
+                  :key="record.date + '-' + recordItem.id"
                   class="record-item"
                   :class="{ done: recordItem.checked }"
                 >
-                  <text class="record-item-icon">{{ recordItem.emoji || recordItem.icon || '📋' }}</text>
-                  <text class="record-item-name">{{ recordItem.label || recordItem.name }}</text>
+                  <text class="record-item-icon">{{ recordItem.emoji || '📋' }}</text>
+                  <text class="record-item-name">{{ recordItem.label }}</text>
                 </view>
               </view>
             </view>
@@ -141,6 +146,58 @@
       </view>
     </scroll-view>
 
+    <view v-if="showManagePopup" class="popup-mask" @tap="showManagePopup = false">
+      <view class="popup-content manage-popup" @tap.stop>
+        <view class="popup-header">
+          <text class="popup-title">管理打卡项</text>
+          <view class="popup-close" @tap="showManagePopup = false">
+            <text class="popup-close-icon">✕</text>
+          </view>
+        </view>
+        <scroll-view scroll-y class="manage-scroll">
+          <view class="manage-section">
+            <text class="manage-section-title">默认打卡项</text>
+            <view class="manage-list">
+              <view v-for="item in allItems.filter(i => i.isDefault)" :key="item.id" class="manage-item">
+                <text class="manage-item-icon">{{ item.emoji || '📋' }}</text>
+                <text class="manage-item-name">{{ item.label }}</text>
+                <view class="manage-item-actions">
+                  <view
+                    class="manage-btn"
+                    :class="{ 'manage-btn-off': !item.hidden }"
+                    @tap="onToggleItemVisibility(item)"
+                  >
+                    <text class="manage-btn-text">{{ item.hidden ? '显示' : '隐藏' }}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+          <view class="manage-section" v-if="allItems.filter(i => i.isCustom).length">
+            <text class="manage-section-title">自定义打卡项</text>
+            <view class="manage-list">
+              <view v-for="item in allItems.filter(i => i.isCustom)" :key="item.id" class="manage-item">
+                <text class="manage-item-icon">{{ item.emoji || '📋' }}</text>
+                <text class="manage-item-name">{{ item.label }}</text>
+                <view class="manage-item-actions">
+                  <view
+                    class="manage-btn"
+                    :class="{ 'manage-btn-off': !item.hidden }"
+                    @tap="onToggleItemVisibility(item)"
+                  >
+                    <text class="manage-btn-text">{{ item.hidden ? '显示' : '隐藏' }}</text>
+                  </view>
+                  <view class="manage-btn manage-btn-del" @tap="onDeleteCustomItem(item)">
+                    <text class="manage-btn-text">删除</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+
     <view v-if="showAddItemPopup" class="popup-mask" @tap="showAddItemPopup = false">
       <view class="popup-content" @tap.stop>
         <view class="popup-header">
@@ -149,7 +206,7 @@
             <text class="popup-close-icon">✕</text>
           </view>
         </view>
-        <view class="popup-body">
+        <scroll-view scroll-y class="add-scroll">
           <view class="form-group">
             <text class="form-label">名称</text>
             <input class="form-input" v-model="newItem.name" placeholder="如：喂零食" maxlength="10" />
@@ -182,7 +239,7 @@
               </view>
             </view>
           </view>
-        </view>
+        </scroll-view>
         <view class="popup-footer">
           <view class="popup-btn cancel" @tap="showAddItemPopup = false">
             <text class="popup-btn-text">取消</text>
@@ -205,14 +262,14 @@
 
 <script>
 import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
-import { createCheckinItem, deleteCheckinItem } from '@/api/checkin'
+import { createCheckinItem, deleteCheckinItem, hideCheckinItem, showCheckinItem } from '@/api/checkin'
 
 const DEFAULT_PET_AVATAR = '/static/images/default-pet-avatar.png'
 
 const EMOJI_OPTIONS = [
   '🍖', '🦴', '🚶', '🧹', '💊', '🛁', '🎾', '🎓',
-  '🪮', '🪥', '🩺', '💉', '🏠', '🍖', '🥛', '💤',
-  '🐕', '🐈', '🐹', '🐰', '🦜', '🐢', '🐟', '🐍'
+  '🪮', '🪥', '🩺', '💉', '🏠', '🥛', '💤', '🐕',
+  '🐈', '🐹', '🐰', '🦜', '🐢', '🐟', '🐍', '🦎'
 ]
 
 const TYPE_OPTIONS = [
@@ -236,11 +293,13 @@ export default {
       today: '',
       streakDays: 0,
       totalCheckins: 0,
-      checkinItems: [],
+      allItems: [],
+      visibleItems: [],
       allRecords: [],
       recentRecords: [],
       showSuccessAnimation: false,
       animationTimer: null,
+      showManagePopup: false,
       showAddItemPopup: false,
       newItem: { name: '', icon: '🍖', type: 1 },
       emojiOptions: EMOJI_OPTIONS,
@@ -263,7 +322,7 @@ export default {
       return age ? `${breed} · ${age}` : breed
     },
     todayCompleted() {
-      return this.checkinItems.filter((item) => item.checked).length
+      return this.visibleItems.filter((item) => item.checked).length
     }
   },
   onLoad(options) {
@@ -333,9 +392,7 @@ export default {
         if (res && res.success) {
           this.pet = res.data || null
           this.petAvatar = (this.pet && this.pet.avatar) || DEFAULT_PET_AVATAR
-          if (this.pet) {
-            uni.setStorageSync('petInfo', this.pet)
-          }
+          if (this.pet) uni.setStorageSync('petInfo', this.pet)
         }
       } catch (error) {
         console.error('加载宠物信息失败:', error)
@@ -346,7 +403,7 @@ export default {
       try {
         const res = await uni.$request.get('/api/checkin/items')
         if (res && res.success && Array.isArray(res.data)) {
-          this.checkinItems = res.data.map((item) => ({
+          this.allItems = res.data.map((item) => ({
             id: item.id,
             name: item.name,
             label: item.name,
@@ -355,9 +412,11 @@ export default {
             type: item.type || 1,
             isCustom: item.isDefault === 0,
             isDefault: item.isDefault === 1,
+            hidden: false,
             checked: false,
             checkTime: ''
           }))
+          this.visibleItems = this.allItems.filter((item) => !item.hidden)
         }
       } catch (error) {
         console.error('加载打卡项失败:', error)
@@ -393,9 +452,7 @@ export default {
         if (!item || item.status !== 1) return
         if (this.petId && item.petId && String(item.petId) !== String(this.petId)) return
         const key = item.id || `${item.itemId}-${item.recordDate}-${item.createdAt || ''}`
-        if (!map.has(key)) {
-          map.set(key, item)
-        }
+        if (!map.has(key)) map.set(key, item)
       })
       return Array.from(map.values())
     },
@@ -405,16 +462,20 @@ export default {
         const todayKey = this.getDateKey(new Date())
         const todayRecord = groupedRecords[todayKey] || []
 
-        this.checkinItems = this.checkinItems.map((item) => {
-          const matched = todayRecord.find((record) => String(record.itemId) === String(item.id))
-          return {
-            ...item,
-            checked: !!matched,
-            checkTime: matched ? this.getTimeText(matched.createdAt) : ''
-          }
-        })
+        this.visibleItems = this.allItems
+          .filter((item) => !item.hidden)
+          .map((item) => {
+            const matched = todayRecord.find((record) => String(record.itemId) === String(item.id))
+            return {
+              ...item,
+              checked: !!matched,
+              checkTime: matched ? this.getTimeText(matched.createdAt) : ''
+            }
+          })
 
         this.totalCheckins = this.allRecords.length
+
+        const visibleItemIds = new Set(this.visibleItems.map((i) => String(i.id)))
 
         this.recentRecords = Object.keys(groupedRecords)
           .sort((a, b) => {
@@ -428,8 +489,10 @@ export default {
           .slice(0, 7)
           .map((date) => {
             const records = groupedRecords[date]
-            const items = this.checkinItems.map((item) => ({
-              ...item,
+            const items = this.visibleItems.map((item) => ({
+              id: item.id,
+              label: item.label,
+              emoji: item.emoji,
               checked: records.some((record) => String(record.itemId) === String(item.id))
             }))
             const completedCount = items.filter((item) => item.checked).length
@@ -468,11 +531,8 @@ export default {
       let streak = 1
       for (let i = 1; i < sorted.length; i += 1) {
         const diff = Math.round((sorted[i - 1].getTime() - sorted[i].getTime()) / 86400000)
-        if (diff === 1) {
-          streak += 1
-        } else if (diff > 1) {
-          break
-        }
+        if (diff === 1) streak += 1
+        else if (diff > 1) break
       }
       return streak
     },
@@ -507,12 +567,34 @@ export default {
         uni.showToast({ title: (error && error.message) || '打卡失败', icon: 'none' })
       }
     },
-    onItemLongPress(item) {
-      if (!item.isCustom) return
+    async onToggleItemVisibility(item) {
+      const loggedIn = await checkLogin('请先登录')
+      if (!loggedIn) return
+
+      try {
+        if (item.hidden) {
+          const res = await showCheckinItem(item.id)
+          if (res && res.success) {
+            uni.showToast({ title: '已显示', icon: 'success' })
+          }
+        } else {
+          const res = await hideCheckinItem(item.id)
+          if (res && res.success) {
+            uni.showToast({ title: '已隐藏', icon: 'success' })
+          }
+        }
+        await this.loadCheckinItems()
+        await this.refreshPageData()
+      } catch (e) {
+        console.error('操作失败:', e)
+        uni.showToast({ title: '操作失败', icon: 'none' })
+      }
+    },
+    onDeleteCustomItem(item) {
       const self = this
       uni.showModal({
         title: '删除打卡项',
-        content: `确定删除"${item.label || item.name}"吗？`,
+        content: `确定删除"${item.label}"吗？删除后不可恢复。`,
         confirmColor: '#ff6a3d',
         async success(res) {
           if (!res.confirm) return
@@ -529,6 +611,10 @@ export default {
           }
         }
       })
+    },
+    openAddPopup() {
+      this.newItem = { name: '', icon: '🍖', type: 1 }
+      this.showAddItemPopup = true
     },
     async onAddCustomItem() {
       if (!this.newItem.name.trim()) {
@@ -547,7 +633,6 @@ export default {
         if (res && res.success) {
           uni.showToast({ title: '添加成功', icon: 'success' })
           this.showAddItemPopup = false
-          this.newItem = { name: '', icon: '🍖', type: 1 }
           await this.loadCheckinItems()
           await this.refreshPageData()
         } else {
@@ -648,9 +733,7 @@ export default {
       const key = this.getDateKey(date)
       if (key === todayKey) return '今天'
       if (key === yesterdayKey) return '昨天'
-      const m = date.getMonth() + 1
-      const d = date.getDate()
-      return `${m}月${d}日`
+      return `${date.getMonth() + 1}月${date.getDate()}日`
     },
     normalizeDate(input) {
       if (!input) return null
@@ -673,701 +756,284 @@ $card-bg: #ffffff;
 $text-primary: #1a1a1a;
 $text-secondary: #666666;
 $text-light: #999999;
-$border: #f0f0f0;
 $radius: 24rpx;
 
-.checkin-page {
-  min-height: 100vh;
-  background: $bg;
-}
+.checkin-page { min-height: 100vh; background: $bg; }
 
 .page-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 30;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 30;
   background: linear-gradient(135deg, #ff8a5c 0%, $primary 100%);
 }
-
 .status-bar { width: 100%; }
-
 .header-bar {
-  height: 92rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 28rpx;
+  height: 92rpx; display: flex; align-items: center;
+  justify-content: space-between; padding: 0 28rpx;
 }
-
-.header-user {
-  display: flex;
-  align-items: center;
-}
-
+.header-user { display: flex; align-items: center; }
 .header-avatar {
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: 50%;
-  margin-right: 16rpx;
-  border: 2rpx solid rgba(255, 255, 255, 0.6);
+  width: 60rpx; height: 60rpx; border-radius: 50%;
+  margin-right: 16rpx; border: 2rpx solid rgba(255,255,255,0.6);
 }
-
-.header-name {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #fff;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-}
-
+.header-name { font-size: 30rpx; font-weight: 600; color: #fff; }
+.header-actions { display: flex; align-items: center; gap: 16rpx; }
 .header-action-btn {
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
+  width: 56rpx; height: 56rpx; border-radius: 28rpx;
+  background: rgba(255,255,255,0.2); display: flex;
+  align-items: center; justify-content: center; position: relative;
 }
-
 .header-action-icon { font-size: 28rpx; }
-
 .header-badge {
-  position: absolute;
-  top: -4rpx;
-  right: -4rpx;
-  min-width: 28rpx;
-  height: 28rpx;
-  border-radius: 14rpx;
-  background: #ff4d4f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 6rpx;
+  position: absolute; top: -4rpx; right: -4rpx;
+  min-width: 28rpx; height: 28rpx; border-radius: 14rpx;
+  background: #ff4d4f; display: flex; align-items: center;
+  justify-content: center; padding: 0 6rpx;
 }
+.header-badge-text { font-size: 18rpx; color: #fff; font-weight: 600; }
 
-.header-badge-text {
-  font-size: 18rpx;
-  color: #fff;
-  font-weight: 600;
-}
-
-.page-scroll {
-  height: 100vh;
-}
-
-.page-content {
-  padding: 24rpx 24rpx 0;
-}
+.page-scroll { height: 100vh; }
+.page-content { padding: 24rpx 24rpx 0; }
 
 .pet-card {
-  position: relative;
-  border-radius: $radius;
-  overflow: hidden;
-  margin-bottom: 24rpx;
+  position: relative; border-radius: $radius;
+  overflow: hidden; margin-bottom: 24rpx;
 }
-
 .pet-card-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   background: linear-gradient(135deg, #ffe8d6 0%, #ffecd2 100%);
 }
-
-.pet-card-content {
-  position: relative;
-  padding: 28rpx;
-}
-
-.pet-main {
-  display: flex;
-  align-items: center;
-  margin-bottom: 24rpx;
-}
-
+.pet-card-content { position: relative; padding: 28rpx; }
+.pet-main { display: flex; align-items: center; margin-bottom: 24rpx; }
 .pet-avatar {
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 50%;
-  border: 4rpx solid #fff;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
-  margin-right: 20rpx;
-  flex-shrink: 0;
+  width: 100rpx; height: 100rpx; border-radius: 50%;
+  border: 4rpx solid #fff; box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.1);
+  margin-right: 20rpx; flex-shrink: 0;
 }
-
-.pet-info {
-  flex: 1;
-  min-width: 0;
-}
-
+.pet-info { flex: 1; min-width: 0; }
 .pet-name {
-  display: block;
-  font-size: 34rpx;
-  font-weight: 700;
-  color: $text-primary;
-  margin-bottom: 4rpx;
+  display: block; font-size: 34rpx; font-weight: 700;
+  color: $text-primary; margin-bottom: 4rpx;
 }
-
-.pet-breed {
-  display: block;
-  font-size: 24rpx;
-  color: $text-secondary;
-}
-
+.pet-breed { display: block; font-size: 24rpx; color: $text-secondary; }
 .pet-picker { flex-shrink: 0; }
-
 .pet-switch-btn {
-  padding: 12rpx 24rpx;
-  border-radius: 30rpx;
-  background: rgba(255, 106, 61, 0.12);
+  padding: 12rpx 24rpx; border-radius: 30rpx;
+  background: rgba(255,106,61,0.12);
 }
-
-.pet-switch-text {
-  font-size: 24rpx;
-  color: $primary;
-  font-weight: 500;
-}
-
+.pet-switch-text { font-size: 24rpx; color: $primary; font-weight: 500; }
 .pet-stats {
-  display: flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 20rpx;
-  padding: 20rpx 0;
+  display: flex; align-items: center;
+  background: rgba(255,255,255,0.7); border-radius: 20rpx; padding: 20rpx 0;
 }
-
-.stat-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.stat-value {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: $primary;
-  margin-bottom: 4rpx;
-}
-
-.stat-label {
-  font-size: 22rpx;
-  color: $text-secondary;
-}
-
-.stat-divider {
-  width: 1rpx;
-  height: 40rpx;
-  background: #e0dcd8;
-}
+.stat-item { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.stat-value { font-size: 32rpx; font-weight: 700; color: $primary; margin-bottom: 4rpx; }
+.stat-label { font-size: 22rpx; color: $text-secondary; }
+.stat-divider { width: 1rpx; height: 40rpx; background: #e0dcd8; }
 
 .empty-pet-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40rpx;
-  background: $card-bg;
-  border-radius: $radius;
-  margin-bottom: 24rpx;
+  display: flex; align-items: center; justify-content: center;
+  padding: 40rpx; background: $card-bg; border-radius: $radius; margin-bottom: 24rpx;
 }
+.empty-pet-icon { font-size: 36rpx; margin-right: 12rpx; }
+.empty-pet-text { font-size: 28rpx; color: $text-secondary; margin-right: 8rpx; }
+.empty-pet-arrow { font-size: 28rpx; color: $primary; }
 
-.empty-pet-icon {
-  font-size: 36rpx;
-  margin-right: 12rpx;
-}
-
-.empty-pet-text {
-  font-size: 28rpx;
-  color: $text-secondary;
-  margin-right: 8rpx;
-}
-
-.empty-pet-arrow {
-  font-size: 28rpx;
-  color: $primary;
-}
-
-.section {
-  margin-bottom: 24rpx;
-}
-
+.section { margin-bottom: 24rpx; }
 .section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20rpx;
-  padding: 0 4rpx;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20rpx; padding: 0 4rpx;
 }
-
-.section-title-group {
-  display: flex;
-  align-items: baseline;
-  gap: 12rpx;
-}
-
-.section-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: $text-primary;
-}
-
-.section-date {
-  font-size: 24rpx;
-  color: $text-light;
-}
-
+.section-title-group { display: flex; align-items: baseline; gap: 12rpx; }
+.section-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
+.section-date { font-size: 24rpx; color: $text-light; }
+.section-actions { display: flex; align-items: center; gap: 12rpx; }
 .section-action {
-  display: flex;
-  align-items: center;
-  gap: 4rpx;
-  padding: 8rpx 20rpx;
-  border-radius: 24rpx;
-  background: $primary-light;
+  display: flex; align-items: center; gap: 4rpx;
+  padding: 8rpx 20rpx; border-radius: 24rpx; background: #f0f0f0;
 }
+.section-action.primary { background: $primary-light; }
+.section-action-icon { font-size: 26rpx; color: $text-secondary; }
+.section-action.primary .section-action-icon { color: $primary; font-weight: 600; }
+.section-action-text { font-size: 24rpx; color: $text-secondary; font-weight: 500; }
+.section-action.primary .section-action-text { color: $primary; font-weight: 500; }
 
-.section-action-icon {
-  font-size: 28rpx;
-  color: $primary;
-  font-weight: 600;
-}
-
-.section-action-text {
-  font-size: 24rpx;
-  color: $primary;
-  font-weight: 500;
-}
-
-.checkin-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16rpx;
-}
-
+.checkin-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16rpx; }
 .checkin-item {
-  background: $card-bg;
-  border-radius: 20rpx;
-  padding: 24rpx 8rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  transition: all 0.25s ease;
-  position: relative;
-  overflow: hidden;
+  background: $card-bg; border-radius: 20rpx; padding: 24rpx 8rpx;
+  display: flex; flex-direction: column; align-items: center;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); transition: all 0.25s ease;
+  position: relative; overflow: hidden;
 }
-
-.checkin-item:active {
-  transform: scale(0.94);
-}
-
-.checkin-item.checked {
-  background: $green-light;
-}
-
+.checkin-item:active { transform: scale(0.94); }
+.checkin-item.checked { background: $green-light; }
 .checkin-item.checked::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4rpx;
-  background: $green;
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 4rpx; background: $green;
 }
-
 .item-icon-box {
-  width: 80rpx;
-  height: 80rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 12rpx;
-  position: relative;
+  width: 80rpx; height: 80rpx; display: flex;
+  align-items: center; justify-content: center;
+  margin-bottom: 12rpx; position: relative;
 }
-
-.item-emoji {
-  font-size: 48rpx;
-}
-
+.item-emoji { font-size: 48rpx; }
 .item-check-mark {
-  position: absolute;
-  top: -4rpx;
-  right: -4rpx;
-  width: 32rpx;
-  height: 32rpx;
-  background: $green;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: absolute; top: -4rpx; right: -4rpx;
+  width: 32rpx; height: 32rpx; background: $green;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
 }
-
-.check-mark-icon {
-  color: #fff;
-  font-size: 20rpx;
-  font-weight: bold;
-}
-
+.check-mark-icon { color: #fff; font-size: 20rpx; font-weight: bold; }
 .item-name {
-  font-size: 24rpx;
-  font-weight: 500;
-  color: $text-primary;
-  margin-bottom: 4rpx;
-  text-align: center;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 24rpx; font-weight: 500; color: $text-primary;
+  margin-bottom: 4rpx; text-align: center; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-
-.item-time {
-  font-size: 20rpx;
-  color: $green;
-}
-
-.item-time-hint {
-  font-size: 20rpx;
-  color: $text-light;
-}
+.item-time { font-size: 20rpx; color: $green; }
+.item-time-hint { font-size: 20rpx; color: $text-light; }
 
 .empty-checkin {
-  padding: 48rpx;
-  text-align: center;
-  background: $card-bg;
-  border-radius: $radius;
+  padding: 48rpx; text-align: center;
+  background: $card-bg; border-radius: $radius;
 }
+.empty-checkin-text { font-size: 28rpx; color: $text-light; }
 
-.empty-checkin-text {
-  font-size: 28rpx;
-  color: $text-light;
-}
-
-.records-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
+.records-list { display: flex; flex-direction: column; gap: 16rpx; }
 .record-card {
-  background: $card-bg;
-  border-radius: $radius;
-  padding: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  background: $card-bg; border-radius: $radius; padding: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
-
 .record-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16rpx;
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 16rpx;
 }
-
-.record-date {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: $text-primary;
-}
-
-.record-progress {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
+.record-date { font-size: 28rpx; font-weight: 600; color: $text-primary; }
+.record-progress { display: flex; align-items: center; gap: 12rpx; }
 .progress-bar {
-  width: 120rpx;
-  height: 8rpx;
-  background: #f0f0f0;
-  border-radius: 4rpx;
-  overflow: hidden;
+  width: 120rpx; height: 8rpx; background: #f0f0f0;
+  border-radius: 4rpx; overflow: hidden;
 }
-
-.progress-fill {
-  height: 100%;
-  background: $primary;
-  border-radius: 4rpx;
-  transition: width 0.3s ease;
-}
-
-.progress-text {
-  font-size: 22rpx;
-  color: $text-light;
-}
-
-.record-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-}
-
+.progress-fill { height: 100%; background: $primary; border-radius: 4rpx; transition: width 0.3s ease; }
+.progress-text { font-size: 22rpx; color: $text-light; }
+.record-items { display: flex; flex-wrap: wrap; gap: 12rpx; }
 .record-item {
-  display: flex;
-  align-items: center;
-  padding: 8rpx 16rpx;
-  border-radius: 20rpx;
-  background: #f5f5f5;
-  opacity: 0.5;
+  display: flex; align-items: center; padding: 8rpx 16rpx;
+  border-radius: 20rpx; background: #f5f5f5; opacity: 0.5;
 }
-
-.record-item.done {
-  background: $green-light;
-  opacity: 1;
-}
-
-.record-item-icon {
-  font-size: 24rpx;
-  margin-right: 6rpx;
-}
-
-.record-item-name {
-  font-size: 22rpx;
-  color: $text-primary;
-}
+.record-item.done { background: $green-light; opacity: 1; }
+.record-item-icon { font-size: 24rpx; margin-right: 6rpx; }
+.record-item-name { font-size: 22rpx; color: $text-primary; }
 
 .empty-records {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 64rpx 0;
-  background: $card-bg;
-  border-radius: $radius;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 64rpx 0; background: $card-bg; border-radius: $radius;
 }
-
-.empty-records-icon {
-  font-size: 64rpx;
-  margin-bottom: 16rpx;
-}
-
-.empty-records-text {
-  font-size: 28rpx;
-  color: $text-light;
-}
-
-.page-bottom-safe {
-  height: calc(24rpx + env(safe-area-inset-bottom));
-}
+.empty-records-icon { font-size: 64rpx; margin-bottom: 16rpx; }
+.empty-records-text { font-size: 28rpx; color: $text-light; }
+.page-bottom-safe { height: calc(24rpx + env(safe-area-inset-bottom)); }
 
 .popup-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 100;
-  display: flex;
-  align-items: flex-end;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: flex-end;
 }
-
 .popup-content {
-  width: 100%;
-  background: #fff;
-  border-radius: 32rpx 32rpx 0 0;
+  width: 100%; background: #fff; border-radius: 32rpx 32rpx 0 0;
   padding-bottom: env(safe-area-inset-bottom);
+  max-height: 80vh;
 }
-
+.manage-popup .manage-scroll { max-height: 60vh; }
+.add-scroll { max-height: 50vh; }
 .popup-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between;
   padding: 32rpx 32rpx 16rpx;
 }
-
-.popup-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: $text-primary;
-}
-
+.popup-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
 .popup-close {
-  width: 56rpx;
-  height: 56rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 28rpx;
-  background: #f5f5f5;
+  width: 56rpx; height: 56rpx; display: flex;
+  align-items: center; justify-content: center;
+  border-radius: 28rpx; background: #f5f5f5;
 }
+.popup-close-icon { font-size: 28rpx; color: $text-secondary; }
 
-.popup-close-icon {
-  font-size: 28rpx;
-  color: $text-secondary;
+.manage-section { padding: 0 32rpx 24rpx; }
+.manage-section-title {
+  font-size: 26rpx; font-weight: 600; color: $text-light;
+  margin-bottom: 16rpx; padding-bottom: 8rpx; border-bottom: 1rpx solid #f0f0f0;
 }
-
-.popup-body {
-  padding: 16rpx 32rpx 32rpx;
+.manage-list { display: flex; flex-direction: column; gap: 12rpx; }
+.manage-item {
+  display: flex; align-items: center; padding: 16rpx 0;
+  border-bottom: 1rpx solid #f8f8f8;
 }
-
-.form-group {
-  margin-bottom: 28rpx;
+.manage-item-icon { font-size: 36rpx; margin-right: 16rpx; flex-shrink: 0; }
+.manage-item-name { flex: 1; font-size: 28rpx; color: $text-primary; }
+.manage-item-actions { display: flex; gap: 12rpx; flex-shrink: 0; }
+.manage-btn {
+  padding: 8rpx 20rpx; border-radius: 20rpx; background: $primary-light;
 }
+.manage-btn-off { background: #f0f0f0; }
+.manage-btn-del { background: #fef2f2; }
+.manage-btn-text { font-size: 24rpx; color: $primary; font-weight: 500; }
+.manage-btn-off .manage-btn-text { color: $text-secondary; }
+.manage-btn-del .manage-btn-text { color: #ef4444; }
 
+.popup-body { padding: 16rpx 32rpx 32rpx; }
+.form-group { margin-bottom: 28rpx; }
 .form-label {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: $text-primary;
-  margin-bottom: 16rpx;
+  display: block; font-size: 28rpx; font-weight: 600;
+  color: $text-primary; margin-bottom: 16rpx;
 }
-
 .form-input {
-  width: 100%;
-  height: 80rpx;
-  border: 2rpx solid #e8e8e8;
-  border-radius: 16rpx;
-  padding: 0 24rpx;
-  font-size: 28rpx;
-  color: $text-primary;
-  box-sizing: border-box;
+  width: 100%; height: 80rpx; border: 2rpx solid #e8e8e8;
+  border-radius: 16rpx; padding: 0 24rpx; font-size: 28rpx;
+  color: $text-primary; box-sizing: border-box;
 }
-
-.emoji-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
-}
-
+.emoji-picker { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .emoji-option {
-  width: 72rpx;
-  height: 72rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16rpx;
-  background: #f5f5f5;
-  border: 2rpx solid transparent;
-  transition: all 0.2s;
+  width: 72rpx; height: 72rpx; display: flex;
+  align-items: center; justify-content: center;
+  border-radius: 16rpx; background: #f5f5f5;
+  border: 2rpx solid transparent; transition: all 0.2s;
 }
-
-.emoji-option.active {
-  border-color: $primary;
-  background: $primary-light;
-}
-
-.emoji-text {
-  font-size: 36rpx;
-}
-
-.type-picker {
-  display: flex;
-  gap: 16rpx;
-}
-
+.emoji-option.active { border-color: $primary; background: $primary-light; }
+.emoji-text { font-size: 36rpx; }
+.type-picker { display: flex; gap: 16rpx; }
 .type-option {
-  flex: 1;
-  height: 72rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16rpx;
-  background: #f5f5f5;
-  border: 2rpx solid transparent;
-  transition: all 0.2s;
+  flex: 1; height: 72rpx; display: flex;
+  align-items: center; justify-content: center;
+  border-radius: 16rpx; background: #f5f5f5;
+  border: 2rpx solid transparent; transition: all 0.2s;
 }
+.type-option.active { border-color: $primary; background: $primary-light; }
+.type-text { font-size: 28rpx; color: $text-primary; }
+.type-option.active .type-text { color: $primary; font-weight: 600; }
 
-.type-option.active {
-  border-color: $primary;
-  background: $primary-light;
-}
-
-.type-text {
-  font-size: 28rpx;
-  color: $text-primary;
-}
-
-.type-option.active .type-text {
-  color: $primary;
-  font-weight: 600;
-}
-
-.popup-footer {
-  display: flex;
-  gap: 16rpx;
-  padding: 0 32rpx 32rpx;
-}
-
+.popup-footer { display: flex; gap: 16rpx; padding: 16rpx 32rpx 32rpx; }
 .popup-btn {
-  flex: 1;
-  height: 88rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 44rpx;
+  flex: 1; height: 88rpx; display: flex;
+  align-items: center; justify-content: center; border-radius: 44rpx;
 }
-
-.popup-btn.cancel {
-  background: #f5f5f5;
-}
-
-.popup-btn.confirm {
-  background: $primary;
-}
-
-.popup-btn-text {
-  font-size: 30rpx;
-  color: $text-secondary;
-}
-
-.confirm-text {
-  color: #fff;
-  font-weight: 600;
-}
+.popup-btn.cancel { background: #f5f5f5; }
+.popup-btn.confirm { background: $primary; }
+.popup-btn-text { font-size: 30rpx; color: $text-secondary; }
+.confirm-text { color: #fff; font-weight: 600; }
 
 .checkin-animation {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  opacity: 0;
-  z-index: 200;
-  transition: opacity 0.3s ease;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; opacity: 0; z-index: 200; transition: opacity 0.3s ease;
 }
-
-.checkin-animation.show {
-  opacity: 1;
-}
-
+.checkin-animation.show { opacity: 1; }
 .success-bubble {
-  background: $green;
-  padding: 40rpx 64rpx;
-  border-radius: 32rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-shadow: 0 16rpx 48rpx rgba(82, 196, 26, 0.4);
-  animation: bubblePop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  background: $green; padding: 40rpx 64rpx; border-radius: 32rpx;
+  display: flex; flex-direction: column; align-items: center;
+  box-shadow: 0 16rpx 48rpx rgba(82,196,26,0.4);
+  animation: bubblePop 0.6s cubic-bezier(0.68,-0.55,0.265,1.55);
 }
-
-.success-emoji {
-  font-size: 64rpx;
-  margin-bottom: 12rpx;
-  animation: emojiCelebrate 0.8s ease infinite;
-}
-
-.success-text {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #fff;
-}
+.success-emoji { font-size: 64rpx; margin-bottom: 12rpx; animation: emojiCelebrate 0.8s ease infinite; }
+.success-text { font-size: 32rpx; font-weight: 700; color: #fff; }
 
 @keyframes bubblePop {
   0% { transform: scale(0); opacity: 0; }
   50% { transform: scale(1.1); }
   100% { transform: scale(1); opacity: 1; }
 }
-
 @keyframes emojiCelebrate {
   0%, 100% { transform: rotate(0deg) scale(1); }
   25% { transform: rotate(-15deg) scale(1.1); }

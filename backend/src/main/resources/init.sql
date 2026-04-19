@@ -100,6 +100,15 @@ CREATE TABLE IF NOT EXISTS `checkin_stats` (
   UNIQUE KEY `uk_user_item` (`user_id`,`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='打卡统计表';
 
+CREATE TABLE IF NOT EXISTS `user_hidden_items` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL,
+  `item_id` bigint(20) NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_item` (`user_id`, `item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户隐藏的打卡项';
+
 -- ========================================
 -- 社交模块（动态、点赞、评论）
 -- ========================================

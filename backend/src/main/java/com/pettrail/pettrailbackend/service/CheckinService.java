@@ -4,10 +4,12 @@ import com.alibaba.fastjson2.JSON;
 import com.pettrail.pettrailbackend.entity.CheckinItem;
 import com.pettrail.pettrailbackend.entity.CheckinRecord;
 import com.pettrail.pettrailbackend.entity.CheckinStats;
+import com.pettrail.pettrailbackend.entity.UserHiddenItem;
 import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.mapper.CheckinItemMapper;
 import com.pettrail.pettrailbackend.mapper.CheckinRecordMapper;
 import com.pettrail.pettrailbackend.mapper.CheckinStatsMapper;
+import com.pettrail.pettrailbackend.mapper.UserHiddenItemMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -18,7 +20,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 打卡服务
@@ -31,6 +35,7 @@ public class CheckinService {
     private final CheckinItemMapper checkinItemMapper;
     private final CheckinRecordMapper checkinRecordMapper;
     private final CheckinStatsMapper checkinStatsMapper;
+    private final UserHiddenItemMapper userHiddenItemMapper;
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
@@ -46,8 +51,33 @@ public class CheckinService {
         if (userId != null) {
             List<CheckinItem> customItems = checkinItemMapper.selectByUserId(userId);
             defaultItems.addAll(customItems);
+
+            Set<Long> hiddenIds = userHiddenItemMapper.selectHiddenItemIdsByUserId(userId)
+                    .stream().collect(Collectors.toSet());
+            defaultItems = defaultItems.stream()
+                    .filter(item -> !hiddenIds.contains(item.getId()))
+                    .collect(Collectors.toList());
         }
         return defaultItems;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void hideItem(Long userId, Long itemId) {
+        if (userHiddenItemMapper.selectList(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<UserHiddenItem>()
+                .eq(UserHiddenItem::getUserId, userId)
+                .eq(UserHiddenItem::getItemId, itemId)).isEmpty()) {
+            UserHiddenItem hidden = new UserHiddenItem();
+            hidden.setUserId(userId);
+            hidden.setItemId(itemId);
+            userHiddenItemMapper.insert(hidden);
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void showItem(Long userId, Long itemId) {
+        userHiddenItemMapper.delete(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<UserHiddenItem>()
+                .eq(UserHiddenItem::getUserId, userId)
+                .eq(UserHiddenItem::getItemId, itemId));
     }
 
     @Transactional(rollbackFor = Exception.class)

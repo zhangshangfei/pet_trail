@@ -31,3 +31,11 @@ export const updateCheckinItem = (id, data) => {
 export const deleteCheckinItem = (id) => {
   return request.delete(`/api/checkin/items/${id}`)
 }
+
+export const hideCheckinItem = (id) => {
+  return request.post(`/api/checkin/items/${id}/hide`)
+}
+
+export const showCheckinItem = (id) => {
+  return request.post(`/api/checkin/items/${id}/show`)
+}

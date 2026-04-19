@@ -92,6 +92,36 @@ public class CheckinController {
         }
     }
 
+    @PostMapping("/items/{id}/hide")
+    public Result<Void> hideItem(@PathVariable Long id) {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+        try {
+            checkinService.hideItem(userId, id);
+            return Result.success();
+        } catch (Exception e) {
+            log.error("隐藏打卡项失败: {}", e.getMessage(), e);
+            return Result.error("操作失败：" + e.getMessage());
+        }
+    }
+
+    @PostMapping("/items/{id}/show")
+    public Result<Void> showItem(@PathVariable Long id) {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+        try {
+            checkinService.showItem(userId, id);
+            return Result.success();
+        } catch (Exception e) {
+            log.error("显示打卡项失败: {}", e.getMessage(), e);
+            return Result.error("操作失败：" + e.getMessage());
+        }
+    }
+
     /**
      * 打卡
      */
