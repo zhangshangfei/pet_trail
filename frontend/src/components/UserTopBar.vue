@@ -10,10 +10,10 @@
         <text class="user-topbar-name">{{ name }}</text>
       </view>
       <view class="user-topbar-right-group" :style="{ marginRight: rightMargin + 'px' }">
-        <view class="user-topbar-right" @tap="$emit('discoverTap')">
+        <view v-if="showDiscover" class="user-topbar-right" @tap="$emit('discoverTap')">
           <text class="user-topbar-right-icon">🔍</text>
         </view>
-        <view class="user-topbar-right" @tap="$emit('rightTap')">
+        <view v-if="showBell" class="user-topbar-right" @tap="$emit('rightTap')">
           <text class="user-topbar-right-icon">🔔</text>
           <view v-if="unreadCount > 0" class="user-topbar-badge">
             <text class="user-topbar-badge-text">{{ unreadCount > 99 ? '99+' : unreadCount }}</text>
@@ -51,6 +51,14 @@ export default {
     unreadCount: {
       type: Number,
       default: 0
+    },
+    showDiscover: {
+      type: Boolean,
+      default: true
+    },
+    showBell: {
+      type: Boolean,
+      default: true
     }
   },
   emits: ['rightTap', 'loginTap', 'userTap', 'discoverTap'],

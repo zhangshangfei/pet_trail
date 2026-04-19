@@ -15,6 +15,7 @@
       <el-table-column prop="content" label="内容" show-overflow-tooltip min-width="200" />
       <el-table-column prop="postId" label="动态ID" width="80" />
       <el-table-column prop="userId" label="用户ID" width="80" />
+      <el-table-column prop="userNickname" label="用户名" width="120" />
       <el-table-column prop="parentId" label="回复ID" width="80" />
       <el-table-column prop="likeCount" label="点赞" width="70" />
       <el-table-column label="状态" width="80">

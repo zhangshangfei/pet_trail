@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/notifications")
@@ -50,7 +52,9 @@ public class AdminNotificationController {
         }
         wrapper.orderByDesc(Notification::getCreatedAt);
 
-        return Result.success(notificationMapper.selectPage(pageParam, wrapper));
+        Page<Notification> result = notificationMapper.selectPage(pageParam, wrapper);
+        fillUserNickname(result);
+        return Result.success(result);
     }
 
     @PostMapping
@@ -118,5 +122,25 @@ public class AdminNotificationController {
         }
 
         return Result.success(Map.of("sentCount", count));
+    }
+
+    private void fillUserNickname(Page<Notification> result) {
+        Set<Long> userIds = result.getRecords().stream()
+                .flatMap(n -> java.util.stream.Stream.of(n.getUserId(), n.getFromUserId()))
+                .filter(uid -> uid != null && uid > 0)
+                .collect(Collectors.toSet());
+        if (userIds.isEmpty()) return;
+        Map<Long, String> nicknameMap = userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u.getNickname() != null ? u.getNickname() : "用户" + u.getId(), (a, b) -> a));
+        for (Notification n : result.getRecords()) {
+            if (n.getUserId() != null) {
+                n.setUserNickname(nicknameMap.getOrDefault(n.getUserId(), "未知用户"));
+            }
+            if (n.getFromUserId() != null && n.getFromUserId() > 0) {
+                n.setFromUserNickname(nicknameMap.getOrDefault(n.getFromUserId(), "系统"));
+            } else {
+                n.setFromUserNickname("系统");
+            }
+        }
     }
 }

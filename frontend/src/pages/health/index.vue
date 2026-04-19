@@ -1,15 +1,15 @@
 <template>
   <view class="health-page">
-    <view class="nav-fixed">
-      <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
-      <view class="nav-bar">
-        <view class="nav-back" @tap="goBackToBoard">
-          <view class="nav-back-arrow"></view>
-        </view>
-        <text class="nav-title">新增记录</text>
-        <view class="nav-placeholder"></view>
-      </view>
-    </view>
+    <user-top-bar
+      :status-bar-height="statusBarHeight"
+      :avatar="userAvatar"
+      :name="isLoggedIn ? (userName || '萌宠主人') : '请登录'"
+      :show-login-button="!isLoggedIn"
+      :unread-count="0"
+      :show-discover="false"
+      :show-bell="false"
+      @userTap="goBackToBoard"
+    />
 
     <scroll-view scroll-y class="health-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px' }">
       <view class="health-content">
@@ -273,6 +273,7 @@
 
 <script>
 import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
+import UserTopBar from '@/components/UserTopBar.vue'
 
 function todayStr() {
   const d = new Date();
@@ -283,6 +284,7 @@ function todayStr() {
 }
 
 export default {
+  components: { UserTopBar },
   data() {
     return {
       statusBarHeight: 20,
@@ -322,6 +324,9 @@ export default {
     };
   },
   computed: {
+    isLoggedIn() {
+      return !!uni.getStorageSync('token')
+    },
     petAgeText() {
       const b = this.currentPet && this.currentPet.birthday;
       if (!b) return "-";
@@ -449,7 +454,10 @@ export default {
       try {
         const res = await uni.$request.get("/api/pets");
         if (res && res.success && Array.isArray(res.data)) {
-          this.pets = res.data;
+          this.pets = res.data.map(pet => ({
+            ...pet,
+            avatar: getPetAvatar(pet.id, pet.avatar)
+          }));
           if (!this.pets.length) {
             this.currentPet = null;
             this.lastWeightRecord = null;

@@ -6,7 +6,9 @@ import com.pettrail.pettrailbackend.annotation.OperationLog;
 import com.pettrail.pettrailbackend.annotation.RequireRole;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Post;
+import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
+import com.pettrail.pettrailbackend.mapper.UserMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/posts")
@@ -22,6 +26,7 @@ import java.util.Map;
 public class AdminPostController {
 
     private final PostMapper postMapper;
+    private final UserMapper userMapper;
 
     @GetMapping
     @Operation(summary = "分页查询动态列表")
@@ -41,7 +46,9 @@ public class AdminPostController {
         }
         wrapper.orderByDesc(Post::getCreatedAt);
 
-        return Result.success(postMapper.selectPage(pageParam, wrapper));
+        Page<Post> result = postMapper.selectPage(pageParam, wrapper);
+        fillUserNickname(result);
+        return Result.success(result);
     }
 
     @GetMapping("/{id}")
@@ -50,6 +57,12 @@ public class AdminPostController {
         Post post = postMapper.selectById(id);
         if (post == null) {
             return Result.error(404, "动态不存在");
+        }
+        if (post.getUserId() != null) {
+            User user = userMapper.selectById(post.getUserId());
+            if (user != null) {
+                post.setUserNickname(user.getNickname());
+            }
         }
         return Result.success(post);
     }
@@ -119,7 +132,9 @@ public class AdminPostController {
         LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Post::getDeleted, 1);
         wrapper.orderByDesc(Post::getCreatedAt);
-        return Result.success(postMapper.selectPage(pageParam, wrapper));
+        Page<Post> result = postMapper.selectPage(pageParam, wrapper);
+        fillUserNickname(result);
+        return Result.success(result);
     }
 
     @PutMapping("/{id}/restore")
@@ -134,5 +149,20 @@ public class AdminPostController {
         post.setDeleted(0);
         postMapper.updateById(post);
         return Result.success(null);
+    }
+
+    private void fillUserNickname(Page<Post> result) {
+        Set<Long> userIds = result.getRecords().stream()
+                .map(Post::getUserId)
+                .filter(uid -> uid != null)
+                .collect(Collectors.toSet());
+        if (userIds.isEmpty()) return;
+        Map<Long, String> nicknameMap = userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u.getNickname() != null ? u.getNickname() : "用户" + u.getId(), (a, b) -> a));
+        for (Post post : result.getRecords()) {
+            if (post.getUserId() != null) {
+                post.setUserNickname(nicknameMap.getOrDefault(post.getUserId(), "未知用户"));
+            }
+        }
     }
 }

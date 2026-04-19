@@ -24,7 +24,9 @@
       <el-table :data="tableData" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="userId" label="接收用户" width="100" />
+        <el-table-column prop="userNickname" label="接收用户名" width="120" />
         <el-table-column prop="fromUserId" label="触发用户" width="100" />
+        <el-table-column prop="fromUserNickname" label="触发用户名" width="120" />
         <el-table-column prop="type" label="类型" width="80">
           <template #default="{ row }">
             <el-tag size="small">{{ { like: '点赞', comment: '评论', follow: '关注', favorite: '收藏', system: '系统' }[row.type] || row.type }}</el-tag>

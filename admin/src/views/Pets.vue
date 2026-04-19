@@ -24,6 +24,7 @@
       </el-table-column>
       <el-table-column prop="weight" label="体重(kg)" width="90" />
       <el-table-column prop="userId" label="主人ID" width="80" />
+      <el-table-column prop="userNickname" label="主人昵称" width="120" />
       <el-table-column prop="createdAt" label="创建时间" width="170" />
       <el-table-column label="操作" width="120" fixed="right">
         <template #default="{ row }">
@@ -46,6 +47,7 @@
         <el-descriptions-item label="绝育">{{ detail.sterilized === 1 ? '已绝育' : '未绝育' }}</el-descriptions-item>
         <el-descriptions-item label="生日">{{ detail.birthday || '-' }}</el-descriptions-item>
         <el-descriptions-item label="主人ID">{{ detail.userId }}</el-descriptions-item>
+        <el-descriptions-item label="主人昵称">{{ detail.userNickname || '-' }}</el-descriptions-item>
         <el-descriptions-item label="创建时间" :span="2">{{ detail.createdAt }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>

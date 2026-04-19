@@ -45,12 +45,25 @@
       </view>
     </view>
 
+    <!-- 系统消息滚动通知 -->
+    <view v-if="showSysNotice && sysNoticeList.length" class="sys-notice-bar" :style="{ top: (headerHeight - 2) + 'px' }">
+      <view class="sys-notice-inner">
+        <text class="sys-notice-icon">📢</text>
+        <swiper class="sys-notice-swiper" vertical autoplay circular :interval="3000" :duration="500">
+          <swiper-item v-for="(msg, idx) in sysNoticeList" :key="idx">
+            <text class="sys-notice-text" @tap="onSysNoticeTap(msg)">{{ msg.content }}</text>
+          </swiper-item>
+        </swiper>
+        <view class="sys-notice-close" @tap="closeSysNotice">
+          <text class="sys-notice-close-text">✕</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 主内容区 -->
-    <scroll-view
-      scroll-y
+    <view
       class="home-scroll"
       :style="{ paddingTop: headerHeight + 'px' }"
-      @scrolltolower="loadMore"
     >
       <view class="feed-list">
         <!-- 动态卡片 -->
@@ -203,7 +216,7 @@
           <text class="empty-state-text">暂无动态</text>
         </view>
       </view>
-    </scroll-view>
+    </view>
 
     <!-- 悬浮发布按钮 -->
     <view class="fab-button" @click="onPublishTap">
@@ -264,7 +277,10 @@ export default {
       expandedPosts: {},
       showVideoPlayer: false,
       currentVideoUrl: '',
-      unreadNotificationCount: 0
+      unreadNotificationCount: 0,
+      showSysNotice: false,
+      sysNoticeList: [],
+      sysNoticeTimer: null
     };
   },
   computed: {
@@ -307,6 +323,10 @@ export default {
   onHide() {
   },
   onUnload() {
+    if (this.sysNoticeTimer) {
+      clearTimeout(this.sysNoticeTimer)
+      this.sysNoticeTimer = null
+    }
     uni.$off('loginSuccess')
   },
   onPullDownRefresh() {
@@ -318,6 +338,9 @@ export default {
     this.loadPosts().finally(() => {
       uni.stopPullDownRefresh()
     })
+  },
+  onReachBottom() {
+    this.loadMore()
   },
   onShareAppMessage(res) {
     if (res.from === 'button' && res.target) {
@@ -426,9 +449,47 @@ export default {
         if (res.success && res.data) {
           this.unreadNotificationCount = res.data.count || 0;
         }
+        this.loadSysNotices()
       } catch (e) {
         console.error('获取未读通知数失败:', e);
       }
+    },
+    async loadSysNotices() {
+      if (!this.isLoggedIn) return
+      try {
+        const res = await uni.$request.get('/api/notifications', { page: 1, size: 10 })
+        if (res && res.success && Array.isArray(res.data)) {
+          const sysMsgs = res.data.filter(n => n.type === 'system' && !n.read)
+          if (sysMsgs.length > 0) {
+            this.sysNoticeList = sysMsgs
+            const lastDismiss = uni.getStorageSync('sysNoticeDismissTime')
+            const now = Date.now()
+            if (!lastDismiss || now - lastDismiss > 300000) {
+              this.showSysNotice = true
+              this.startSysNoticeTimer()
+            }
+          }
+        }
+      } catch (e) {
+        console.error('加载系统消息失败', e)
+      }
+    },
+    startSysNoticeTimer() {
+      if (this.sysNoticeTimer) clearTimeout(this.sysNoticeTimer)
+      this.sysNoticeTimer = setTimeout(() => {
+        this.showSysNotice = false
+      }, 30000)
+    },
+    closeSysNotice() {
+      this.showSysNotice = false
+      if (this.sysNoticeTimer) {
+        clearTimeout(this.sysNoticeTimer)
+        this.sysNoticeTimer = null
+      }
+      uni.setStorageSync('sysNoticeDismissTime', Date.now())
+    },
+    onSysNoticeTap(msg) {
+      uni.navigateTo({ url: '/pages/notification/index' })
     },
 
     onWechatLogin() {
@@ -754,6 +815,60 @@ export default {
   -webkit-backdrop-filter: blur(16px);
 }
 
+.sys-notice-bar {
+  position: fixed;
+  left: 24rpx;
+  right: 24rpx;
+  z-index: 89;
+  background: linear-gradient(135deg, #fff7ed 0%, #fff1f2 100%);
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 16rpx rgba(255, 122, 61, 0.15);
+  border: 1rpx solid rgba(255, 122, 61, 0.15);
+  overflow: hidden;
+}
+
+.sys-notice-inner {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 16rpx 20rpx;
+}
+
+.sys-notice-icon {
+  font-size: 28rpx;
+  margin-right: 12rpx;
+  flex-shrink: 0;
+}
+
+.sys-notice-swiper {
+  flex: 1;
+  height: 40rpx;
+}
+
+.sys-notice-text {
+  font-size: 24rpx;
+  color: #9a3412;
+  line-height: 40rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sys-notice-close {
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 12rpx;
+  flex-shrink: 0;
+}
+
+.sys-notice-close-text {
+  font-size: 24rpx;
+  color: #d97706;
+}
+
 .segmented-control {
   display: flex;
   margin: 4rpx 24rpx 8rpx;
@@ -788,7 +903,7 @@ export default {
 }
 
 .home-scroll {
-  height: 100vh;
+  min-height: 100vh;
 }
 
 .feed-list {

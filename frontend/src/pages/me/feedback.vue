@@ -63,6 +63,12 @@
           <text class="submit-text">提交反馈</text>
         </view>
 
+        <view class="history-btn" @tap="goFeedbackList">
+          <text class="history-icon">📋</text>
+          <text class="history-text">查看反馈记录</text>
+          <text class="history-arrow">›</text>
+        </view>
+
         <view class="tip-section">
           <text class="tip-icon">💡</text>
           <text class="tip-text">我们会在1-3个工作日内处理您的反馈，感谢您的支持！</text>
@@ -110,6 +116,9 @@ export default {
   methods: {
     goBack() {
       uni.navigateBack({ delta: 1 })
+    },
+    goFeedbackList() {
+      uni.navigateTo({ url: '/pages/me/feedback-list' })
     },
     chooseImage() {
       const self = this
@@ -229,6 +238,16 @@ $text-light: #999999;
 .submit-btn:active { opacity: 0.9; }
 .submit-btn.disabled { background: #ccc; box-shadow: none; }
 .submit-text { font-size: 32rpx; font-weight: 600; color: #fff; }
+
+.history-btn {
+  display: flex; flex-direction: row; align-items: center; justify-content: center;
+  height: 96rpx; border-radius: 48rpx; background: #fff; margin: 20rpx 0;
+  border: 2rpx solid #e5e7eb;
+}
+.history-btn:active { background: #f9fafb; }
+.history-icon { font-size: 30rpx; margin-right: 10rpx; }
+.history-text { font-size: 28rpx; font-weight: 500; color: $text-secondary; }
+.history-arrow { font-size: 32rpx; color: #d1d5db; margin-left: 8rpx; }
 
 .tip-section {
   display: flex; align-items: flex-start; padding: 24rpx;

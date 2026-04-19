@@ -6,6 +6,8 @@
       :name="isLoggedIn ? (userName || '萌宠主人') : '请登录'"
       :show-login-button="!isLoggedIn"
       :unread-count="0"
+      :show-discover="false"
+      :show-bell="false"
       @rightTap="onBellTap"
       @userTap="onTopUserTap"
       @discoverTap="onDiscoverTap"
@@ -120,7 +122,7 @@
         <view class="dash-section">
           <view class="section-header">
             <text class="section-title">💉 疫苗提醒</text>
-            <view v-if="vaccineCards.length > 3" class="view-all-btn" @tap="goVaccineList">
+            <view v-if="vaccineCards.length > vaccineCardsLimited.length" class="view-all-btn" @tap="goVaccineList">
               <text class="view-all-text">查看全部</text>
               <text class="view-all-arrow">›</text>
             </view>
@@ -172,7 +174,7 @@
         <view class="dash-section">
           <view class="section-header">
             <text class="section-title">💊 驱虫提醒</text>
-            <view v-if="parasiteCards.length > 3" class="view-all-btn" @tap="goParasiteList">
+            <view v-if="parasiteCards.length > parasiteCardsLimited.length" class="view-all-btn" @tap="goParasiteList">
               <text class="view-all-text">查看全部</text>
               <text class="view-all-arrow">›</text>
             </view>
@@ -370,7 +372,7 @@ export default {
       });
     },
     vaccineCardsLimited() {
-      return this.vaccineCards.slice(0, 3);
+      return this.vaccineCards.filter(c => !c.isCompleted).slice(0, 3);
     },
     parasiteCards() {
       const petId = this.selectedPet && this.selectedPet.id;
@@ -395,7 +397,7 @@ export default {
       });
     },
     parasiteCardsLimited() {
-      return this.parasiteCards.slice(0, 3);
+      return this.parasiteCards.filter(c => !c.isCompleted).slice(0, 3);
     }
   },
   onShow() {
@@ -466,7 +468,10 @@ export default {
       try {
         const res = await uni.$request.get("/api/pets");
         if (res && res.success && Array.isArray(res.data)) {
-          this.pets = res.data;
+          this.pets = res.data.map(pet => ({
+            ...pet,
+            avatar: getPetAvatar(pet.id, pet.avatar)
+          }));
           if (!this.pets.length) {
             this.selectedPet = null;
             this.clearBoardData();

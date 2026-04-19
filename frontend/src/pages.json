@@ -154,6 +154,13 @@
       }
     },
     {
+      "path": "pages/me/feedback-list",
+      "style": {
+        "navigationBarTitleText": "反馈记录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/me/settings",
       "style": {
         "navigationBarTitleText": "设置",

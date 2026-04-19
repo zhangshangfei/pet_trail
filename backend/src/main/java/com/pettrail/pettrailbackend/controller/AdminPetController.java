@@ -5,11 +5,17 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.annotation.RequireRole;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Pet;
+import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.PetMapper;
+import com.pettrail.pettrailbackend.mapper.UserMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/pets")
@@ -18,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminPetController {
 
     private final PetMapper petMapper;
+    private final UserMapper userMapper;
 
     @GetMapping
     @Operation(summary = "分页查询宠物列表")
@@ -41,7 +48,9 @@ public class AdminPetController {
         }
         wrapper.orderByDesc(Pet::getCreatedAt);
 
-        return Result.success(petMapper.selectPage(pageParam, wrapper));
+        Page<Pet> result = petMapper.selectPage(pageParam, wrapper);
+        fillUserNickname(result);
+        return Result.success(result);
     }
 
     @GetMapping("/{id}")
@@ -50,6 +59,12 @@ public class AdminPetController {
         Pet pet = petMapper.selectById(id);
         if (pet == null) {
             return Result.error(404, "宠物不存在");
+        }
+        if (pet.getUserId() != null) {
+            User user = userMapper.selectById(pet.getUserId());
+            if (user != null) {
+                pet.setUserNickname(user.getNickname());
+            }
         }
         return Result.success(pet);
     }
@@ -65,5 +80,20 @@ public class AdminPetController {
         }
         petMapper.deleteById(id);
         return Result.success(null);
+    }
+
+    private void fillUserNickname(Page<Pet> result) {
+        Set<Long> userIds = result.getRecords().stream()
+                .map(Pet::getUserId)
+                .filter(uid -> uid != null)
+                .collect(Collectors.toSet());
+        if (userIds.isEmpty()) return;
+        Map<Long, String> nicknameMap = userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u.getNickname() != null ? u.getNickname() : "用户" + u.getId(), (a, b) -> a));
+        for (Pet pet : result.getRecords()) {
+            if (pet.getUserId() != null) {
+                pet.setUserNickname(nicknameMap.getOrDefault(pet.getUserId(), "未知用户"));
+            }
+        }
     }
 }

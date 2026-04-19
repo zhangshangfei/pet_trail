@@ -20,6 +20,7 @@
         <el-table-column type="selection" width="50" />
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="userId" label="用户ID" width="90" />
+        <el-table-column prop="userNickname" label="用户名" width="120" />
         <el-table-column prop="content" label="内容" min-width="220" show-overflow-tooltip />
         <el-table-column label="图片" width="80">
           <template #default="{ row }">
@@ -60,6 +61,7 @@
       <el-descriptions :column="2" border v-if="detailPost">
         <el-descriptions-item label="ID">{{ detailPost.id }}</el-descriptions-item>
         <el-descriptions-item label="用户ID">{{ detailPost.userId }}</el-descriptions-item>
+        <el-descriptions-item label="用户名">{{ detailPost.userNickname || '-' }}</el-descriptions-item>
         <el-descriptions-item label="内容" :span="2">{{ detailPost.content }}</el-descriptions-item>
         <el-descriptions-item label="图片" :span="2" v-if="detailPost.images">
           <div class="detail-images">
@@ -97,6 +99,7 @@
       <el-table :data="deletedList" v-loading="deletedLoading" stripe>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="userId" label="用户ID" width="90" />
+        <el-table-column prop="userNickname" label="用户名" width="120" />
         <el-table-column prop="content" label="内容" min-width="200" show-overflow-tooltip />
         <el-table-column prop="createdAt" label="发布时间" width="170" />
         <el-table-column label="操作" width="100">

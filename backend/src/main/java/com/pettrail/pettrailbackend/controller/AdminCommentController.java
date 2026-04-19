@@ -5,11 +5,17 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.annotation.RequireRole;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.PostComment;
+import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.PostCommentMapper;
+import com.pettrail.pettrailbackend.mapper.UserMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/comments")
@@ -18,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminCommentController {
 
     private final PostCommentMapper commentMapper;
+    private final UserMapper userMapper;
 
     @GetMapping
     @Operation(summary = "分页查询评论列表")
@@ -41,7 +48,9 @@ public class AdminCommentController {
         }
         wrapper.orderByDesc(PostComment::getCreatedAt);
 
-        return Result.success(commentMapper.selectPage(pageParam, wrapper));
+        Page<PostComment> result = commentMapper.selectPage(pageParam, wrapper);
+        fillUserNickname(result);
+        return Result.success(result);
     }
 
     @DeleteMapping("/{id}")
@@ -70,5 +79,20 @@ public class AdminCommentController {
         comment.setStatus(1);
         commentMapper.updateById(comment);
         return Result.success(null);
+    }
+
+    private void fillUserNickname(Page<PostComment> result) {
+        Set<Long> userIds = result.getRecords().stream()
+                .map(PostComment::getUserId)
+                .filter(uid -> uid != null)
+                .collect(Collectors.toSet());
+        if (userIds.isEmpty()) return;
+        Map<Long, String> nicknameMap = userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u.getNickname() != null ? u.getNickname() : "用户" + u.getId(), (a, b) -> a));
+        for (PostComment comment : result.getRecords()) {
+            if (comment.getUserId() != null) {
+                comment.setUserNickname(nicknameMap.getOrDefault(comment.getUserId(), "未知用户"));
+            }
+        }
     }
 }
