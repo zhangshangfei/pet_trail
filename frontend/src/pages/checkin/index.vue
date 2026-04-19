@@ -1,151 +1,250 @@
 <template>
   <view class="checkin-page">
-    <user-top-bar
-      :status-bar-height="statusBarHeight"
-      :avatar="userAvatar"
-      :name="userName"
-      right-icon="🔔"
-      @rightTap="onTopBarBell"
-    />
-    <scroll-view scroll-y class="checkin-scroll" :style="{ paddingTop: headerHeight + 'px' }">
-      <view class="container">
-    <view class="pet-card card" v-if="pet">
-      <view class="pet-header">
-        <image class="pet-avatar" :src="petAvatar" mode="aspectFill"></image>
-        <view class="pet-info">
-          <text class="pet-name">{{ pet.name || '我的宠物' }}</text>
-          <text class="pet-detail">{{ petDetail }}</text>
+    <view class="page-header">
+      <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
+      <view class="header-bar">
+        <view class="header-user" @tap="goProfile">
+          <image class="header-avatar" :src="userAvatar" mode="aspectFill" />
+          <text class="header-name">{{ userName }}</text>
         </view>
-        <view class="pet-edit" @tap="onEditPet">
-          <text class="edit-icon">✏️</text>
-        </view>
-      </view>
-
-      <view class="pet-meta-row">
-        <view class="streak-badge">
-          <text class="streak-icon">🔥</text>
-          <text class="streak-text">连续打卡 {{ streakDays }} 天</text>
-        </view>
-        <picker v-if="pets.length > 1" class="pet-picker" :range="petNames" :value="petIndex" @change="onPetChange">
-          <view class="pet-switcher">
-            <text class="pet-switcher-label">{{ pet.name || '切换宠物' }}</text>
-            <text class="pet-switcher-arrow">⌄</text>
-          </view>
-        </picker>
-      </view>
-    </view>
-
-    <view class="empty-card card" v-else>
-      <text class="empty-card-text">请先添加宠物</text>
-    </view>
-
-    <view class="section">
-      <view class="section-header">
-        <text class="section-title">📋 今日打卡</text>
-        <text class="section-date">{{ today }}</text>
-      </view>
-
-      <view class="checkin-grid">
-        <view
-          v-for="item in checkinItems"
-          :key="item.id || item.code"
-          class="checkin-item"
-          :class="{ checked: item.checked }"
-          @tap="onCheckIn(item)"
-        >
-          <view class="checkin-icon-wrapper">
-            <text class="checkin-emoji">{{ item.emoji }}</text>
-            <view class="check-success" :class="{ show: item.checked }">
-              <text class="check-icon">✓</text>
+        <view class="header-actions">
+          <view class="header-action-btn" @tap="goNotifications">
+            <text class="header-action-icon">🔔</text>
+            <view v-if="unreadCount > 0" class="header-badge">
+              <text class="header-badge-text">{{ unreadCount > 99 ? '99+' : unreadCount }}</text>
             </view>
           </view>
-          <text class="checkin-label">{{ item.label }}</text>
-          <text v-if="item.checked" class="checkin-time">{{ item.checkTime }}</text>
-          <text v-else class="checkin-time-placeholder">未打卡</text>
         </view>
       </view>
     </view>
 
-    <view class="section">
-      <view class="section-header">
-        <text class="section-title">📝 打卡记录</text>
-      </view>
+    <scroll-view scroll-y class="page-scroll" :style="{ paddingTop: headerHeight + 'px' }">
+      <view class="page-content">
 
-      <view v-if="recentRecords.length" class="records-list">
-        <view v-for="record in recentRecords" :key="record.date" class="record-card card">
-          <view class="record-header">
-            <text class="record-date">{{ record.displayDate }}</text>
-            <text class="record-count">完成 {{ record.completedCount }}/{{ record.totalCount }}</text>
+        <view class="pet-card" v-if="pet">
+          <view class="pet-card-bg"></view>
+          <view class="pet-card-content">
+            <view class="pet-main">
+              <image class="pet-avatar" :src="petAvatar" mode="aspectFill" />
+              <view class="pet-info">
+                <text class="pet-name">{{ pet.name || '我的宠物' }}</text>
+                <text class="pet-breed">{{ petDetail }}</text>
+              </view>
+              <picker v-if="pets.length > 1" class="pet-picker" :range="petNames" :value="petIndex" @change="onPetChange">
+                <view class="pet-switch-btn">
+                  <text class="pet-switch-text">切换</text>
+                </view>
+              </picker>
+            </view>
+            <view class="pet-stats">
+              <view class="stat-item">
+                <text class="stat-value">{{ streakDays }}</text>
+                <text class="stat-label">连续天数</text>
+              </view>
+              <view class="stat-divider"></view>
+              <view class="stat-item">
+                <text class="stat-value">{{ todayCompleted }}/{{ checkinItems.length }}</text>
+                <text class="stat-label">今日完成</text>
+              </view>
+              <view class="stat-divider"></view>
+              <view class="stat-item">
+                <text class="stat-value">{{ totalCheckins }}</text>
+                <text class="stat-label">累计打卡</text>
+              </view>
+            </view>
           </view>
-          <view class="record-items">
+        </view>
+
+        <view class="empty-pet-card" v-else @tap="goAddPet">
+          <text class="empty-pet-icon">🐾</text>
+          <text class="empty-pet-text">添加你的第一只宠物</text>
+          <text class="empty-pet-arrow">→</text>
+        </view>
+
+        <view class="section">
+          <view class="section-header">
+            <view class="section-title-group">
+              <text class="section-title">今日打卡</text>
+              <text class="section-date">{{ today }}</text>
+            </view>
+            <view class="section-action" @tap="showAddItemPopup = true">
+              <text class="section-action-icon">＋</text>
+              <text class="section-action-text">自定义</text>
+            </view>
+          </view>
+
+          <view class="checkin-grid" v-if="checkinItems.length">
             <view
-              v-for="recordItem in record.items"
-              :key="record.date + '-' + (recordItem.id || recordItem.code)"
-              class="record-item"
-              :class="{ done: recordItem.checked }"
+              v-for="item in checkinItems"
+              :key="item.id || item.code"
+              class="checkin-item"
+              :class="{ checked: item.checked, custom: item.isCustom }"
+              @tap="onCheckIn(item)"
+              @longpress="onItemLongPress(item)"
             >
-              <text class="record-item-emoji">{{ recordItem.emoji }}</text>
-              <text class="record-item-label">{{ recordItem.label }}</text>
+              <view class="item-icon-box">
+                <text class="item-emoji">{{ item.emoji || item.icon || '📋' }}</text>
+                <view v-if="item.checked" class="item-check-mark">
+                  <text class="check-mark-icon">✓</text>
+                </view>
+              </view>
+              <text class="item-name">{{ item.label || item.name }}</text>
+              <text v-if="item.checked" class="item-time">{{ item.checkTime }}</text>
+              <text v-else class="item-time-hint">点击打卡</text>
+            </view>
+          </view>
+
+          <view class="empty-checkin" v-else>
+            <text class="empty-checkin-text">暂无打卡项，点击右上角添加</text>
+          </view>
+        </view>
+
+        <view class="section">
+          <view class="section-header">
+            <view class="section-title-group">
+              <text class="section-title">打卡记录</text>
+            </view>
+          </view>
+
+          <view v-if="recentRecords.length" class="records-list">
+            <view v-for="record in recentRecords" :key="record.date" class="record-card">
+              <view class="record-header">
+                <text class="record-date">{{ record.displayDate }}</text>
+                <view class="record-progress">
+                  <view class="progress-bar">
+                    <view class="progress-fill" :style="{ width: record.progress + '%' }"></view>
+                  </view>
+                  <text class="progress-text">{{ record.completedCount }}/{{ record.totalCount }}</text>
+                </view>
+              </view>
+              <view class="record-items">
+                <view
+                  v-for="recordItem in record.items"
+                  :key="record.date + '-' + (recordItem.id || recordItem.code)"
+                  class="record-item"
+                  :class="{ done: recordItem.checked }"
+                >
+                  <text class="record-item-icon">{{ recordItem.emoji || recordItem.icon || '📋' }}</text>
+                  <text class="record-item-name">{{ recordItem.label || recordItem.name }}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view v-else class="empty-records">
+            <text class="empty-records-icon">📝</text>
+            <text class="empty-records-text">暂无打卡记录</text>
+          </view>
+        </view>
+
+        <view class="page-bottom-safe"></view>
+      </view>
+    </scroll-view>
+
+    <view v-if="showAddItemPopup" class="popup-mask" @tap="showAddItemPopup = false">
+      <view class="popup-content" @tap.stop>
+        <view class="popup-header">
+          <text class="popup-title">添加自定义打卡项</text>
+          <view class="popup-close" @tap="showAddItemPopup = false">
+            <text class="popup-close-icon">✕</text>
+          </view>
+        </view>
+        <view class="popup-body">
+          <view class="form-group">
+            <text class="form-label">名称</text>
+            <input class="form-input" v-model="newItem.name" placeholder="如：喂零食" maxlength="10" />
+          </view>
+          <view class="form-group">
+            <text class="form-label">图标</text>
+            <view class="emoji-picker">
+              <view
+                v-for="emoji in emojiOptions"
+                :key="emoji"
+                class="emoji-option"
+                :class="{ active: newItem.icon === emoji }"
+                @tap="newItem.icon = emoji"
+              >
+                <text class="emoji-text">{{ emoji }}</text>
+              </view>
+            </view>
+          </view>
+          <view class="form-group">
+            <text class="form-label">类型</text>
+            <view class="type-picker">
+              <view
+                v-for="t in typeOptions"
+                :key="t.value"
+                class="type-option"
+                :class="{ active: newItem.type === t.value }"
+                @tap="newItem.type = t.value"
+              >
+                <text class="type-text">{{ t.label }}</text>
+              </view>
             </view>
           </view>
         </view>
-      </view>
-
-      <view v-else class="empty-records">
-        <text class="empty-records-text">暂无打卡记录</text>
+        <view class="popup-footer">
+          <view class="popup-btn cancel" @tap="showAddItemPopup = false">
+            <text class="popup-btn-text">取消</text>
+          </view>
+          <view class="popup-btn confirm" @tap="onAddCustomItem">
+            <text class="popup-btn-text confirm-text">添加</text>
+          </view>
+        </view>
       </view>
     </view>
 
     <view class="checkin-animation" :class="{ show: showSuccessAnimation }">
       <view class="success-bubble">
-        <text class="success-text">打卡成功！</text>
         <text class="success-emoji">🎉</text>
+        <text class="success-text">打卡成功！</text>
       </view>
     </view>
-      </view>
-    </scroll-view>
   </view>
 </template>
 
 <script>
-import UserTopBar from '@/components/UserTopBar.vue'
 import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
+import { createCheckinItem, deleteCheckinItem } from '@/api/checkin'
 
-const DISPLAY_ITEM_PRESETS = [
-  { code: 'feed', label: '喂食', emoji: '🍖' },
-  { code: 'walk', label: '遛弯', emoji: '🚶' },
-  { code: 'clean', label: '铲屎', emoji: '🧹' },
-  { code: 'medicine', label: '喂药', emoji: '💊' }
-]
 const DEFAULT_PET_AVATAR = '/static/images/default-pet-avatar.png'
 
+const EMOJI_OPTIONS = [
+  '🍖', '🦴', '🚶', '🧹', '💊', '🛁', '🎾', '🎓',
+  '🪮', '🪥', '🩺', '💉', '🏠', '🍖', '🥛', '💤',
+  '🐕', '🐈', '🐹', '🐰', '🦜', '🐢', '🐟', '🐍'
+]
+
+const TYPE_OPTIONS = [
+  { value: 1, label: '日常' },
+  { value: 2, label: '健康' },
+  { value: 3, label: '训练' }
+]
+
 export default {
-  components: {
-    UserTopBar
-  },
   data() {
     return {
       statusBarHeight: 20,
       headerHeight: 70,
       userName: '萌宠主人',
       userAvatar: DEFAULT_USER_AVATAR,
+      unreadCount: 0,
       petId: null,
       pets: [],
       pet: null,
       petAvatar: DEFAULT_PET_AVATAR,
       today: '',
       streakDays: 0,
-      checkinItems: DISPLAY_ITEM_PRESETS.map((item, index) => ({
-        ...item,
-        uiIndex: index,
-        id: null,
-        checked: false,
-        checkTime: ''
-      })),
+      totalCheckins: 0,
+      checkinItems: [],
       allRecords: [],
       recentRecords: [],
       showSuccessAnimation: false,
-      animationTimer: null
+      animationTimer: null,
+      showAddItemPopup: false,
+      newItem: { name: '', icon: '🍖', type: 1 },
+      emojiOptions: EMOJI_OPTIONS,
+      typeOptions: TYPE_OPTIONS
     }
   },
   computed: {
@@ -162,6 +261,9 @@ export default {
       const breed = this.pet.breed || '未填写品种'
       const age = this.getAgeText(this.pet.birthday)
       return age ? `${breed} · ${age}` : breed
+    },
+    todayCompleted() {
+      return this.checkinItems.filter((item) => item.checked).length
     }
   },
   onLoad(options) {
@@ -174,7 +276,6 @@ export default {
     this.initPage()
   },
   async onShow() {
-    // 每次显示页面时都重新加载宠物列表和刷新数据
     await this.loadPets()
     await this.refreshPageData()
   },
@@ -244,19 +345,19 @@ export default {
     async loadCheckinItems() {
       try {
         const res = await uni.$request.get('/api/checkin/items')
-        if (res && res.success && Array.isArray(res.data) && res.data.length) {
-          this.checkinItems = DISPLAY_ITEM_PRESETS.map((preset, index) => {
-            const apiItem = res.data[index] || {}
-            return {
-              ...preset,
-              uiIndex: index,
-              id: apiItem.id || null,
-              backendName: apiItem.name || preset.label,
-              backendIcon: apiItem.icon || preset.emoji,
-              checked: false,
-              checkTime: ''
-            }
-          })
+        if (res && res.success && Array.isArray(res.data)) {
+          this.checkinItems = res.data.map((item) => ({
+            id: item.id,
+            name: item.name,
+            label: item.name,
+            emoji: item.icon || '📋',
+            icon: item.icon || '📋',
+            type: item.type || 1,
+            isCustom: item.isDefault === 0,
+            isDefault: item.isDefault === 1,
+            checked: false,
+            checkTime: ''
+          }))
         }
       } catch (error) {
         console.error('加载打卡项失败:', error)
@@ -282,10 +383,7 @@ export default {
       const now = new Date()
       for (let i = 0; i < count; i += 1) {
         const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-        requests.push({
-          year: date.getFullYear(),
-          month: date.getMonth() + 1
-        })
+        requests.push({ year: date.getFullYear(), month: date.getMonth() + 1 })
       }
       return requests
     },
@@ -316,6 +414,8 @@ export default {
           }
         })
 
+        this.totalCheckins = this.allRecords.length
+
         this.recentRecords = Object.keys(groupedRecords)
           .sort((a, b) => {
             const left = this.normalizeDate(a)
@@ -325,38 +425,35 @@ export default {
             if (!right) return -1
             return right.getTime() - left.getTime()
           })
-          .slice(0, 5)
+          .slice(0, 7)
           .map((date) => {
             const records = groupedRecords[date]
             const items = this.checkinItems.map((item) => ({
               ...item,
               checked: records.some((record) => String(record.itemId) === String(item.id))
             }))
+            const completedCount = items.filter((item) => item.checked).length
             return {
               date,
               displayDate: this.formatRecordDate(date),
               items,
-              completedCount: items.filter((item) => item.checked).length,
-              totalCount: items.length
+              completedCount,
+              totalCount: items.length,
+              progress: items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0
             }
           })
 
         this.streakDays = this.calculateStreak(Object.keys(groupedRecords))
       } catch (error) {
         console.error('syncPageState failed:', error)
-        uni.showToast({
-          title: '页面数据处理失败',
-          icon: 'none'
-        })
+        uni.showToast({ title: '数据处理失败', icon: 'none' })
       }
     },
     groupRecordsByDate(records) {
       return records.reduce((acc, item) => {
         const key = this.getDateKey(item.recordDate || item.createdAt)
         if (!key) return acc
-        if (!acc[key]) {
-          acc[key] = []
-        }
+        if (!acc[key]) acc[key] = []
         acc[key].push(item)
         return acc
       }, {})
@@ -381,23 +478,14 @@ export default {
     },
     async onCheckIn(item) {
       if (!this.petId) {
-        uni.showToast({
-          title: '请先选择宠物',
-          icon: 'none'
-        })
+        uni.showToast({ title: '请先选择宠物', icon: 'none' })
         return
       }
-      if (item.checked) {
-        return
-      }
+      if (item.checked) return
       if (!item.id) {
-        uni.showToast({
-          title: '打卡项未配置',
-          icon: 'none'
-        })
+        uni.showToast({ title: '打卡项未配置', icon: 'none' })
         return
       }
-
       const loggedIn = await checkLogin('请先登录后再打卡')
       if (!loggedIn) return
 
@@ -406,37 +494,73 @@ export default {
           petId: this.petId,
           itemId: item.id
         })
-
         if (!res || res.success !== true) {
-          uni.showToast({
-            title: (res && res.message) || '打卡失败',
-            icon: 'none'
-          })
+          uni.showToast({ title: (res && res.message) || '打卡失败', icon: 'none' })
           return
         }
-
-        try {
-          uni.vibrateShort({ type: 'medium' })
-        } catch (e) {
-          // ignore
-        }
-
+        try { uni.vibrateShort({ type: 'medium' }) } catch (e) { /* ignore */ }
         this.showSuccessFeedback()
         await this.loadCalendarRecords()
         this.syncPageState()
       } catch (error) {
         console.error('打卡失败:', error)
-        uni.showToast({
-          title: (error && error.message) || '打卡失败',
-          icon: 'none'
+        uni.showToast({ title: (error && error.message) || '打卡失败', icon: 'none' })
+      }
+    },
+    onItemLongPress(item) {
+      if (!item.isCustom) return
+      const self = this
+      uni.showModal({
+        title: '删除打卡项',
+        content: `确定删除"${item.label || item.name}"吗？`,
+        confirmColor: '#ff6a3d',
+        async success(res) {
+          if (!res.confirm) return
+          try {
+            const result = await deleteCheckinItem(item.id)
+            if (result && result.success) {
+              uni.showToast({ title: '已删除', icon: 'success' })
+              await self.loadCheckinItems()
+              await self.refreshPageData()
+            }
+          } catch (e) {
+            console.error('删除打卡项失败:', e)
+            uni.showToast({ title: '删除失败', icon: 'none' })
+          }
+        }
+      })
+    },
+    async onAddCustomItem() {
+      if (!this.newItem.name.trim()) {
+        uni.showToast({ title: '请输入名称', icon: 'none' })
+        return
+      }
+      const loggedIn = await checkLogin('请先登录')
+      if (!loggedIn) return
+
+      try {
+        const res = await createCheckinItem({
+          name: this.newItem.name.trim(),
+          icon: this.newItem.icon,
+          type: this.newItem.type
         })
+        if (res && res.success) {
+          uni.showToast({ title: '添加成功', icon: 'success' })
+          this.showAddItemPopup = false
+          this.newItem = { name: '', icon: '🍖', type: 1 }
+          await this.loadCheckinItems()
+          await this.refreshPageData()
+        } else {
+          uni.showToast({ title: (res && res.message) || '添加失败', icon: 'none' })
+        }
+      } catch (e) {
+        console.error('添加自定义打卡项失败:', e)
+        uni.showToast({ title: '添加失败', icon: 'none' })
       }
     },
     showSuccessFeedback() {
       this.showSuccessAnimation = true
-      if (this.animationTimer) {
-        clearTimeout(this.animationTimer)
-      }
+      if (this.animationTimer) clearTimeout(this.animationTimer)
       this.animationTimer = setTimeout(() => {
         this.showSuccessAnimation = false
       }, 1200)
@@ -449,17 +573,14 @@ export default {
       this.syncPetFromList()
       await this.refreshPageData()
     },
-    onEditPet() {
-      uni.showToast({
-        title: '编辑宠物信息',
-        icon: 'none'
-      })
+    goProfile() {
+      uni.navigateTo({ url: '/pages/user/profile' })
     },
-    onTopBarBell() {
-      uni.showToast({
-        title: '通知未实现',
-        icon: 'none'
-      })
+    goNotifications() {
+      uni.navigateTo({ url: '/pages/notification/index' })
+    },
+    goAddPet() {
+      uni.navigateTo({ url: '/pages/pet/edit' })
     },
     initNavMetrics() {
       try {
@@ -500,40 +621,36 @@ export default {
       const now = new Date()
       let years = now.getFullYear() - date.getFullYear()
       let months = now.getMonth() - date.getMonth()
-      if (now.getDate() < date.getDate()) {
-        months -= 1
-      }
-      if (months < 0) {
-        years -= 1
-        months += 12
-      }
-      if (years > 0) {
-        return `${years}岁`
-      }
-      return `${Math.max(months, 1)}个月`
+      if (now.getDate() < date.getDate()) months -= 1
+      if (months < 0) { years -= 1; months += 12 }
+      return years > 0 ? `${years}岁` : `${Math.max(months, 1)}个月`
     },
     getDateKey(input) {
       const date = this.normalizeDate(input)
       if (!date) return ''
-      const year = date.getFullYear()
-      const month = `${date.getMonth() + 1}`.padStart(2, '0')
-      const day = `${date.getDate()}`.padStart(2, '0')
-      return `${year}-${month}-${day}`
+      const y = date.getFullYear()
+      const m = `${date.getMonth() + 1}`.padStart(2, '0')
+      const d = `${date.getDate()}`.padStart(2, '0')
+      return `${y}-${m}-${d}`
     },
     getTimeText(input) {
       const date = this.normalizeDate(input)
       if (!date) return ''
-      const hours = `${date.getHours()}`.padStart(2, '0')
-      const minutes = `${date.getMinutes()}`.padStart(2, '0')
-      return `${hours}:${minutes}`
+      return `${`${date.getHours()}`.padStart(2, '0')}:${`${date.getMinutes()}`.padStart(2, '0')}`
     },
     formatRecordDate(dateString) {
       const date = this.normalizeDate(dateString)
       if (!date) return dateString
-      const year = date.getFullYear()
-      const month = `${date.getMonth() + 1}`.padStart(2, '0')
-      const day = `${date.getDate()}`.padStart(2, '0')
-      return `${year}-${month}-${day}`
+      const today = new Date()
+      const todayKey = this.getDateKey(today)
+      const yesterday = new Date(today.getTime() - 86400000)
+      const yesterdayKey = this.getDateKey(yesterday)
+      const key = this.getDateKey(date)
+      if (key === todayKey) return '今天'
+      if (key === yesterdayKey) return '昨天'
+      const m = date.getMonth() + 1
+      const d = date.getDate()
+      return `${m}月${d}日`
     },
     normalizeDate(input) {
       if (!input) return null
@@ -547,62 +664,143 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+$primary: #ff6a3d;
+$primary-light: #fff0ea;
+$green: #52c41a;
+$green-light: #f0fff0;
+$bg: #f5f5f5;
+$card-bg: #ffffff;
+$text-primary: #1a1a1a;
+$text-secondary: #666666;
+$text-light: #999999;
+$border: #f0f0f0;
+$radius: 24rpx;
+
 .checkin-page {
   min-height: 100vh;
-  background: #f7f3ef;
+  background: $bg;
 }
 
-.checkin-scroll {
+.page-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: linear-gradient(135deg, #ff8a5c 0%, $primary 100%);
+}
+
+.status-bar { width: 100%; }
+
+.header-bar {
+  height: 92rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28rpx;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+}
+
+.header-avatar {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  margin-right: 16rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.6);
+}
+
+.header-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #fff;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.header-action-btn {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.header-action-icon { font-size: 28rpx; }
+
+.header-badge {
+  position: absolute;
+  top: -4rpx;
+  right: -4rpx;
+  min-width: 28rpx;
+  height: 28rpx;
+  border-radius: 14rpx;
+  background: #ff4d4f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6rpx;
+}
+
+.header-badge-text {
+  font-size: 18rpx;
+  color: #fff;
+  font-weight: 600;
+}
+
+.page-scroll {
   height: 100vh;
 }
 
-.container {
-  min-height: 100vh;
-  padding: 32rpx;
-  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
-  background: #f7f3ef;
-  --color-warm-yellow: #ffd76a;
-  --color-warm-yellow-light: #ffe8a3;
-  --color-light-green: #dff3d4;
-  --color-light-green-dark: #c5e9af;
-  --color-success: #8bc34a;
-  --color-accent: #ff8f3d;
-  --color-bg-card: rgba(255, 255, 255, 0.96);
-  --color-border: #ece7df;
-  --color-text-primary: #2f2a24;
-  --color-text-secondary: #7b746c;
-  --color-text-light: #b8b0a6;
-  --radius-md: 24rpx;
-  --radius-lg: 32rpx;
-  --shadow-card: 0 12rpx 28rpx rgba(17, 24, 39, 0.08);
-}
-
-.card {
-  background: var(--color-bg-card);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
+.page-content {
+  padding: 24rpx 24rpx 0;
 }
 
 .pet-card {
-  background: linear-gradient(135deg, var(--color-warm-yellow) 0%, var(--color-warm-yellow-light) 100%);
-  padding: 32rpx;
-  margin-bottom: 32rpx;
+  position: relative;
+  border-radius: $radius;
+  overflow: hidden;
+  margin-bottom: 24rpx;
 }
 
-.pet-header {
+.pet-card-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #ffe8d6 0%, #ffecd2 100%);
+}
+
+.pet-card-content {
+  position: relative;
+  padding: 28rpx;
+}
+
+.pet-main {
   display: flex;
-  flex-direction: row;
   align-items: center;
   margin-bottom: 24rpx;
 }
 
 .pet-avatar {
-  width: 120rpx;
-  height: 120rpx;
+  width: 100rpx;
+  height: 100rpx;
   border-radius: 50%;
-  border: 4rpx solid #ffffff;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
-  margin-right: 24rpx;
+  border: 4rpx solid #fff;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+  margin-right: 20rpx;
+  flex-shrink: 0;
 }
 
 .pet-info {
@@ -612,286 +810,514 @@ export default {
 
 .pet-name {
   display: block;
-  font-size: 36rpx;
+  font-size: 34rpx;
   font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: 8rpx;
+  color: $text-primary;
+  margin-bottom: 4rpx;
 }
 
-.pet-detail {
+.pet-breed {
   display: block;
   font-size: 24rpx;
-  color: var(--color-text-secondary);
+  color: $text-secondary;
 }
 
-.pet-edit {
-  width: 60rpx;
-  height: 60rpx;
+.pet-picker { flex-shrink: 0; }
+
+.pet-switch-btn {
+  padding: 12rpx 24rpx;
+  border-radius: 30rpx;
+  background: rgba(255, 106, 61, 0.12);
+}
+
+.pet-switch-text {
+  font-size: 24rpx;
+  color: $primary;
+  font-weight: 500;
+}
+
+.pet-stats {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 20rpx;
+  padding: 20rpx 0;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: $primary;
+  margin-bottom: 4rpx;
+}
+
+.stat-label {
+  font-size: 22rpx;
+  color: $text-secondary;
+}
+
+.stat-divider {
+  width: 1rpx;
+  height: 40rpx;
+  background: #e0dcd8;
+}
+
+.empty-pet-card {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  transition: all 0.2s ease;
+  padding: 40rpx;
+  background: $card-bg;
+  border-radius: $radius;
+  margin-bottom: 24rpx;
 }
 
-.pet-edit:active {
-  transform: scale(0.9);
-  background: rgba(255, 255, 255, 0.8);
+.empty-pet-icon {
+  font-size: 36rpx;
+  margin-right: 12rpx;
 }
 
-.edit-icon {
+.empty-pet-text {
   font-size: 28rpx;
-}
-
-.pet-picker {
-  display: inline-block;
-}
-
-.pet-meta-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
-}
-
-.streak-badge {
-  display: inline-flex;
-  flex-direction: row;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 12rpx 24rpx;
-  border-radius: 30rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-}
-
-.streak-icon {
-  font-size: 28rpx;
+  color: $text-secondary;
   margin-right: 8rpx;
 }
 
-.streak-text {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: var(--color-accent);
-}
-
-.pet-switcher {
-  display: inline-flex;
-  align-items: center;
-  gap: 8rpx;
-  padding: 12rpx 22rpx;
-  border-radius: 30rpx;
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-}
-
-.pet-switcher-label {
-  font-size: 24rpx;
-  color: var(--color-text-primary);
-  font-weight: 600;
-  max-width: 220rpx;
-}
-
-.pet-switcher-arrow {
-  font-size: 20rpx;
-  color: var(--color-text-secondary);
+.empty-pet-arrow {
+  font-size: 28rpx;
+  color: $primary;
 }
 
 .section {
-  margin-bottom: 32rpx;
+  margin-bottom: 24rpx;
 }
 
 .section-header {
   display: flex;
-  flex-direction: row;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20rpx;
-  padding: 0 8rpx;
+  padding: 0 4rpx;
+}
+
+.section-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
 }
 
 .section-title {
   font-size: 32rpx;
-  font-weight: 600;
-  color: var(--color-text-primary);
+  font-weight: 700;
+  color: $text-primary;
 }
 
 .section-date {
   font-size: 24rpx;
-  color: var(--color-text-secondary);
+  color: $text-light;
+}
+
+.section-action {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+  background: $primary-light;
+}
+
+.section-action-icon {
+  font-size: 28rpx;
+  color: $primary;
+  font-weight: 600;
+}
+
+.section-action-text {
+  font-size: 24rpx;
+  color: $primary;
+  font-weight: 500;
 }
 
 .checkin-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20rpx;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16rpx;
 }
 
 .checkin-item {
-  background: var(--color-bg-card);
-  border-radius: var(--radius-md);
-  padding: 32rpx 24rpx;
+  background: $card-bg;
+  border-radius: 20rpx;
+  padding: 24rpx 8rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: var(--shadow-card);
-  transition: all 0.3s ease;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  transition: all 0.25s ease;
   position: relative;
   overflow: hidden;
 }
 
 .checkin-item:active {
-  transform: scale(0.95);
+  transform: scale(0.94);
 }
 
 .checkin-item.checked {
-  background: linear-gradient(135deg, var(--color-light-green) 0%, var(--color-light-green-dark) 100%);
+  background: $green-light;
 }
 
-.checkin-item.checked::after {
+.checkin-item.checked::before {
   content: '';
   position: absolute;
   top: 0;
+  left: 0;
   right: 0;
-  width: 60rpx;
-  height: 60rpx;
-  background: var(--color-success);
-  border-radius: 0 0 0 60rpx;
+  height: 4rpx;
+  background: $green;
 }
 
-.checkin-icon-wrapper {
-  width: 100rpx;
-  height: 100rpx;
+.item-icon-box {
+  width: 80rpx;
+  height: 80rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16rpx;
+  margin-bottom: 12rpx;
   position: relative;
 }
 
-.checkin-emoji {
-  font-size: 56rpx;
+.item-emoji {
+  font-size: 48rpx;
 }
 
-.check-success {
+.item-check-mark {
   position: absolute;
-  top: -8rpx;
-  right: -8rpx;
-  width: 40rpx;
-  height: 40rpx;
-  background: var(--color-success);
+  top: -4rpx;
+  right: -4rpx;
+  width: 32rpx;
+  height: 32rpx;
+  background: $green;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transform: scale(0);
-  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-.check-success.show {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.check-icon {
-  color: #ffffff;
-  font-size: 24rpx;
+.check-mark-icon {
+  color: #fff;
+  font-size: 20rpx;
   font-weight: bold;
 }
 
-.checkin-label {
-  font-size: 28rpx;
+.item-name {
+  font-size: 24rpx;
   font-weight: 500;
-  color: var(--color-text-primary);
-  margin-bottom: 8rpx;
+  color: $text-primary;
+  margin-bottom: 4rpx;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.checkin-time {
-  font-size: 22rpx;
-  color: var(--color-text-secondary);
+.item-time {
+  font-size: 20rpx;
+  color: $green;
 }
 
-.checkin-time-placeholder {
-  font-size: 22rpx;
-  color: var(--color-text-light);
+.item-time-hint {
+  font-size: 20rpx;
+  color: $text-light;
+}
+
+.empty-checkin {
+  padding: 48rpx;
+  text-align: center;
+  background: $card-bg;
+  border-radius: $radius;
+}
+
+.empty-checkin-text {
+  font-size: 28rpx;
+  color: $text-light;
 }
 
 .records-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 16rpx;
 }
 
 .record-card {
+  background: $card-bg;
+  border-radius: $radius;
   padding: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
 .record-header {
   display: flex;
-  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20rpx;
-  padding-bottom: 16rpx;
-  border-bottom: 1rpx solid var(--color-border);
+  margin-bottom: 16rpx;
 }
 
 .record-date {
   font-size: 28rpx;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: $text-primary;
 }
 
-.record-count {
-  font-size: 24rpx;
-  color: var(--color-accent);
-  font-weight: 500;
+.record-progress {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.progress-bar {
+  width: 120rpx;
+  height: 8rpx;
+  background: #f0f0f0;
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: $primary;
+  border-radius: 4rpx;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 22rpx;
+  color: $text-light;
 }
 
 .record-items {
   display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
-  gap: 16rpx;
+  gap: 12rpx;
 }
 
 .record-item {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  padding: 12rpx 20rpx;
-  background: var(--color-warm-yellow-light);
-  border-radius: 30rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  background: #f5f5f5;
   opacity: 0.5;
 }
 
 .record-item.done {
-  background: var(--color-light-green);
+  background: $green-light;
   opacity: 1;
 }
 
-.record-item-emoji {
-  font-size: 28rpx;
-  margin-right: 8rpx;
-}
-
-.record-item-label {
+.record-item-icon {
   font-size: 24rpx;
-  color: var(--color-text-primary);
+  margin-right: 6rpx;
 }
 
-.empty-card,
+.record-item-name {
+  font-size: 22rpx;
+  color: $text-primary;
+}
+
 .empty-records {
-  padding: 48rpx 32rpx;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 64rpx 0;
+  background: $card-bg;
+  border-radius: $radius;
 }
 
-.empty-card-text,
+.empty-records-icon {
+  font-size: 64rpx;
+  margin-bottom: 16rpx;
+}
+
 .empty-records-text {
   font-size: 28rpx;
-  color: var(--color-text-secondary);
+  color: $text-light;
+}
+
+.page-bottom-safe {
+  height: calc(24rpx + env(safe-area-inset-bottom));
+}
+
+.popup-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+}
+
+.popup-content {
+  width: 100%;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 32rpx 16rpx;
+}
+
+.popup-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.popup-close {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28rpx;
+  background: #f5f5f5;
+}
+
+.popup-close-icon {
+  font-size: 28rpx;
+  color: $text-secondary;
+}
+
+.popup-body {
+  padding: 16rpx 32rpx 32rpx;
+}
+
+.form-group {
+  margin-bottom: 28rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: 16rpx;
+}
+
+.form-input {
+  width: 100%;
+  height: 80rpx;
+  border: 2rpx solid #e8e8e8;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: $text-primary;
+  box-sizing: border-box;
+}
+
+.emoji-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.emoji-option {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  background: #f5f5f5;
+  border: 2rpx solid transparent;
+  transition: all 0.2s;
+}
+
+.emoji-option.active {
+  border-color: $primary;
+  background: $primary-light;
+}
+
+.emoji-text {
+  font-size: 36rpx;
+}
+
+.type-picker {
+  display: flex;
+  gap: 16rpx;
+}
+
+.type-option {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  background: #f5f5f5;
+  border: 2rpx solid transparent;
+  transition: all 0.2s;
+}
+
+.type-option.active {
+  border-color: $primary;
+  background: $primary-light;
+}
+
+.type-text {
+  font-size: 28rpx;
+  color: $text-primary;
+}
+
+.type-option.active .type-text {
+  color: $primary;
+  font-weight: 600;
+}
+
+.popup-footer {
+  display: flex;
+  gap: 16rpx;
+  padding: 0 32rpx 32rpx;
+}
+
+.popup-btn {
+  flex: 1;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 44rpx;
+}
+
+.popup-btn.cancel {
+  background: #f5f5f5;
+}
+
+.popup-btn.confirm {
+  background: $primary;
+}
+
+.popup-btn-text {
+  font-size: 30rpx;
+  color: $text-secondary;
+}
+
+.confirm-text {
+  color: #fff;
+  font-weight: 600;
 }
 
 .checkin-animation {
@@ -905,7 +1331,7 @@ export default {
   justify-content: center;
   pointer-events: none;
   opacity: 0;
-  z-index: 1000;
+  z-index: 200;
   transition: opacity 0.3s ease;
 }
 
@@ -914,56 +1340,37 @@ export default {
 }
 
 .success-bubble {
-  background: var(--color-success);
-  padding: 40rpx 60rpx;
-  border-radius: var(--radius-lg);
+  background: $green;
+  padding: 40rpx 64rpx;
+  border-radius: 32rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 16rpx 48rpx rgba(139, 195, 74, 0.4);
+  box-shadow: 0 16rpx 48rpx rgba(82, 196, 26, 0.4);
   animation: bubblePop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.success-text {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 16rpx;
 }
 
 .success-emoji {
   font-size: 64rpx;
+  margin-bottom: 12rpx;
   animation: emojiCelebrate 0.8s ease infinite;
 }
 
+.success-text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
 @keyframes bubblePop {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-
-  50% {
-    transform: scale(1.1);
-  }
-
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 @keyframes emojiCelebrate {
-  0%,
-  100% {
-    transform: rotate(0deg) scale(1);
-  }
-
-  25% {
-    transform: rotate(-15deg) scale(1.1);
-  }
-
-  75% {
-    transform: rotate(15deg) scale(1.1);
-  }
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-15deg) scale(1.1); }
+  75% { transform: rotate(15deg) scale(1.1); }
 }
 </style>

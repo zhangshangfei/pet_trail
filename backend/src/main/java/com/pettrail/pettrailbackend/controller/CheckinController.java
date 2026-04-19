@@ -29,8 +29,67 @@ public class CheckinController {
      */
     @GetMapping("/items")
     public Result<List<CheckinItem>> getCheckinItems() {
-        List<CheckinItem> items = checkinService.getCheckinItems();
+        Long userId = UserContext.getCurrentUserId();
+        List<CheckinItem> items = checkinService.getUserCheckinItems(userId);
         return Result.success(items);
+    }
+
+    @PostMapping("/items")
+    public Result<CheckinItem> createCustomItem(@RequestBody java.util.Map<String, Object> body) {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+        String name = body.get("name") != null ? body.get("name").toString() : null;
+        String icon = body.get("icon") != null ? body.get("icon").toString() : null;
+        Integer type = body.get("type") != null ? Integer.parseInt(body.get("type").toString()) : null;
+        String description = body.get("description") != null ? body.get("description").toString() : null;
+
+        if (name == null || name.trim().isEmpty()) {
+            return Result.error(400, "打卡项名称不能为空");
+        }
+        try {
+            CheckinItem item = checkinService.createCustomItem(userId, name, icon, type, description);
+            return Result.success(item);
+        } catch (Exception e) {
+            log.error("创建自定义打卡项失败: {}", e.getMessage(), e);
+            return Result.error("创建失败：" + e.getMessage());
+        }
+    }
+
+    @PutMapping("/items/{id}")
+    public Result<CheckinItem> updateCustomItem(@PathVariable Long id, @RequestBody java.util.Map<String, Object> body) {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+        String name = body.get("name") != null ? body.get("name").toString() : null;
+        String icon = body.get("icon") != null ? body.get("icon").toString() : null;
+        Integer type = body.get("type") != null ? Integer.parseInt(body.get("type").toString()) : null;
+        String description = body.get("description") != null ? body.get("description").toString() : null;
+
+        try {
+            CheckinItem item = checkinService.updateCustomItem(userId, id, name, icon, type, description);
+            return Result.success(item);
+        } catch (Exception e) {
+            log.error("更新自定义打卡项失败: {}", e.getMessage(), e);
+            return Result.error("更新失败：" + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/items/{id}")
+    public Result<Void> deleteCustomItem(@PathVariable Long id) {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+        try {
+            checkinService.deleteCustomItem(userId, id);
+            return Result.success();
+        } catch (Exception e) {
+            log.error("删除自定义打卡项失败: {}", e.getMessage(), e);
+            return Result.error("删除失败：" + e.getMessage());
+        }
     }
 
     /**

@@ -4,6 +4,7 @@
 
     <resultMap id="BaseResultMap" type="com.pettrail.pettrailbackend.entity.CheckinItem">
         <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
         <result column="name" property="name"/>
         <result column="icon" property="icon"/>
         <result column="type" property="type"/>

@@ -195,9 +195,12 @@ export default {
             this.userList = [...this.userList, ...list]
           }
           this.hasMore = list.length >= this.size
+        } else {
+          uni.showToast({ title: (res && res.message) || '加载失败', icon: 'none' })
         }
       } catch (e) {
         console.error('加载用户失败:', e)
+        uni.showToast({ title: '网络异常，请重试', icon: 'none' })
       } finally {
         this.loading = false
       }

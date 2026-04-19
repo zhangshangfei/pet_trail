@@ -60,20 +60,20 @@ public class RecommendService {
         }
 
         String cacheKey = CACHE_KEY_PREFIX + currentUserId;
-        Object cached = redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            try {
+        try {
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached != null) {
                 @SuppressWarnings("unchecked")
                 List<Map<String, Object>> cachedList = (List<Map<String, Object>>) cached;
                 int start = (page - 1) * size;
                 int end = Math.min(start + size, cachedList.size());
                 if (start < cachedList.size()) {
-                    return cachedList.subList(start, end);
+                    return new ArrayList<>(cachedList.subList(start, end));
                 }
                 return Collections.emptyList();
-            } catch (Exception e) {
-                log.warn("推荐缓存读取异常，重新计算: {}", e.getMessage());
             }
+        } catch (Exception e) {
+            log.warn("推荐缓存读取异常，重新计算: {}", e.getMessage());
         }
 
         List<Map<String, Object>> fullList = computeRecommendations(currentUserId);
@@ -292,9 +292,9 @@ public class RecommendService {
         }
 
         String cacheKey = POST_CACHE_KEY_PREFIX + userId;
-        Object cached = redisTemplate.opsForValue().get(cacheKey);
-        if (cached != null) {
-            try {
+        try {
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached != null) {
                 @SuppressWarnings("unchecked")
                 List<Long> cachedIds = (List<Long>) cached;
                 int start = (page - 1) * size;
@@ -307,9 +307,9 @@ public class RecommendService {
                         .collect(Collectors.toList());
                 }
                 return Collections.emptyList();
-            } catch (Exception e) {
-                log.warn("动态推荐缓存读取异常，重新计算: {}", e.getMessage());
             }
+        } catch (Exception e) {
+            log.warn("动态推荐缓存读取异常，重新计算: {}", e.getMessage());
         }
 
         List<Long> sortedIds = computePostRecommendations(userId);

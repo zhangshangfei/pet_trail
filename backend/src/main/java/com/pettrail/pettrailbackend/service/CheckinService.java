@@ -41,6 +41,57 @@ public class CheckinService {
         return defaultItems;
     }
 
+    public List<CheckinItem> getUserCheckinItems(Long userId) {
+        List<CheckinItem> defaultItems = checkinItemMapper.selectDefaultItems();
+        if (userId != null) {
+            List<CheckinItem> customItems = checkinItemMapper.selectByUserId(userId);
+            defaultItems.addAll(customItems);
+        }
+        return defaultItems;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public CheckinItem createCustomItem(Long userId, String name, String icon, Integer type, String description) {
+        CheckinItem item = new CheckinItem();
+        item.setUserId(userId);
+        item.setName(name);
+        item.setIcon(icon);
+        item.setType(type != null ? type : 1);
+        item.setDescription(description);
+        item.setSortOrder(100);
+        item.setIsDefault(0);
+        item.setIsEnabled(1);
+        checkinItemMapper.insert(item);
+        return item;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public CheckinItem updateCustomItem(Long userId, Long itemId, String name, String icon, Integer type, String description) {
+        CheckinItem item = checkinItemMapper.selectById(itemId);
+        if (item == null || !item.getUserId().equals(userId)) {
+            throw new BusinessException("打卡项不存在或无权修改");
+        }
+        if (name != null) item.setName(name);
+        if (icon != null) item.setIcon(icon);
+        if (type != null) item.setType(type);
+        if (description != null) item.setDescription(description);
+        checkinItemMapper.updateById(item);
+        return item;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteCustomItem(Long userId, Long itemId) {
+        CheckinItem item = checkinItemMapper.selectById(itemId);
+        if (item == null || !item.getUserId().equals(userId)) {
+            throw new BusinessException("打卡项不存在或无权删除");
+        }
+        if (item.getIsDefault() != null && item.getIsDefault() == 1) {
+            throw new BusinessException("默认打卡项不可删除");
+        }
+        item.setIsEnabled(0);
+        checkinItemMapper.updateById(item);
+    }
+
     /**
      * 打卡（幂等性保证）
      */

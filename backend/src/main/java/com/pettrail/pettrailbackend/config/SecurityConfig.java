@@ -55,7 +55,9 @@ public class SecurityConfig {
                                 "/api/posts/*/comments",
                                 "/api/users/profile/*",
                                 "/api/users/*",
-                                "/api/pets/*"
+                                "/api/users/discover",
+                                "/api/pets/*",
+                                "/api/checkin/items"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

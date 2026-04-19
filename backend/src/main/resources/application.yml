@@ -29,6 +29,13 @@ spring:
           max-idle: 10
           min-idle: 5
 
+  # Jackson 配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+
   # 文件上传配置
   servlet:
     multipart:

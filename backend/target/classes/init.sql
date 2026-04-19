@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS `pets` (
 -- 打卡项表
 CREATE TABLE IF NOT EXISTS `checkin_items` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) DEFAULT NULL COMMENT '用户ID，NULL表示系统默认',
   `name` varchar(50) NOT NULL COMMENT '打卡项名称',
   `icon` varchar(255) DEFAULT NULL COMMENT '图标',
   `type` tinyint(4) DEFAULT '1' COMMENT '类型：1-日常 2-健康 3-训练',
@@ -65,7 +66,8 @@ CREATE TABLE IF NOT EXISTS `checkin_items` (
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_type` (`type`)
+  KEY `idx_type` (`type`),
+  KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='打卡项表';
 
 -- 打卡记录表
