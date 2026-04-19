@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>宠迹 PetTrail - 宠物生活伴侣</title>
+  <meta name="description" content="宠迹是一款专为宠物主人打造的智能宠物管理工具，记录健康、日常打卡、疫苗提醒，让每一只宠物都能得到更好的关爱。">
+  <meta name="keywords" content="宠物管理,宠物健康,疫苗提醒,驱虫提醒,宠物打卡,宠物记录,宠迹,PetTrail">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 导航栏 -->
+  <nav class="navbar" id="navbar">
+    <div class="container nav-container">
+      <a href="#" class="nav-logo">
+        <span class="nav-logo-icon">🐾</span>
+        <span class="nav-logo-text">宠迹</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">功能</a>
+        <a href="#highlights">亮点</a>
+        <a href="#roadmap">规划</a>
+        <a href="#about">关于</a>
+      </div>
+      <a href="#download" class="nav-cta">立即体验</a>
+      <button class="nav-mobile-btn" id="mobileMenuBtn" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#features">功能</a>
+      <a href="#highlights">亮点</a>
+      <a href="#roadmap">规划</a>
+      <a href="#about">关于</a>
+      <a href="#download" class="mobile-cta">立即体验</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-gradient"></div>
+      <div class="hero-particles" id="particles"></div>
+    </div>
+    <div class="container hero-content">
+      <div class="hero-badge">🐾 宠物生活伴侣</div>
+      <h1 class="hero-title">
+        用心记录<br>
+        <span class="hero-title-accent">每一刻陪伴</span>
+      </h1>
+      <p class="hero-subtitle">从健康打卡到疫苗提醒，从日常记录到成长轨迹<br>宠迹，让爱宠生活更有迹可循</p>
+      <div class="hero-actions">
+        <a href="#download" class="btn btn-primary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+          微信小程序
+        </a>
+        <a href="#features" class="btn btn-ghost">了解更多</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="hero-stat-num">4</span>
+          <span class="hero-stat-label">核心模块</span>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">23+</span>
+          <span class="hero-stat-label">功能页面</span>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-num">∞</span>
+          <span class="hero-stat-label">爱的记录</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-scroll-hint">
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <!-- 功能模块 -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">核心功能</span>
+        <h2 class="section-title">全方位守护毛孩子</h2>
+        <p class="section-desc">四大核心模块，覆盖宠物生活的方方面面</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card" data-delay="0">
+          <div class="feature-icon-wrap">
+            <div class="feature-icon">📊</div>
+          </div>
+          <h3 class="feature-name">健康看板</h3>
+          <p class="feature-desc">体重趋势一目了然，疫苗驱虫到期智能提醒，健康数据尽在掌握</p>
+          <ul class="feature-list">
+            <li>体重趋势图表追踪</li>
+            <li>疫苗到期倒计时提醒</li>
+            <li>驱虫计划智能管理</li>
+            <li>多宠物数据独立管理</li>
+          </ul>
+        </div>
+        <div class="feature-card" data-delay="1">
+          <div class="feature-icon-wrap">
+            <div class="feature-icon">✅</div>
+          </div>
+          <h3 class="feature-name">每日打卡</h3>
+          <p class="feature-desc">自定义打卡项目，培养科学养宠习惯，连续打卡见证坚持</p>
+          <ul class="feature-list">
+            <li>自定义打卡项目</li>
+            <li>连续打卡天数统计</li>
+            <li>打卡日历回顾</li>
+            <li>打卡成功动画激励</li>
+          </ul>
+        </div>
+        <div class="feature-card" data-delay="2">
+          <div class="feature-icon-wrap">
+            <div class="feature-icon">🐾</div>
+          </div>
+          <h3 class="feature-name">社交动态</h3>
+          <p class="feature-desc">分享萌宠日常，结识同城宠友，发现更多养宠乐趣</p>
+          <ul class="feature-list">
+            <li>图文视频动态发布</li>
+            <li>贴纸气泡趣味互动</li>
+            <li>点赞收藏评论分享</li>
+            <li>推荐关注发现宠友</li>
+          </ul>
+        </div>
+        <div class="feature-card" data-delay="3">
+          <div class="feature-icon-wrap">
+            <div class="feature-icon">🔔</div>
+          </div>
+          <h3 class="feature-name">智能提醒</h3>
+          <p class="feature-desc">喂食提醒、疫苗提醒、驱虫提醒，再也不怕忘记重要事项</p>
+          <ul class="feature-list">
+            <li>喂食时间定时提醒</li>
+            <li>疫苗到期自动通知</li>
+            <li>驱虫周期智能计算</li>
+            <li>系统公告即时推送</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 产品亮点 -->
+  <section class="highlights" id="highlights">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">产品亮点</span>
+        <h2 class="section-title">为什么选择宠迹</h2>
+        <p class="section-desc">不只是记录工具，更是宠物生活的智能伙伴</p>
+      </div>
+      <div class="highlights-list">
+        <div class="highlight-item">
+          <div class="highlight-num">01</div>
+          <div class="highlight-content">
+            <h3>多宠物独立管理</h3>
+            <p>无论家里有几只毛孩子，每只宠物都有独立的健康档案、打卡记录和提醒计划，数据互不干扰，管理井井有条。</p>
+          </div>
+        </div>
+        <div class="highlight-item">
+          <div class="highlight-num">02</div>
+          <div class="highlight-content">
+            <h3>智能健康追踪</h3>
+            <p>体重变化趋势图、疫苗驱虫到期倒计时、健康评分系统，用数据守护宠物健康，异常变化早发现早应对。</p>
+          </div>
+        </div>
+        <div class="highlight-item">
+          <div class="highlight-num">03</div>
+          <div class="highlight-content">
+            <h3>个性化打卡体系</h3>
+            <p>内置默认打卡项 + 自定义打卡项，灵活适配不同宠物的日常需求。连续打卡统计，让好习惯看得见。</p>
+          </div>
+        </div>
+        <div class="highlight-item">
+          <div class="highlight-num">04</div>
+          <div class="highlight-content">
+            <h3>温暖宠友社区</h3>
+            <p>分享萌宠日常，发现同好宠友。推荐算法帮你找到同品种宠主，交流养宠心得，让养宠之路不再孤单。</p>
+          </div>
+        </div>
+        <div class="highlight-item">
+          <div class="highlight-num">05</div>
+          <div class="highlight-content">
+            <h3>隐私安全守护</h3>
+            <p>动态可见性控制、位置信息保护、账号注销功能，你的数据你做主。严格的内容审核机制，营造健康社区氛围。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 发展规划 -->
+  <section class="roadmap" id="roadmap">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">发展规划</span>
+        <h2 class="section-title">持续进化，为爱宠而来</h2>
+        <p class="section-desc">我们正在打造更完善的宠物生态</p>
+      </div>
+      <div class="roadmap-timeline">
+        <div class="roadmap-phase current">
+          <div class="phase-badge">已上线</div>
+          <h3 class="phase-title">V1.0 基础版</h3>
+          <ul class="phase-list">
+            <li>✅ 宠物档案管理</li>
+            <li>✅ 健康数据看板</li>
+            <li>✅ 疫苗/驱虫提醒</li>
+            <li>✅ 每日打卡系统</li>
+            <li>✅ 社交动态广场</li>
+            <li>✅ 消息通知中心</li>
+          </ul>
+        </div>
+        <div class="roadmap-phase">
+          <div class="phase-badge soon">即将上线</div>
+          <h3 class="phase-title">V2.0 进阶版</h3>
+          <ul class="phase-list">
+            <li>🔜 AI 宠物健康分析</li>
+            <li>🔜 宠物成长相册</li>
+            <li>🔜 遛狗轨迹记录</li>
+            <li>🔜 宠物日历视图</li>
+            <li>🔜 宠物知识百科</li>
+            <li>🔜 深色模式支持</li>
+          </ul>
+        </div>
+        <div class="roadmap-phase">
+          <div class="phase-badge future">规划中</div>
+          <h3 class="phase-title">V3.0 生态版</h3>
+          <ul class="phase-list">
+            <li>💡 宠物医院预约</li>
+            <li>💡 宠物商城优选</li>
+            <li>💡 宠物保险服务</li>
+            <li>💡 宠物寄养平台</li>
+            <li>💡 宠物社区活动</li>
+            <li>💡 繁育健康管理</li>
+          </ul>
+        </div>
+      </div>
+      <div class="premium-section">
+        <div class="premium-card">
+          <div class="premium-badge">PRO</div>
+          <h3 class="premium-title">宠迹 Pro 会员</h3>
+          <p class="premium-desc">即将推出，解锁更多高级功能</p>
+          <div class="premium-features">
+            <div class="premium-feature">
+              <span class="premium-check">✦</span>
+              <span>无限宠物档案</span>
+            </div>
+            <div class="premium-feature">
+              <span class="premium-check">✦</span>
+              <span>AI 健康报告</span>
+            </div>
+            <div class="premium-feature">
+              <span class="premium-check">✦</span>
+              <span>高级数据导出</span>
+            </div>
+            <div class="premium-feature">
+              <span class="premium-check">✦</span>
+              <span>专属客服通道</span>
+            </div>
+            <div class="premium-feature">
+              <span class="premium-check">✦</span>
+              <span>成长相册无限容量</span>
+            </div>
+            <div class="premium-feature">
+              <span class="premium-check">✦</span>
+              <span>遛狗轨迹历史回放</span>
+            </div>
+          </div>
+          <div class="premium-price">
+            <span class="premium-price-label">首发价</span>
+            <span class="premium-price-amount">¥9.9<span>/月</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 下载 -->
+  <section class="download" id="download">
+    <div class="container">
+      <div class="download-content">
+        <div class="download-text">
+          <h2 class="download-title">开启你的宠迹之旅</h2>
+          <p class="download-desc">微信搜索「宠迹」小程序，或扫描下方二维码<br>让每一份爱都有迹可循</p>
+          <div class="download-ways">
+            <div class="download-way">
+              <div class="download-way-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272.272 0 0 0 .14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-7.062-6.122zM14.033 13.3c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982z"/></svg>
+              </div>
+              <div class="download-way-text">
+                <span class="download-way-label">微信搜索</span>
+                <span class="download-way-value">宠迹</span>
+              </div>
+            </div>
+            <div class="download-way">
+              <div class="download-way-icon">📱</div>
+              <div class="download-way-text">
+                <span class="download-way-label">扫码体验</span>
+                <span class="download-way-value">小程序码</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="download-qr">
+          <div class="qr-placeholder">
+            <div class="qr-icon">🐾</div>
+            <div class="qr-text">小程序码</div>
+            <div class="qr-hint">微信扫码即可体验</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 关于 -->
+  <section class="about" id="about">
+    <div class="container">
+      <div class="about-content">
+        <div class="about-text">
+          <span class="section-tag">关于我们</span>
+          <h2 class="about-title">每一只宠物<br>都值得被好好记录</h2>
+          <p class="about-desc">宠迹团队由一群热爱宠物的开发者组成。我们相信，科技可以让养宠生活更轻松、更科学、更有温度。从第一次疫苗到每一天的陪伴，宠迹帮你把爱记录下来。</p>
+          <div class="about-contact">
+            <a href="mailto:contact@openclaw.com" class="about-contact-item">
+              <span class="contact-icon">✉️</span>
+              <span>contact@openclaw.com</span>
+            </a>
+            <a href="https://pettrail.openclaw.com" class="about-contact-item">
+              <span class="contact-icon">🌐</span>
+              <span>pettrail.openclaw.com</span>
+            </a>
+          </div>
+        </div>
+        <div class="about-values">
+          <div class="value-card">
+            <div class="value-emoji">❤️</div>
+            <h4>用心</h4>
+            <p>每一个功能都从宠物主人的真实需求出发</p>
+          </div>
+          <div class="value-card">
+            <div class="value-emoji">🔬</div>
+            <h4>科学</h4>
+            <p>基于兽医建议的健康管理方案</p>
+          </div>
+          <div class="value-card">
+            <div class="value-emoji">🛡️</div>
+            <h4>安全</h4>
+            <p>数据加密存储，隐私严格保护</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <span class="footer-logo">🐾 宠迹</span>
+          <p class="footer-tagline">宠物生活伴侣</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>产品</h4>
+            <a href="#features">功能介绍</a>
+            <a href="#highlights">产品亮点</a>
+            <a href="#roadmap">发展规划</a>
+          </div>
+          <div class="footer-col">
+            <h4>支持</h4>
+            <a href="mailto:contact@openclaw.com">联系我们</a>
+            <a href="mailto:feedback@openclaw.com">意见反馈</a>
+          </div>
+          <div class="footer-col">
+            <h4>法律</h4>
+            <a href="#">隐私政策</a>
+            <a href="#">用户协议</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 宠迹 PetTrail by OpenClaw. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
