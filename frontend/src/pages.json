@@ -173,6 +173,27 @@
         "navigationBarTitleText": "喂食提醒",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/pets/album",
+      "style": {
+        "navigationBarTitleText": "成长相册",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/pets/calendar",
+      "style": {
+        "navigationBarTitleText": "宠物日历",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/me/membership",
+      "style": {
+        "navigationBarTitleText": "宠迹Pro",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

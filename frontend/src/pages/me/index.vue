@@ -69,6 +69,10 @@
               <view class="feature-icon-wrap feature-icon-green"><text class="feature-emoji">🔍</text></view>
               <text class="feature-text">发现用户</text>
             </view>
+            <view class="feature-item" @tap="goToMembership">
+              <view class="feature-icon-wrap feature-icon-gold"><text class="feature-emoji">👑</text></view>
+              <text class="feature-text">宠迹Pro</text>
+            </view>
           </view>
         </view>
 
@@ -281,6 +285,9 @@ export default {
     goToDiscover() {
       uni.navigateTo({ url: '/pages/discover/index' });
     },
+    goToMembership() {
+      uni.navigateTo({ url: '/pages/me/membership' });
+    },
     onDiscoverTap() {
       uni.navigateTo({ url: '/pages/discover/index' });
     },
@@ -472,6 +479,7 @@ export default {
 .feature-icon-red { background: #fff1f2; }
 .feature-icon-blue { background: #eff6ff; }
 .feature-icon-green { background: #ecfdf5; }
+.feature-icon-gold { background: #fffbeb; }
 
 .feature-text {
   font-size: 24rpx;

@@ -8,6 +8,21 @@
       <text class="nav-title">消息通知</text>
       <view class="nav-placeholder"></view>
     </view>
+    <view class="filter-bar">
+      <scroll-view scroll-x class="filter-scroll">
+        <view class="filter-tabs">
+          <view
+            v-for="tab in filterTabs"
+            :key="tab.value"
+            class="filter-tab"
+            :class="{ active: currentFilter === tab.value }"
+            @click="onFilterChange(tab.value)"
+          >
+            <text class="filter-tab-text">{{ tab.label }}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
     <view v-if="notificationList.length > 0" class="action-bar">
       <view class="action-btn" @click="onMarkAllRead">
         <text class="action-btn-text">全部已读</text>
@@ -68,14 +83,23 @@ export default {
       size: 20,
       loading: false,
       refreshing: false,
-      hasMore: true
+      hasMore: true,
+      currentFilter: '',
+      filterTabs: [
+        { value: '', label: '全部' },
+        { value: 'like', label: '❤️ 点赞' },
+        { value: 'favorite', label: '⭐ 收藏' },
+        { value: 'comment', label: '💬 评论' },
+        { value: 'follow', label: '👤 关注' },
+        { value: 'system', label: '📢 系统' }
+      ]
     }
   },
   onLoad() {
     try {
       const sys = uni.getSystemInfoSync()
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20
-      const navHeight = this.statusBarHeight + 44
+      const navHeight = this.statusBarHeight + 44 + 44
       this.scrollHeight = (sys && sys.windowHeight ? sys.windowHeight : 667) - navHeight
     } catch (e) {
       this.scrollHeight = 600
@@ -92,7 +116,11 @@ export default {
       if (this.loading || !this.hasMore) return
       this.loading = true
       try {
-        const res = await notificationApi.getNotifications(this.page, this.size)
+        const params = { page: this.page, size: this.size }
+        if (this.currentFilter) {
+          params.type = this.currentFilter
+        }
+        const res = await notificationApi.getNotifications(params)
         if (res.success && Array.isArray(res.data)) {
           if (this.page === 1) {
             this.notificationList = res.data
@@ -201,6 +229,14 @@ export default {
     goBack() {
       uni.navigateBack()
     },
+    onFilterChange(filter) {
+      if (this.currentFilter === filter) return
+      this.currentFilter = filter
+      this.page = 1
+      this.hasMore = true
+      this.notificationList = []
+      this.loadNotifications()
+    },
     getTypeIcon(type) {
       var map = {
         like: '❤️',
@@ -276,6 +312,36 @@ export default {
   color: #333;
 }
 .nav-placeholder { width: 60rpx; }
+.filter-bar {
+  background: #fff;
+  border-bottom: 1rpx solid #f0f0f0;
+  padding: 12rpx 0;
+}
+.filter-scroll { white-space: nowrap; }
+.filter-tabs {
+  display: flex;
+  padding: 0 20rpx;
+  gap: 12rpx;
+}
+.filter-tab {
+  padding: 10rpx 24rpx;
+  border-radius: 28rpx;
+  background: #f5f5f5;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.filter-tab.active {
+  background: #ff6a3d;
+}
+.filter-tab-text {
+  font-size: 24rpx;
+  color: #666;
+  font-weight: 500;
+}
+.filter-tab.active .filter-tab-text {
+  color: #fff;
+  font-weight: 600;
+}
 .action-bar {
   display: flex; align-items: center; justify-content: flex-end;
   gap: 16rpx; padding: 16rpx 28rpx; background: #fff;

@@ -70,7 +70,7 @@
           <view v-if="!activeReminders.length && currentPetId" class="empty-section">
             <text class="empty-icon">🍽️</text>
             <text class="empty-text">暂无喂食提醒</text>
-            <text class="empty-hint">点击右上角"添加"创建提醒</text>
+            <text class="empty-hint">点击下方按钮创建提醒</text>
           </view>
 
           <view class="tips-card">
@@ -181,12 +181,13 @@ export default {
       editingReminder: null,
       form: { mealType: 'breakfast', time: '08:00', repeat: 'daily', note: '' },
       mealOptions: MEAL_OPTIONS,
-      repeatOptions: REPEAT_OPTIONS
+      repeatOptions: REPEAT_OPTIONS,
+      saving: false
     }
   },
   computed: {
     activeReminders() {
-      return this.reminders.filter(r => r.petId === this.currentPetId)
+      return this.reminders.filter(r => String(r.petId) === String(this.currentPetId))
     }
   },
   onLoad() {
@@ -203,7 +204,7 @@ export default {
   },
   methods: {
     goBack() { uni.navigateBack({ delta: 1 }) },
-    goAddPet() { uni.navigateTo({ url: '/pages/pet/edit' }) },
+    goAddPet() { uni.navigateTo({ url: '/pages/pets/index' }) },
 
     async loadPets() {
       try {
@@ -222,19 +223,18 @@ export default {
       }
     },
 
-    loadReminders() {
+    async loadReminders() {
       try {
-        const data = uni.getStorageSync('feedingReminders')
-        this.reminders = data ? JSON.parse(data) : []
+        const res = await uni.$request.get('/api/feeding-reminders')
+        if (res && res.success && Array.isArray(res.data)) {
+          this.reminders = res.data
+        } else {
+          this.reminders = []
+        }
       } catch (e) {
+        console.error('加载喂食提醒失败:', e)
         this.reminders = []
       }
-    },
-
-    saveReminders() {
-      try {
-        uni.setStorageSync('feedingReminders', JSON.stringify(this.reminders))
-      } catch (e) { /* ignore */ }
     },
 
     switchPet(petId) {
@@ -255,11 +255,15 @@ export default {
       this.form.time = e.detail.value
     },
 
-    onToggleReminder(reminder) {
-      reminder.enabled = !reminder.enabled
-      this.saveReminders()
-      if (reminder.enabled) {
-        this.scheduleLocalNotification(reminder)
+    async onToggleReminder(reminder) {
+      try {
+        const res = await uni.$request.put(`/api/feeding-reminders/${reminder.id}/toggle`)
+        if (res && res.success) {
+          reminder.enabled = res.data.enabled
+        }
+      } catch (e) {
+        console.error('切换提醒状态失败:', e)
+        uni.showToast({ title: '操作失败', icon: 'none' })
       }
     },
 
@@ -280,10 +284,18 @@ export default {
         title: '删除提醒',
         content: `确定删除"${self.getMealName(reminder.mealType)} ${reminder.time}"的提醒吗？`,
         confirmColor: '#ff6a3d',
-        success(res) {
+        async success(res) {
           if (!res.confirm) return
-          self.reminders = self.reminders.filter(r => r.id !== reminder.id)
-          self.saveReminders()
+          try {
+            const result = await uni.$request.delete(`/api/feeding-reminders/${reminder.id}`)
+            if (result && result.success) {
+              self.reminders = self.reminders.filter(r => r.id !== reminder.id)
+              uni.showToast({ title: '已删除', icon: 'success' })
+            }
+          } catch (e) {
+            console.error('删除提醒失败:', e)
+            uni.showToast({ title: '删除失败', icon: 'none' })
+          }
         }
       })
     },
@@ -294,7 +306,7 @@ export default {
       this.form = { mealType: 'breakfast', time: '08:00', repeat: 'daily', note: '' }
     },
 
-    onSaveReminder() {
+    async onSaveReminder() {
       if (!this.form.time) {
         uni.showToast({ title: '请选择时间', icon: 'none' })
         return
@@ -303,50 +315,41 @@ export default {
         uni.showToast({ title: '请先选择宠物', icon: 'none' })
         return
       }
+      if (this.saving) return
+      this.saving = true
 
-      if (this.editingReminder) {
-        const idx = this.reminders.findIndex(r => r.id === this.editingReminder.id)
-        if (idx > -1) {
-          this.reminders[idx] = {
-            ...this.reminders[idx],
-            ...this.form,
-            enabled: this.reminders[idx].enabled
-          }
-        }
-      } else {
-        const newReminder = {
-          id: Date.now(),
-          petId: this.currentPetId,
-          ...this.form,
-          enabled: true
-        }
-        this.reminders.push(newReminder)
-        this.scheduleLocalNotification(newReminder)
-      }
-
-      this.saveReminders()
-      uni.showToast({ title: '保存成功', icon: 'success' })
-      this.closeModal()
-    },
-
-    scheduleLocalNotification(reminder) {
-      // #ifdef MP-WEIXIN
       try {
-        const now = new Date()
-        const [hours, minutes] = reminder.time.split(':').map(Number)
-        const scheduled = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0)
-        if (scheduled.getTime() <= now.getTime()) {
-          scheduled.setDate(scheduled.getDate() + 1)
+        let res
+        if (this.editingReminder) {
+          res = await uni.$request.put(`/api/feeding-reminders/${this.editingReminder.id}`, {
+            mealType: this.form.mealType,
+            time: this.form.time,
+            repeat: this.form.repeat,
+            note: this.form.note || null
+          })
+        } else {
+          res = await uni.$request.post('/api/feeding-reminders', {
+            petId: this.currentPetId,
+            mealType: this.form.mealType,
+            time: this.form.time,
+            repeat: this.form.repeat,
+            note: this.form.note || null
+          })
         }
-        const pet = this.pets.find(p => String(p.id) === String(reminder.petId))
-        const petName = pet ? pet.name : '宠物'
-        wx.requestSubscribeMessage({
-          tmplIds: [],
-          success() {},
-          fail() {}
-        })
-      } catch (e) { /* ignore */ }
-      // #endif
+
+        if (res && res.success) {
+          uni.showToast({ title: '保存成功', icon: 'success' })
+          this.closeModal()
+          await this.loadReminders()
+        } else {
+          uni.showToast({ title: (res && res.message) || '保存失败', icon: 'none' })
+        }
+      } catch (e) {
+        console.error('保存喂食提醒失败:', e)
+        uni.showToast({ title: '网络错误', icon: 'none' })
+      } finally {
+        this.saving = false
+      }
     }
   }
 }

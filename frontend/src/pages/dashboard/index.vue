@@ -62,7 +62,15 @@
           <view class="section-header">
             <text class="section-title">⚖️ 体重趋势</text>
             <view class="chart-switch">
-              <text class="switch-text">近7天</text>
+              <view
+                v-for="opt in chartRangeOptions"
+                :key="opt.value"
+                class="switch-chip"
+                :class="{ active: chartRange === opt.value }"
+                @tap="onChartRangeChange(opt.value)"
+              >
+                <text class="switch-chip-text">{{ opt.label }}</text>
+              </view>
             </view>
           </view>
 
@@ -93,7 +101,7 @@
               </view>
             </view>
             <view v-else class="chart-empty">
-              <text class="chart-empty-text">近7天暂无体重记录</text>
+              <text class="chart-empty-text">近{{ chartRange }}天暂无体重记录</text>
             </view>
 
             <view class="chart-stats">
@@ -278,7 +286,13 @@ export default {
         deltaNum: 0
       },
       vaccineReminders: [],
-      parasiteReminders: []
+      parasiteReminders: [],
+      chartRange: 7,
+      chartRangeOptions: [
+        { value: 7, label: '7天' },
+        { value: 30, label: '30天' },
+        { value: 90, label: '90天' }
+      ]
     };
   },
   computed: {
@@ -502,7 +516,7 @@ export default {
 
       try {
         const [weightRes, vaccineRes, parasiteRes] = await Promise.all([
-          uni.$request.get(`/api/pets/${petId}/weight-records`),
+          uni.$request.get(`/api/pets/${petId}/weight-records/trend`, { days: this.chartRange }),
           uni.$request.get(`/api/pets/${petId}/vaccine-reminders`),
           uni.$request.get(`/api/pets/${petId}/parasite-reminders`)
         ]);
@@ -533,18 +547,30 @@ export default {
           return db - da;
         });
 
+        const range = this.chartRange;
         const dates = [];
         const raw = [];
         const today = new Date();
+        const maxLabels = range <= 7 ? range : range <= 30 ? 10 : 12;
+        const step = Math.max(1, Math.floor(range / maxLabels));
 
-        for (let i = 6; i >= 0; i--) {
+        for (let i = range - 1; i >= 0; i--) {
           const date = new Date(today);
           date.setDate(date.getDate() - i);
           const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-          if (i === 0) dates.push("今天");
-          else if (i === 1) dates.push("昨天");
-          else dates.push(`${date.getMonth() + 1}/${date.getDate()}`);
+          const idx = range - 1 - i;
+          if (range <= 7) {
+            if (i === 0) dates.push("今天");
+            else if (i === 1) dates.push("昨天");
+            else dates.push(`${date.getMonth() + 1}/${date.getDate()}`);
+          } else {
+            if (idx % step === 0 || i === 0) {
+              dates.push(`${date.getMonth() + 1}/${date.getDate()}`);
+            } else {
+              dates.push("");
+            }
+          }
 
           const record = weightRecords.find((r) => {
             const recordDate = new Date(r.recordDate);
@@ -703,6 +729,10 @@ export default {
     goParasiteList() {
       if (!this.selectedPet || !this.selectedPet.id) return
       uni.navigateTo({ url: `/pages/health/parasite-list?petId=${this.selectedPet.id}` })
+    },
+    onChartRangeChange(range) {
+      this.chartRange = range
+      this.loadDashboardData()
     }
   }
 };
@@ -865,15 +895,32 @@ export default {
 }
 
 .chart-switch {
-  background: rgba(255, 122, 61, 0.1);
-  padding: 8rpx 20rpx;
+  display: flex;
+  gap: 8rpx;
+  background: rgba(255, 122, 61, 0.08);
+  padding: 6rpx 12rpx;
   border-radius: 30rpx;
 }
 
-.switch-text {
-  font-size: 24rpx;
+.switch-chip {
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+  transition: all 0.2s;
+}
+
+.switch-chip.active {
+  background: #ff7a3d;
+}
+
+.switch-chip-text {
+  font-size: 22rpx;
   color: #ff7a3d;
   font-weight: 500;
+}
+
+.switch-chip.active .switch-chip-text {
+  color: #fff;
+  font-weight: 600;
 }
 
 .dash-card {

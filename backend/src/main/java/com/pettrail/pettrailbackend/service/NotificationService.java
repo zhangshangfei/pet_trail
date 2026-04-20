@@ -54,11 +54,14 @@ public class NotificationService {
         invalidateUnreadCache(userId);
     }
 
-    public List<NotificationVO> getNotifications(Long userId, int page, int size) {
+    public List<NotificationVO> getNotifications(Long userId, int page, int size, String type) {
         int offset = (page - 1) * size;
         LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<Notification>()
-                .eq(Notification::getUserId, userId)
-                .orderByDesc(Notification::getCreatedAt)
+                .eq(Notification::getUserId, userId);
+        if (type != null && !type.isEmpty()) {
+            wrapper.eq(Notification::getType, type);
+        }
+        wrapper.orderByDesc(Notification::getCreatedAt)
                 .last("LIMIT " + offset + "," + size);
 
         List<Notification> notifications = notificationMapper.selectList(wrapper);

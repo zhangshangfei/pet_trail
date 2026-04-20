@@ -49,11 +49,16 @@
     <view v-if="showSysNotice && sysNoticeList.length" class="sys-notice-bar" :style="{ top: (headerHeight - 2) + 'px' }">
       <view class="sys-notice-inner">
         <text class="sys-notice-icon">📢</text>
-        <swiper class="sys-notice-swiper" vertical autoplay circular :interval="3000" :duration="500">
+        <swiper v-if="sysNoticeList.length > 1" class="sys-notice-swiper" vertical autoplay circular :interval="4000" :duration="500">
           <swiper-item v-for="(msg, idx) in sysNoticeList" :key="idx">
-            <text class="sys-notice-text" @tap="onSysNoticeTap(msg)">{{ msg.title ? msg.title + '：' + msg.content : msg.content }}</text>
+            <view class="sys-notice-scroll-wrap">
+              <text class="sys-notice-text" :class="{ 'sys-notice-text-long': isMsgLong(msg) }" @tap="onSysNoticeTap(msg)">{{ msg.title ? msg.title + '：' + msg.content : msg.content }}</text>
+            </view>
           </swiper-item>
         </swiper>
+        <view v-else class="sys-notice-scroll-wrap">
+          <text class="sys-notice-text" :class="{ 'sys-notice-text-long': isMsgLong(sysNoticeList[0]) }" @tap="onSysNoticeTap(sysNoticeList[0])">{{ sysNoticeList[0] && sysNoticeList[0].title ? sysNoticeList[0].title + '：' + sysNoticeList[0].content : (sysNoticeList[0] ? sysNoticeList[0].content : '') }}</text>
+        </view>
         <view class="sys-notice-close" @tap="closeSysNotice">
           <text class="sys-notice-close-text">✕</text>
         </view>
@@ -457,22 +462,27 @@ export default {
     async loadSysNotices() {
       if (!this.isLoggedIn) return
       try {
-        const res = await uni.$request.get('/api/notifications', { page: 1, size: 10 })
+        const todayStr = new Date().toISOString().slice(0, 10)
+        const dismissedDate = uni.getStorageSync('sysNoticeDismissDate')
+        if (dismissedDate === todayStr) return
+
+        const res = await uni.$request.get('/api/notifications', { page: 1, size: 20 })
         if (res && res.success && Array.isArray(res.data)) {
           const sysMsgs = res.data.filter(n => n.type === 'system' && !n.read)
           if (sysMsgs.length > 0) {
             this.sysNoticeList = sysMsgs
-            const lastDismiss = uni.getStorageSync('sysNoticeDismissTime')
-            const now = Date.now()
-            if (!lastDismiss || now - lastDismiss > 300000) {
-              this.showSysNotice = true
-              this.startSysNoticeTimer()
-            }
+            this.showSysNotice = true
+            this.startSysNoticeTimer()
           }
         }
       } catch (e) {
         console.error('加载系统消息失败', e)
       }
+    },
+    isMsgLong(msg) {
+      if (!msg) return false
+      const text = msg.title ? msg.title + '：' + msg.content : msg.content
+      return text && text.length > 28
     },
     startSysNoticeTimer() {
       if (this.sysNoticeTimer) clearTimeout(this.sysNoticeTimer)
@@ -486,7 +496,8 @@ export default {
         clearTimeout(this.sysNoticeTimer)
         this.sysNoticeTimer = null
       }
-      uni.setStorageSync('sysNoticeDismissTime', Date.now())
+      const todayStr = new Date().toISOString().slice(0, 10)
+      uni.setStorageSync('sysNoticeDismissDate', todayStr)
     },
     onSysNoticeTap(msg) {
       uni.navigateTo({ url: '/pages/notification/index' })
@@ -845,6 +856,12 @@ export default {
   height: 40rpx;
 }
 
+.sys-notice-scroll-wrap {
+  flex: 1;
+  height: 40rpx;
+  overflow: hidden;
+}
+
 .sys-notice-text {
   font-size: 24rpx;
   color: #9a3412;
@@ -852,6 +869,21 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: block;
+}
+
+.sys-notice-text-long {
+  display: inline-block;
+  white-space: nowrap;
+  animation: noticeScroll 8s linear infinite;
+  padding-right: 60rpx;
+}
+
+@keyframes noticeScroll {
+  0% { transform: translateX(0); }
+  10% { transform: translateX(0); }
+  90% { transform: translateX(-100%); }
+  100% { transform: translateX(-100%); }
 }
 
 .sys-notice-close {

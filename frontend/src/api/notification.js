@@ -1,7 +1,10 @@
 import request from '@/utils/request'
 
-export const getNotifications = (page = 1, size = 20) => {
-  return request.get('/api/notifications', { page, size })
+export const getNotifications = (params = {}) => {
+  if (typeof params === 'number') {
+    params = { page: params, size: arguments[1] || 20 }
+  }
+  return request.get('/api/notifications', params)
 }
 
 export const getUnreadCount = () => {

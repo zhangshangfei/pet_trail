@@ -69,6 +69,13 @@
         <view class="settings-group">
           <text class="group-title">通用</text>
           <view class="settings-card">
+            <view class="setting-item">
+              <view class="setting-left">
+                <text class="setting-icon">🌙</text>
+                <text class="setting-label">深色模式</text>
+              </view>
+              <switch :checked="isDarkMode" @change="onToggleDarkMode" color="#ff6a3d" />
+            </view>
             <view class="setting-item" @tap="clearCache">
               <view class="setting-left">
                 <text class="setting-icon">🗑️</text>
@@ -101,6 +108,15 @@
           </view>
         </view>
 
+        <view class="settings-group" v-if="isLoggedIn">
+          <view class="settings-card">
+            <view class="setting-item deactivate-item" @tap="onDeactivate">
+              <text class="deactivate-text">注销账号</text>
+            </view>
+          </view>
+          <text class="deactivate-hint">注销后账号数据将无法恢复，请谨慎操作</text>
+        </view>
+
         <view class="page-bottom-safe"></view>
       </view>
     </scroll-view>
@@ -113,6 +129,7 @@ export default {
     return {
       statusBarHeight: 20,
       isLoggedIn: false,
+      isDarkMode: false,
       cacheSize: '0KB',
       settings: {
         pushEnabled: true,
@@ -132,6 +149,7 @@ export default {
       this.statusBarHeight = 20
     }
     this.isLoggedIn = !!uni.getStorageSync('token')
+    this.isDarkMode = uni.getStorageSync('app_theme') === 'dark'
     this.loadSettings()
     this.calcCacheSize()
   },
@@ -158,6 +176,24 @@ export default {
     onToggleFeeding(e) { this.settings.feedingReminder = e.detail.value; this.saveSettings() },
     onTogglePublicPosts(e) { this.settings.publicPosts = e.detail.value; this.saveSettings() },
     onToggleShowLocation(e) { this.settings.showLocation = e.detail.value; this.saveSettings() },
+    onToggleDarkMode(e) {
+      const isDark = e.detail.value
+      this.isDarkMode = isDark
+      const theme = isDark ? 'dark' : 'light'
+      uni.setStorageSync('app_theme', theme)
+      const pages = getCurrentPages()
+      if (pages.length > 0) {
+        const page = pages[pages.length - 1]
+        if (isDark) {
+          page.$page && uni.setPageStyle({ pageStyle: { darkmode: true } })
+        }
+      }
+      if (isDark) {
+        uni.setTabBarStyle({ backgroundColor: '#1a1a1a', borderStyle: 'black' })
+      } else {
+        uni.setTabBarStyle({ backgroundColor: '#ffffff', borderStyle: 'black' })
+      }
+    },
     calcCacheSize() {
       try {
         const res = uni.getStorageInfoSync()
@@ -212,6 +248,44 @@ export default {
           }, 1500)
         }
       })
+    },
+    onDeactivate() {
+      const self = this
+      uni.showModal({
+        title: '注销账号',
+        content: '注销后您的所有数据将被永久删除且无法恢复，确定要注销吗？',
+        confirmColor: '#ff4d4f',
+        confirmText: '确认注销',
+        cancelText: '再想想',
+        async success(res) {
+          if (!res.confirm) return
+          uni.showModal({
+            title: '二次确认',
+            content: '这是最后确认，注销后无法找回任何数据，确定继续？',
+            confirmColor: '#ff4d4f',
+            confirmText: '确认注销',
+            cancelText: '取消',
+            async success(res2) {
+              if (!res2.confirm) return
+              try {
+                const result = await uni.$request.delete('/api/users/account')
+                if (result && result.success) {
+                  uni.clearStorageSync()
+                  uni.showToast({ title: '账号已注销', icon: 'success' })
+                  setTimeout(() => {
+                    uni.switchTab({ url: '/pages/home/index' })
+                  }, 1500)
+                } else {
+                  uni.showToast({ title: (result && result.message) || '注销失败', icon: 'none' })
+                }
+              } catch (e) {
+                console.error('注销账号失败:', e)
+                uni.showToast({ title: '网络错误', icon: 'none' })
+              }
+            }
+          })
+        }
+      })
     }
   }
 }
@@ -255,6 +329,10 @@ $text-light: #999999;
 
 .logout-item { justify-content: center; }
 .logout-text { font-size: 30rpx; color: #ef4444; font-weight: 600; }
+
+.deactivate-item { justify-content: center; }
+.deactivate-text { font-size: 28rpx; color: #999; }
+.deactivate-hint { display: block; font-size: 22rpx; color: #bbb; margin-top: 8rpx; padding-left: 8rpx; text-align: center; }
 
 .page-bottom-safe { height: calc(40rpx + env(safe-area-inset-bottom)); }
 </style>

@@ -57,6 +57,25 @@
           </view>
         </view>
 
+        <view class="pd-shortcuts">
+          <view class="pd-shortcut-item" @tap="goAlbum">
+            <text class="pd-shortcut-icon">📷</text>
+            <text class="pd-shortcut-label">成长相册</text>
+          </view>
+          <view class="pd-shortcut-item" @tap="goCalendar">
+            <text class="pd-shortcut-icon">📅</text>
+            <text class="pd-shortcut-label">宠物日历</text>
+          </view>
+          <view class="pd-shortcut-item" @tap="goWeightRecords">
+            <text class="pd-shortcut-icon">⚖️</text>
+            <text class="pd-shortcut-label">体重记录</text>
+          </view>
+          <view class="pd-shortcut-item" @tap="goVaccineList">
+            <text class="pd-shortcut-icon">💉</text>
+            <text class="pd-shortcut-label">疫苗记录</text>
+          </view>
+        </view>
+
         <view class="pd-danger-zone">
           <button class="pd-delete-btn" @tap="confirmDelete">删除宠物</button>
         </view>
@@ -150,6 +169,26 @@ export default {
     },
     goBack() {
       uni.navigateBack()
+    },
+    goAlbum() {
+      if (!this.pet || !this.pet.id) return
+      uni.navigateTo({ url: `/pages/pets/album?petId=${this.pet.id}` })
+    },
+    goCalendar() {
+      if (!this.pet || !this.pet.id) return
+      uni.navigateTo({ url: `/pages/pets/calendar?petId=${this.pet.id}` })
+    },
+    goWeightRecords() {
+      if (!this.pet || !this.pet.id) return
+      uni.navigateTo({ url: `/pages/health/index?petId=${this.pet.id}` })
+    },
+    goVaccineList() {
+      if (!this.pet || !this.pet.id) return
+      uni.navigateTo({ url: `/pages/health/vaccine-list?petId=${this.pet.id}` })
+    },
+    goParasiteList() {
+      if (!this.pet || !this.pet.id) return
+      uni.navigateTo({ url: `/pages/health/parasite-list?petId=${this.pet.id}` })
     },
     async onEditTap() {
       const loggedIn = await checkLogin('请先登录后再编辑')
@@ -398,6 +437,25 @@ export default {
   margin-top: 24px;
   padding: 0 20px;
 }
+
+.pd-shortcuts {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 24rpx;
+  padding: 0 32rpx;
+}
+.pd-shortcut-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24rpx 8rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.pd-shortcut-icon { font-size: 36rpx; margin-bottom: 8rpx; }
+.pd-shortcut-label { font-size: 22rpx; color: #666; }
 
 .pd-delete-btn {
   width: 100%;

@@ -320,7 +320,8 @@ export default {
         date: todayStr(),
         medicine: "",
         remark: ""
-      }
+      },
+      healthScore: 0
     };
   },
   computed: {
@@ -346,7 +347,7 @@ export default {
       return "-";
     },
     petHealthScore() {
-      return 86;
+      return this.healthScore;
     },
     weightInputDelta() {
       const w = parseFloat(this.weightForm.weight);
@@ -466,6 +467,7 @@ export default {
           const still = this.currentPet && this.pets.find((p) => p.id === this.currentPet.id);
           this.currentPet = still || this.pets[0];
           await this.loadLastWeightRecord();
+          await this.loadHealthScore();
         } else {
           this.pets = [];
           this.currentPet = null;
@@ -499,6 +501,23 @@ export default {
         this.lastWeightRecord = null;
       }
     },
+    async loadHealthScore() {
+      if (!this.currentPet || !this.currentPet.id) {
+        this.healthScore = 0;
+        return;
+      }
+      try {
+        const res = await uni.$request.get('/api/health/score', { petId: this.currentPet.id });
+        if (res && res.success && res.data) {
+          this.healthScore = res.data.score || 0;
+        } else {
+          this.healthScore = 0;
+        }
+      } catch (e) {
+        console.error("加载健康评分失败:", e);
+        this.healthScore = 0;
+      }
+    },
     togglePetSelector() {
       // 使用防抖，避免快速点击导致多次渲染
       if (this._toggleTimer) {
@@ -517,6 +536,7 @@ export default {
       this.$nextTick(() => {
         this.currentPet = pet;
         this.loadLastWeightRecord();
+        this.loadHealthScore();
       });
     },
     goBackToBoard() {

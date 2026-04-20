@@ -15,9 +15,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Map;
 
-/**
- * 健康记录控制器
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/health")
@@ -25,6 +22,21 @@ import java.util.Map;
 public class HealthRecordController {
 
     private final HealthRecordService healthRecordService;
+
+    @GetMapping("/score")
+    public Result<Map<String, Object>> getHealthScore(@RequestParam Long petId) {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "用户未登录");
+        }
+        try {
+            Map<String, Object> scoreData = healthRecordService.calculateHealthScore(userId, petId);
+            return Result.success(scoreData);
+        } catch (Exception e) {
+            log.error("计算健康评分失败: {}", e.getMessage(), e);
+            return Result.error("计算失败：" + e.getMessage());
+        }
+    }
 
     /**
      * 记录步数

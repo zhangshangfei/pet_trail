@@ -10,6 +10,7 @@ import com.pettrail.pettrailbackend.mapper.CheckinItemMapper;
 import com.pettrail.pettrailbackend.mapper.CheckinRecordMapper;
 import com.pettrail.pettrailbackend.mapper.CheckinStatsMapper;
 import com.pettrail.pettrailbackend.mapper.UserHiddenItemMapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -19,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -252,5 +255,71 @@ public class CheckinService {
             stats.setTotalCount(Math.max(0, stats.getTotalCount() - 1));
             checkinStatsMapper.updateById(stats);
         }
+    }
+
+    public Map<String, Object> getUserStats(Long userId) {
+        Map<String, Object> result = new HashMap<>();
+        LocalDate today = LocalDate.now();
+
+        List<CheckinStats> allStats = checkinStatsMapper.selectList(
+            new LambdaQueryWrapper<CheckinStats>().eq(CheckinStats::getUserId, userId));
+
+        int totalCheckins = 0;
+        int maxStreak = 0;
+        int currentStreak = 0;
+
+        for (CheckinStats s : allStats) {
+            totalCheckins += s.getTotalCount() != null ? s.getTotalCount() : 0;
+            if (s.getMaxStreak() != null && s.getMaxStreak() > maxStreak) {
+                maxStreak = s.getMaxStreak();
+            }
+            if (s.getLastCheckinDate() != null) {
+                long daysDiff = ChronoUnit.DAYS.between(s.getLastCheckinDate(), today);
+                if (daysDiff <= 1 && s.getCurrentStreak() != null) {
+                    if (s.getCurrentStreak() > currentStreak) {
+                        currentStreak = s.getCurrentStreak();
+                    }
+                }
+            }
+        }
+
+        result.put("totalCount", totalCheckins);
+        result.put("currentStreak", currentStreak);
+        result.put("maxStreak", maxStreak);
+
+        LocalDate weekStart = today.minusDays(6);
+        List<CheckinRecord> weekRecords = checkinRecordMapper.selectByUserIdAndDateRange(userId, weekStart, today);
+        long weekDays = weekRecords.stream()
+                .filter(r -> r.getStatus() != null && r.getStatus() == 1)
+                .map(CheckinRecord::getRecordDate)
+                .distinct()
+                .count();
+        result.put("weekDays", weekDays);
+
+        LocalDate monthStart = today.minusDays(29);
+        List<CheckinRecord> monthRecords = checkinRecordMapper.selectByUserIdAndDateRange(userId, monthStart, today);
+        long monthDays = monthRecords.stream()
+                .filter(r -> r.getStatus() != null && r.getStatus() == 1)
+                .map(CheckinRecord::getRecordDate)
+                .distinct()
+                .count();
+        result.put("monthDays", monthDays);
+
+        List<Map<String, Object>> itemStats = new java.util.ArrayList<>();
+        for (CheckinStats s : allStats) {
+            CheckinItem item = checkinItemMapper.selectById(s.getItemId());
+            Map<String, Object> itemMap = new HashMap<>();
+            itemMap.put("itemId", s.getItemId());
+            itemMap.put("itemName", item != null ? item.getName() : "未知");
+            itemMap.put("itemIcon", item != null ? item.getIcon() : "📋");
+            itemMap.put("totalCount", s.getTotalCount());
+            itemMap.put("currentStreak", s.getCurrentStreak());
+            itemMap.put("maxStreak", s.getMaxStreak());
+            itemMap.put("lastCheckinDate", s.getLastCheckinDate());
+            itemStats.add(itemMap);
+        }
+        result.put("itemStats", itemStats);
+
+        return result;
     }
 }

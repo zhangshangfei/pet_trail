@@ -206,12 +206,7 @@ public class CheckinController {
             return Result.error(401, "用户未登录");
         }
 
-        // TODO: 实现统计接口
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("totalCount", 0);
-        stats.put("currentStreak", 0);
-        stats.put("maxStreak", 0);
-        
+        Map<String, Object> stats = checkinService.getUserStats(userId);
         return Result.success(stats);
     }
 }

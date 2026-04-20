@@ -24,16 +24,17 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping
-    @Operation(summary = "获取通知列表", description = "分页获取当前用户的通知列表")
+    @Operation(summary = "获取通知列表", description = "分页获取当前用户的通知列表，支持类型筛选")
     public Result<List<NotificationVO>> getNotifications(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String type) {
         Long userId = UserContext.getCurrentUserId();
         if (userId == null) {
             return Result.error(401, "用户未登录");
         }
 
-        List<NotificationVO> notifications = notificationService.getNotifications(userId, page, size);
+        List<NotificationVO> notifications = notificationService.getNotifications(userId, page, size, type);
         return Result.success(notifications);
     }
 
