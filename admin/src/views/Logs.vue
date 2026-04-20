@@ -14,6 +14,7 @@
       </el-select>
       <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 260px" @change="loadData" />
       <el-button type="primary" @click="loadData">搜索</el-button>
+      <el-button type="success" @click="handleExport">导出Excel</el-button>
     </div>
     <el-table :data="list" v-loading="loading" border stripe>
       <el-table-column prop="id" label="ID" width="70" />
@@ -33,7 +34,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getOperationLogs } from '../api/admin'
+import { ElMessage } from 'element-plus'
+import { getOperationLogs, exportLogs } from '../api/admin'
 
 const loading = ref(false)
 const list = ref([])
@@ -62,6 +64,22 @@ const loadData = async () => {
 }
 
 const handlePageChange = (p) => { page.value = p; loadData() }
+
+const handleExport = async () => {
+  try {
+    const res = await exportLogs({ module: module.value || undefined })
+    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `操作日志_${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (e) {
+    ElMessage.error('导出失败')
+  }
+}
 
 onMounted(() => loadData())
 </script>

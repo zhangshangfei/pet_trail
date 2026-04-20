@@ -16,6 +16,7 @@
               <el-option label="用户" value="user" />
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
+            <el-button type="success" @click="handleExport">导出Excel</el-button>
           </div>
         </div>
       </template>
@@ -74,7 +75,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getReportList, handleReport as handleReportApi, deletePost, updateUserStatus, deleteComment } from '../api/admin'
+import { getReportList, handleReport as handleReportApi, deletePost, updateUserStatus, deleteComment, exportReports } from '../api/admin'
 
 const tableData = ref([])
 const loading = ref(false)
@@ -127,6 +128,22 @@ const submitHandle = async () => {
     showHandle.value = false
     loadData()
   } catch (e) {}
+}
+
+const handleExport = async () => {
+  try {
+    const res = await exportReports({ status: statusFilter.value ?? undefined })
+    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `举报数据_${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (e) {
+    ElMessage.error('导出失败')
+  }
 }
 
 onMounted(loadData)

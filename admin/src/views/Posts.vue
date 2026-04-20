@@ -12,6 +12,7 @@
               <el-option label="已拒绝" :value="2" />
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
+            <el-button type="success" @click="handleExport">导出Excel</el-button>
             <el-button type="warning" @click="loadDeleted" v-if="isSuperAdmin">回收站</el-button>
           </div>
         </div>
@@ -115,7 +116,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getPostList, getPostDetail, auditPost, deletePost, batchAuditPosts, getDeletedPosts, restorePost } from '../api/admin'
+import { getPostList, getPostDetail, auditPost, deletePost, batchAuditPosts, getDeletedPosts, restorePost, exportPosts } from '../api/admin'
 
 const tableData = ref([])
 const loading = ref(false)
@@ -211,6 +212,22 @@ const handleRestore = async (row) => {
     ElMessage.success('恢复成功')
     loadDeleted()
   } catch (e) {}
+}
+
+const handleExport = async () => {
+  try {
+    const res = await exportPosts({ auditStatus: auditFilter.value ?? undefined })
+    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `动态数据_${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (e) {
+    ElMessage.error('导出失败')
+  }
 }
 
 onMounted(loadData)

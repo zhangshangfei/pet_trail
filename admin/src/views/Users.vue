@@ -13,6 +13,7 @@
               <el-option label="已禁用" :value="0" />
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
+            <el-button type="success" @click="handleExport">导出Excel</el-button>
           </div>
         </div>
       </template>
@@ -84,7 +85,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUserList, getUserStats, updateUserStatus } from '../api/admin'
+import { getUserList, getUserStats, updateUserStatus, exportUsers } from '../api/admin'
 
 const tableData = ref([])
 const loading = ref(false)
@@ -139,6 +140,22 @@ const handleStatus = async (row, status) => {
     ElMessage.success(`${action}成功`)
     loadData()
   } catch (e) {}
+}
+
+const handleExport = async () => {
+  try {
+    const res = await exportUsers({ keyword: keyword.value || undefined, status: statusFilter.value ?? undefined })
+    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `用户数据_${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (e) {
+    ElMessage.error('导出失败')
+  }
 }
 
 onMounted(loadData)
