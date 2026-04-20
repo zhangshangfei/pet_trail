@@ -290,8 +290,7 @@ export default {
       chartRange: 7,
       chartRangeOptions: [
         { value: 7, label: '7天' },
-        { value: 30, label: '30天' },
-        { value: 90, label: '90天' }
+        { value: 30, label: '30天' }
       ]
     };
   },

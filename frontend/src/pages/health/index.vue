@@ -264,6 +264,9 @@
     </scroll-view>
 
     <view class="cta-footer">
+      <button class="btn-back" hover-class="btn-back-hover" @tap="goBackToBoard">
+        <text class="btn-back-text">返回</text>
+      </button>
       <button class="btn-submit" hover-class="btn-submit-hover" @tap="onSubmitCurrent">
         <text class="btn-submit-text">{{ submitButtonText }}</text>
       </button>
@@ -1062,10 +1065,42 @@ export default {
   padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
   background: #fff;
   box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.06);
+  display: flex;
+  gap: 16rpx;
+}
+
+.btn-back {
+  width: 160rpx;
+  height: 96rpx;
+  line-height: 96rpx;
+  border-radius: 999rpx;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.btn-back::after {
+  border: none;
+}
+
+.btn-back:active {
+  opacity: 0.8;
+}
+
+.btn-back-text {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #666;
+}
+
+.btn-back-hover {
+  opacity: 0.8;
 }
 
 .btn-submit {
-  width: 100%;
+  flex: 1;
   height: 96rpx;
   line-height: 96rpx;
   border-radius: 999rpx;

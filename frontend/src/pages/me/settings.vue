@@ -108,6 +108,8 @@
           </view>
         </view>
 
+        <!-- 账号注销入口暂时隐藏 -->
+        <!--
         <view class="settings-group" v-if="isLoggedIn">
           <view class="settings-card">
             <view class="setting-item deactivate-item" @tap="onDeactivate">
@@ -116,6 +118,7 @@
           </view>
           <text class="deactivate-hint">注销后账号数据将无法恢复，请谨慎操作</text>
         </view>
+        -->
 
         <view class="page-bottom-safe"></view>
       </view>
