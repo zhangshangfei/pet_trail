@@ -4,10 +4,8 @@ import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.StepRecord;
 import com.pettrail.pettrailbackend.entity.WaterRecord;
 import com.pettrail.pettrailbackend.service.HealthRecordService;
-import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -19,111 +17,51 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/health")
 @RequiredArgsConstructor
-public class HealthRecordController {
+public class HealthRecordController extends BaseController {
 
     private final HealthRecordService healthRecordService;
 
     @GetMapping("/score")
     public Result<Map<String, Object>> getHealthScore(@RequestParam Long petId) {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-        try {
-            Map<String, Object> scoreData = healthRecordService.calculateHealthScore(userId, petId);
-            return Result.success(scoreData);
-        } catch (Exception e) {
-            log.error("计算健康评分失败: {}", e.getMessage(), e);
-            return Result.error("计算失败：" + e.getMessage());
-        }
+        Long userId = requireLogin();
+        return Result.success(healthRecordService.calculateHealthScore(userId, petId));
     }
 
-    /**
-     * 记录步数
-     */
     @PostMapping("/steps")
     public Result<StepRecord> recordStep(@RequestBody java.util.Map<String, Object> requestBody) {
+        Long userId = requireLogin();
         Integer steps = requestBody.get("steps") != null ? Integer.parseInt(requestBody.get("steps").toString()) : null;
-        
-        BigDecimal distance = null;
-        if (requestBody.get("distance") != null) {
-            distance = new BigDecimal(requestBody.get("distance").toString());
-        }
-        
-        LocalDate recordDate = null;
-        if (requestBody.get("recordDate") != null) {
-            recordDate = LocalDate.parse(requestBody.get("recordDate").toString());
-        }
-        
-        Long petId = null;
-        if (requestBody.get("petId") != null) {
-            petId = Long.parseLong(requestBody.get("petId").toString());
-        }
-
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-
         if (steps == null) {
             return Result.error(400, "步数参数不能为空");
         }
 
+        BigDecimal distance = requestBody.get("distance") != null ? new BigDecimal(requestBody.get("distance").toString()) : null;
+        LocalDate recordDate = requestBody.get("recordDate") != null ? LocalDate.parse(requestBody.get("recordDate").toString()) : null;
+        Long petId = requestBody.get("petId") != null ? Long.parseLong(requestBody.get("petId").toString()) : null;
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();
-        StepRecord record = healthRecordService.recordStep(userId, petId, steps, distance, date);
-        return Result.success(record);
+
+        return Result.success(healthRecordService.recordStep(userId, petId, steps, distance, date));
     }
 
-    /**
-     * 记录饮水量
-     */
     @PostMapping("/water")
     public Result<WaterRecord> recordWater(@RequestBody java.util.Map<String, Object> requestBody) {
-        BigDecimal amount = null;
-        if (requestBody.get("amount") != null) {
-            amount = new BigDecimal(requestBody.get("amount").toString());
-        }
-        
-        LocalDate recordDate = null;
-        if (requestBody.get("recordDate") != null) {
-            recordDate = LocalDate.parse(requestBody.get("recordDate").toString());
-        }
-        
-        LocalTime recordTime = null;
-        if (requestBody.get("recordTime") != null) {
-            recordTime = LocalTime.parse(requestBody.get("recordTime").toString());
-        }
-        
-        Long petId = null;
-        if (requestBody.get("petId") != null) {
-            petId = Long.parseLong(requestBody.get("petId").toString());
-        }
-
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-
+        Long userId = requireLogin();
+        BigDecimal amount = requestBody.get("amount") != null ? new BigDecimal(requestBody.get("amount").toString()) : null;
         if (amount == null) {
             return Result.error(400, "水量参数不能为空");
         }
 
+        LocalDate recordDate = requestBody.get("recordDate") != null ? LocalDate.parse(requestBody.get("recordDate").toString()) : null;
+        LocalTime recordTime = requestBody.get("recordTime") != null ? LocalTime.parse(requestBody.get("recordTime").toString()) : null;
+        Long petId = requestBody.get("petId") != null ? Long.parseLong(requestBody.get("petId").toString()) : null;
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();
-        WaterRecord record = healthRecordService.recordWater(userId, petId, amount, date, recordTime);
-        return Result.success(record);
+
+        return Result.success(healthRecordService.recordWater(userId, petId, amount, date, recordTime));
     }
 
-    /**
-     * 获取健康数据看板
-     */
     @GetMapping("/dashboard")
     public Result<Map<String, Object>> getDashboard(@RequestParam(required = false) Long petId) {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-
-        Map<String, Object> data = healthRecordService.getDashboard(userId, petId);
-        return Result.success(data);
+        Long userId = requireLogin();
+        return Result.success(healthRecordService.getDashboard(userId, petId));
     }
 }

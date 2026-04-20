@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Feedback;
 import com.pettrail.pettrailbackend.mapper.FeedbackMapper;
-import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -16,17 +15,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/feedback")
 @RequiredArgsConstructor
-public class FeedbackController {
+public class FeedbackController extends BaseController {
 
     private final FeedbackMapper feedbackMapper;
 
     @PostMapping
     public Result<Void> submitFeedback(@RequestBody java.util.Map<String, Object> body) {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-
+        Long userId = requireLogin();
         String type = body.get("type") != null ? body.get("type").toString() : "other";
         String content = body.get("content") != null ? body.get("content").toString() : "";
         String contact = body.get("contact") != null ? body.get("contact").toString() : null;
@@ -47,31 +42,15 @@ public class FeedbackController {
         feedback.setStatus(0);
         feedback.setCreatedAt(LocalDateTime.now());
         feedback.setUpdatedAt(LocalDateTime.now());
-
-        try {
-            feedbackMapper.insert(feedback);
-            return Result.success();
-        } catch (Exception e) {
-            log.error("提交反馈失败: {}", e.getMessage(), e);
-            return Result.error("提交失败，请稍后重试");
-        }
+        feedbackMapper.insert(feedback);
+        return Result.success();
     }
 
     @GetMapping("/my")
     public Result<List<Feedback>> getMyFeedbackList() {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-        try {
-            LambdaQueryWrapper<Feedback> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(Feedback::getUserId, userId)
-                    .orderByDesc(Feedback::getCreatedAt);
-            List<Feedback> list = feedbackMapper.selectList(wrapper);
-            return Result.success(list);
-        } catch (Exception e) {
-            log.error("获取反馈列表失败: {}", e.getMessage(), e);
-            return Result.error("获取反馈列表失败");
-        }
+        Long userId = requireLogin();
+        LambdaQueryWrapper<Feedback> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Feedback::getUserId, userId).orderByDesc(Feedback::getCreatedAt);
+        return Result.success(feedbackMapper.selectList(wrapper));
     }
 }

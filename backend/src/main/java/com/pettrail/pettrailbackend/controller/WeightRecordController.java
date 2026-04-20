@@ -7,7 +7,6 @@ import com.pettrail.pettrailbackend.exception.ForbiddenException;
 import com.pettrail.pettrailbackend.exception.NotFoundException;
 import com.pettrail.pettrailbackend.service.PetService;
 import com.pettrail.pettrailbackend.service.WeightRecordService;
-import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -21,126 +20,76 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/pets/{petId}/weight-records")
 @RequiredArgsConstructor
-public class WeightRecordController {
+public class WeightRecordController extends BaseController {
 
     private final PetService petService;
     private final WeightRecordService weightRecordService;
 
-    /**
-     * 获取宠物的体重记录
-     */
     @GetMapping
     public Result<List<WeightRecord>> listRecords(@PathVariable Long petId) {
-        log.info("获取体重记录：petId={}", petId);
         validatePetOwnership(petId);
-        List<WeightRecord> records = weightRecordService.listByPetId(petId);
-        return Result.success(records);
+        return Result.success(weightRecordService.listByPetId(petId));
     }
 
-    /**
-     * 获取指定时间范围的体重记录
-     */
     @GetMapping("/range")
     public Result<List<WeightRecord>> listByDateRange(
             @PathVariable Long petId,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-        log.info("获取时间范围内的体重记录：petId={}, startDate={}, endDate={}", petId, startDate, endDate);
         validatePetOwnership(petId);
-        List<WeightRecord> records = weightRecordService.listByPetIdAndDateRange(petId, startDate, endDate);
-        return Result.success(records);
+        return Result.success(weightRecordService.listByPetIdAndDateRange(petId, startDate, endDate));
     }
 
-    /**
-     * 获取最后一次体重记录
-     */
     @GetMapping("/last")
     public Result<WeightRecord> getLastRecord(@PathVariable Long petId) {
-        log.info("获取最后一次体重记录：petId={}", petId);
         validatePetOwnership(petId);
         WeightRecord record = weightRecordService.getLastRecord(petId);
         return record != null ? Result.success(record) : Result.error(404, "暂无记录");
     }
 
-    /**
-     * 获取体重趋势
-     */
     @GetMapping("/trend")
-    public Result<List<WeightRecord>> getTrend(
-            @PathVariable Long petId,
-            @RequestParam(defaultValue = "7") int days) {
-        log.info("获取体重趋势：petId={}, days={}", petId, days);
+    public Result<List<WeightRecord>> getTrend(@PathVariable Long petId, @RequestParam(defaultValue = "7") int days) {
         validatePetOwnership(petId);
-        List<WeightRecord> records = weightRecordService.getTrend(petId, days);
-        return Result.success(records);
+        return Result.success(weightRecordService.getTrend(petId, days));
     }
 
-    /**
-     * 创建体重记录
-     */
     @PostMapping
-    public Result<WeightRecord> createRecord(
-            @PathVariable Long petId,
-            @RequestBody java.util.Map<String, Object> requestBody) {
-        BigDecimal weight = new BigDecimal(requestBody.get("weight").toString());
-        LocalDate recordDate = null;
-        if (requestBody.containsKey("recordDate") && requestBody.get("recordDate") != null) {
-            recordDate = LocalDate.parse(requestBody.get("recordDate").toString());
-        }
-        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
-        log.info("创建体重记录：petId={}, weight={}, recordDate={}, note={}", petId, weight, recordDate, note);
+    public Result<WeightRecord> createRecord(@PathVariable Long petId, @RequestBody java.util.Map<String, Object> requestBody) {
         validatePetOwnership(petId);
+        BigDecimal weight = new BigDecimal(requestBody.get("weight").toString());
+        LocalDate recordDate = requestBody.containsKey("recordDate") && requestBody.get("recordDate") != null
+                ? LocalDate.parse(requestBody.get("recordDate").toString()) : null;
+        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();
         WeightRecord record = weightRecordService.createRecord(petId, weight, date, note);
-        // 同步更新 pets 表中的当前体重
         petService.updatePetWeight(petId, weight);
         return Result.success(record);
     }
 
-    /**
-     * 更新体重记录
-     */
     @PutMapping("/{id}")
     public Result<WeightRecord> updateRecord(
-            @PathVariable Long petId,
-            @PathVariable Long id,
+            @PathVariable Long petId, @PathVariable Long id,
             @RequestBody java.util.Map<String, Object> requestBody) {
-        BigDecimal weight = new BigDecimal(requestBody.get("weight").toString());
-        LocalDate recordDate = null;
-        if (requestBody.containsKey("recordDate") && requestBody.get("recordDate") != null) {
-            recordDate = LocalDate.parse(requestBody.get("recordDate").toString());
-        }
-        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
-        log.info("更新体重记录：petId={}, id={}, weight={}, recordDate={}, note={}", petId, id, weight, recordDate, note);
         validatePetOwnership(petId);
+        BigDecimal weight = new BigDecimal(requestBody.get("weight").toString());
+        LocalDate recordDate = requestBody.containsKey("recordDate") && requestBody.get("recordDate") != null
+                ? LocalDate.parse(requestBody.get("recordDate").toString()) : null;
+        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();
         WeightRecord record = weightRecordService.updateRecord(id, weight, date, note);
-        // 同步更新 pets 表中的当前体重
         petService.updatePetWeight(petId, weight);
         return Result.success(record);
     }
 
-    /**
-     * 删除体重记录
-     */
     @DeleteMapping("/{id}")
-    public Result<Void> deleteRecord(
-            @PathVariable Long petId,
-            @PathVariable Long id) {
-        log.info("删除体重记录：id={}", id);
+    public Result<Void> deleteRecord(@PathVariable Long petId, @PathVariable Long id) {
         validatePetOwnership(petId);
         weightRecordService.deleteRecord(id);
         return Result.success();
     }
 
-    /**
-     * 校验当前登录用户是否拥有该宠物
-     */
     private void validatePetOwnership(Long petId) {
-        Long currentUserId = UserContext.getCurrentUserId();
-        if (currentUserId == null) {
-            throw new IllegalStateException("用户未登录");
-        }
+        Long currentUserId = requireLogin();
         Pet pet = petService.getPetDetail(petId);
         if (pet == null) {
             throw new NotFoundException("宠物不存在");

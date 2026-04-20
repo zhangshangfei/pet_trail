@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.pettrail.pettrailbackend.service.PostServiceTest
+-------------------------------------------------------------------------------
+Tests run: 24, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.218 s - in com.pettrail.pettrailbackend.service.PostServiceTest

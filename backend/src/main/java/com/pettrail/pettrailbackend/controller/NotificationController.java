@@ -19,97 +19,72 @@ import java.util.Map;
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
 @Tag(name = "消息通知", description = "通知相关接口")
-public class NotificationController {
+public class NotificationController extends BaseController {
 
     private final NotificationService notificationService;
 
     @GetMapping
-    @Operation(summary = "获取通知列表", description = "分页获取当前用户的通知列表，支持类型筛选")
+    @Operation(summary = "获取通知列表")
     public Result<List<NotificationVO>> getNotifications(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String type) {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-
-        List<NotificationVO> notifications = notificationService.getNotifications(userId, page, size, type);
-        return Result.success(notifications);
+        Long userId = requireLogin();
+        return Result.success(notificationService.getNotifications(userId, page, size, type));
     }
 
     @GetMapping("/unread-count")
-    @Operation(summary = "获取未读通知数", description = "获取当前用户的未读通知数量")
+    @Operation(summary = "获取未读通知数")
     public Result<Map<String, Object>> getUnreadCount() {
         Long userId = UserContext.getCurrentUserId();
+        Map<String, Object> data = new HashMap<>();
         if (userId == null) {
-            Map<String, Object> data = new HashMap<>();
             data.put("count", 0);
             return Result.success(data);
         }
-
-        int count = notificationService.getUnreadCount(userId);
-        Map<String, Object> data = new HashMap<>();
-        data.put("count", count);
+        data.put("count", notificationService.getUnreadCount(userId));
         return Result.success(data);
     }
 
     @PutMapping("/{id}/read")
-    @Operation(summary = "标记通知已读", description = "标记指定通知为已读状态")
+    @Operation(summary = "标记通知已读")
     public Result<Void> markAsRead(@PathVariable Long id) {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-
+        Long userId = requireLogin();
         notificationService.markAsRead(id, userId);
         return Result.success(null);
     }
 
     @PutMapping("/read-all")
-    @Operation(summary = "全部标记已读", description = "将当前用户所有通知标记为已读")
+    @Operation(summary = "全部标记已读")
     public Result<Void> markAllAsRead() {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-
+        Long userId = requireLogin();
         notificationService.markAllAsRead(userId);
         return Result.success(null);
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "删除通知", description = "删除指定的通知")
+    @Operation(summary = "删除通知")
     public Result<Void> deleteNotification(@PathVariable Long id) {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-
+        Long userId = requireLogin();
         notificationService.deleteNotification(id, userId);
         return Result.success(null);
     }
 
     @DeleteMapping("/clear")
-    @Operation(summary = "清空所有通知", description = "清空当前用户的所有通知")
+    @Operation(summary = "清空所有通知")
     public Result<Void> clearAllNotifications() {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-
+        Long userId = requireLogin();
         notificationService.clearAllNotifications(userId);
         return Result.success(null);
     }
 
     @GetMapping("/unread-system")
-    @Operation(summary = "获取未读系统消息", description = "获取当前用户的未读系统消息列表，用于首页滚动通知")
+    @Operation(summary = "获取未读系统消息")
     public Result<List<NotificationVO>> getUnreadSystemNotifications() {
         Long userId = UserContext.getCurrentUserId();
         if (userId == null) {
             return Result.success(List.of());
         }
-
         List<NotificationVO> notifications = notificationService.getNotifications(userId, 1, 10, "system");
         List<NotificationVO> unreadSystem = notifications.stream()
             .filter(n -> !n.getIsRead())
@@ -118,7 +93,7 @@ public class NotificationController {
     }
 
     @GetMapping("/poll")
-    @Operation(summary = "轮询新通知", description = "轮询检查是否有新通知，返回最新未读数和系统消息")
+    @Operation(summary = "轮询新通知")
     public Result<Map<String, Object>> pollNotifications() {
         Long userId = UserContext.getCurrentUserId();
         Map<String, Object> data = new HashMap<>();

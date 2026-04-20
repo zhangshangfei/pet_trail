@@ -5,7 +5,6 @@ import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.CheckinReminder;
 import com.pettrail.pettrailbackend.service.CheckinReminderService;
 import com.pettrail.pettrailbackend.service.CheckinService;
-import com.pettrail.pettrailbackend.util.UserContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -21,19 +20,15 @@ import java.util.Map;
 @RequestMapping("/api/checkin")
 @RequiredArgsConstructor
 @Tag(name = "打卡", description = "打卡相关接口")
-public class CheckinExtController {
+public class CheckinExtController extends BaseController {
 
     private final CheckinReminderService checkinReminderService;
     private final CheckinService checkinService;
 
     @GetMapping("/report")
-    @Operation(summary = "获取打卡报表", description = "获取周报或月报数据")
+    @Operation(summary = "获取打卡报表")
     public Result<CheckinReportVO> getReport(@RequestParam(defaultValue = "week") String period) {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-
+        Long userId = requireLogin();
         Map<String, Object> stats = checkinService.getUserStats(userId);
         CheckinReportVO report = new CheckinReportVO();
         report.setPeriod(period);
@@ -43,12 +38,10 @@ public class CheckinExtController {
 
         if ("week".equals(period)) {
             report.setTotalDays(7);
-            int activeDays = stats.get("activeDays7") != null ? Integer.parseInt(stats.get("activeDays7").toString()) : 0;
-            report.setCheckinDays(activeDays);
+            report.setCheckinDays(stats.get("activeDays7") != null ? Integer.parseInt(stats.get("activeDays7").toString()) : 0);
         } else {
             report.setTotalDays(30);
-            int activeDays = stats.get("activeDays30") != null ? Integer.parseInt(stats.get("activeDays30").toString()) : 0;
-            report.setCheckinDays(activeDays);
+            report.setCheckinDays(stats.get("activeDays30") != null ? Integer.parseInt(stats.get("activeDays30").toString()) : 0);
         }
 
         report.setCompletionRate(report.getTotalDays() > 0
@@ -65,40 +58,25 @@ public class CheckinExtController {
     }
 
     @GetMapping("/reminders")
-    @Operation(summary = "获取打卡提醒列表", description = "获取当前用户的打卡提醒设置")
+    @Operation(summary = "获取打卡提醒列表")
     public Result<List<CheckinReminder>> getReminders() {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-        List<CheckinReminder> reminders = checkinReminderService.getUserReminders(userId);
-        return Result.success(reminders);
+        Long userId = requireLogin();
+        return Result.success(checkinReminderService.getUserReminders(userId));
     }
 
     @PostMapping("/reminders")
-    @Operation(summary = "创建打卡提醒", description = "创建新的打卡提醒")
+    @Operation(summary = "创建打卡提醒")
     public Result<CheckinReminder> createReminder(@RequestBody Map<String, Object> body) {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-
+        Long userId = requireLogin();
         Long itemId = body.get("itemId") != null ? Long.valueOf(body.get("itemId").toString()) : null;
-        String timeStr = (String) body.get("remindTime");
-        LocalTime remindTime = LocalTime.parse(timeStr);
-
-        CheckinReminder reminder = checkinReminderService.createReminder(userId, itemId, remindTime);
-        return Result.success(reminder);
+        LocalTime remindTime = LocalTime.parse((String) body.get("remindTime"));
+        return Result.success(checkinReminderService.createReminder(userId, itemId, remindTime));
     }
 
     @PutMapping("/reminders/{id}")
-    @Operation(summary = "更新打卡提醒", description = "更新打卡提醒设置")
+    @Operation(summary = "更新打卡提醒")
     public Result<CheckinReminder> updateReminder(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
-
+        Long userId = requireLogin();
         Long itemId = body.get("itemId") != null ? Long.valueOf(body.get("itemId").toString()) : null;
         LocalTime remindTime = body.get("remindTime") != null ? LocalTime.parse((String) body.get("remindTime")) : null;
         Boolean isEnabled = body.get("isEnabled") != null ? Boolean.valueOf(body.get("isEnabled").toString()) : null;
@@ -111,12 +89,9 @@ public class CheckinExtController {
     }
 
     @DeleteMapping("/reminders/{id}")
-    @Operation(summary = "删除打卡提醒", description = "删除打卡提醒")
+    @Operation(summary = "删除打卡提醒")
     public Result<Void> deleteReminder(@PathVariable Long id) {
-        Long userId = UserContext.getCurrentUserId();
-        if (userId == null) {
-            return Result.error(401, "用户未登录");
-        }
+        Long userId = requireLogin();
         checkinReminderService.deleteReminder(id, userId);
         return Result.success(null);
     }

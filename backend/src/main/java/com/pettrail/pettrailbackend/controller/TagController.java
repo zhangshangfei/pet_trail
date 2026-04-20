@@ -20,29 +20,27 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/tags")
 @RequiredArgsConstructor
 @io.swagger.v3.oas.annotations.tags.Tag(name = "话题标签", description = "话题标签相关接口")
-public class TagController {
+public class TagController extends BaseController {
 
     private final TagService tagService;
     private final PostMapper postMapper;
 
     @GetMapping("/hot")
-    @Operation(summary = "获取热门标签", description = "获取使用量最高的热门标签列表")
+    @Operation(summary = "获取热门标签")
     public Result<List<TagVO>> getHotTags(@RequestParam(defaultValue = "20") int limit) {
         List<Tag> tags = tagService.getHotTags(limit);
-        List<TagVO> voList = tags.stream().map(this::convertToVO).collect(Collectors.toList());
-        return Result.success(voList);
+        return Result.success(tags.stream().map(this::convertToVO).collect(Collectors.toList()));
     }
 
     @GetMapping("/search")
-    @Operation(summary = "搜索标签", description = "根据关键词搜索标签")
+    @Operation(summary = "搜索标签")
     public Result<List<TagVO>> searchTags(@RequestParam String keyword, @RequestParam(defaultValue = "20") int limit) {
         List<Tag> tags = tagService.searchTags(keyword, limit);
-        List<TagVO> voList = tags.stream().map(this::convertToVO).collect(Collectors.toList());
-        return Result.success(voList);
+        return Result.success(tags.stream().map(this::convertToVO).collect(Collectors.toList()));
     }
 
     @GetMapping("/{id}/posts")
-    @Operation(summary = "获取标签下的动态", description = "分页获取指定标签下的动态列表")
+    @Operation(summary = "获取标签下的动态")
     public Result<List<Object>> getTagPosts(@PathVariable Long id,
                                              @RequestParam(defaultValue = "1") int page,
                                              @RequestParam(defaultValue = "20") int size) {

@@ -5,6 +5,7 @@ import com.pettrail.pettrailbackend.entity.Notification;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.NotificationMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
+import com.pettrail.pettrailbackend.websocket.NotificationWebSocketHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +41,9 @@ class NotificationServiceTest {
 
     @Mock
     private ValueOperations<String, Object> valueOperations;
+
+    @Mock
+    private NotificationWebSocketHandler webSocketHandler;
 
     @InjectMocks
     private NotificationService notificationService;

@@ -316,6 +316,22 @@ public class PostService {
         return newCount;
     }
 
+    public void updatePost(Post post) {
+        postMapper.updateById(post);
+        String cacheKey = "post:detail:" + post.getId();
+        redisTemplate.delete(cacheKey);
+    }
+
+    public List<Post> getUserPosts(Long userId, int page, int size) {
+        int offset = (page - 1) * size;
+        return postMapper.selectByUserId(userId, offset, size);
+    }
+
+    public List<Post> getUserLikedPosts(Long userId, int page, int size) {
+        int offset = (page - 1) * size;
+        return postMapper.selectLikedFeed(userId, offset, size);
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public void deletePost(Long postId, Long userId) {
         Post post = postMapper.selectById(postId);

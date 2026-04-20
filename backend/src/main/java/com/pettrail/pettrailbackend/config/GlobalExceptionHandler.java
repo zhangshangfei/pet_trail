@@ -4,6 +4,7 @@ import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.exception.ForbiddenException;
 import com.pettrail.pettrailbackend.exception.NotFoundException;
+import com.pettrail.pettrailbackend.exception.UnauthorizedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -45,6 +46,13 @@ public class GlobalExceptionHandler {
     /**
      * 权限不足异常
      */
+    @ExceptionHandler(UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public Result<?> handleUnauthorizedException(UnauthorizedException e) {
+        log.warn("未授权：{}", e.getMessage());
+        return Result.fromException(e);
+    }
+
     @ExceptionHandler(ForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public Result<?> handleForbiddenException(ForbiddenException e) {

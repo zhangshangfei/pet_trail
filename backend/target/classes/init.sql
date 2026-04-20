@@ -517,6 +517,9 @@ CREATE TABLE IF NOT EXISTS `checkin_reminders` (
 
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS `tags` json DEFAULT NULL COMMENT '标签列表' AFTER bubble;
 
+ALTER TABLE posts ADD INDEX idx_status_created (status, created_at);
+ALTER TABLE post_comments ADD INDEX idx_user_status (user_id, status);
+
 INSERT IGNORE INTO `tags` (`name`, `usage_count`, `is_hot`, `is_official`) VALUES
 ('萌宠日常', 0, 1, 1),
 ('宠物才艺', 0, 1, 1),
