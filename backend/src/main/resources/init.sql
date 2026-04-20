@@ -139,10 +139,15 @@ CREATE TABLE IF NOT EXISTS `posts` (
   `like_count` int(11) DEFAULT '0' COMMENT '点赞数',
   `comment_count` int(11) DEFAULT '0' COMMENT '评论数',
   `share_count` int(11) DEFAULT '0' COMMENT '分享数',
+  `ee_count` int(11) DEFAULT '0' COMMENT '嗯嗯数',
   `location` varchar(200) DEFAULT NULL COMMENT '位置信息',
   `stickers` json DEFAULT NULL COMMENT '贴纸列表',
   `bubble` json DEFAULT NULL COMMENT '文字气泡',
+  `tags` json DEFAULT NULL COMMENT '标签列表',
   `status` tinyint(4) DEFAULT '1' COMMENT '状态：0-审核中 1-正常 2-删除',
+  `audit_status` tinyint(4) DEFAULT '1' COMMENT '审核状态：1-通过 2-拒绝',
+  `audit_remark` varchar(500) DEFAULT NULL COMMENT '审核备注',
+  `deleted` tinyint(1) DEFAULT '0' COMMENT '是否删除：0-否 1-是',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -308,6 +313,36 @@ CREATE TABLE IF NOT EXISTS `parasite_reminders` (
   KEY `idx_next_date` (`next_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='驱虫提醒表';
 
+CREATE TABLE IF NOT EXISTS `feeding_reminders` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL,
+  `pet_id` bigint(20) NOT NULL,
+  `meal_type` varchar(50) DEFAULT 'breakfast' COMMENT '餐次类型',
+  `time` varchar(10) NOT NULL COMMENT '提醒时间',
+  `repeat_type` varchar(20) DEFAULT 'daily' COMMENT '重复方式',
+  `note` varchar(500) DEFAULT NULL COMMENT '备注',
+  `enabled` tinyint(1) DEFAULT '1' COMMENT '是否启用',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_pet_id` (`pet_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='喂食提醒表';
+
+CREATE TABLE IF NOT EXISTS `pet_album` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL,
+  `pet_id` bigint(20) NOT NULL,
+  `image_url` varchar(500) NOT NULL COMMENT '图片地址',
+  `title` varchar(100) DEFAULT NULL COMMENT '标题',
+  `note` varchar(500) DEFAULT NULL COMMENT '备注',
+  `record_date` date DEFAULT NULL COMMENT '记录日期',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_pet_id` (`pet_id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='宠物相册表';
+
 -- ========================================
 -- 成就模块
 -- ========================================
@@ -369,6 +404,7 @@ CREATE TABLE IF NOT EXISTS `reports` (
   `reason` varchar(50) NOT NULL COMMENT '举报原因',
   `description` varchar(500) DEFAULT NULL COMMENT '补充描述',
   `status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '状态：0-待处理 1-已处理 2-已驳回',
+  `result` varchar(500) DEFAULT NULL COMMENT '处理结果',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_reporter_target` (`reporter_id`, `target_id`, `target_type`),
@@ -561,4 +597,14 @@ INSERT IGNORE INTO `tags` (`name`, `usage_count`, `is_hot`, `is_official`) VALUE
 ('新手养宠', 0, 1, 1),
 ('猫咪控', 0, 1, 1),
 ('狗狗控', 0, 1, 1);
+
+-- 增量迁移：为 posts 表添加缺失字段
+ALTER TABLE `posts` ADD COLUMN IF NOT EXISTS `ee_count` int(11) DEFAULT '0' COMMENT '嗯嗯数' AFTER `share_count`;
+ALTER TABLE `posts` ADD COLUMN IF NOT EXISTS `tags` json DEFAULT NULL COMMENT '标签列表' AFTER `bubble`;
+ALTER TABLE `posts` ADD COLUMN IF NOT EXISTS `audit_status` tinyint(4) DEFAULT '1' COMMENT '审核状态：1-通过 2-拒绝' AFTER `status`;
+ALTER TABLE `posts` ADD COLUMN IF NOT EXISTS `audit_remark` varchar(500) DEFAULT NULL COMMENT '审核备注' AFTER `audit_status`;
+ALTER TABLE `posts` ADD COLUMN IF NOT EXISTS `deleted` tinyint(1) DEFAULT '0' COMMENT '是否删除：0-否 1-是' AFTER `audit_remark`;
+
+-- 增量迁移：为 reports 表添加缺失字段
+ALTER TABLE `reports` ADD COLUMN IF NOT EXISTS `result` varchar(500) DEFAULT NULL COMMENT '处理结果' AFTER `status`;
 

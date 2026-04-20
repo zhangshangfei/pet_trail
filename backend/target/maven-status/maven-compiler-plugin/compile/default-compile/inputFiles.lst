@@ -34,6 +34,7 @@ G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\controller\admin\AdminNotificationController.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\service\HealthRecordService.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\dto\ChangePasswordDTO.java
+G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\config\SchemaMigrationConfig.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\enums\ErrorCodeEnum.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\dto\SettingBatchUpdateDTO.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\controller\PetAlbumController.java
