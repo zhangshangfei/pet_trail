@@ -520,6 +520,38 @@ ALTER TABLE posts ADD COLUMN IF NOT EXISTS `tags` json DEFAULT NULL COMMENT '标
 ALTER TABLE posts ADD INDEX idx_status_created (status, created_at);
 ALTER TABLE post_comments ADD INDEX idx_user_status (user_id, status);
 
+CREATE TABLE IF NOT EXISTS `user_membership` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL,
+  `plan` varchar(20) NOT NULL COMMENT 'monthly/yearly',
+  `amount` decimal(10,2) NOT NULL,
+  `start_date` datetime DEFAULT NULL,
+  `expire_date` datetime DEFAULT NULL,
+  `status` tinyint(4) DEFAULT '1' COMMENT '0-取消 1-有效 2-被替换',
+  `order_no` varchar(50) DEFAULT NULL,
+  `transaction_id` varchar(50) DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户会员表';
+
+CREATE TABLE IF NOT EXISTS `orders` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL,
+  `order_no` varchar(50) NOT NULL COMMENT '订单号',
+  `plan` varchar(20) NOT NULL COMMENT 'pro_month/pro_year',
+  `amount` decimal(10,2) NOT NULL,
+  `status` tinyint(4) DEFAULT '0' COMMENT '0-待支付 1-已支付 2-已退款 3-已取消',
+  `wx_transaction_id` varchar(50) DEFAULT NULL COMMENT '微信交易号',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `paid_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_order_no` (`order_no`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单表';
+
 INSERT IGNORE INTO `tags` (`name`, `usage_count`, `is_hot`, `is_official`) VALUES
 ('萌宠日常', 0, 1, 1),
 ('宠物才艺', 0, 1, 1),

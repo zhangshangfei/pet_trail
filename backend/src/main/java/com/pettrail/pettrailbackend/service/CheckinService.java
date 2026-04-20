@@ -40,6 +40,7 @@ public class CheckinService {
     private final CheckinStatsMapper checkinStatsMapper;
     private final UserHiddenItemMapper userHiddenItemMapper;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final AchievementService achievementService;
 
     /**
      * 获取打卡项列表
@@ -182,6 +183,14 @@ public class CheckinService {
         updateCheckinStats(userId, itemId, today);
 
         log.info("打卡完成: userId={}, itemId={}, recordId={}", userId, itemId, record.getId());
+
+        try {
+            achievementService.checkAndUnlock(userId, "checkin_count");
+            achievementService.checkAndUnlock(userId, "checkin_streak");
+        } catch (Exception e) {
+            log.warn("成就检查失败: userId={}, error={}", userId, e.getMessage());
+        }
+
         return record;
     }
 

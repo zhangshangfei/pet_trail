@@ -146,17 +146,26 @@ export default {
         async success(res) {
           if (!res.confirm) return
           try {
-            uni.showLoading({ title: '处理中...' })
-            const result = await uni.$request.post('/api/membership/subscribe', {
+            uni.showLoading({ title: '创建订单...' })
+            const orderRes = await uni.$request.post('/api/membership/orders', {
               plan: self.selectedPlan
             })
+            if (!orderRes || !orderRes.success || !orderRes.data) {
+              uni.hideLoading()
+              uni.showToast({ title: (orderRes && orderRes.message) || '创建订单失败', icon: 'none' })
+              return
+            }
+
+            uni.showLoading({ title: '支付中...' })
+            const payRes = await uni.$request.post(`/api/membership/orders/${orderRes.data.id}/pay`)
             uni.hideLoading()
-            if (result && result.success) {
+
+            if (payRes && payRes.success) {
               uni.showToast({ title: '开通成功！', icon: 'success' })
               self.isPro = true
               self.loadMembershipInfo()
             } else {
-              uni.showToast({ title: (result && result.message) || '开通失败', icon: 'none' })
+              uni.showToast({ title: (payRes && payRes.message) || '支付失败', icon: 'none' })
             }
           } catch (e) {
             uni.hideLoading()

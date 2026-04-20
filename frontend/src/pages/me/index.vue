@@ -73,6 +73,10 @@
               <view class="feature-icon-wrap feature-icon-gold"><text class="feature-emoji">👑</text></view>
               <text class="feature-text">宠迹Pro</text>
             </view>
+            <view class="feature-item" @tap="goToAchievement">
+              <view class="feature-icon-wrap feature-icon-purple"><text class="feature-emoji">🏆</text></view>
+              <text class="feature-text">成就墙</text>
+            </view>
           </view>
         </view>
 
@@ -288,6 +292,9 @@ export default {
     goToMembership() {
       uni.navigateTo({ url: '/pages/me/membership' });
     },
+    goToAchievement() {
+      uni.navigateTo({ url: '/pages/me/achievement' });
+    },
     onDiscoverTap() {
       uni.navigateTo({ url: '/pages/discover/index' });
     },
@@ -480,6 +487,7 @@ export default {
 .feature-icon-blue { background: #eff6ff; }
 .feature-icon-green { background: #ecfdf5; }
 .feature-icon-gold { background: #fffbeb; }
+.feature-icon-purple { background: #f5f3ff; }
 
 .feature-text {
   font-size: 24rpx;

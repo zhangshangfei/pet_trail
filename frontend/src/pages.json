@@ -196,6 +196,13 @@
       }
     },
     {
+      "path": "pages/me/achievement",
+      "style": {
+        "navigationBarTitleText": "成就墙",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/checkin/report",
       "style": {
         "navigationBarTitleText": "打卡报表",

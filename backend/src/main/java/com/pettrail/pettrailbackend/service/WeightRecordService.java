@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pettrail.pettrailbackend.entity.WeightRecord;
 import com.pettrail.pettrailbackend.enums.ErrorCodeEnum;
 import com.pettrail.pettrailbackend.exception.BusinessException;
+import com.pettrail.pettrailbackend.mapper.PetMapper;
 import com.pettrail.pettrailbackend.mapper.WeightRecordMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class WeightRecordService extends ServiceImpl<WeightRecordMapper, WeightRecord> {
+
+    private final AchievementService achievementService;
+    private final PetMapper petMapper;
 
     /**
      * 获取宠物的体重记录
@@ -67,6 +71,16 @@ public class WeightRecordService extends ServiceImpl<WeightRecordMapper, WeightR
         this.save(record);
         log.info("创建体重记录成功: id={}, petId={}, weight={}, recordDate={}, note={}",
                 record.getId(), petId, weight, recordDate, note);
+
+        try {
+            com.pettrail.pettrailbackend.entity.Pet pet = petMapper.selectById(petId);
+            if (pet != null) {
+                achievementService.checkAndUnlock(pet.getUserId(), "health_record_count");
+            }
+        } catch (Exception e) {
+            log.warn("成就检查失败: petId={}, error={}", petId, e.getMessage());
+        }
+
         return record;
     }
 

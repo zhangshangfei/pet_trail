@@ -36,6 +36,7 @@ public class PostService {
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
     private final ContentAuditService contentAuditService;
+    private final AchievementService achievementService;
 
     @Transactional(rollbackFor = Exception.class)
     public Post createPost(Long userId, Long petId, String content, List<String> images, List<String> videos,
@@ -67,6 +68,13 @@ public class PostService {
         post.setShareCount(0);
         post.setEeCount(0);
         postMapper.insert(post);
+
+        try {
+            achievementService.checkAndUnlock(userId, "post_count");
+        } catch (Exception e) {
+            log.warn("成就检查失败: userId={}, error={}", userId, e.getMessage());
+        }
+
         return post;
     }
 
@@ -171,6 +179,12 @@ public class PostService {
 
             notificationService.createNotification(
                 post.getUserId(), userId, "like", postId, "赞了你的动态");
+
+            try {
+                achievementService.checkAndUnlock(post.getUserId(), "like_received");
+            } catch (Exception e) {
+                log.warn("成就检查失败: userId={}, error={}", post.getUserId(), e.getMessage());
+            }
         }
 
         // 清除详情缓存

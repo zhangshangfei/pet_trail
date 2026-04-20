@@ -1,11 +1,12 @@
 package com.pettrail.pettrailbackend.controller.admin;
 
+import com.pettrail.pettrailbackend.service.ExportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @RestController
@@ -14,40 +15,34 @@ import java.io.IOException;
 @Tag(name = "Admin-数据导出", description = "后台数据导出")
 public class AdminExportController extends BaseAdminController {
 
+    private final ExportService exportService;
+
     @GetMapping("/users")
     @Operation(summary = "导出用户数据")
     public void exportUsers(HttpServletResponse response,
                             @RequestParam(required = false) String keyword,
                             @RequestParam(required = false) Integer status) throws IOException {
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setHeader("Content-Disposition", "attachment; filename=users.xlsx");
-        response.getWriter().write("export placeholder - users");
+        exportService.exportUsers(response, keyword, status);
     }
 
     @GetMapping("/posts")
     @Operation(summary = "导出动态数据")
     public void exportPosts(HttpServletResponse response,
                             @RequestParam(required = false) Integer auditStatus) throws IOException {
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setHeader("Content-Disposition", "attachment; filename=posts.xlsx");
-        response.getWriter().write("export placeholder - posts");
+        exportService.exportPosts(response, auditStatus);
     }
 
     @GetMapping("/reports")
     @Operation(summary = "导出举报数据")
     public void exportReports(HttpServletResponse response,
                               @RequestParam(required = false) Integer status) throws IOException {
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setHeader("Content-Disposition", "attachment; filename=reports.xlsx");
-        response.getWriter().write("export placeholder - reports");
+        exportService.exportReports(response, status);
     }
 
     @GetMapping("/logs")
     @Operation(summary = "导出操作日志")
     public void exportLogs(HttpServletResponse response,
                            @RequestParam(required = false) String module) throws IOException {
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setHeader("Content-Disposition", "attachment; filename=logs.xlsx");
-        response.getWriter().write("export placeholder - logs");
+        exportService.exportLogs(response, module);
     }
 }
