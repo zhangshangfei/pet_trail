@@ -6,6 +6,7 @@ import com.pettrail.pettrailbackend.entity.Notification;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.NotificationMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
+import com.pettrail.pettrailbackend.websocket.NotificationWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -25,6 +26,7 @@ public class NotificationService {
     private final NotificationMapper notificationMapper;
     private final UserMapper userMapper;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final NotificationWebSocketHandler webSocketHandler;
 
     private static final String UNREAD_COUNT_PREFIX = "notification:unread:";
     private static final long UNREAD_CACHE_TTL_MINUTES = 10;
@@ -52,6 +54,13 @@ public class NotificationService {
         notificationMapper.insert(notification);
 
         invalidateUnreadCache(userId);
+
+        try {
+            webSocketHandler.notifyNewNotification(userId, type, content, targetId);
+            webSocketHandler.notifyUnreadCount(userId);
+        } catch (Exception e) {
+            log.warn("WebSocket推送通知失败: userId={}, error={}", userId, e.getMessage());
+        }
     }
 
     public List<NotificationVO> getNotifications(Long userId, int page, int size, String type) {
@@ -101,12 +110,14 @@ public class NotificationService {
             notification.setIsRead(true);
             notificationMapper.updateById(notification);
             invalidateUnreadCache(userId);
+            webSocketHandler.notifyUnreadCount(userId);
         }
     }
 
     public void markAllAsRead(Long userId) {
         notificationMapper.markAllAsRead(userId);
         invalidateUnreadCache(userId);
+        webSocketHandler.notifyUnreadCount(userId);
     }
 
     public void deleteNotification(Long notificationId, Long userId) {
@@ -114,6 +125,7 @@ public class NotificationService {
         if (notification != null && notification.getUserId().equals(userId)) {
             notificationMapper.deleteById(notificationId);
             invalidateUnreadCache(userId);
+            webSocketHandler.notifyUnreadCount(userId);
             log.info("删除通知：notificationId={}, userId={}", notificationId, userId);
         }
     }
@@ -123,6 +135,7 @@ public class NotificationService {
                 .eq(Notification::getUserId, userId);
         notificationMapper.delete(wrapper);
         invalidateUnreadCache(userId);
+        webSocketHandler.notifyUnreadCount(userId);
         log.info("清空所有通知：userId={}", userId);
     }
 

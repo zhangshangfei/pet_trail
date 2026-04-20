@@ -45,6 +45,7 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/posts/feed",
                                 "/api/admin/auth/login",
+                                "/ws/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/error"

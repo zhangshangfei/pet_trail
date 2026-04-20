@@ -247,6 +247,7 @@ import UserTopBar from '@/components/UserTopBar.vue'
 import * as postApi from '@/api/post'
 import * as notificationApi from '@/api/notification'
 import * as behaviorApi from '@/api/behavior'
+import wsManager from '@/utils/websocket'
 import { checkLogin, wechatLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 
 export default {
@@ -274,8 +275,7 @@ export default {
       unreadNotificationCount: 0,
       showSysNotice: false,
       sysNoticeList: [],
-      sysNoticeTimer: null,
-      pollTimer: null
+      sysNoticeTimer: null
     };
   },
   computed: {
@@ -289,7 +289,7 @@ export default {
 
     this.checkLoginStatus();
     this.fetchUnreadCount();
-    this.startPolling();
+    this.connectWebSocket();
     this.page = 1;
     this.postList = [];
     this.hasMore = true;
@@ -317,14 +317,14 @@ export default {
     })
   },
   onHide() {
-    this.stopPolling()
+    this.disconnectWebSocket()
   },
   onUnload() {
     if (this.sysNoticeTimer) {
       clearTimeout(this.sysNoticeTimer)
       this.sysNoticeTimer = null
     }
-    this.stopPolling()
+    this.disconnectWebSocket()
     uni.$off('loginSuccess')
   },
   onPullDownRefresh() {
@@ -792,39 +792,54 @@ export default {
       return `${date.getMonth() + 1}/${date.getDate()}`;
     },
 
-    startPolling() {
-      this.stopPolling()
-      this.pollTimer = setInterval(() => {
-        this.pollNotifications()
-      }, 30000)
-    },
-
-    stopPolling() {
-      if (this.pollTimer) {
-        clearInterval(this.pollTimer)
-        this.pollTimer = null
-      }
-    },
-
-    async pollNotifications() {
+    connectWebSocket() {
       if (!this.isLoggedIn) return
-      try {
-        const res = await notificationApi.pollNotifications()
-        if (res && res.success && res.data) {
-          this.unreadNotificationCount = res.data.unreadCount || 0
-          if (res.data.hasNewSystem && !this.showSysNotice) {
-            const todayStr = new Date().toISOString().slice(0, 10)
-            const dismissedDate = uni.getStorageSync('sysNoticeDismissDate')
-            if (dismissedDate !== todayStr && res.data.systemMessages && res.data.systemMessages.length > 0) {
-              this.sysNoticeList = res.data.systemMessages
-              this.showSysNotice = true
-              this.startSysNoticeTimer()
-            }
+      const token = uni.getStorageSync('token')
+      if (!token) return
+
+      wsManager.off('notification', this._onWsNotification)
+      wsManager.off('unreadCount', this._onWsUnreadCount)
+      wsManager.off('init', this._onWsInit)
+
+      this._onWsNotification = (data) => {
+        if (data.notifyType === 'system' && !this.showSysNotice) {
+          const todayStr = new Date().toISOString().slice(0, 10)
+          const dismissedDate = uni.getStorageSync('sysNoticeDismissDate')
+          if (dismissedDate !== todayStr) {
+            this.loadSysNotices()
           }
         }
-      } catch (e) {
-        // ignore polling errors
       }
+
+      this._onWsUnreadCount = (data) => {
+        this.unreadNotificationCount = data.count || 0
+      }
+
+      this._onWsInit = (data) => {
+        this.unreadNotificationCount = data.unreadCount || 0
+        if (data.systemMessages && data.systemMessages.length > 0 && !this.showSysNotice) {
+          const todayStr = new Date().toISOString().slice(0, 10)
+          const dismissedDate = uni.getStorageSync('sysNoticeDismissDate')
+          if (dismissedDate !== todayStr) {
+            this.sysNoticeList = data.systemMessages
+            this.showSysNotice = true
+            this.startSysNoticeTimer()
+          }
+        }
+      }
+
+      wsManager.on('notification', this._onWsNotification)
+      wsManager.on('unreadCount', this._onWsUnreadCount)
+      wsManager.on('init', this._onWsInit)
+
+      wsManager.connect(token)
+    },
+
+    disconnectWebSocket() {
+      wsManager.off('notification', this._onWsNotification)
+      wsManager.off('unreadCount', this._onWsUnreadCount)
+      wsManager.off('init', this._onWsInit)
+      wsManager.disconnect()
     },
 
     trackView(targetType, targetId, duration) {

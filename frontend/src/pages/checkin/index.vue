@@ -67,23 +67,32 @@
               <text class="section-title">今日打卡</text>
               <text class="section-date">{{ today }}</text>
             </view>
-            <view class="section-actions">
-              <view class="section-action" @tap="goReport">
-                <text class="section-action-icon">📊</text>
-                <text class="section-action-text">报表</text>
+            <view class="section-add-btn" @tap="goAddItem">
+              <text class="section-add-icon">＋</text>
+              <text class="section-add-text">添加</text>
+            </view>
+          </view>
+
+          <view class="section-toolbar">
+            <view class="toolbar-item" @tap="goReport">
+              <view class="toolbar-icon-wrap">
+                <text class="toolbar-icon">📊</text>
               </view>
-              <view class="section-action" @tap="goReminder">
-                <text class="section-action-icon">⏰</text>
-                <text class="section-action-text">提醒</text>
+              <text class="toolbar-label">报表</text>
+            </view>
+            <view class="toolbar-divider"></view>
+            <view class="toolbar-item" @tap="goReminder">
+              <view class="toolbar-icon-wrap">
+                <text class="toolbar-icon">⏰</text>
               </view>
-              <view class="section-action" @tap="goManageItems">
-                <text class="section-action-icon">⚙</text>
-                <text class="section-action-text">管理</text>
+              <text class="toolbar-label">提醒</text>
+            </view>
+            <view class="toolbar-divider"></view>
+            <view class="toolbar-item" @tap="goManageItems">
+              <view class="toolbar-icon-wrap">
+                <text class="toolbar-icon">⚙️</text>
               </view>
-              <view class="section-action primary" @tap="goAddItem">
-                <text class="section-action-icon">＋</text>
-                <text class="section-action-text">添加</text>
-              </view>
+              <text class="toolbar-label">管理</text>
             </view>
           </view>
 
@@ -668,15 +677,33 @@ $radius: 24rpx;
 .section-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
 .section-date { font-size: 24rpx; color: $text-light; }
 .section-actions { display: flex; align-items: center; gap: 12rpx; }
-.section-action {
-  display: flex; align-items: center; gap: 4rpx;
-  padding: 8rpx 20rpx; border-radius: 24rpx; background: #f0f0f0;
+.section-add-btn {
+  display: flex; align-items: center; gap: 6rpx;
+  padding: 10rpx 24rpx; border-radius: 24rpx;
+  background: linear-gradient(135deg, #ff6a3d, #ff8a5c);
+  box-shadow: 0 4rpx 12rpx rgba(255,106,61,0.3);
 }
-.section-action.primary { background: $primary-light; }
-.section-action-icon { font-size: 26rpx; color: $text-secondary; }
-.section-action.primary .section-action-icon { color: $primary; font-weight: 600; }
-.section-action-text { font-size: 24rpx; color: $text-secondary; font-weight: 500; }
-.section-action.primary .section-action-text { color: $primary; font-weight: 500; }
+.section-add-icon { font-size: 28rpx; color: #fff; font-weight: 700; }
+.section-add-text { font-size: 24rpx; color: #fff; font-weight: 600; }
+
+.section-toolbar {
+  display: flex; align-items: center;
+  background: $card-bg; border-radius: 20rpx;
+  padding: 16rpx 0; margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
+}
+.toolbar-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 6rpx;
+}
+.toolbar-icon-wrap {
+  width: 64rpx; height: 64rpx; border-radius: 16rpx;
+  background: #f5f5f5; display: flex;
+  align-items: center; justify-content: center;
+}
+.toolbar-icon { font-size: 32rpx; }
+.toolbar-label { font-size: 22rpx; color: $text-secondary; font-weight: 500; }
+.toolbar-divider { width: 1rpx; height: 48rpx; background: #e5e7eb; }
 
 .checkin-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16rpx; }
 .checkin-item {
