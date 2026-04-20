@@ -202,7 +202,7 @@ class NotificationServiceTest {
         when(notificationMapper.selectList(any())).thenReturn(Arrays.asList(n1));
         when(userMapper.selectById(2L)).thenReturn(testUser);
 
-        List<NotificationVO> result = notificationService.getNotifications(1L, 1, 10);
+        List<NotificationVO> result = notificationService.getNotifications(1L, 1, 10, "like");
         assertEquals(1, result.size());
         assertEquals("测试用户", result.get(0).getFromUserName());
     }
@@ -220,7 +220,7 @@ class NotificationServiceTest {
 
         when(notificationMapper.selectList(any())).thenReturn(Arrays.asList(n1));
 
-        List<NotificationVO> result = notificationService.getNotifications(1L, 1, 10);
+        List<NotificationVO> result = notificationService.getNotifications(1L, 1, 10, "system");
         assertEquals(1, result.size());
         assertEquals("系统通知", result.get(0).getFromUserName());
     }
