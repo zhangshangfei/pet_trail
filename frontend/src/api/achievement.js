@@ -1,7 +1,11 @@
 import request from '@/utils/request'
 
 export const getAchievements = (type) => {
-  return request.get('/api/achievements', { type })
+  const params = {}
+  if (type !== undefined && type !== null && type !== '') {
+    params.type = type
+  }
+  return request.get('/api/achievements', params)
 }
 
 export const getAchievementDetail = (id) => {

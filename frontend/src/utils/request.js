@@ -256,8 +256,11 @@ const buildQueryString = (data) => {
   if (!data || typeof data !== 'object') return ''
   const params = []
   for (const key in data) {
-    if (data.hasOwnProperty(key) && data[key] !== undefined && data[key] !== null) {
-      params.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+    if (data.hasOwnProperty(key)) {
+      const value = data[key]
+      if (value !== undefined && value !== null && value !== '' && value !== 'undefined' && value !== 'null') {
+        params.push(encodeURIComponent(key) + '=' + encodeURIComponent(value))
+      }
     }
   }
   return params.length > 0 ? '?' + params.join('&') : ''

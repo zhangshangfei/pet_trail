@@ -32,8 +32,9 @@ public class AchievementController extends BaseController {
         List<AchievementVO> achievements = achievementService.getUserAchievements(userId);
 
         if (type != null) {
+            final int filterType = type;
             achievements = achievements.stream()
-                    .filter(a -> a.getType().equals(type))
+                    .filter(a -> a.getType() != null && a.getType().equals(filterType))
                     .toList();
         }
 
