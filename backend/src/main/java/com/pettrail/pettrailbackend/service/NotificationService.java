@@ -9,6 +9,7 @@ import com.pettrail.pettrailbackend.mapper.UserMapper;
 import com.pettrail.pettrailbackend.websocket.NotificationWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -20,13 +21,22 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class NotificationService {
 
     private final NotificationMapper notificationMapper;
     private final UserMapper userMapper;
     private final RedisTemplate<String, Object> redisTemplate;
     private final NotificationWebSocketHandler webSocketHandler;
+
+    public NotificationService(NotificationMapper notificationMapper,
+                               UserMapper userMapper,
+                               RedisTemplate<String, Object> redisTemplate,
+                               @Lazy NotificationWebSocketHandler webSocketHandler) {
+        this.notificationMapper = notificationMapper;
+        this.userMapper = userMapper;
+        this.redisTemplate = redisTemplate;
+        this.webSocketHandler = webSocketHandler;
+    }
 
     private static final String UNREAD_COUNT_PREFIX = "notification:unread:";
     private static final long UNREAD_CACHE_TTL_MINUTES = 10;

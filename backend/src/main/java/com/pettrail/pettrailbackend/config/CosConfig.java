@@ -7,11 +7,13 @@ import com.qcloud.cos.auth.BasicSessionCredentials;
 import com.qcloud.cos.auth.COSCredentials;
 import com.qcloud.cos.region.Region;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Data
+@Slf4j
 @Configuration
 @ConfigurationProperties(prefix = "tencent.cos")
 public class CosConfig {
@@ -33,10 +35,11 @@ public class CosConfig {
         } else if (secretId != null && !secretId.isEmpty() && secretKey != null && !secretKey.isEmpty()) {
             credentials = new BasicCOSCredentials(secretId, secretKey);
         } else {
-            throw new IllegalStateException("COS credentials not configured. Set TENCENTCLOUD_SECRET_ID/KEY or tencent.cos.secret-id/secret-key.");
+            log.warn("COS credentials not configured. File upload will not work. Set TENCENTCLOUD_SECRET_ID/KEY or tencent.cos.secret-id/secret-key.");
+            credentials = new BasicCOSCredentials("placeholder", "placeholder");
         }
 
-        ClientConfig clientConfig = new ClientConfig(new Region(region));
+        ClientConfig clientConfig = new ClientConfig(new Region(region != null ? region : "ap-shanghai"));
         return new COSClient(credentials, clientConfig);
     }
 }
