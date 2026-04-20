@@ -27,6 +27,7 @@ public class Post {
     private String location;
     private String stickers;
     private String bubble;
+    private String tags;
     private Integer status;
     private Integer auditStatus;
     private String auditRemark;

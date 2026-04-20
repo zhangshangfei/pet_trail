@@ -26,3 +26,11 @@ export const deleteNotification = (id) => {
 export const clearAllNotifications = () => {
   return request.delete('/api/notifications/clear')
 }
+
+export const getUnreadSystem = () => {
+  return request.get('/api/notifications/unread-system')
+}
+
+export const pollNotifications = () => {
+  return request.get('/api/notifications/poll')
+}

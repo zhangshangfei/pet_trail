@@ -68,6 +68,14 @@
               <text class="section-date">{{ today }}</text>
             </view>
             <view class="section-actions">
+              <view class="section-action" @tap="goReport">
+                <text class="section-action-icon">📊</text>
+                <text class="section-action-text">报表</text>
+              </view>
+              <view class="section-action" @tap="goReminder">
+                <text class="section-action-icon">⏰</text>
+                <text class="section-action-text">提醒</text>
+              </view>
               <view class="section-action" @tap="goManageItems">
                 <text class="section-action-icon">⚙</text>
                 <text class="section-action-text">管理</text>
@@ -450,6 +458,12 @@ export default {
     },
     goAddItem() {
       uni.navigateTo({ url: '/pages/checkin/add-item' })
+    },
+    goReport() {
+      uni.navigateTo({ url: '/pages/checkin/report' })
+    },
+    goReminder() {
+      uni.navigateTo({ url: '/pages/checkin/reminder' })
     },
     showSuccessFeedback() {
       this.showSuccessAnimation = true

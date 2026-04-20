@@ -137,6 +137,11 @@
             <text class="location-text">{{ post.location }}</text>
           </view>
 
+          <!-- 话题标签 -->
+          <view v-if="post.tags && post.tags.length" class="post-tags">
+            <text v-for="(tag, tidx) in post.tags" :key="tidx" class="post-tag" @tap="onTagTap(tag)">#{{ tag }}</text>
+          </view>
+
           <!-- 视频展示 -->
           <view
             v-if="post.videos && post.videos.length"
@@ -146,7 +151,6 @@
               v-for="(vid, vidx) in post.videos"
               :key="'v' + vidx"
               class="post-video-item"
-              @click="playVideo(vid)"
             >
               <video
                 class="post-video"
@@ -154,7 +158,10 @@
                 :autoplay="false"
                 :show-play-btn="true"
                 :show-center-play-btn="true"
-                :enable-progress-gesture="false"
+                :enable-progress-gesture="true"
+                :show-fullscreen-btn="true"
+                :enable-play-gesture="true"
+                :page-gesture="false"
                 object-fit="cover"
                 poster=""
               />
@@ -232,23 +239,6 @@
         </view>
       </view>
     </view>
-
-    <!-- 视频播放弹窗 -->
-    <view v-if="showVideoPlayer" class="video-player-mask" @click="closeVideoPlayer">
-      <view class="video-player-container" @click.stop>
-        <view class="video-player-close" @click="closeVideoPlayer">✕</view>
-        <video
-          class="video-player-video"
-          :src="currentVideoUrl"
-          :autoplay="true"
-          :show-play-btn="true"
-          :show-center-play-btn="true"
-          :enable-progress-gesture="true"
-          :show-fullscreen-btn="true"
-          object-fit="contain"
-        />
-      </view>
-    </view>
   </view>
 </template>
 
@@ -256,6 +246,7 @@
 import UserTopBar from '@/components/UserTopBar.vue'
 import * as postApi from '@/api/post'
 import * as notificationApi from '@/api/notification'
+import * as behaviorApi from '@/api/behavior'
 import { checkLogin, wechatLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 
 export default {
@@ -280,12 +271,11 @@ export default {
       hasMore: true,
 
       expandedPosts: {},
-      showVideoPlayer: false,
-      currentVideoUrl: '',
       unreadNotificationCount: 0,
       showSysNotice: false,
       sysNoticeList: [],
-      sysNoticeTimer: null
+      sysNoticeTimer: null,
+      pollTimer: null
     };
   },
   computed: {
@@ -299,6 +289,7 @@ export default {
 
     this.checkLoginStatus();
     this.fetchUnreadCount();
+    this.startPolling();
     this.page = 1;
     this.postList = [];
     this.hasMore = true;
@@ -326,12 +317,14 @@ export default {
     })
   },
   onHide() {
+    this.stopPolling()
   },
   onUnload() {
     if (this.sysNoticeTimer) {
       clearTimeout(this.sysNoticeTimer)
       this.sysNoticeTimer = null
     }
+    this.stopPolling()
     uni.$off('loginSuccess')
   },
   onPullDownRefresh() {
@@ -466,13 +459,15 @@ export default {
         const dismissedDate = uni.getStorageSync('sysNoticeDismissDate')
         if (dismissedDate === todayStr) return
 
-        const res = await uni.$request.get('/api/notifications', { page: 1, size: 20 })
+        const res = await notificationApi.getUnreadSystem()
         if (res && res.success && Array.isArray(res.data)) {
-          const sysMsgs = res.data.filter(n => n.type === 'system' && !n.read)
-          if (sysMsgs.length > 0) {
-            this.sysNoticeList = sysMsgs
+          if (res.data.length > 0) {
+            this.sysNoticeList = res.data
             this.showSysNotice = true
             this.startSysNoticeTimer()
+          } else {
+            this.showSysNotice = false
+            this.sysNoticeList = []
           }
         }
       } catch (e) {
@@ -642,15 +637,6 @@ export default {
       });
     },
 
-    playVideo(url) {
-      this.currentVideoUrl = url
-      this.showVideoPlayer = true
-    },
-    closeVideoPlayer() {
-      this.showVideoPlayer = false
-      this.currentVideoUrl = ''
-    },
-
     async onLikeTap(post) {
       const loggedIn = await checkLogin('请先登录后再点赞')
       if (!loggedIn) return
@@ -804,6 +790,50 @@ export default {
       
       const date = new Date(timeMs);
       return `${date.getMonth() + 1}/${date.getDate()}`;
+    },
+
+    startPolling() {
+      this.stopPolling()
+      this.pollTimer = setInterval(() => {
+        this.pollNotifications()
+      }, 30000)
+    },
+
+    stopPolling() {
+      if (this.pollTimer) {
+        clearInterval(this.pollTimer)
+        this.pollTimer = null
+      }
+    },
+
+    async pollNotifications() {
+      if (!this.isLoggedIn) return
+      try {
+        const res = await notificationApi.pollNotifications()
+        if (res && res.success && res.data) {
+          this.unreadNotificationCount = res.data.unreadCount || 0
+          if (res.data.hasNewSystem && !this.showSysNotice) {
+            const todayStr = new Date().toISOString().slice(0, 10)
+            const dismissedDate = uni.getStorageSync('sysNoticeDismissDate')
+            if (dismissedDate !== todayStr && res.data.systemMessages && res.data.systemMessages.length > 0) {
+              this.sysNoticeList = res.data.systemMessages
+              this.showSysNotice = true
+              this.startSysNoticeTimer()
+            }
+          }
+        }
+      } catch (e) {
+        // ignore polling errors
+      }
+    },
+
+    trackView(targetType, targetId, duration) {
+      if (!this.isLoggedIn) return
+      behaviorApi.recordView({ targetType, targetId, duration }).catch(() => {})
+    },
+
+    onTagTap(tag) {
+      uni.showToast({ title: '#' + tag, icon: 'none', duration: 1500 })
     }
   }
 };
@@ -1122,6 +1152,22 @@ export default {
   color: #6b7280;
 }
 
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 8rpx;
+}
+
+.post-tag {
+  font-size: 22rpx;
+  color: #ff6a3d;
+  font-weight: 500;
+  padding: 4rpx 12rpx;
+  background: #fff0ea;
+  border-radius: 12rpx;
+}
+
 .post-actions {
   display: flex;
   justify-content: space-between;
@@ -1339,44 +1385,5 @@ export default {
   width: 5rpx;
   height: 38rpx;
   transform: translateX(-50%);
-}
-
-.video-player-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.video-player-container {
-  position: relative;
-  width: 100%;
-}
-
-.video-player-close {
-  position: absolute;
-  top: -80rpx;
-  right: 20rpx;
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  color: #fff;
-  font-size: 32rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-}
-
-.video-player-video {
-  width: 100%;
-  height: 420rpx;
 }
 </style>

@@ -38,6 +38,8 @@ public class PostVO {
 
     private BubbleVO bubble;
 
+    private List<String> tags;
+
     private Integer status;
 
     private LocalDateTime createdAt;

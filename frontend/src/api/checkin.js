@@ -39,3 +39,23 @@ export const hideCheckinItem = (id) => {
 export const showCheckinItem = (id) => {
   return request.post(`/api/checkin/items/${id}/show`)
 }
+
+export const getCheckinReport = (period = 'week') => {
+  return request.get('/api/checkin/report', { period })
+}
+
+export const getCheckinReminders = () => {
+  return request.get('/api/checkin/reminders')
+}
+
+export const createCheckinReminder = (data) => {
+  return request.post('/api/checkin/reminders', data)
+}
+
+export const updateCheckinReminder = (id, data) => {
+  return request.put(`/api/checkin/reminders/${id}`, data)
+}
+
+export const deleteCheckinReminder = (id) => {
+  return request.delete(`/api/checkin/reminders/${id}`)
+}

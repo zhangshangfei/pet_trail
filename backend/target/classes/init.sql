@@ -457,3 +457,73 @@ INSERT IGNORE INTO `system_settings` (`setting_key`, `setting_value`, `descripti
 ('notification_enabled', 'true', '全局通知开关'),
 ('registration_enabled', 'true', '新用户注册开关');
 
+-- ========================================
+-- V2.1 新增表：用户行为追踪、话题标签、打卡提醒
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS `user_behaviors` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+  `action` varchar(32) NOT NULL COMMENT '行为类型：view-浏览, like-点赞, comment-评论, share-分享, follow-关注, collect-收藏, publish-发布',
+  `target_type` varchar(32) DEFAULT NULL COMMENT '目标类型：post/user/pet',
+  `target_id` bigint(20) DEFAULT NULL COMMENT '目标ID',
+  `duration` int(11) DEFAULT 0 COMMENT '停留时长(秒)，仅浏览行为有值',
+  `extra` json DEFAULT NULL COMMENT '额外数据',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_action` (`action`),
+  KEY `idx_target` (`target_type`, `target_id`),
+  KEY `idx_user_action` (`user_id`, `action`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户行为追踪表';
+
+CREATE TABLE IF NOT EXISTS `tags` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL COMMENT '标签名称',
+  `usage_count` int(11) DEFAULT '0' COMMENT '使用次数',
+  `is_hot` tinyint(1) DEFAULT '0' COMMENT '是否热门',
+  `is_official` tinyint(1) DEFAULT '0' COMMENT '是否官方标签',
+  `status` tinyint(4) DEFAULT '1' COMMENT '状态：1-正常 0-禁用',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_name` (`name`),
+  KEY `idx_usage_count` (`usage_count`),
+  KEY `idx_is_hot` (`is_hot`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='话题标签表';
+
+CREATE TABLE IF NOT EXISTS `post_tags` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `post_id` bigint(20) NOT NULL COMMENT '动态ID',
+  `tag_id` bigint(20) NOT NULL COMMENT '标签ID',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_post_tag` (`post_id`, `tag_id`),
+  KEY `idx_tag_id` (`tag_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='动态-标签关联表';
+
+CREATE TABLE IF NOT EXISTS `checkin_reminders` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+  `item_id` bigint(20) DEFAULT NULL COMMENT '打卡项ID，NULL表示全部',
+  `remind_time` time NOT NULL COMMENT '提醒时间',
+  `is_enabled` tinyint(1) DEFAULT '1' COMMENT '是否启用',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='打卡提醒设置表';
+
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS `tags` json DEFAULT NULL COMMENT '标签列表' AFTER bubble;
+
+INSERT IGNORE INTO `tags` (`name`, `usage_count`, `is_hot`, `is_official`) VALUES
+('萌宠日常', 0, 1, 1),
+('宠物才艺', 0, 1, 1),
+('宠物穿搭', 0, 1, 1),
+('宠物旅行', 0, 1, 1),
+('养宠心得', 0, 1, 1),
+('新手养宠', 0, 1, 1),
+('猫咪控', 0, 1, 1),
+('狗狗控', 0, 1, 1);
+

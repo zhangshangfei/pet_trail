@@ -101,4 +101,43 @@ public class NotificationController {
         notificationService.clearAllNotifications(userId);
         return Result.success(null);
     }
+
+    @GetMapping("/unread-system")
+    @Operation(summary = "获取未读系统消息", description = "获取当前用户的未读系统消息列表，用于首页滚动通知")
+    public Result<List<NotificationVO>> getUnreadSystemNotifications() {
+        Long userId = UserContext.getCurrentUserId();
+        if (userId == null) {
+            return Result.success(List.of());
+        }
+
+        List<NotificationVO> notifications = notificationService.getNotifications(userId, 1, 10, "system");
+        List<NotificationVO> unreadSystem = notifications.stream()
+            .filter(n -> !n.getIsRead())
+            .collect(java.util.stream.Collectors.toList());
+        return Result.success(unreadSystem);
+    }
+
+    @GetMapping("/poll")
+    @Operation(summary = "轮询新通知", description = "轮询检查是否有新通知，返回最新未读数和系统消息")
+    public Result<Map<String, Object>> pollNotifications() {
+        Long userId = UserContext.getCurrentUserId();
+        Map<String, Object> data = new HashMap<>();
+        if (userId == null) {
+            data.put("unreadCount", 0);
+            data.put("hasNewSystem", false);
+            data.put("systemMessages", List.of());
+            return Result.success(data);
+        }
+
+        int unreadCount = notificationService.getUnreadCount(userId);
+        List<NotificationVO> systemMsgs = notificationService.getNotifications(userId, 1, 5, "system");
+        List<NotificationVO> unreadSystem = systemMsgs.stream()
+            .filter(n -> !n.getIsRead())
+            .collect(java.util.stream.Collectors.toList());
+
+        data.put("unreadCount", unreadCount);
+        data.put("hasNewSystem", !unreadSystem.isEmpty());
+        data.put("systemMessages", unreadSystem);
+        return Result.success(data);
+    }
 }

@@ -113,6 +113,24 @@
               <text class="option-text">{{ selectedChallenge || '添加挑战赛话题' }}</text>
               <text class="option-arrow">›</text>
             </view>
+            <view class="option-item" @click="showTagPicker = true">
+              <text class="option-icon">#️⃣</text>
+              <text class="option-text">{{ selectedTags.length > 0 ? '已选' + selectedTags.length + '个标签' : '添加话题标签' }}</text>
+              <text class="option-arrow">›</text>
+            </view>
+          </view>
+        </view>
+
+        <view v-if="selectedTags.length > 0" class="card">
+          <view class="card-label">
+            <text class="card-label-icon">#️⃣</text>
+            <text class="card-label-text">已选标签</text>
+          </view>
+          <view class="selected-tags-wrap">
+            <view v-for="(tag, idx) in selectedTags" :key="idx" class="selected-tag-chip">
+              <text class="selected-tag-text">#{{ tag }}</text>
+              <text class="selected-tag-remove" @click="removeTag(idx)">✕</text>
+            </view>
           </view>
         </view>
       </view>
@@ -261,6 +279,43 @@
       </view>
     </view>
 
+    <view v-if="showTagPicker" class="modal-mask" @click="showTagPicker = false">
+      <view class="modal-card" @click.stop>
+        <view class="modal-header">
+          <text class="modal-title">选择话题标签</text>
+          <text class="modal-close" @click="showTagPicker = false">✕</text>
+        </view>
+        <view class="tag-search-bar">
+          <input class="tag-search-input" v-model="tagSearchKeyword" placeholder="搜索标签..." @input="onTagSearch" />
+        </view>
+        <view class="tag-grid">
+          <view
+            v-for="tag in tagList"
+            :key="tag.id || tag.name"
+            class="tag-chip"
+            :class="{ active: selectedTags.includes(tag.name) }"
+            @click="toggleTag(tag.name)"
+          >
+            <text class="tag-chip-text">#{{ tag.name }}</text>
+            <text v-if="tag.usageCount" class="tag-chip-count">{{ tag.usageCount }}</text>
+          </view>
+        </view>
+        <view v-if="selectedTags.length > 0" class="tag-selected-bar">
+          <scroll-view scroll-x class="tag-selected-scroll">
+            <view class="tag-selected-list">
+              <view v-for="(t, i) in selectedTags" :key="i" class="tag-selected-item">
+                <text class="tag-selected-text">#{{ t }}</text>
+                <view class="tag-remove" @click="removeTag(i)">
+                  <text class="tag-remove-icon">✕</text>
+                </view>
+              </view>
+            </view>
+          </scroll-view>
+          <text class="tag-confirm-btn" @click="showTagPicker = false">确定</text>
+        </view>
+      </view>
+    </view>
+
     <view v-if="showVideoPlayer" class="video-player-mask" @click="closeVideoPlayer">
       <view class="video-player-container" @click.stop>
         <view class="video-player-close" @click="closeVideoPlayer">✕</view>
@@ -282,6 +337,7 @@
 <script>
 import * as postApi from '@/api/post'
 import * as petApi from '@/api/pet'
+import * as tagApi from '@/api/tag'
 import { checkLogin } from '@/utils/index'
 
 export default {
@@ -306,7 +362,12 @@ export default {
       showChallengePicker: false,
       showStickerPicker: false,
       showBubbleEditor: false,
+      showTagPicker: false,
       currentStickerCat: 'pet',
+
+      selectedTags: [],
+      tagSearchKeyword: '',
+      tagList: [],
 
       stickerCategories: [
         { key: 'pet', label: '🐾 宠物' },
@@ -368,6 +429,7 @@ export default {
     }
 
     this.loadPetList()
+    this.loadHotTags()
   },
   methods: {
     async loadPetList() {
@@ -474,6 +536,7 @@ export default {
           images: uploadedImageUrls.length > 0 ? uploadedImageUrls : undefined,
           videos: uploadedVideoUrls.length > 0 ? uploadedVideoUrls : undefined,
           challengeTag: this.selectedChallenge || undefined,
+          tags: this.selectedTags.length > 0 ? this.selectedTags : undefined,
           stickers: this.selectedStickers.length > 0 ? this.selectedStickers : undefined,
           bubble: this.bubbleText ? { text: this.bubbleText, bgColor: this.bubbleColor, textColor: this.bubbleTextColor } : undefined,
           location: this.selectedLocation || undefined
@@ -490,6 +553,7 @@ export default {
           this.mediaList = []
           this.selectedChallenge = ''
           this.selectedStickers = []
+          this.selectedTags = []
           this.bubbleText = ''
           this.bubbleColor = '#ff6a3d'
           this.bubbleTextColor = '#ffffff'
@@ -613,6 +677,48 @@ export default {
 
     clearLocation() {
       this.selectedLocation = ''
+    },
+
+    async loadHotTags() {
+      try {
+        const res = await tagApi.getHotTags(30)
+        if (res && res.success && Array.isArray(res.data)) {
+          this.tagList = res.data
+        }
+      } catch (e) {
+        console.error('加载热门标签失败:', e)
+      }
+    },
+
+    async onTagSearch() {
+      try {
+        const keyword = this.tagSearchKeyword.trim()
+        if (!keyword) {
+          await this.loadHotTags()
+          return
+        }
+        const res = await tagApi.searchTags(keyword, 20)
+        if (res && res.success && Array.isArray(res.data)) {
+          this.tagList = res.data
+        }
+      } catch (e) {
+        console.error('搜索标签失败:', e)
+      }
+    },
+
+    toggleTag(name) {
+      const idx = this.selectedTags.indexOf(name)
+      if (idx >= 0) {
+        this.selectedTags.splice(idx, 1)
+      } else if (this.selectedTags.length < 5) {
+        this.selectedTags.push(name)
+      } else {
+        uni.showToast({ title: '最多选择5个标签', icon: 'none' })
+      }
+    },
+
+    removeTag(index) {
+      this.selectedTags.splice(index, 1)
     },
   }
 }
@@ -1374,5 +1480,134 @@ export default {
   font-size: 24rpx;
   color: #9ca3af;
   padding: 4rpx 8rpx;
+}
+
+.selected-tags-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  padding: 8rpx 0;
+}
+
+.selected-tag-chip {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+  background: #fff0ea;
+}
+
+.selected-tag-text {
+  font-size: 24rpx;
+  color: #ff6a3d;
+  font-weight: 500;
+}
+
+.selected-tag-remove {
+  font-size: 20rpx;
+  color: #ff6a3d;
+  margin-left: 8rpx;
+}
+
+.tag-search-bar {
+  padding: 16rpx 24rpx;
+}
+
+.tag-search-input {
+  width: 100%;
+  height: 64rpx;
+  background: #f5f5f5;
+  border-radius: 32rpx;
+  padding: 0 24rpx;
+  font-size: 26rpx;
+}
+
+.tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  padding: 8rpx 24rpx;
+  max-height: 400rpx;
+  overflow-y: auto;
+}
+
+.tag-chip {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 24rpx;
+  border-radius: 24rpx;
+  background: #f5f5f5;
+  transition: all 0.2s;
+}
+
+.tag-chip.active {
+  background: #fff0ea;
+}
+
+.tag-chip-text {
+  font-size: 24rpx;
+  color: #374151;
+  font-weight: 500;
+}
+
+.tag-chip.active .tag-chip-text {
+  color: #ff6a3d;
+}
+
+.tag-chip-count {
+  font-size: 20rpx;
+  color: #9ca3af;
+  margin-left: 8rpx;
+}
+
+.tag-selected-bar {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 24rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.tag-selected-scroll {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.tag-selected-list {
+  display: inline-flex;
+  gap: 12rpx;
+}
+
+.tag-selected-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+  background: #fff0ea;
+}
+
+.tag-selected-text {
+  font-size: 24rpx;
+  color: #ff6a3d;
+  font-weight: 500;
+}
+
+.tag-remove {
+  margin-left: 8rpx;
+}
+
+.tag-remove-icon {
+  font-size: 20rpx;
+  color: #ff6a3d;
+}
+
+.tag-confirm-btn {
+  padding: 12rpx 32rpx;
+  border-radius: 24rpx;
+  background: #ff6a3d;
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
+  margin-left: 16rpx;
+  flex-shrink: 0;
 }
 </style>

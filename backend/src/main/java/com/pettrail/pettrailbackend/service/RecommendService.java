@@ -34,6 +34,7 @@ public class RecommendService {
     private final PostMapper postMapper;
     private final FollowService followService;
     private final PostService postService;
+    private final UserBehaviorService userBehaviorService;
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String CACHE_KEY_PREFIX = "recommend:";
@@ -52,6 +53,7 @@ public class RecommendService {
     private static final double PW_SOCIAL = 0.20;
     private static final double PW_INTERACT = 0.15;
     private static final double PW_FRESH = 0.10;
+    private static final double PW_BEHAVIOR = 0.10;
     private static final int CANDIDATE_LIMIT = 500;
 
     public List<Map<String, Object>> recommendUsers(Long currentUserId, int page, int size) {
@@ -406,6 +408,9 @@ public class RecommendService {
             double freshScore = computePostFreshnessScore(post.getCreatedAt(), now);
             score += PW_FRESH * freshScore;
 
+            double behaviorScore = computeBehaviorScore(userId, post.getId());
+            score += PW_BEHAVIOR * behaviorScore;
+
             scoreMap.put(post.getId(), score);
         }
 
@@ -491,6 +496,22 @@ public class RecommendService {
             redisTemplate.delete(CACHE_KEY_PREFIX + userId);
         } catch (Exception e) {
             log.warn("清除推荐缓存异常: {}", e.getMessage());
+        }
+    }
+
+    private double computeBehaviorScore(Long userId, Long postId) {
+        try {
+            List<Long> recentViewed = userBehaviorService.getRecentViewedPostIds(userId, 50);
+            if (recentViewed.contains(postId)) {
+                return 0.8;
+            }
+            List<Long> recentCollected = userBehaviorService.getRecentCollectedPostIds(userId, 20);
+            if (recentCollected.contains(postId)) {
+                return 1.0;
+            }
+            return 0.0;
+        } catch (Exception e) {
+            return 0.0;
         }
     }
 }

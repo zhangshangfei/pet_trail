@@ -194,6 +194,20 @@
         "navigationBarTitleText": "宠迹Pro",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/checkin/report",
+      "style": {
+        "navigationBarTitleText": "打卡报表",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/checkin/reminder",
+      "style": {
+        "navigationBarTitleText": "打卡提醒",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

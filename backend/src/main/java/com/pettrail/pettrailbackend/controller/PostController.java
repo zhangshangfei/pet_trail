@@ -10,8 +10,11 @@ import com.pettrail.pettrailbackend.service.CommentService;
 import com.pettrail.pettrailbackend.service.RecommendService;
 import com.pettrail.pettrailbackend.service.UserService;
 import com.pettrail.pettrailbackend.service.PetService;
+import com.pettrail.pettrailbackend.service.TagService;
+import com.pettrail.pettrailbackend.service.UserBehaviorService;
 import com.pettrail.pettrailbackend.entity.Pet;
 import com.pettrail.pettrailbackend.entity.Post;
+import com.pettrail.pettrailbackend.entity.Tag;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.service.PostService;
@@ -37,6 +40,8 @@ public class PostController {
     private final UserService userService;
     private final PetService petService;
     private final PostMapper postMapper;
+    private final TagService tagService;
+    private final UserBehaviorService userBehaviorService;
 
     /**
      * 发布动态
@@ -74,9 +79,21 @@ public class PostController {
 
         String location = data.getString("location");
 
+        List<String> tagNames = data.getJSONArray("tags") != null
+            ? data.getJSONArray("tags").toList(String.class)
+            : null;
+
         try {
             Post post = postService.createPost(userId, petId, content, images, videos, stickers, bubble, location);
+
+            if (tagNames != null && !tagNames.isEmpty()) {
+                tagService.bindTagsToPost(post.getId(), tagNames);
+                post.setTags(JSON.toJSONString(tagNames));
+                postMapper.updateById(post);
+            }
+
             postService.publishPostCreateEvent(post);
+            userBehaviorService.recordPublish(userId, post.getId());
             return Result.success(post);
         } catch (RuntimeException e) {
             if (e.getMessage() != null && e.getMessage().contains("违规")) {
@@ -172,6 +189,16 @@ public class PostController {
             } catch (Exception e) {
                 vo.setBubble(null);
             }
+        }
+
+        if (post.getTags() != null && !post.getTags().trim().isEmpty() && !post.getTags().equals("null")) {
+            try {
+                vo.setTags(JSON.parseArray(post.getTags(), String.class));
+            } catch (Exception e) {
+                vo.setTags(List.of());
+            }
+        } else {
+            vo.setTags(List.of());
         }
 
         vo.setStatus(post.getStatus());
@@ -311,8 +338,11 @@ public class PostController {
         // 切换点赞状态
         boolean isNowLiked = postService.toggleLike(id, userId);
 
-        // 获取当前点赞数 - 使用 Redis 原子操作优化
         Long likeCount = postService.getLikeCountFromCache(id);
+
+        if (isNowLiked) {
+            userBehaviorService.recordLike(userId, id);
+        }
 
         Map<String, Object> result = new HashMap<>();
         // isNowLiked 表示操作后的状态：true=已点赞，false=已取消点赞
@@ -337,10 +367,12 @@ public class PostController {
             return Result.error(401, "用户未登录");
         }
 
-        // 切换收藏状态（内部已经更新了数据库）
         boolean isNowEeLiked = postService.toggleEe(id, userId);
 
-        // 直接从数据库查询最新的收藏数（避免缓存问题）
+        if (isNowEeLiked) {
+            userBehaviorService.recordCollect(userId, id);
+        }
+
         Post post = postMapper.selectById(id);
         int eeCount = post != null ? (post.getEeCount() != null ? post.getEeCount() : 0) : 0;
 

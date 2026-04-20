@@ -2,6 +2,7 @@ package com.pettrail.pettrailbackend.task;
 
 import com.pettrail.pettrailbackend.entity.ParasiteReminder;
 import com.pettrail.pettrailbackend.entity.VaccineReminder;
+import com.pettrail.pettrailbackend.service.CheckinReminderService;
 import com.pettrail.pettrailbackend.service.NotificationService;
 import com.pettrail.pettrailbackend.service.ReminderService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class ReminderTask {
 
     private final ReminderService reminderService;
     private final NotificationService notificationService;
+    private final CheckinReminderService checkinReminderService;
 
     /**
      * 每日早上 9 点检查即将到期的提醒
@@ -86,5 +88,14 @@ public class ReminderTask {
         log.info("开始清理过期提醒");
         LocalDate expiredDate = LocalDate.now().minusDays(30);
         reminderService.cleanExpiredReminders(expiredDate);
+    }
+
+    @Scheduled(cron = "0 */1 * * * ?")
+    public void sendCheckinReminders() {
+        try {
+            checkinReminderService.sendCheckinReminders();
+        } catch (Exception e) {
+            log.warn("发送打卡提醒失败: {}", e.getMessage());
+        }
     }
 }
