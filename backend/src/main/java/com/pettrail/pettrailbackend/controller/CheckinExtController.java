@@ -40,10 +40,10 @@ public class CheckinExtController extends BaseController {
 
         if ("week".equals(period)) {
             report.setTotalDays(7);
-            report.setCheckinDays(stats.get("activeDays7") != null ? Integer.parseInt(stats.get("activeDays7").toString()) : 0);
+            report.setCheckinDays(stats.get("weekDays") != null ? Integer.parseInt(stats.get("weekDays").toString()) : 0);
         } else {
             report.setTotalDays(30);
-            report.setCheckinDays(stats.get("activeDays30") != null ? Integer.parseInt(stats.get("activeDays30").toString()) : 0);
+            report.setCheckinDays(stats.get("monthDays") != null ? Integer.parseInt(stats.get("monthDays").toString()) : 0);
         }
 
         report.setCompletionRate(report.getTotalDays() > 0
@@ -51,9 +51,9 @@ public class CheckinExtController extends BaseController {
             : 0.0);
 
         @SuppressWarnings("unchecked")
-        Map<String, Integer> itemStats = stats.get("itemStats") != null
-            ? (Map<String, Integer>) stats.get("itemStats")
-            : Map.of();
+        List<Map<String, Object>> itemStats = stats.get("itemStats") != null
+            ? (List<Map<String, Object>>) stats.get("itemStats")
+            : List.of();
         report.setItemStats(itemStats);
 
         return Result.success(report);

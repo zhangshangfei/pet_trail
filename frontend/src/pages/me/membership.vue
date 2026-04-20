@@ -239,14 +239,15 @@ $text-light: #999999;
 .section-title { display: block; font-size: 30rpx; font-weight: 700; color: $text-primary; margin-bottom: 20rpx; }
 
 .features-section { margin-bottom: 32rpx; }
-.features-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.features-grid { display: flex; flex-wrap: wrap; justify-content: space-between; }
 .feature-card {
-  width: calc(50% - 8rpx); background: $card-bg; border-radius: 20rpx;
-  padding: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  width: 48%; background: $card-bg; border-radius: 16rpx;
+  padding: 20rpx 16rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  margin-bottom: 16rpx; box-sizing: border-box;
 }
-.feature-icon { display: block; font-size: 40rpx; margin-bottom: 8rpx; }
-.feature-title { display: block; font-size: 26rpx; font-weight: 600; color: $text-primary; margin-bottom: 4rpx; }
-.feature-desc { display: block; font-size: 22rpx; color: $text-light; }
+.feature-icon { display: block; font-size: 36rpx; margin-bottom: 6rpx; }
+.feature-title { display: block; font-size: 24rpx; font-weight: 600; color: $text-primary; margin-bottom: 2rpx; }
+.feature-desc { display: block; font-size: 20rpx; color: $text-light; }
 
 .plans-section { margin-bottom: 32rpx; }
 .plans { display: flex; gap: 16rpx; }

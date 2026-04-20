@@ -2,6 +2,7 @@ package com.pettrail.pettrailbackend.dto;
 
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -15,5 +16,5 @@ public class CheckinReportVO {
     private int currentStreak;
     private int maxStreak;
     private int totalCheckins;
-    private Map<String, Integer> itemStats;
+    private List<Map<String, Object>> itemStats;
 }
