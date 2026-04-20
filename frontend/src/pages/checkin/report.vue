@@ -78,17 +78,18 @@
             </view>
           </view>
 
-          <view v-if="report.itemStats && Object.keys(report.itemStats).length" class="items-card">
+          <view v-if="report.itemStats && report.itemStats.length" class="items-card">
             <text class="card-title">各打卡项统计</text>
             <view class="item-list">
-              <view v-for="(count, name) in report.itemStats" :key="name" class="item-row">
-                <text class="item-name">{{ name }}</text>
+              <view v-for="item in report.itemStats" :key="item.itemId" class="item-row">
+                <text class="item-icon">{{ item.itemIcon || '📋' }}</text>
+                <text class="item-name">{{ item.itemName }}</text>
                 <view class="item-bar-wrap">
                   <view class="item-bar-bg">
-                    <view class="item-bar-fill" :style="{ width: getItemPercent(count) + '%' }"></view>
+                    <view class="item-bar-fill" :style="{ width: getItemPercent(item.totalCount) + '%' }"></view>
                   </view>
                 </view>
-                <text class="item-count">{{ count }}次</text>
+                <text class="item-count">{{ item.totalCount }}次</text>
               </view>
             </view>
           </view>
@@ -251,7 +252,8 @@ $radius: 24rpx;
 }
 .item-list { display: flex; flex-direction: column; gap: 20rpx; }
 .item-row { display: flex; align-items: center; gap: 16rpx; }
-.item-name { font-size: 26rpx; color: $text-secondary; min-width: 120rpx; }
+.item-icon { font-size: 32rpx; }
+.item-name { font-size: 26rpx; color: $text-secondary; min-width: 100rpx; }
 .item-bar-wrap { flex: 1; }
 .item-bar-bg { height: 12rpx; background: #f0f0f0; border-radius: 6rpx; overflow: hidden; }
 .item-bar-fill { height: 100%; background: $primary; border-radius: 6rpx; transition: width 0.3s ease; }

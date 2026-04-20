@@ -272,7 +272,7 @@ export default {
       this.form = {
         mealType: reminder.mealType,
         time: reminder.time,
-        repeat: reminder.repeat || 'daily',
+        repeat: reminder.repeatType || reminder.repeat || 'daily',
         note: reminder.note || ''
       }
       this.showAddModal = true

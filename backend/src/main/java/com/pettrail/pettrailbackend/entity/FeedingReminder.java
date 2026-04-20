@@ -23,8 +23,7 @@ public class FeedingReminder {
 
     private String time;
 
-    @TableField("repeat_type")
-    private String repeat;
+    private String repeatType;
 
     private String note;
 

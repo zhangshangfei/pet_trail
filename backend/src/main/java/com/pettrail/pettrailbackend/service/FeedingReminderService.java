@@ -44,7 +44,7 @@ public class FeedingReminderService {
         reminder.setPetId(petId);
         reminder.setMealType(mealType);
         reminder.setTime(time);
-        reminder.setRepeat(repeat != null ? repeat : "daily");
+        reminder.setRepeatType(repeat != null ? repeat : "daily");
         reminder.setNote(note);
         reminder.setEnabled(true);
         reminder.setCreatedAt(LocalDateTime.now());
@@ -62,7 +62,7 @@ public class FeedingReminderService {
         }
         if (mealType != null) reminder.setMealType(mealType);
         if (time != null) reminder.setTime(time);
-        if (repeat != null) reminder.setRepeat(repeat);
+        if (repeat != null) reminder.setRepeatType(repeat);
         if (note != null) reminder.setNote(note);
         reminder.setUpdatedAt(LocalDateTime.now());
         feedingReminderMapper.updateById(reminder);
