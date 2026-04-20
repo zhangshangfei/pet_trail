@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.PetAlbumDTO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.PetAlbum;
 import com.pettrail.pettrailbackend.service.PetAlbumService;
@@ -9,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -28,12 +28,12 @@ public class PetAlbumController extends BaseController {
     }
 
     @PostMapping
-    public Result<PetAlbum> addPhoto(@PathVariable Long petId, @RequestBody Map<String, Object> body) {
+    public Result<PetAlbum> addPhoto(@PathVariable Long petId, @RequestBody PetAlbumDTO dto) {
         Long userId = requireLogin();
-        String imageUrl = body.get("imageUrl") != null ? body.get("imageUrl").toString() : null;
-        String title = body.get("title") != null ? body.get("title").toString() : null;
-        String note = body.get("note") != null ? body.get("note").toString() : null;
-        String recordDateStr = body.get("recordDate") != null ? body.get("recordDate").toString() : null;
+        String imageUrl = dto.getImageUrl();
+        String title = dto.getTitle();
+        String note = dto.getNote();
+        String recordDateStr = dto.getRecordDate();
         LocalDate recordDate = (recordDateStr != null && !recordDateStr.isEmpty()) ? LocalDate.parse(recordDateStr) : null;
 
         if (imageUrl == null || imageUrl.isEmpty()) {
@@ -44,10 +44,10 @@ public class PetAlbumController extends BaseController {
     }
 
     @PutMapping("/{id}")
-    public Result<PetAlbum> updatePhoto(@PathVariable Long petId, @PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public Result<PetAlbum> updatePhoto(@PathVariable Long petId, @PathVariable Long id, @RequestBody PetAlbumDTO dto) {
         Long userId = requireLogin();
-        String title = body.get("title") != null ? body.get("title").toString() : null;
-        String note = body.get("note") != null ? body.get("note").toString() : null;
+        String title = dto.getTitle();
+        String note = dto.getNote();
         return Result.success(petAlbumService.updatePhoto(userId, id, title, note));
     }
 

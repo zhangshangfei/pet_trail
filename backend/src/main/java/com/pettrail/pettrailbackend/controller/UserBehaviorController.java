@@ -1,6 +1,8 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.UserBehaviorDTO;
+import com.pettrail.pettrailbackend.dto.UserBehaviorViewDTO;
 import com.pettrail.pettrailbackend.entity.UserBehavior;
 import com.pettrail.pettrailbackend.service.UserBehaviorService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,8 +10,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -22,25 +22,17 @@ public class UserBehaviorController extends BaseController {
 
     @PostMapping
     @Operation(summary = "记录用户行为")
-    public Result<Void> recordBehavior(@RequestBody Map<String, Object> body) {
+    public Result<Void> recordBehavior(@RequestBody UserBehaviorDTO dto) {
         Long userId = requireLogin();
-        String action = (String) body.get("action");
-        String targetType = (String) body.get("targetType");
-        Long targetId = body.get("targetId") != null ? Long.valueOf(body.get("targetId").toString()) : null;
-        Integer duration = body.get("duration") != null ? Integer.valueOf(body.get("duration").toString()) : null;
-        String extra = body.get("extra") != null ? body.get("extra").toString() : null;
-        userBehaviorService.recordBehavior(userId, action, targetType, targetId, duration, extra);
+        userBehaviorService.recordBehavior(userId, dto.getAction(), dto.getTargetType(), dto.getTargetId(), dto.getDuration(), dto.getExtra());
         return Result.success(null);
     }
 
     @PostMapping("/view")
     @Operation(summary = "记录浏览行为")
-    public Result<Void> recordView(@RequestBody Map<String, Object> body) {
+    public Result<Void> recordView(@RequestBody UserBehaviorViewDTO dto) {
         Long userId = requireLogin();
-        String targetType = (String) body.get("targetType");
-        Long targetId = Long.valueOf(body.get("targetId").toString());
-        Integer duration = body.get("duration") != null ? Integer.valueOf(body.get("duration").toString()) : 0;
-        userBehaviorService.recordView(userId, targetType, targetId, duration);
+        userBehaviorService.recordView(userId, dto.getTargetType(), dto.getTargetId(), dto.getDuration() != null ? dto.getDuration() : 0);
         return Result.success(null);
     }
 }

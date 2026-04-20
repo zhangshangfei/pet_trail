@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.WeightRecordDTO;
 import com.pettrail.pettrailbackend.entity.Pet;
 import com.pettrail.pettrailbackend.exception.ForbiddenException;
 import com.pettrail.pettrailbackend.exception.NotFoundException;
@@ -59,9 +60,9 @@ public class PetController extends BaseController {
     }
 
     @PutMapping("/{id}/weight")
-    public Result<Pet> updatePetWeight(@PathVariable Long id, @RequestBody java.util.Map<String, BigDecimal> requestBody) {
+    public Result<Pet> updatePetWeight(@PathVariable Long id, @RequestBody WeightRecordDTO dto) {
         validatePetOwnership(id);
-        BigDecimal weight = requestBody.get("weight");
+        BigDecimal weight = dto.getWeight();
         if (weight == null) {
             throw new IllegalArgumentException("体重参数不能为空");
         }

@@ -1,8 +1,8 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
 import com.pettrail.pettrailbackend.converter.PostConverter;
+import com.pettrail.pettrailbackend.dto.PostCreateDTO;
 import com.pettrail.pettrailbackend.dto.PostVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Post;
@@ -33,26 +33,17 @@ public class PostController extends BaseController {
     private final UserBehaviorService userBehaviorService;
 
     @PostMapping
-    public Result<Post> createPost(@RequestBody JSONObject data) {
+    public Result<Post> createPost(@RequestBody PostCreateDTO dto) {
         Long userId = requireLogin();
 
-        String content = data.getString("content");
-        Long petId = data.getLong("petId");
-        List<String> images = data.getJSONArray("images") != null ? data.getJSONArray("images").toList(String.class) : null;
-        List<String> videos = data.getJSONArray("videos") != null ? data.getJSONArray("videos").toList(String.class) : null;
-        List<String> stickers = data.getJSONArray("stickers") != null ? data.getJSONArray("stickers").toList(String.class) : null;
-
-        Map<String, String> bubble = null;
-        JSONObject bubbleObj = data.getJSONObject("bubble");
-        if (bubbleObj != null) {
-            bubble = new HashMap<>();
-            if (bubbleObj.getString("text") != null) bubble.put("text", bubbleObj.getString("text"));
-            if (bubbleObj.getString("bgColor") != null) bubble.put("bgColor", bubbleObj.getString("bgColor"));
-            if (bubbleObj.getString("textColor") != null) bubble.put("textColor", bubbleObj.getString("textColor"));
-        }
-
-        String location = data.getString("location");
-        List<String> tagNames = data.getJSONArray("tags") != null ? data.getJSONArray("tags").toList(String.class) : null;
+        String content = dto.getContent();
+        Long petId = dto.getPetId();
+        List<String> images = dto.getImages();
+        List<String> videos = dto.getVideos();
+        List<String> stickers = dto.getStickers();
+        Map<String, String> bubble = dto.getBubble();
+        String location = dto.getLocation();
+        List<String> tagNames = dto.getTags();
 
         Post post = postService.createPost(userId, petId, content, images, videos, stickers, bubble, location);
 

@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.UploadBase64DTO;
 import com.pettrail.pettrailbackend.service.CosService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,10 +37,10 @@ public class UploadController extends BaseController {
     }
 
     @PostMapping("/base64")
-    public Result<Map<String, Object>> uploadFileBase64(@RequestBody Map<String, String> request) throws IOException {
-        String fileBase64 = request.get("fileBase64");
-        String fileName = request.get("fileName");
-        String contentType = request.get("contentType");
+    public Result<Map<String, Object>> uploadFileBase64(@RequestBody UploadBase64DTO dto) throws IOException {
+        String fileBase64 = dto.getFileBase64();
+        String fileName = dto.getFileName();
+        String contentType = dto.getContentType();
 
         if (fileBase64 == null || fileBase64.isEmpty()) {
             return Result.error(400, "文件内容不能为空");

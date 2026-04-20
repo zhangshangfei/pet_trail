@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.MembershipOrderDTO;
 import com.pettrail.pettrailbackend.dto.OrderVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.service.OrderService;
@@ -32,9 +33,9 @@ public class UserMembershipController extends BaseController {
 
     @PostMapping("/orders")
     @Operation(summary = "创建订阅订单")
-    public Result<OrderVO> createOrder(@RequestBody Map<String, String> body) {
+    public Result<OrderVO> createOrder(@RequestBody MembershipOrderDTO dto) {
         Long userId = requireLogin();
-        String plan = body.getOrDefault("plan", "monthly");
+        String plan = dto.getPlan() != null ? dto.getPlan() : "monthly";
         return Result.success(orderService.createOrder(userId, plan));
     }
 

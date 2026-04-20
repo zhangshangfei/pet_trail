@@ -3,7 +3,11 @@ package com.pettrail.pettrailbackend.controller.admin;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.annotation.RequireRole;
+import com.pettrail.pettrailbackend.dto.AdminCreateDTO;
+import com.pettrail.pettrailbackend.dto.AdminUpdateDTO;
+import com.pettrail.pettrailbackend.dto.ChangePasswordDTO;
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.StatusDTO;
 import com.pettrail.pettrailbackend.entity.Admin;
 import com.pettrail.pettrailbackend.mapper.AdminMapper;
 import com.pettrail.pettrailbackend.util.UserContext;
@@ -14,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/admins")
@@ -48,11 +51,11 @@ public class AdminAdminController extends BaseAdminController {
     @com.pettrail.pettrailbackend.annotation.OperationLog(module = "admin", action = "create", detail = "创建管理员")
     @Operation(summary = "新增管理员")
     @RequireRole("SUPER_ADMIN")
-    public Result<Void> create(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
-        String password = body.get("password");
-        String nickname = body.get("nickname");
-        String role = body.getOrDefault("role", "ADMIN");
+    public Result<Void> create(@RequestBody AdminCreateDTO dto) {
+        String username = dto.getUsername();
+        String password = dto.getPassword();
+        String nickname = dto.getNickname();
+        String role = dto.getRole() != null ? dto.getRole() : "ADMIN";
 
         if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
             return Result.error(400, "用户名和密码不能为空");
@@ -79,7 +82,7 @@ public class AdminAdminController extends BaseAdminController {
     @com.pettrail.pettrailbackend.annotation.OperationLog(module = "admin", action = "update", detail = "更新管理员")
     @Operation(summary = "编辑管理员")
     @RequireRole("SUPER_ADMIN")
-    public Result<Void> update(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    public Result<Void> update(@PathVariable Long id, @RequestBody AdminUpdateDTO dto) {
         Long currentId = UserContext.getCurrentUserId();
         if (id.equals(currentId)) {
             return Result.error(400, "不能编辑自己");
@@ -90,11 +93,11 @@ public class AdminAdminController extends BaseAdminController {
             return Result.error(404, "管理员不存在");
         }
 
-        if (body.containsKey("nickname")) {
-            admin.setNickname(body.get("nickname"));
+        if (dto.getNickname() != null) {
+            admin.setNickname(dto.getNickname());
         }
-        if (body.containsKey("role") && !id.equals(currentId)) {
-            admin.setRole(body.get("role"));
+        if (dto.getRole() != null && !id.equals(currentId)) {
+            admin.setRole(dto.getRole());
         }
         admin.setUpdatedAt(LocalDateTime.now());
         adminMapper.updateById(admin);
@@ -105,7 +108,7 @@ public class AdminAdminController extends BaseAdminController {
     @com.pettrail.pettrailbackend.annotation.OperationLog(module = "admin", action = "update_status", detail = "更新管理员状态")
     @Operation(summary = "启用/禁用管理员")
     @RequireRole("SUPER_ADMIN")
-    public Result<Void> updateStatus(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
+    public Result<Void> updateStatus(@PathVariable Long id, @RequestBody StatusDTO dto) {
         Long currentId = UserContext.getCurrentUserId();
         if (id.equals(currentId)) {
             return Result.error(400, "不能禁用自己");
@@ -116,7 +119,7 @@ public class AdminAdminController extends BaseAdminController {
             return Result.error(404, "管理员不存在");
         }
 
-        admin.setStatus(body.get("status"));
+        admin.setStatus(dto.getStatus());
         admin.setUpdatedAt(LocalDateTime.now());
         adminMapper.updateById(admin);
         return Result.success(null);
@@ -141,11 +144,11 @@ public class AdminAdminController extends BaseAdminController {
     @PutMapping("/password")
     @com.pettrail.pettrailbackend.annotation.OperationLog(module = "admin", action = "change_pwd", detail = "修改密码")
     @Operation(summary = "修改自己的密码")
-    public Result<Void> changePassword(@RequestBody Map<String, String> body) {
+    public Result<Void> changePassword(@RequestBody ChangePasswordDTO dto) {
         Long currentId = requireLogin();
 
-        String oldPassword = body.get("oldPassword");
-        String newPassword = body.get("newPassword");
+        String oldPassword = dto.getOldPassword();
+        String newPassword = dto.getNewPassword();
 
         if (oldPassword == null || newPassword == null) {
             return Result.error(400, "请填写完整");

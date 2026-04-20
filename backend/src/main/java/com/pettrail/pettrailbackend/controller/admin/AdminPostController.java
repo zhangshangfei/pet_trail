@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.annotation.OperationLog;
 import com.pettrail.pettrailbackend.annotation.RequireRole;
+import com.pettrail.pettrailbackend.dto.PostAuditDTO;
+import com.pettrail.pettrailbackend.dto.PostBatchAuditDTO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.entity.User;
@@ -69,14 +71,14 @@ public class AdminPostController extends BaseAdminController {
     @PutMapping("/{id}/audit")
     @Operation(summary = "审核动态（通过/拒绝）")
     @OperationLog(module = "post", action = "audit", detail = "审核动态")
-    public Result<Void> audit(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public Result<Void> audit(@PathVariable Long id, @RequestBody PostAuditDTO dto) {
         Post post = postMapper.selectById(id);
         if (post == null) {
             return Result.error(404, "动态不存在");
         }
-        post.setAuditStatus(Integer.valueOf(body.get("auditStatus").toString()));
-        if (body.containsKey("auditRemark") && body.get("auditRemark") != null) {
-            post.setAuditRemark(body.get("auditRemark").toString());
+        post.setAuditStatus(dto.getAuditStatus());
+        if (dto.getAuditRemark() != null) {
+            post.setAuditRemark(dto.getAuditRemark());
         }
         postMapper.updateById(post);
         return Result.success(null);
@@ -99,10 +101,10 @@ public class AdminPostController extends BaseAdminController {
     @PutMapping("/batch-audit")
     @Operation(summary = "批量审核动态")
     @OperationLog(module = "post", action = "batch_audit", detail = "批量审核动态")
-    public Result<Void> batchAudit(@RequestBody Map<String, Object> body) {
-        List<Integer> postIds = (List<Integer>) body.get("postIds");
-        Integer auditStatus = (Integer) body.get("auditStatus");
-        String auditRemark = body.get("auditRemark") != null ? body.get("auditRemark").toString() : null;
+    public Result<Void> batchAudit(@RequestBody PostBatchAuditDTO dto) {
+        List<Integer> postIds = dto.getPostIds();
+        Integer auditStatus = dto.getAuditStatus();
+        String auditRemark = dto.getAuditRemark();
 
         if (postIds == null || postIds.isEmpty() || auditStatus == null) {
             return Result.error(400, "参数不完整");

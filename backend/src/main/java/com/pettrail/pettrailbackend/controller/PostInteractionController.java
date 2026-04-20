@@ -1,12 +1,12 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.CommentCreateDTO;
 import com.pettrail.pettrailbackend.dto.CommentVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.exception.NotFoundException;
 import com.pettrail.pettrailbackend.service.CommentService;
 import com.pettrail.pettrailbackend.service.PostService;
 import com.pettrail.pettrailbackend.service.UserBehaviorService;
-import com.alibaba.fastjson2.JSONObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -68,15 +68,15 @@ public class PostInteractionController extends BaseController {
     }
 
     @PostMapping("/{id}/comments")
-    public Result<CommentVO> createComment(@PathVariable Long id, @RequestBody JSONObject data) {
+    public Result<CommentVO> createComment(@PathVariable Long id, @RequestBody CommentCreateDTO dto) {
         Long userId = requireLogin();
-        String content = data.getString("content");
+        String content = dto.getContent();
         if (content == null || content.trim().isEmpty()) {
             return Result.error(400, "评论内容不能为空");
         }
 
-        Long parentId = data.getLong("parentId");
-        Long replyToId = data.getLong("replyToId");
+        Long parentId = dto.getParentId();
+        Long replyToId = dto.getReplyToId();
         return Result.success(commentService.createComment(id, userId, content.trim(), parentId, replyToId));
     }
 

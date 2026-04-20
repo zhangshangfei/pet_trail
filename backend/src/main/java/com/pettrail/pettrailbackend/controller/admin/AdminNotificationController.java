@@ -3,6 +3,8 @@ package com.pettrail.pettrailbackend.controller.admin;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.annotation.RequireRole;
+import com.pettrail.pettrailbackend.dto.NotificationBroadcastDTO;
+import com.pettrail.pettrailbackend.dto.NotificationSendDTO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Notification;
 import com.pettrail.pettrailbackend.entity.User;
@@ -59,10 +61,10 @@ public class AdminNotificationController extends BaseAdminController {
     @PostMapping
     @Operation(summary = "发送系统通知")
     @com.pettrail.pettrailbackend.annotation.OperationLog(module = "notification", action = "send", detail = "发送系统通知")
-    public Result<Void> sendNotification(@RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        String content = body.get("content").toString();
-        String title = body.getOrDefault("title", "系统通知").toString();
+    public Result<Void> sendNotification(@RequestBody NotificationSendDTO dto) {
+        Long userId = dto.getUserId();
+        String content = dto.getContent();
+        String title = dto.getTitle() != null ? dto.getTitle() : "系统通知";
 
         Notification notification = new Notification();
         notification.setUserId(userId);
@@ -80,9 +82,9 @@ public class AdminNotificationController extends BaseAdminController {
     @Operation(summary = "广播通知（发送给所有用户）")
     @RequireRole("SUPER_ADMIN")
     @com.pettrail.pettrailbackend.annotation.OperationLog(module = "notification", action = "broadcast", detail = "广播通知")
-    public Result<Map<String, Object>> broadcast(@RequestBody Map<String, String> body) {
-        String content = body.get("content");
-        String title = body.getOrDefault("title", "系统通知");
+    public Result<Map<String, Object>> broadcast(@RequestBody NotificationBroadcastDTO dto) {
+        String content = dto.getContent();
+        String title = dto.getTitle() != null ? dto.getTitle() : "系统通知";
 
         List<User> users = userMapper.selectList(new LambdaQueryWrapper<User>().eq(User::getStatus, 1));
 

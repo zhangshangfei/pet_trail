@@ -1,6 +1,8 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.StepRecordDTO;
+import com.pettrail.pettrailbackend.dto.WaterRecordDTO;
 import com.pettrail.pettrailbackend.entity.StepRecord;
 import com.pettrail.pettrailbackend.entity.WaterRecord;
 import com.pettrail.pettrailbackend.service.HealthRecordService;
@@ -28,32 +30,32 @@ public class HealthRecordController extends BaseController {
     }
 
     @PostMapping("/steps")
-    public Result<StepRecord> recordStep(@RequestBody java.util.Map<String, Object> requestBody) {
+    public Result<StepRecord> recordStep(@RequestBody StepRecordDTO dto) {
         Long userId = requireLogin();
-        Integer steps = requestBody.get("steps") != null ? Integer.parseInt(requestBody.get("steps").toString()) : null;
+        Integer steps = dto.getSteps();
         if (steps == null) {
             return Result.error(400, "步数参数不能为空");
         }
 
-        BigDecimal distance = requestBody.get("distance") != null ? new BigDecimal(requestBody.get("distance").toString()) : null;
-        LocalDate recordDate = requestBody.get("recordDate") != null ? LocalDate.parse(requestBody.get("recordDate").toString()) : null;
-        Long petId = requestBody.get("petId") != null ? Long.parseLong(requestBody.get("petId").toString()) : null;
+        BigDecimal distance = dto.getDistance();
+        LocalDate recordDate = dto.getRecordDate() != null ? LocalDate.parse(dto.getRecordDate()) : null;
+        Long petId = dto.getPetId();
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();
 
         return Result.success(healthRecordService.recordStep(userId, petId, steps, distance, date));
     }
 
     @PostMapping("/water")
-    public Result<WaterRecord> recordWater(@RequestBody java.util.Map<String, Object> requestBody) {
+    public Result<WaterRecord> recordWater(@RequestBody WaterRecordDTO dto) {
         Long userId = requireLogin();
-        BigDecimal amount = requestBody.get("amount") != null ? new BigDecimal(requestBody.get("amount").toString()) : null;
+        BigDecimal amount = dto.getAmount();
         if (amount == null) {
             return Result.error(400, "水量参数不能为空");
         }
 
-        LocalDate recordDate = requestBody.get("recordDate") != null ? LocalDate.parse(requestBody.get("recordDate").toString()) : null;
-        LocalTime recordTime = requestBody.get("recordTime") != null ? LocalTime.parse(requestBody.get("recordTime").toString()) : null;
-        Long petId = requestBody.get("petId") != null ? Long.parseLong(requestBody.get("petId").toString()) : null;
+        LocalDate recordDate = dto.getRecordDate() != null ? LocalDate.parse(dto.getRecordDate()) : null;
+        LocalTime recordTime = dto.getRecordTime() != null ? LocalTime.parse(dto.getRecordTime()) : null;
+        Long petId = dto.getPetId();
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();
 
         return Result.success(healthRecordService.recordWater(userId, petId, amount, date, recordTime));

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.annotation.OperationLog;
 import com.pettrail.pettrailbackend.annotation.RequireRole;
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.StatusDTO;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -60,12 +61,12 @@ public class AdminUserController extends BaseAdminController {
     @Operation(summary = "更新用户状态（启用/禁用）")
     @RequireRole("SUPER_ADMIN")
     @OperationLog(module = "user", action = "update_status", detail = "更新用户状态")
-    public Result<Void> updateStatus(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
+    public Result<Void> updateStatus(@PathVariable Long id, @RequestBody StatusDTO dto) {
         User user = userMapper.selectById(id);
         if (user == null) {
             return Result.error(404, "用户不存在");
         }
-        user.setStatus(body.get("status"));
+        user.setStatus(dto.getStatus());
         userMapper.updateById(user);
         return Result.success(null);
     }

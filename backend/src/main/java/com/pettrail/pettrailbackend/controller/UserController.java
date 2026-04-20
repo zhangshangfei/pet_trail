@@ -2,6 +2,8 @@ package com.pettrail.pettrailbackend.controller;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.UserUpdateDTO;
+import com.pettrail.pettrailbackend.dto.WxLoginDTO;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.service.UserService;
 import com.pettrail.pettrailbackend.service.FollowService;
@@ -42,8 +44,8 @@ public class UserController extends BaseController {
     private String appSecret;
 
     @PostMapping("/login")
-    public Result<?> login(@RequestBody JSONObject data) {
-        String code = data.getString("code");
+    public Result<?> login(@RequestBody WxLoginDTO dto) {
+        String code = dto.getCode();
         if (code == null || code.isEmpty()) {
             return Result.error(400, "缺少 code 参数");
         }
@@ -167,13 +169,9 @@ public class UserController extends BaseController {
     }
 
     @PutMapping("/profile")
-    public Result<User> updateProfile(@RequestBody java.util.Map<String, Object> requestBody) {
+    public Result<User> updateProfile(@RequestBody UserUpdateDTO dto) {
         Long userId = requireLogin();
-        String nickname = (String) requestBody.get("nickname");
-        String avatar = (String) requestBody.get("avatar");
-        String phone = (String) requestBody.get("phone");
-        Integer gender = requestBody.get("gender") != null ? Integer.parseInt(requestBody.get("gender").toString()) : null;
-        return Result.success(userService.updateProfile(userId, nickname, avatar, phone, gender));
+        return Result.success(userService.updateProfile(userId, dto.getNickname(), dto.getAvatar(), dto.getPhone(), dto.getGender()));
     }
 
     @DeleteMapping("/account")

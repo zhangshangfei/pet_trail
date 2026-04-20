@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.WeightRecordDTO;
 import com.pettrail.pettrailbackend.entity.Pet;
 import com.pettrail.pettrailbackend.entity.WeightRecord;
 import com.pettrail.pettrailbackend.exception.ForbiddenException;
@@ -54,12 +55,12 @@ public class WeightRecordController extends BaseController {
     }
 
     @PostMapping
-    public Result<WeightRecord> createRecord(@PathVariable Long petId, @RequestBody java.util.Map<String, Object> requestBody) {
+    public Result<WeightRecord> createRecord(@PathVariable Long petId, @RequestBody WeightRecordDTO dto) {
         validatePetOwnership(petId);
-        BigDecimal weight = new BigDecimal(requestBody.get("weight").toString());
-        LocalDate recordDate = requestBody.containsKey("recordDate") && requestBody.get("recordDate") != null
-                ? LocalDate.parse(requestBody.get("recordDate").toString()) : null;
-        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
+        BigDecimal weight = dto.getWeight();
+        LocalDate recordDate = dto.getRecordDate() != null && !dto.getRecordDate().isEmpty()
+                ? LocalDate.parse(dto.getRecordDate()) : null;
+        String note = dto.getNote();
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();
         WeightRecord record = weightRecordService.createRecord(petId, weight, date, note);
         petService.updatePetWeight(petId, weight);
@@ -69,12 +70,12 @@ public class WeightRecordController extends BaseController {
     @PutMapping("/{id}")
     public Result<WeightRecord> updateRecord(
             @PathVariable Long petId, @PathVariable Long id,
-            @RequestBody java.util.Map<String, Object> requestBody) {
+            @RequestBody WeightRecordDTO dto) {
         validatePetOwnership(petId);
-        BigDecimal weight = new BigDecimal(requestBody.get("weight").toString());
-        LocalDate recordDate = requestBody.containsKey("recordDate") && requestBody.get("recordDate") != null
-                ? LocalDate.parse(requestBody.get("recordDate").toString()) : null;
-        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
+        BigDecimal weight = dto.getWeight();
+        LocalDate recordDate = dto.getRecordDate() != null && !dto.getRecordDate().isEmpty()
+                ? LocalDate.parse(dto.getRecordDate()) : null;
+        String note = dto.getNote();
         LocalDate date = recordDate != null ? recordDate : LocalDate.now();
         WeightRecord record = weightRecordService.updateRecord(id, weight, date, note);
         petService.updatePetWeight(petId, weight);

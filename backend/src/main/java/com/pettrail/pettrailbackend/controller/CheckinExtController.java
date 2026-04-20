@@ -1,5 +1,7 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.CheckinReminderDTO;
+import com.pettrail.pettrailbackend.dto.CheckinReminderUpdateDTO;
 import com.pettrail.pettrailbackend.dto.CheckinReportVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.CheckinReminder;
@@ -66,20 +68,20 @@ public class CheckinExtController extends BaseController {
 
     @PostMapping("/reminders")
     @Operation(summary = "创建打卡提醒")
-    public Result<CheckinReminder> createReminder(@RequestBody Map<String, Object> body) {
+    public Result<CheckinReminder> createReminder(@RequestBody CheckinReminderDTO dto) {
         Long userId = requireLogin();
-        Long itemId = body.get("itemId") != null ? Long.valueOf(body.get("itemId").toString()) : null;
-        LocalTime remindTime = LocalTime.parse((String) body.get("remindTime"));
+        Long itemId = dto.getItemId();
+        LocalTime remindTime = LocalTime.parse(dto.getRemindTime());
         return Result.success(checkinReminderService.createReminder(userId, itemId, remindTime));
     }
 
     @PutMapping("/reminders/{id}")
     @Operation(summary = "更新打卡提醒")
-    public Result<CheckinReminder> updateReminder(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public Result<CheckinReminder> updateReminder(@PathVariable Long id, @RequestBody CheckinReminderUpdateDTO dto) {
         Long userId = requireLogin();
-        Long itemId = body.get("itemId") != null ? Long.valueOf(body.get("itemId").toString()) : null;
-        LocalTime remindTime = body.get("remindTime") != null ? LocalTime.parse((String) body.get("remindTime")) : null;
-        Boolean isEnabled = body.get("isEnabled") != null ? Boolean.valueOf(body.get("isEnabled").toString()) : null;
+        Long itemId = dto.getItemId();
+        LocalTime remindTime = dto.getRemindTime() != null ? LocalTime.parse(dto.getRemindTime()) : null;
+        Boolean isEnabled = dto.getIsEnabled();
 
         CheckinReminder reminder = checkinReminderService.updateReminder(id, userId, itemId, remindTime, isEnabled);
         if (reminder == null) {

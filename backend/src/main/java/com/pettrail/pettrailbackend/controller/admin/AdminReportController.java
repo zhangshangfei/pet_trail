@@ -2,6 +2,7 @@ package com.pettrail.pettrailbackend.controller.admin;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pettrail.pettrailbackend.dto.ReportHandleDTO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Report;
 import com.pettrail.pettrailbackend.mapper.ReportMapper;
@@ -40,14 +41,14 @@ public class AdminReportController extends BaseAdminController {
     @PutMapping("/{id}/handle")
     @com.pettrail.pettrailbackend.annotation.OperationLog(module = "report", action = "handle", detail = "处理举报")
     @Operation(summary = "处理举报")
-    public Result<Void> handle(@PathVariable Long id, @RequestBody java.util.Map<String, Object> body) {
+    public Result<Void> handle(@PathVariable Long id, @RequestBody ReportHandleDTO dto) {
         Report report = reportMapper.selectById(id);
         if (report == null) {
             return Result.error(404, "举报不存在");
         }
-        report.setStatus(Integer.valueOf(body.get("status").toString()));
-        if (body.containsKey("result")) {
-            report.setResult(body.get("result").toString());
+        report.setStatus(dto.getStatus());
+        if (dto.getResult() != null) {
+            report.setResult(dto.getResult());
         }
         reportMapper.updateById(report);
         return Result.success(null);

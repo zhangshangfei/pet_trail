@@ -2,7 +2,9 @@ package com.pettrail.pettrailbackend.controller.admin;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pettrail.pettrailbackend.dto.FeedbackReplyDTO;
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.StatusDTO;
 import com.pettrail.pettrailbackend.entity.Feedback;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.FeedbackMapper;
@@ -66,12 +68,12 @@ public class AdminFeedbackController extends BaseAdminController {
     @PutMapping("/{id}/reply")
     @com.pettrail.pettrailbackend.annotation.OperationLog(module = "feedback", action = "reply", detail = "回复反馈")
     @Operation(summary = "回复反馈")
-    public Result<Void> reply(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    public Result<Void> reply(@PathVariable Long id, @RequestBody FeedbackReplyDTO dto) {
         Feedback feedback = feedbackMapper.selectById(id);
         if (feedback == null) {
             return Result.error(404, "反馈不存在");
         }
-        String replyContent = body.get("reply");
+        String replyContent = dto.getReply();
         if (replyContent == null || replyContent.trim().isEmpty()) {
             return Result.error(400, "回复内容不能为空");
         }
@@ -85,12 +87,12 @@ public class AdminFeedbackController extends BaseAdminController {
     @PutMapping("/{id}/status")
     @com.pettrail.pettrailbackend.annotation.OperationLog(module = "feedback", action = "update_status", detail = "更新反馈状态")
     @Operation(summary = "更新反馈状态")
-    public Result<Void> updateStatus(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
+    public Result<Void> updateStatus(@PathVariable Long id, @RequestBody StatusDTO dto) {
         Feedback feedback = feedbackMapper.selectById(id);
         if (feedback == null) {
             return Result.error(404, "反馈不存在");
         }
-        Integer newStatus = body.get("status");
+        Integer newStatus = dto.getStatus();
         if (newStatus == null) {
             return Result.error(400, "状态不能为空");
         }

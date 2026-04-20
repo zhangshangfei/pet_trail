@@ -1,6 +1,9 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.ReminderNextDateDTO;
+import com.pettrail.pettrailbackend.dto.ReminderStatusDTO;
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.VaccineReminderDTO;
 import com.pettrail.pettrailbackend.entity.VaccineReminder;
 import com.pettrail.pettrailbackend.service.VaccineReminderService;
 import com.pettrail.pettrailbackend.util.UserContext;
@@ -32,12 +35,12 @@ public class VaccineReminderController extends BaseController {
     @PostMapping
     public Result<VaccineReminder> createReminder(
             @PathVariable Long petId,
-            @RequestBody java.util.Map<String, Object> requestBody) {
+            @RequestBody VaccineReminderDTO dto) {
         Long userId = requireLogin();
-        String vaccineName = (String) requestBody.get("vaccineName");
-        String nextDateStr = (String) requestBody.get("nextDate");
+        String vaccineName = dto.getVaccineName();
+        String nextDateStr = dto.getNextDate();
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
-        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
+        String note = dto.getNote();
         return Result.success(vaccineReminderService.createReminder(petId, userId, vaccineName, nextDate, note));
     }
 
@@ -49,26 +52,26 @@ public class VaccineReminderController extends BaseController {
     @PutMapping("/{id}")
     public Result<VaccineReminder> updateReminder(
             @PathVariable Long petId, @PathVariable Long id,
-            @RequestBody java.util.Map<String, Object> requestBody) {
-        String vaccineName = (String) requestBody.get("vaccineName");
-        String nextDateStr = (String) requestBody.get("nextDate");
+            @RequestBody VaccineReminderDTO dto) {
+        String vaccineName = dto.getVaccineName();
+        String nextDateStr = dto.getNextDate();
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
-        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
+        String note = dto.getNote();
         return Result.success(vaccineReminderService.updateReminder(id, vaccineName, nextDate, note));
     }
 
     @PutMapping("/{id}/status")
     public Result<VaccineReminder> updateStatus(
             @PathVariable Long petId, @PathVariable Long id,
-            @RequestBody java.util.Map<String, Integer> requestBody) {
-        return Result.success(vaccineReminderService.updateStatus(id, requestBody.get("status")));
+            @RequestBody ReminderStatusDTO dto) {
+        return Result.success(vaccineReminderService.updateStatus(id, dto.getStatus()));
     }
 
     @PutMapping("/{id}/next-date")
     public Result<VaccineReminder> updateNextDate(
             @PathVariable Long petId, @PathVariable Long id,
-            @RequestBody java.util.Map<String, String> requestBody) {
-        String nextDateStr = requestBody.get("nextDate");
+            @RequestBody ReminderNextDateDTO dto) {
+        String nextDateStr = dto.getNextDate();
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
         return Result.success(vaccineReminderService.updateNextDate(id, nextDate));
     }

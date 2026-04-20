@@ -1,5 +1,8 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.ParasiteReminderDTO;
+import com.pettrail.pettrailbackend.dto.ReminderNextDateDTO;
+import com.pettrail.pettrailbackend.dto.ReminderStatusDTO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.ParasiteReminder;
 import com.pettrail.pettrailbackend.service.ParasiteReminderService;
@@ -32,12 +35,12 @@ public class ParasiteReminderController extends BaseController {
     @PostMapping
     public Result<ParasiteReminder> createReminder(
             @PathVariable Long petId,
-            @RequestBody java.util.Map<String, Object> requestBody) {
+            @RequestBody ParasiteReminderDTO dto) {
         Long userId = requireLogin();
-        Integer type = requestBody.get("type") != null ? ((Number) requestBody.get("type")).intValue() : null;
-        String nextDateStr = (String) requestBody.get("nextDate");
+        Integer type = dto.getType();
+        String nextDateStr = dto.getNextDate();
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
-        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
+        String note = dto.getNote();
         return Result.success(parasiteReminderService.createReminder(petId, userId, type, nextDate, note));
     }
 
@@ -49,26 +52,26 @@ public class ParasiteReminderController extends BaseController {
     @PutMapping("/{id}")
     public Result<ParasiteReminder> updateReminder(
             @PathVariable Long petId, @PathVariable Long id,
-            @RequestBody java.util.Map<String, Object> requestBody) {
-        Integer type = requestBody.get("type") != null ? ((Number) requestBody.get("type")).intValue() : null;
-        String nextDateStr = (String) requestBody.get("nextDate");
+            @RequestBody ParasiteReminderDTO dto) {
+        Integer type = dto.getType();
+        String nextDateStr = dto.getNextDate();
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
-        String note = requestBody.get("note") != null ? requestBody.get("note").toString() : null;
+        String note = dto.getNote();
         return Result.success(parasiteReminderService.updateReminder(id, type, nextDate, note));
     }
 
     @PutMapping("/{id}/status")
     public Result<ParasiteReminder> updateStatus(
             @PathVariable Long petId, @PathVariable Long id,
-            @RequestBody java.util.Map<String, Integer> requestBody) {
-        return Result.success(parasiteReminderService.updateStatus(id, requestBody.get("status")));
+            @RequestBody ReminderStatusDTO dto) {
+        return Result.success(parasiteReminderService.updateStatus(id, dto.getStatus()));
     }
 
     @PutMapping("/{id}/next-date")
     public Result<ParasiteReminder> updateNextDate(
             @PathVariable Long petId, @PathVariable Long id,
-            @RequestBody java.util.Map<String, String> requestBody) {
-        String nextDateStr = requestBody.get("nextDate");
+            @RequestBody ReminderNextDateDTO dto) {
+        String nextDateStr = dto.getNextDate();
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
         return Result.success(parasiteReminderService.updateNextDate(id, nextDate));
     }

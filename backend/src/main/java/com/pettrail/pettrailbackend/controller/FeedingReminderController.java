@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.FeedingReminderDTO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.FeedingReminder;
 import com.pettrail.pettrailbackend.service.FeedingReminderService;
@@ -8,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -28,13 +28,13 @@ public class FeedingReminderController extends BaseController {
     }
 
     @PostMapping
-    public Result<FeedingReminder> createReminder(@RequestBody Map<String, Object> body) {
+    public Result<FeedingReminder> createReminder(@RequestBody FeedingReminderDTO dto) {
         Long userId = requireLogin();
-        Long petId = body.get("petId") != null ? Long.parseLong(body.get("petId").toString()) : null;
-        String mealType = body.get("mealType") != null ? body.get("mealType").toString() : "breakfast";
-        String time = body.get("time") != null ? body.get("time").toString() : null;
-        String repeat = body.get("repeat") != null ? body.get("repeat").toString() : "daily";
-        String note = body.get("note") != null ? body.get("note").toString() : null;
+        Long petId = dto.getPetId();
+        String mealType = dto.getMealType() != null ? dto.getMealType() : "breakfast";
+        String time = dto.getTime();
+        String repeat = dto.getRepeat() != null ? dto.getRepeat() : "daily";
+        String note = dto.getNote();
 
         if (time == null || time.isEmpty()) {
             return Result.error(400, "请选择提醒时间");
@@ -47,12 +47,12 @@ public class FeedingReminderController extends BaseController {
     }
 
     @PutMapping("/{id}")
-    public Result<FeedingReminder> updateReminder(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public Result<FeedingReminder> updateReminder(@PathVariable Long id, @RequestBody FeedingReminderDTO dto) {
         Long userId = requireLogin();
-        String mealType = body.get("mealType") != null ? body.get("mealType").toString() : null;
-        String time = body.get("time") != null ? body.get("time").toString() : null;
-        String repeat = body.get("repeat") != null ? body.get("repeat").toString() : null;
-        String note = body.get("note") != null ? body.get("note").toString() : null;
+        String mealType = dto.getMealType();
+        String time = dto.getTime();
+        String repeat = dto.getRepeat();
+        String note = dto.getNote();
         return Result.success(feedingReminderService.updateReminder(userId, id, mealType, time, repeat, note));
     }
 

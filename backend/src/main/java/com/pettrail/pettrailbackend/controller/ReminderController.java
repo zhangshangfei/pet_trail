@@ -1,6 +1,8 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.ParasiteReminderDTO;
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.VaccineReminderDTO;
 import com.pettrail.pettrailbackend.entity.ParasiteReminder;
 import com.pettrail.pettrailbackend.entity.VaccineReminder;
 import com.pettrail.pettrailbackend.service.ReminderService;
@@ -20,13 +22,13 @@ public class ReminderController extends BaseController {
     private final ReminderService reminderService;
 
     @PostMapping("/vaccine")
-    public Result<VaccineReminder> createVaccineReminder(@RequestBody java.util.Map<String, Object> requestBody) {
+    public Result<VaccineReminder> createVaccineReminder(@RequestBody VaccineReminderDTO dto) {
         Long userId = requireLogin();
-        Long petId = requestBody.get("petId") != null ? Long.parseLong(requestBody.get("petId").toString()) : null;
-        String vaccineName = (String) requestBody.get("vaccineName");
-        Integer vaccineType = requestBody.get("vaccineType") != null ? Integer.parseInt(requestBody.get("vaccineType").toString()) : null;
-        LocalDate nextDate = requestBody.get("nextDate") != null ? LocalDate.parse(requestBody.get("nextDate").toString()) : null;
-        Integer reminderDays = requestBody.get("reminderDays") != null ? Integer.parseInt(requestBody.get("reminderDays").toString()) : null;
+        Long petId = dto.getPetId();
+        String vaccineName = dto.getVaccineName();
+        Integer vaccineType = dto.getVaccineType();
+        LocalDate nextDate = dto.getNextDate() != null ? LocalDate.parse(dto.getNextDate()) : null;
+        Integer reminderDays = dto.getReminderDays();
 
         if (petId == null || vaccineName == null || nextDate == null) {
             return Result.error(400, "宠物ID、疫苗名称和下次接种日期不能为空");
@@ -36,13 +38,13 @@ public class ReminderController extends BaseController {
     }
 
     @PostMapping("/parasite")
-    public Result<ParasiteReminder> createParasiteReminder(@RequestBody java.util.Map<String, Object> requestBody) {
+    public Result<ParasiteReminder> createParasiteReminder(@RequestBody ParasiteReminderDTO dto) {
         Long userId = requireLogin();
-        Long petId = requestBody.get("petId") != null ? Long.parseLong(requestBody.get("petId").toString()) : null;
-        Integer type = requestBody.get("type") != null ? Integer.parseInt(requestBody.get("type").toString()) : null;
-        String productName = (String) requestBody.get("productName");
-        LocalDate nextDate = requestBody.get("nextDate") != null ? LocalDate.parse(requestBody.get("nextDate").toString()) : null;
-        Integer intervalDays = requestBody.get("intervalDays") != null ? Integer.parseInt(requestBody.get("intervalDays").toString()) : null;
+        Long petId = dto.getPetId();
+        Integer type = dto.getType();
+        String productName = dto.getProductName();
+        LocalDate nextDate = dto.getNextDate() != null ? LocalDate.parse(dto.getNextDate()) : null;
+        Integer intervalDays = dto.getIntervalDays();
 
         if (petId == null || type == null || nextDate == null) {
             return Result.error(400, "宠物ID、类型和下次驱虫日期不能为空");

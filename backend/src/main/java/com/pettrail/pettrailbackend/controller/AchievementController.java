@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.AchievementCheckDTO;
 import com.pettrail.pettrailbackend.dto.AchievementVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.UserAchievement;
@@ -63,9 +64,9 @@ public class AchievementController extends BaseController {
 
     @PostMapping("/check")
     @Operation(summary = "手动触发成就检查")
-    public Result<Map<String, Object>> checkAchievements(@RequestBody Map<String, String> body) {
+    public Result<Map<String, Object>> checkAchievements(@RequestBody AchievementCheckDTO dto) {
         Long userId = requireLogin();
-        String conditionType = body.get("conditionType");
+        String conditionType = dto.getConditionType();
         boolean unlocked = achievementService.checkAndUnlock(userId, conditionType);
 
         Map<String, Object> result = new HashMap<>();

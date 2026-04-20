@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.pettrail.pettrailbackend.dto.FeedbackCreateDTO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Feedback;
 import com.pettrail.pettrailbackend.mapper.FeedbackMapper;
@@ -20,12 +21,11 @@ public class FeedbackController extends BaseController {
     private final FeedbackMapper feedbackMapper;
 
     @PostMapping
-    public Result<Void> submitFeedback(@RequestBody java.util.Map<String, Object> body) {
+    public Result<Void> submitFeedback(@RequestBody FeedbackCreateDTO dto) {
         Long userId = requireLogin();
-        String type = body.get("type") != null ? body.get("type").toString() : "other";
-        String content = body.get("content") != null ? body.get("content").toString() : "";
-        String contact = body.get("contact") != null ? body.get("contact").toString() : null;
-        Object imagesObj = body.get("images");
+        String type = dto.getType() != null ? dto.getType() : "other";
+        String content = dto.getContent() != null ? dto.getContent() : "";
+        String contact = dto.getContact();
 
         if (content.trim().isEmpty()) {
             return Result.error(400, "反馈内容不能为空");
@@ -36,8 +36,8 @@ public class FeedbackController extends BaseController {
         feedback.setType(type);
         feedback.setContent(content.trim());
         feedback.setContact(contact);
-        if (imagesObj != null) {
-            feedback.setImages(imagesObj.toString());
+        if (dto.getImages() != null) {
+            feedback.setImages(dto.getImages());
         }
         feedback.setStatus(0);
         feedback.setCreatedAt(LocalDateTime.now());
