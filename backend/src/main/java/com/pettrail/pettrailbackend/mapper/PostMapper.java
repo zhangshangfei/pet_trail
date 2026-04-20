@@ -2,7 +2,6 @@ package com.pettrail.pettrailbackend.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.pettrail.pettrailbackend.entity.Post;
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDate;
@@ -12,7 +11,6 @@ import java.util.List;
 /**
  * 动态 Mapper
  */
-@Mapper
 public interface PostMapper extends BaseMapper<Post> {
 
     /**

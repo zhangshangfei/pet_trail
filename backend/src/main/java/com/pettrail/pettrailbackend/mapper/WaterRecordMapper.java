@@ -2,7 +2,6 @@ package com.pettrail.pettrailbackend.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.pettrail.pettrailbackend.entity.WaterRecord;
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
@@ -12,7 +11,6 @@ import java.util.List;
 /**
  * 饮水记录 Mapper
  */
-@Mapper
 public interface WaterRecordMapper extends BaseMapper<WaterRecord> {
 
     /**

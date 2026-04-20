@@ -2,14 +2,12 @@ package com.pettrail.pettrailbackend.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.pettrail.pettrailbackend.entity.UserBehavior;
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 import java.util.Map;
 
-@Mapper
 public interface UserBehaviorMapper extends BaseMapper<UserBehavior> {
 
     @Select("SELECT target_id FROM user_behaviors WHERE user_id = #{userId} AND action = #{action} AND target_type = #{targetType} ORDER BY created_at DESC LIMIT #{limit}")

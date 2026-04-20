@@ -2,13 +2,11 @@ package com.pettrail.pettrailbackend.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.pettrail.pettrailbackend.entity.PostEe;
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 /**
  * 动态收藏 Mapper
  */
-@Mapper
 public interface PostEeMapper extends BaseMapper<PostEe> {
 
     /**

@@ -2,7 +2,6 @@ package com.pettrail.pettrailbackend.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.pettrail.pettrailbackend.entity.Follow;
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -10,7 +9,6 @@ import java.util.List;
 /**
  * 关注 Mapper
  */
-@Mapper
 public interface FollowMapper extends BaseMapper<Follow> {
 
     /**

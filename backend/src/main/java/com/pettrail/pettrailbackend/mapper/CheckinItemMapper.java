@@ -2,14 +2,12 @@ package com.pettrail.pettrailbackend.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.pettrail.pettrailbackend.entity.CheckinItem;
-import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
 /**
- * 打卡项 Mapper
+ * 打卡�?Mapper
  */
-@Mapper
 public interface CheckinItemMapper extends BaseMapper<CheckinItem> {
 
     /**

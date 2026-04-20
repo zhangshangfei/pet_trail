@@ -2,13 +2,11 @@ package com.pettrail.pettrailbackend.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.pettrail.pettrailbackend.entity.CheckinStats;
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 /**
  * 打卡统计 Mapper
  */
-@Mapper
 public interface CheckinStatsMapper extends BaseMapper<CheckinStats> {
 
     /**

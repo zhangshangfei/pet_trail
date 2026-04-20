@@ -2,13 +2,11 @@ package com.pettrail.pettrailbackend.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.pettrail.pettrailbackend.entity.PostLike;
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 /**
  * 动态点赞 Mapper
  */
-@Mapper
 public interface PostLikeMapper extends BaseMapper<PostLike> {
 
     /**
