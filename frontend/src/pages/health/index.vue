@@ -438,7 +438,7 @@ export default {
       const userInfo = uni.getStorageSync("userInfo");
       const token = uni.getStorageSync("token");
 
-      if (userInfo && userInfo.avatar) {
+      if (userInfo) {
         this.userAvatar = getUserAvatar(userInfo.id, userInfo.avatar);
         this.userName = userInfo.nickname || "小萌宠主人";
       } else if (!token) {

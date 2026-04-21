@@ -419,7 +419,7 @@ export default {
           uni.setStorageSync('userInfo', userData);
         } else if (!cachedUserInfo) {
           this.isLoggedIn = false;
-          this.userName = '请登录';
+          this.userName = '';
           this.avatarUrl = DEFAULT_USER_AVATAR;
         }
       } catch (error) {

@@ -73,7 +73,7 @@
           class="user-card"
           @tap="goUserDetail(user)"
         >
-          <image class="user-avatar" :src="getUserAvatar(user.id, user.avatar)" mode="aspectFill" />
+          <avatar-view :src="user.avatar" :name="user.nickname || '萌宠主人'" :id="user.id" :size="80" />
           <view class="user-info">
             <view class="user-name-row">
               <text class="user-nickname">{{ user.nickname || '萌宠主人' }}</text>
@@ -112,9 +112,11 @@
 <script>
 import { discoverUsers } from '@/api/auth'
 import { toggleFollow } from '@/api/post'
-import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
+import { checkLogin } from '@/utils/index'
+import AvatarView from '@/components/AvatarView.vue'
 
 export default {
+  components: { AvatarView },
   data() {
     return {
       statusBarHeight: 0,
