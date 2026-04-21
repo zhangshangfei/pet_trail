@@ -33,7 +33,9 @@ export default {
       return {
         width: this.size + 'rpx',
         height: this.size + 'rpx',
-        borderRadius: (this.size / 2) + 'rpx'
+        borderRadius: (this.size / 2) + 'rpx',
+        display: 'block',
+        lineHeight: '0'
       }
     },
     textStyle() {
@@ -44,7 +46,8 @@ export default {
         backgroundColor: this.bgColor,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        lineHeight: '0'
       }
     },
     iconStyle() {
@@ -55,14 +58,15 @@ export default {
         backgroundColor: '#c0c4cc',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        lineHeight: '0'
       }
     },
     iconTextStyle() {
       const fontSize = Math.max(20, Math.round(this.size * 0.5))
       return {
         fontSize: fontSize + 'rpx',
-        lineHeight: fontSize + 'rpx'
+        lineHeight: '1'
       }
     },
     charStyle() {
@@ -71,7 +75,7 @@ export default {
         fontSize: fontSize + 'rpx',
         color: '#ffffff',
         fontWeight: '600',
-        lineHeight: fontSize + 'rpx'
+        lineHeight: '1'
       }
     }
   }

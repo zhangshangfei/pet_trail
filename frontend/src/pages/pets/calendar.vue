@@ -20,7 +20,9 @@
               :class="{ active: currentPetId === pet.id }"
               @tap="switchPet(pet.id)"
             >
-              <avatar-view class="pet-tab-avatar" :src="pet.avatar || ''" :name="pet.name || ''" :id="pet.id" :size="72" />
+              <view class="pet-tab-avatar" :class="{ active: currentPetId === pet.id }">
+                <avatar-view :src="pet.avatar || ''" :name="pet.name || ''" :id="pet.id" :size="66" />
+              </view>
               <text class="pet-tab-name">{{ pet.name }}</text>
             </view>
           </scroll-view>
@@ -328,8 +330,8 @@ $text-light: #999999;
 .pet-tabs { margin-bottom: 20rpx; }
 .pet-tabs-scroll { white-space: nowrap; }
 .pet-tab { display: inline-flex; flex-direction: column; align-items: center; margin-right: 24rpx; padding: 12rpx; }
-.pet-tab-avatar { margin-bottom: 6rpx; border: 3rpx solid #e5e7eb; border-radius: 50%; }
-.pet-tab.active .pet-tab-avatar { border-color: $primary; }
+.pet-tab-avatar { width: 72rpx; height: 72rpx; border-radius: 50%; border: 3rpx solid #e5e7eb; margin-bottom: 6rpx; overflow: hidden; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+.pet-tab-avatar.active { border-color: $primary; }
 .pet-tab-name { font-size: 22rpx; color: $text-secondary; }
 .pet-tab.active .pet-tab-name { color: $primary; font-weight: 600; }
 
