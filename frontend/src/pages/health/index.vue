@@ -72,8 +72,8 @@
               <text class="core-label">绝育</text>
             </view>
             <view class="core-card core-card-wide">
-              <view class="score-circle">
-                <text class="score-text">{{ petHealthScore }}%</text>
+              <view class="score-circle" :class="scoreCircleClass">
+                <text class="score-text">{{ petHealthScore }}</text>
               </view>
               <text class="core-label">健康评分</text>
             </view>
@@ -86,8 +86,12 @@
             <text class="ai-entry-icon">🤖</text>
             <view class="ai-entry-text">
               <text class="ai-entry-title">AI 健康分析</text>
-              <text class="ai-entry-desc">智能评估宠物健康状况</text>
+              <text v-if="aiSummary" class="ai-entry-desc">综合评分 {{ aiSummary.score }} · {{ aiSummary.level }}</text>
+              <text v-else class="ai-entry-desc">智能评估宠物健康状况</text>
             </view>
+          </view>
+          <view v-if="aiSummary && aiSummary.warningCount > 0" class="ai-entry-badge">
+            <text class="ai-entry-badge-text">{{ aiSummary.warningCount }}</text>
           </view>
           <text class="ai-entry-arrow">›</text>
         </view>
@@ -336,7 +340,8 @@ export default {
         medicine: "",
         remark: ""
       },
-      healthScore: 0
+      healthScore: 0,
+      aiSummary: null
     };
   },
   computed: {
@@ -363,6 +368,12 @@ export default {
     },
     petHealthScore() {
       return this.healthScore;
+    },
+    scoreCircleClass() {
+      if (this.healthScore >= 90) return 'score-excellent';
+      if (this.healthScore >= 75) return 'score-good';
+      if (this.healthScore >= 60) return 'score-fair';
+      return 'score-poor';
     },
     weightInputDelta() {
       const w = parseFloat(this.weightForm.weight);
@@ -519,18 +530,26 @@ export default {
     async loadHealthScore() {
       if (!this.currentPet || !this.currentPet.id) {
         this.healthScore = 0;
+        this.aiSummary = null;
         return;
       }
       try {
-        const res = await uni.$request.get('/api/health/score', { petId: this.currentPet.id });
+        const res = await uni.$request.post(`/api/health/analysis/${this.currentPet.id}`);
         if (res && res.success && res.data) {
           this.healthScore = res.data.score || 0;
+          this.aiSummary = {
+            score: res.data.score || 0,
+            level: res.data.level || '',
+            warningCount: (res.data.warnings && res.data.warnings.length) || 0
+          };
         } else {
           this.healthScore = 0;
+          this.aiSummary = null;
         }
       } catch (e) {
         console.error("加载健康评分失败:", e);
         this.healthScore = 0;
+        this.aiSummary = null;
       }
     },
     togglePetSelector() {
@@ -856,6 +875,8 @@ export default {
 .ai-entry-title { font-size: 30rpx; font-weight: 600; color: #fff; }
 .ai-entry-desc { font-size: 22rpx; color: rgba(255,255,255,0.8); margin-top: 4rpx; }
 .ai-entry-arrow { font-size: 40rpx; color: rgba(255,255,255,0.8); }
+.ai-entry-badge { width: 36rpx; height: 36rpx; border-radius: 18rpx; background: #ff3b30; display: flex; align-items: center; justify-content: center; margin-right: 8rpx; }
+.ai-entry-badge-text { font-size: 20rpx; font-weight: 700; color: #fff; }
 .core-row-inner {
   display: flex;
   gap: 14rpx;
@@ -899,6 +920,14 @@ export default {
   margin-bottom: 8rpx;
   background: linear-gradient(135deg, rgba(255,122,61,0.08) 0%, rgba(255,77,79,0.05) 100%);
 }
+.score-excellent { border-color: rgba(52, 199, 89, 0.4); background: linear-gradient(135deg, rgba(52,199,89,0.08) 0%, rgba(52,199,89,0.03) 100%); }
+.score-excellent .score-text { color: #34c759; }
+.score-good { border-color: rgba(74, 144, 217, 0.4); background: linear-gradient(135deg, rgba(74,144,217,0.08) 0%, rgba(74,144,217,0.03) 100%); }
+.score-good .score-text { color: #4a90d9; }
+.score-fair { border-color: rgba(255, 149, 0, 0.4); background: linear-gradient(135deg, rgba(255,149,0,0.08) 0%, rgba(255,149,0,0.03) 100%); }
+.score-fair .score-text { color: #ff9500; }
+.score-poor { border-color: rgba(255, 59, 48, 0.4); background: linear-gradient(135deg, rgba(255,59,48,0.08) 0%, rgba(255,59,48,0.03) 100%); }
+.score-poor .score-text { color: #ff3b30; }
 .score-text {
   font-size: 24rpx;
   font-weight: 800;

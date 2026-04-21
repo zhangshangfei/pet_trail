@@ -150,6 +150,7 @@
           </view>
 
           <view class="action-section">
+            <button class="back-btn" @tap="goBack">← 返回</button>
             <button class="reanalyze-btn" @tap="runAnalysis" :disabled="loading">重新分析</button>
           </view>
         </template>
@@ -349,8 +350,10 @@ $red: #ff3b30;
 .ai-card { background: rgba(255,255,255,0.15); border-radius: 16rpx; padding: 20rpx; }
 .ai-text { font-size: 26rpx; color: #fff; line-height: 1.8; }
 
-.action-section { margin-top: 16rpx; padding-bottom: 40rpx; }
-.reanalyze-btn { width: 100%; height: 88rpx; line-height: 88rpx; background: $accent; color: #fff; font-size: 30rpx; font-weight: 600; border-radius: 44rpx; border: none; }
+.action-section { margin-top: 16rpx; padding-bottom: 40rpx; display: flex; gap: 20rpx; }
+.back-btn { width: 200rpx; height: 88rpx; line-height: 88rpx; background: #f0f0f0; color: #666; font-size: 28rpx; font-weight: 600; border-radius: 44rpx; border: none; }
+.back-btn:active { background: #e0e0e0; }
+.reanalyze-btn { flex: 1; height: 88rpx; line-height: 88rpx; background: $accent; color: #fff; font-size: 30rpx; font-weight: 600; border-radius: 44rpx; border: none; }
 .reanalyze-btn[disabled] { opacity: 0.6; }
 
 .empty-wrap { display: flex; flex-direction: column; align-items: center; padding-top: 200rpx; }
