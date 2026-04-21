@@ -205,7 +205,8 @@ public class AiAnalysisService {
         String effectiveApiKey = getGlmApiKey();
         String effectiveBaseUrl = getGlmBaseUrl();
         String effectiveModel = getGlmModel();
-        String url = effectiveBaseUrl + (effectiveBaseUrl.endsWith("/") ? "" : "/") + "chat/completions";
+        // String url = effectiveBaseUrl + (effectiveBaseUrl.endsWith("/") ? "" : "/") + "chat/completions";
+        String url = effectiveBaseUrl;
 
         log.info("[AI调用] 开始调用GLM === 宠物: {}, 模型: {}, URL: {}, apiKey前缀: {}",
                 petName, effectiveModel, url,
