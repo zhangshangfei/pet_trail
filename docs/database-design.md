@@ -1,6 +1,6 @@
 # 宠迹数据库设计
 
-> 最后更新：2026年4月20日 | 数据库：pet_trail | 共22张表
+> 最后更新：2026年4月21日 | 数据库：pet_trail | 共24张表
 
 ## 一、基础表
 
@@ -537,6 +537,58 @@ CREATE TABLE user_memberships (
 
 ---
 
+## 七-A、AI模块
+
+### ai_model (AI模型配置表)
+
+```sql
+CREATE TABLE ai_model (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  model_name VARCHAR(100) NOT NULL COMMENT '模型标识名(如deepseek/deepseek-chat)',
+  display_name VARCHAR(100) NOT NULL COMMENT '模型显示名称',
+  provider VARCHAR(50) NOT NULL COMMENT '模型提供商: openrouter/zhipu/openai/custom',
+  base_url VARCHAR(255) NOT NULL COMMENT 'API基础地址',
+  api_key VARCHAR(500) NOT NULL COMMENT 'API密钥',
+  model_version VARCHAR(50) DEFAULT NULL COMMENT '模型版本号',
+  parameters JSON DEFAULT NULL COMMENT '模型参数配置(temperature/max_tokens等)',
+  status TINYINT DEFAULT 1 COMMENT '状态: 1-启用 0-禁用',
+  is_default TINYINT DEFAULT 0 COMMENT '是否为当前活动模型: 1-是 0-否',
+  sort_order INT DEFAULT 0 COMMENT '排序',
+  description VARCHAR(500) DEFAULT NULL COMMENT '模型描述',
+  icon VARCHAR(50) DEFAULT NULL COMMENT '模型图标emoji',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_status (status),
+  INDEX idx_is_default (is_default),
+  INDEX idx_provider (provider)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI模型配置表';
+```
+
+### ai_model_switch_log (AI模型切换日志表)
+
+```sql
+CREATE TABLE ai_model_switch_log (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  from_model_id BIGINT DEFAULT NULL COMMENT '切换前模型ID',
+  from_model_name VARCHAR(100) DEFAULT NULL COMMENT '切换前模型名称',
+  to_model_id BIGINT NOT NULL COMMENT '切换后模型ID',
+  to_model_name VARCHAR(100) NOT NULL COMMENT '切换后模型名称',
+  switch_type VARCHAR(20) NOT NULL COMMENT '切换类型: manual-手动/auto-自动',
+  operator_id BIGINT DEFAULT NULL COMMENT '操作者ID',
+  operator_name VARCHAR(50) DEFAULT NULL COMMENT '操作者名称',
+  reason VARCHAR(500) DEFAULT NULL COMMENT '切换原因',
+  status VARCHAR(20) NOT NULL COMMENT '切换状态: success/failed',
+  duration BIGINT DEFAULT NULL COMMENT '切换耗时(毫秒)',
+  error_message VARCHAR(500) DEFAULT NULL COMMENT '错误信息',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_to_model_id (to_model_id),
+  INDEX idx_switch_type (switch_type),
+  INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI模型切换日志表';
+```
+
+---
+
 ## 初始化数据
 
 ```sql
@@ -567,4 +619,9 @@ INSERT INTO tags (name, is_hot, is_official) VALUES
 ('猫咪控', 1, 1),
 ('狗狗控', 1, 1),
 ('新手养宠', 1, 1);
+
+INSERT INTO ai_model (model_name, display_name, provider, base_url, api_key, model_version, parameters, status, is_default, sort_order, description, icon) VALUES
+('deepseek/deepseek-chat', 'DeepSeek 智能分析', 'openrouter', 'https://openrouter.ai/api/v1', '', 'v3', '{"temperature": 0.7, "max_tokens": 300}', 1, 1, 1, '基于DeepSeek大模型的宠物健康智能分析，擅长综合评估与建议', '🧠'),
+('glm-4-flash', '智谱GLM快速分析', 'zhipu', 'https://open.bigmodel.cn/api/paas/v4', '', 'v4', '{"temperature": 0.6, "max_tokens": 250}', 1, 0, 2, '基于智谱GLM-4-Flash的快速健康分析，响应速度快', '⚡'),
+('openrouter/free', '通用免费模型', 'openrouter', 'https://openrouter.ai/api/v1', '', 'free', '{"temperature": 0.7, "max_tokens": 200}', 1, 0, 3, '免费通用模型，适合基础健康分析需求', '🎁');
 ```
