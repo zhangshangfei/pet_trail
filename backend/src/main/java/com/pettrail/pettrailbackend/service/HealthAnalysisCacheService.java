@@ -16,8 +16,8 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class HealthAnalysisCacheService {
 
-    private static final long CACHE_TTL_MINUTES = 30;
-    private static final long CLEANUP_INTERVAL_MINUTES = 5;
+    private static final long CACHE_TTL_MINUTES = 720;
+    private static final long CLEANUP_INTERVAL_MINUTES = 60;
 
     private final ConcurrentHashMap<String, CacheEntry> cache = new ConcurrentHashMap<>();
     private final AtomicLong hitCount = new AtomicLong(0);
