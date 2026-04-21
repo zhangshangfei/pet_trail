@@ -27,12 +27,51 @@ public class HealthAnalysisService {
     private final CheckinRecordMapper checkinRecordMapper;
     private final CheckinStatsMapper checkinStatsMapper;
     private final AiAnalysisService aiAnalysisService;
+    private final HealthAnalysisCacheService cacheService;
 
     public HealthAnalysisVO analyze(Long userId, Long petId) {
         Pet pet = petMapper.selectById(petId);
         if (pet == null || !pet.getUserId().equals(userId)) {
             return null;
         }
+
+        String cacheKey = cacheService.buildCacheKey(userId, petId);
+        HealthAnalysisVO cached = cacheService.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        long startTime = System.currentTimeMillis();
+        log.info("[健康分析] 开始执行分析: userId={}, petId={}", userId, petId);
+
+        HealthAnalysisVO vo = doAnalyze(pet);
+
+        long elapsed = System.currentTimeMillis() - startTime;
+        log.info("[健康分析] 分析完成: userId={}, petId={}, 耗时={}ms, 评分={}", userId, petId, elapsed, vo.getScore());
+
+        cacheService.put(cacheKey, vo);
+        return vo;
+    }
+
+    public void invalidateCache(Long userId, Long petId) {
+        cacheService.invalidate(userId, petId);
+    }
+
+    public void invalidateCacheByPetId(Long petId) {
+        cacheService.invalidateByPetId(petId);
+    }
+
+    public void invalidateAllCache() {
+        cacheService.invalidateAll();
+    }
+
+    public Map<String, Object> getCacheStats() {
+        return cacheService.getCacheStats();
+    }
+
+    private HealthAnalysisVO doAnalyze(Pet pet) {
+        Long petId = pet.getId();
+        Long userId = pet.getUserId();
 
         HealthAnalysisVO vo = new HealthAnalysisVO();
         List<WarningItem> warnings = new ArrayList<>();

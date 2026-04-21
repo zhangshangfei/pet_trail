@@ -79,3 +79,6 @@ export const switchAiModel = (data) => request.post('/api/admin/ai-models/switch
 export const deleteAiModel = (id) => request.delete(`/api/admin/ai-models/${id}`)
 export const getAiModelSwitchLogs = (limit) => request.get('/api/admin/ai-models/switch-logs', { params: { limit } })
 export const refreshAiModelCache = () => request.post('/api/admin/ai-models/refresh')
+export const getAiModelCacheStats = () => request.get('/api/admin/ai-models/cache/stats')
+export const clearAiModelAllCache = () => request.delete('/api/admin/ai-models/cache')
+export const clearAiModelPetCache = (petId) => request.delete(`/api/admin/ai-models/cache/pet/${petId}`)

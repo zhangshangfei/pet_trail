@@ -4,6 +4,7 @@ import com.pettrail.pettrailbackend.annotation.OperationLog;
 import com.pettrail.pettrailbackend.annotation.RequireRole;
 import com.pettrail.pettrailbackend.dto.*;
 import com.pettrail.pettrailbackend.service.AiModelService;
+import com.pettrail.pettrailbackend.service.HealthAnalysisService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.util.Map;
 public class AdminAiModelController extends BaseAdminController {
 
     private final AiModelService aiModelService;
+    private final HealthAnalysisService healthAnalysisService;
 
     @GetMapping
     @Operation(summary = "获取所有AI模型列表")
@@ -167,6 +169,31 @@ public class AdminAiModelController extends BaseAdminController {
     @OperationLog(module = "ai_model", action = "refresh", detail = "刷新模型缓存")
     public Result<Void> refreshModel() {
         aiModelService.refreshCurrentModel();
+        return Result.success(null);
+    }
+
+    @GetMapping("/cache/stats")
+    @Operation(summary = "获取健康分析缓存统计")
+    @RequireRole("ADMIN")
+    public Result<Map<String, Object>> getCacheStats() {
+        return Result.success(healthAnalysisService.getCacheStats());
+    }
+
+    @DeleteMapping("/cache")
+    @Operation(summary = "清除所有健康分析缓存")
+    @RequireRole("SUPER_ADMIN")
+    @OperationLog(module = "ai_model", action = "clear_cache", detail = "清除健康分析缓存")
+    public Result<Void> clearAllCache() {
+        healthAnalysisService.invalidateAllCache();
+        return Result.success(null);
+    }
+
+    @DeleteMapping("/cache/pet/{petId}")
+    @Operation(summary = "清除指定宠物的健康分析缓存")
+    @RequireRole("SUPER_ADMIN")
+    @OperationLog(module = "ai_model", action = "clear_pet_cache", detail = "清除指定宠物缓存")
+    public Result<Void> clearPetCache(@PathVariable Long petId) {
+        healthAnalysisService.invalidateCacheByPetId(petId);
         return Result.success(null);
     }
 }

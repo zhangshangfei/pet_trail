@@ -28,6 +28,7 @@ public class AiModelService {
     private final AiModelMapper aiModelMapper;
     private final AiModelSwitchLogMapper switchLogMapper;
     private final ObjectMapper objectMapper;
+    private final HealthAnalysisCacheService cacheService;
 
     private final AtomicReference<AiModel> currentActiveModel = new AtomicReference<>();
     private final Map<Long, ModelStats> modelStatsMap = new ConcurrentHashMap<>();
@@ -105,6 +106,9 @@ public class AiModelService {
             aiModelMapper.updateById(toModel);
 
             currentActiveModel.set(toModel);
+
+            cacheService.invalidateAll();
+            log.info("[模型切换] 已清除所有健康分析缓存");
 
             long duration = System.currentTimeMillis() - startTime;
             switchLog.setStatus("success");

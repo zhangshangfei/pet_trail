@@ -40,6 +40,51 @@
       </el-row>
     </div>
 
+    <div class="cache-section" v-if="cacheStats">
+      <div class="section-header-inline">
+        <h3>分析缓存状态</h3>
+        <el-button size="small" type="danger" @click="handleClearCache" v-if="isSuperAdmin">清除全部缓存</el-button>
+      </div>
+      <el-row :gutter="16">
+        <el-col :span="4">
+          <div class="stat-card mini">
+            <div class="stat-label">缓存条目</div>
+            <div class="stat-value">{{ cacheStats.activeEntries || 0 }}</div>
+          </div>
+        </el-col>
+        <el-col :span="4">
+          <div class="stat-card mini">
+            <div class="stat-label">缓存命中率</div>
+            <div class="stat-value text-success">{{ cacheStats.hitRate || '0%' }}</div>
+          </div>
+        </el-col>
+        <el-col :span="4">
+          <div class="stat-card mini">
+            <div class="stat-label">命中次数</div>
+            <div class="stat-value">{{ cacheStats.hitCount || 0 }}</div>
+          </div>
+        </el-col>
+        <el-col :span="4">
+          <div class="stat-card mini">
+            <div class="stat-label">未命中次数</div>
+            <div class="stat-value">{{ cacheStats.missCount || 0 }}</div>
+          </div>
+        </el-col>
+        <el-col :span="4">
+          <div class="stat-card mini">
+            <div class="stat-label">过期清除</div>
+            <div class="stat-value">{{ cacheStats.evictCount || 0 }}</div>
+          </div>
+        </el-col>
+        <el-col :span="4">
+          <div class="stat-card mini">
+            <div class="stat-label">缓存有效期</div>
+            <div class="stat-value">{{ cacheStats.ttlMinutes || 30 }}分钟</div>
+          </div>
+        </el-col>
+      </el-row>
+    </div>
+
     <el-table :data="models" v-loading="loading" border stripe style="margin-bottom: 24px;">
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column label="模型" min-width="200">
@@ -240,7 +285,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   getAiModelList, getAiModelDashboard, createAiModel, updateAiModel,
   setAiModelStatus, switchAiModel, deleteAiModel, getAiModelSwitchLogs,
-  getAiModelParameters, updateAiModelParameters
+  getAiModelParameters, updateAiModelParameters, getAiModelCacheStats, clearAiModelAllCache
 } from '../api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Right } from '@element-plus/icons-vue'
@@ -249,6 +294,7 @@ const loading = ref(false)
 const models = ref([])
 const dashboard = ref(null)
 const switchLogs = ref([])
+const cacheStats = ref(null)
 const showAdd = ref(false)
 const showEdit = ref(false)
 const showParams = ref(false)
@@ -278,12 +324,14 @@ const providerTagType = { openrouter: 'warning', zhipu: 'success', openai: '', c
 const loadDashboard = async () => {
   loading.value = true
   try {
-    const [listRes, dashRes] = await Promise.all([
+    const [listRes, dashRes, cacheRes] = await Promise.all([
       getAiModelList(),
-      getAiModelDashboard()
+      getAiModelDashboard(),
+      getAiModelCacheStats()
     ])
     if (listRes.data) models.value = listRes.data
     if (dashRes.data) dashboard.value = dashRes.data
+    if (cacheRes.data) cacheStats.value = cacheRes.data
   } catch (e) {}
   loading.value = false
 }
@@ -410,6 +458,23 @@ const handleSaveParams = async () => {
   } catch (e) {}
 }
 
+const handleClearCache = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定清除所有健康分析缓存？清除后下次分析将重新执行。',
+      '确认清除缓存',
+      { type: 'warning' }
+    )
+    await clearAiModelAllCache()
+    ElMessage.success('缓存已清除')
+    loadDashboard()
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('清除缓存失败')
+    }
+  }
+}
+
 onMounted(() => {
   loadDashboard()
   loadSwitchLogs()
@@ -424,6 +489,11 @@ onMounted(() => {
 
 .dashboard-section { margin-bottom: 24px; }
 .stat-card { background: #fff; border-radius: 8px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.stat-card.mini { padding: 12px 16px; }
+.stat-card.mini .stat-value { font-size: 20px; }
+.cache-section { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 24px; }
+.section-header-inline { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.section-header-inline h3 { margin: 0; font-size: 15px; }
 .stat-label { font-size: 13px; color: #909399; margin-bottom: 8px; }
 .stat-value { font-size: 24px; font-weight: 700; color: #303133; }
 .stat-sub { font-size: 12px; color: #909399; margin-top: 4px; }
