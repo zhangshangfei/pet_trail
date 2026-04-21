@@ -75,15 +75,18 @@ public class AiAnalysisService {
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
-            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, request, Map.class);
+            @SuppressWarnings("unchecked")
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.POST, request, (Class<Map<String, Object>>)(Class<?>)Map.class);
 
             long elapsed = System.currentTimeMillis() - startTime;
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                Map bodyResp = response.getBody();
-                List<Map> choices = (List<Map>) bodyResp.get("choices");
+                Map<String, Object> bodyResp = response.getBody();
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) bodyResp.get("choices");
                 if (choices != null && !choices.isEmpty()) {
-                    Map message = (Map) choices.get(0).get("message");
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
                     if (message != null) {
                         String content = (String) message.get("content");
                         log.info("[AI调用] 调用成功 === 耗时: {}ms, 状态码: {}, 内容长度: {}, 内容摘要: {}",

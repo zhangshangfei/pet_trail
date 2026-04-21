@@ -3,15 +3,14 @@
     <user-top-bar
       :status-bar-height="statusBarHeight"
       :avatar="userAvatar"
-      :name="userName || '宠'"
-      :show-login-button="!isLoggedIn"
+      :name="userName"
       :unread-count="0"
       :show-discover="false"
       :show-bell="false"
       @userTap="goBackToBoard"
     />
 
-    <scroll-view scroll-y class="health-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px' }">
+    <scroll-view scroll-y class="health-scroll" :style="{ paddingTop: (statusBarHeight + 54) + 'px' }">
       <view class="health-content">
         <!-- 宠物切换（保留原逻辑） -->
         <view class="pet-selector">
@@ -292,7 +291,7 @@ export default {
     return {
       statusBarHeight: 20,
       userAvatar: DEFAULT_USER_AVATAR,
-      userName: "小萌宠主人",
+      userName: "",
       fallbackPetAvatar: DEFAULT_PET_AVATAR_URL,
       pets: [],
       currentPet: null,
@@ -328,9 +327,6 @@ export default {
     };
   },
   computed: {
-    isLoggedIn() {
-      return !!uni.getStorageSync('token')
-    },
     petAgeText() {
       const b = this.currentPet && this.currentPet.birthday;
       if (!b) return "-";
@@ -440,7 +436,7 @@ export default {
 
       if (userInfo) {
         this.userAvatar = getUserAvatar(userInfo.id, userInfo.avatar);
-        this.userName = userInfo.nickname || "小萌宠主人";
+        this.userName = userInfo.nickname || "";
       } else if (!token) {
         this.userAvatar = DEFAULT_USER_AVATAR;
         this.userName = "";

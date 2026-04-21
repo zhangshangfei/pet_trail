@@ -3,8 +3,7 @@
     <user-top-bar
       :status-bar-height="statusBarHeight"
       :avatar="userAvatar"
-      :name="userName || '宠'"
-      :show-login-button="!isLoggedIn"
+      :name="userName"
       :unread-count="0"
       :show-discover="false"
       :show-bell="false"
@@ -13,7 +12,7 @@
       @discoverTap="onDiscoverTap"
     />
 
-    <scroll-view scroll-y class="board-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px' }">
+    <scroll-view scroll-y class="board-scroll" :style="{ paddingTop: (statusBarHeight + 54) + 'px' }">
       <view class="board-content">
         <view class="pet-selector">
           <view class="pet-selector-card" @touchstart.stop="togglePetSelector">
@@ -278,7 +277,7 @@ export default {
   data() {
     return {
       statusBarHeight: 20,
-      userName: "小萌宠主人",
+      userName: "",
       userAvatar: DEFAULT_USER_AVATAR,
       fallbackPetAvatar: DEFAULT_PET_AVATAR_URL,
       pets: [],
@@ -305,9 +304,6 @@ export default {
     };
   },
   computed: {
-    isLoggedIn() {
-      return !!uni.getStorageSync('token')
-    },
     weightChartHasData() {
       return (this.weightSeriesFilled || []).some((v) => v != null && !Number.isNaN(v));
     },
@@ -467,7 +463,7 @@ export default {
 
       if (userInfo) {
         this.userAvatar = getUserAvatar(userInfo.id, userInfo.avatar);
-        this.userName = userInfo.nickname || "小萌宠主人";
+        this.userName = userInfo.nickname || "";
       } else if (!token) {
         this.userAvatar = DEFAULT_USER_AVATAR;
         this.userName = "";

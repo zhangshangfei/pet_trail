@@ -1,22 +1,16 @@
 <template>
   <view class="checkin-page">
-    <view class="page-header">
-      <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
-      <view class="header-bar">
-        <view class="header-user" @tap="goProfile">
-          <image class="header-avatar" :src="userAvatar" mode="aspectFill" />
-          <text class="header-name">{{ userName }}</text>
-        </view>
-        <view class="header-actions">
-          <view class="header-action-btn" @tap="goNotifications">
-            <text class="header-action-icon">🔔</text>
-            <view v-if="unreadCount > 0" class="header-badge">
-              <text class="header-badge-text">{{ unreadCount > 99 ? '99+' : unreadCount }}</text>
-            </view>
-          </view>
-        </view>
-      </view>
-    </view>
+    <user-top-bar
+      :status-bar-height="statusBarHeight"
+      :avatar="userAvatar"
+      :name="userName"
+      :unread-count="unreadCount"
+      :show-discover="false"
+      :show-bell="false"
+      @userTap="goProfile"
+      @loginTap="goProfile"
+      @rightTap="goNotifications"
+    />
 
     <scroll-view scroll-y class="page-scroll" :style="{ paddingTop: headerHeight + 'px' }">
       <view class="page-content">
@@ -174,15 +168,17 @@
 
 <script>
 import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
+import UserTopBar from '@/components/UserTopBar.vue'
 
 const DEFAULT_PET_AVATAR = '/static/images/default-pet-avatar.png'
 
 export default {
+  components: { UserTopBar },
   data() {
     return {
       statusBarHeight: 20,
       headerHeight: 70,
-      userName: '萌宠主人',
+      userName: '',
       userAvatar: DEFAULT_USER_AVATAR,
       unreadCount: 0,
       petId: null,
@@ -229,6 +225,7 @@ export default {
     this.initPage()
   },
   async onShow() {
+    this.loadUserProfile()
     await this.loadPets()
     await this.loadCheckinItems()
     await this.refreshPageData()
@@ -505,17 +502,21 @@ export default {
       } catch (e) {
         this.statusBarHeight = 20
       }
-      this.headerHeight = this.statusBarHeight + 50
+      this.headerHeight = this.statusBarHeight + 54
     },
     async loadUserProfile() {
       try {
         const userInfo = uni.getStorageSync('userInfo')
+        const token = uni.getStorageSync('token')
+        if (!token) {
+          this.userName = ''
+          this.userAvatar = DEFAULT_USER_AVATAR
+          return
+        }
         if (userInfo) {
           if (userInfo.nickname) this.userName = userInfo.nickname
           if (userInfo.avatar) this.userAvatar = getUserAvatar(userInfo.id, userInfo.avatar)
         }
-        const token = uni.getStorageSync('token')
-        if (!token) return
         const res = await uni.$request.get('/api/users/profile')
         if (res && res.success && res.data) {
           if (res.data.nickname) this.userName = res.data.nickname
@@ -590,36 +591,6 @@ $text-light: #999999;
 $radius: 24rpx;
 
 .checkin-page { min-height: 100vh; background: $bg; }
-
-.page-header {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 30;
-  background: linear-gradient(135deg, #ff8a5c 0%, $primary 100%);
-}
-.status-bar { width: 100%; }
-.header-bar {
-  height: 92rpx; display: flex; align-items: center;
-  justify-content: space-between; padding: 0 28rpx;
-}
-.header-user { display: flex; align-items: center; }
-.header-avatar {
-  width: 60rpx; height: 60rpx; border-radius: 50%;
-  margin-right: 16rpx; border: 2rpx solid rgba(255,255,255,0.6);
-}
-.header-name { font-size: 30rpx; font-weight: 600; color: #fff; }
-.header-actions { display: flex; align-items: center; gap: 16rpx; }
-.header-action-btn {
-  width: 56rpx; height: 56rpx; border-radius: 28rpx;
-  background: rgba(255,255,255,0.2); display: flex;
-  align-items: center; justify-content: center; position: relative;
-}
-.header-action-icon { font-size: 28rpx; }
-.header-badge {
-  position: absolute; top: -4rpx; right: -4rpx;
-  min-width: 28rpx; height: 28rpx; border-radius: 14rpx;
-  background: #ff4d4f; display: flex; align-items: center;
-  justify-content: center; padding: 0 6rpx;
-}
-.header-badge-text { font-size: 18rpx; color: #fff; font-weight: 600; }
 
 .page-scroll { height: 100vh; }
 .page-content { padding: 24rpx 24rpx 0; }

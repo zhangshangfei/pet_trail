@@ -7,6 +7,7 @@
       :show-discover="false"
       :show-bell="false"
       @userTap="onTopUserTap"
+      @loginTap="onTopUserTap"
     />
 
     <scroll-view scroll-y class="me-scroll" :style="{ height: scrollHeight + 'px', paddingTop: headerHeight + 'px' }">
@@ -25,7 +26,9 @@
               class="pet-avatar-item"
               @tap="goPetDetail(pet.id)"
             >
-              <image class="pet-avatar" :src="pet.avatar || defaultPetAvatar" mode="aspectFill" />
+              <view class="pet-avatar-wrap">
+                <avatar-view :src="pet.avatar || ''" :name="pet.name || ''" :id="pet.id" :size="100" />
+              </view>
               <text class="pet-name-label">{{ pet.name || ('宠物' + (index + 1)) }}</text>
             </view>
 
@@ -118,12 +121,14 @@
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
 import AddPetModal from '@/components/AddPetModal.vue'
+import AvatarView from '@/components/AvatarView.vue'
 import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
 
 export default {
   components: {
     UserTopBar,
-    AddPetModal
+    AddPetModal,
+    AvatarView
   },
   data() {
     return {
@@ -132,7 +137,7 @@ export default {
       scrollHeight: 0,
       avatarUrl: DEFAULT_USER_AVATAR,
       defaultPetAvatar: DEFAULT_PET_AVATAR_URL,
-      userName: "宠物管家",
+      userName: "",
       pets: [],
       showAddPetModal: false,
       addPetForm: {
@@ -173,7 +178,7 @@ export default {
     try {
       const sys = uni.getSystemInfoSync();
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
-      this.headerHeight = this.statusBarHeight + 50;
+      this.headerHeight = this.statusBarHeight + 54;
       this.scrollHeight = sys && sys.windowHeight ? sys.windowHeight : 0;
     } catch (e) {
       this.statusBarHeight = 20;
@@ -185,18 +190,21 @@ export default {
   methods: {
     async loadUserInfo() {
       const userInfo = uni.getStorageSync('userInfo');
-      if (userInfo && userInfo.avatar) {
-        this.avatarUrl = getUserAvatar(userInfo.id, userInfo.avatar);
-        this.userName = userInfo.nickname || '宠物管家';
-      }
       const token = uni.getStorageSync('token');
+      if (userInfo) {
+        this.avatarUrl = getUserAvatar(userInfo.id, userInfo.avatar);
+        this.userName = userInfo.nickname || '';
+      } else if (!token) {
+        this.avatarUrl = DEFAULT_USER_AVATAR;
+        this.userName = '';
+      }
       if (token) {
         try {
           const res = await uni.$request.get('/api/users/profile');
           if (res && res.success) {
             const userData = res.data;
             this.avatarUrl = getUserAvatar(userData.id, userData.avatar);
-            this.userName = userData.nickname || this.userName;
+            this.userName = userData.nickname || '';
             uni.setStorageSync('userInfo', userData);
           }
         } catch (e) {
@@ -322,7 +330,7 @@ export default {
 }
 
 .me-content {
-  padding: 8rpx 20rpx 220rpx;
+  padding: 20rpx 20rpx 220rpx;
 }
 
 .card {
@@ -371,13 +379,13 @@ export default {
   align-items: center;
 }
 
-.pet-avatar {
+.pet-avatar-wrap {
   width: 100rpx;
   height: 100rpx;
   border-radius: 50%;
-  background: #e5e7eb;
   border: 4rpx solid #fff;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
 .pet-name-label {

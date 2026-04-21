@@ -20,7 +20,7 @@
               :class="{ active: currentPetId === pet.id }"
               @tap="switchPet(pet.id)"
             >
-              <image class="pet-tab-avatar" :src="pet.avatar || defaultPetAvatar" mode="aspectFill" />
+              <avatar-view class="pet-tab-avatar" :src="pet.avatar || ''" :name="pet.name || ''" :id="pet.id" :size="72" />
               <text class="pet-tab-name">{{ pet.name }}</text>
             </view>
           </scroll-view>
@@ -118,8 +118,10 @@
 
 <script>
 import { DEFAULT_PET_AVATAR_URL } from '@/utils/index'
+import AvatarView from '@/components/AvatarView.vue'
 
 export default {
+  components: { AvatarView },
   data() {
     return {
       statusBarHeight: 20,
@@ -326,7 +328,7 @@ $text-light: #999999;
 .pet-tabs { margin-bottom: 20rpx; }
 .pet-tabs-scroll { white-space: nowrap; }
 .pet-tab { display: inline-flex; flex-direction: column; align-items: center; margin-right: 24rpx; padding: 12rpx; }
-.pet-tab-avatar { width: 72rpx; height: 72rpx; border-radius: 50%; border: 3rpx solid #e5e7eb; margin-bottom: 6rpx; }
+.pet-tab-avatar { margin-bottom: 6rpx; border: 3rpx solid #e5e7eb; border-radius: 50%; }
 .pet-tab.active .pet-tab-avatar { border-color: $primary; }
 .pet-tab-name { font-size: 22rpx; color: $text-secondary; }
 .pet-tab.active .pet-tab-name { color: $primary; font-weight: 600; }

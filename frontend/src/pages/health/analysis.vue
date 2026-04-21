@@ -3,14 +3,13 @@
     <user-top-bar
       :status-bar-height="statusBarHeight"
       :avatar="userAvatar"
-      :name="userName || '宠'"
-      :show-login-button="!isLoggedIn"
+      :name="userName"
       :show-discover="false"
       :show-bell="false"
       @userTap="goBack"
     />
 
-    <scroll-view scroll-y class="analysis-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px' }">
+    <scroll-view scroll-y class="analysis-scroll" :style="{ paddingTop: (statusBarHeight + 54) + 'px' }">
       <view class="analysis-content">
         <view v-if="loading" class="loading-wrap">
           <view class="loading-spinner"></view>

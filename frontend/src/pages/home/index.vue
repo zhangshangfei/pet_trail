@@ -4,10 +4,11 @@
     <user-top-bar
       :status-bar-height="statusBarHeight"
       :avatar="avatarUrl"
-      :name="userName || '宠'"
+      :name="userName"
       :unread-count="unreadNotificationCount"
       @rightTap="onBellTap"
       @userTap="onTopUserTap"
+      @loginTap="onTopUserTap"
       @discoverTap="onDiscoverTap"
     />
 
@@ -299,13 +300,13 @@ export default {
     try {
       const sys = uni.getSystemInfoSync();
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20;
-      const userTopBarHeight = this.statusBarHeight + 92;
-      this.segmentBarTop = userTopBarHeight - 30;
-      this.headerHeight = userTopBarHeight + 26;
+      const userTopBarHeight = this.statusBarHeight + 54;
+      this.segmentBarTop = userTopBarHeight + 4;
+      this.headerHeight = userTopBarHeight + 60;
     } catch (e) {
       this.statusBarHeight = 20;
-      this.segmentBarTop = 82;
-      this.headerHeight = 138;
+      this.segmentBarTop = 78;
+      this.headerHeight = 134;
     }
 
     this.checkLoginStatus();
@@ -406,7 +407,7 @@ export default {
       const cachedUserInfo = uni.getStorageSync('userInfo');
       if (cachedUserInfo) {
         this.isLoggedIn = true;
-        this.userName = cachedUserInfo.nickname || '萌宠主人';
+        this.userName = cachedUserInfo.nickname || '';
         this.avatarUrl = getUserAvatar(cachedUserInfo.id, cachedUserInfo.avatar);
       }
       try {
@@ -414,7 +415,7 @@ export default {
         if (res.success) {
           const userData = res.data;
           this.isLoggedIn = true;
-          this.userName = userData.nickname || '萌宠主人';
+          this.userName = userData.nickname || '';
           this.avatarUrl = getUserAvatar(userData.id, userData.avatar);
           uni.setStorageSync('userInfo', userData);
         } else if (!cachedUserInfo) {
@@ -426,7 +427,7 @@ export default {
         console.error('获取用户资料失败:', error);
         if (!cachedUserInfo) {
           this.isLoggedIn = false;
-          this.userName = '请登录';
+          this.userName = '';
           this.avatarUrl = DEFAULT_USER_AVATAR;
         }
       }
@@ -519,7 +520,7 @@ export default {
                 uni.setStorageSync('userInfo', userInfo);
 
                 self.isLoggedIn = true;
-                self.userName = userInfo?.nickname || '萌宠主人';
+                self.userName = userInfo?.nickname || '';
                 self.avatarUrl = getUserAvatar(userInfo?.id, userInfo?.avatar);
 
                 uni.showToast({ title: '登录成功', icon: 'success', duration: 2000 });

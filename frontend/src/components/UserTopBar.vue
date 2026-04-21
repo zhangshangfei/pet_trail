@@ -2,13 +2,26 @@
   <view class="user-topbar">
     <view class="user-topbar-statusbar" :style="{ height: statusBarHeight + 'px' }"></view>
     <view class="user-topbar-inner">
-      <view v-if="showLoginButton" class="user-topbar-login-wrap" @tap="$emit('loginTap')">
-        <avatar-view :src="avatar" :name="name || '宠'" :size="64" />
-        <text class="user-topbar-name">请登录</text>
+      <view v-if="!isLoggedIn" class="user-topbar-login-wrap" @tap="$emit('loginTap')">
+        <view class="user-topbar-avatar-wrap">
+          <avatar-view src="" name="宠" :size="72" />
+        </view>
+        <view class="user-topbar-text-group">
+          <text class="user-topbar-greeting">Hi～</text>
+          <text class="user-topbar-name user-topbar-name--login">点击登录</text>
+        </view>
+        <view class="user-topbar-login-arrow">
+          <text class="login-arrow-icon">›</text>
+        </view>
       </view>
       <view v-else class="user-topbar-user" @tap="$emit('userTap')">
-        <avatar-view :src="avatar" :name="name" :size="64" />
-        <text class="user-topbar-name">{{ name }}</text>
+        <view class="user-topbar-avatar-wrap">
+          <avatar-view :src="avatar" :name="name || '宠'" :size="72" />
+        </view>
+        <view class="user-topbar-text-group">
+          <text class="user-topbar-greeting">Hi～</text>
+          <text class="user-topbar-name">{{ name || '宠迹主人' }}</text>
+        </view>
       </view>
       <view class="user-topbar-right-group" :style="{ marginRight: rightMargin + 'px' }">
         <view v-if="showDiscover" class="user-topbar-right" @tap="$emit('discoverTap')">
@@ -42,15 +55,7 @@ export default {
     },
     name: {
       type: String,
-      default: '小萌宠主人'
-    },
-    showLoginButton: {
-      type: Boolean,
-      default: false
-    },
-    loginText: {
-      type: String,
-      default: '微信登录'
+      default: ''
     },
     unreadCount: {
       type: Number,
@@ -68,13 +73,35 @@ export default {
   emits: ['rightTap', 'loginTap', 'userTap', 'discoverTap'],
   data() {
     return {
-      rightMargin: 0
+      rightMargin: 0,
+      isLoggedIn: false
+    }
+  },
+  watch: {
+    avatar() {
+      this.checkLogin()
+    },
+    name() {
+      this.checkLogin()
     }
   },
   created() {
     this.calcRightMargin()
+    this.checkLogin()
+    uni.$on('loginSuccess', this.checkLogin)
+    uni.$on('logout', this.checkLogin)
+  },
+  activated() {
+    this.checkLogin()
+  },
+  beforeDestroy() {
+    uni.$off('loginSuccess', this.checkLogin)
+    uni.$off('logout', this.checkLogin)
   },
   methods: {
+    checkLogin() {
+      this.isLoggedIn = !!uni.getStorageSync('token')
+    },
     calcRightMargin() {
       try {
         const menuButton = uni.getMenuButtonBoundingClientRect()
@@ -95,7 +122,7 @@ export default {
   left: 0;
   right: 0;
   z-index: 30;
-  background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 100%);
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
 }
 
 .user-topbar-statusbar {
@@ -103,43 +130,85 @@ export default {
 }
 
 .user-topbar-inner {
-  height: 92rpx;
+  height: 108rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 28rpx;
 }
 
-.user-topbar-user {
+.user-topbar-avatar-wrap {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 36rpx;
+  border: 3rpx solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.user-topbar-text-group {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  margin-left: 18rpx;
 }
 
-.user-topbar-login-wrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 56rpx;
-  padding: 0 22rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.22);
-}
-
-.user-topbar-login-text {
-  color: #ffffff;
-  font-size: 26rpx;
-  font-weight: 600;
-}
-
-.user-topbar-avatar {
-  margin-right: 14rpx;
-  border: 2rpx solid rgba(255, 255, 255, 0.85);
+.user-topbar-greeting {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 .user-topbar-name {
+  font-size: 32rpx;
   color: #ffffff;
-  font-size: 30rpx;
+  font-weight: 700;
+  line-height: 1.3;
+  max-width: 240rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-topbar-name--login {
   font-weight: 600;
+  font-size: 30rpx;
+}
+
+.user-topbar-login-wrap {
+  display: flex;
+  align-items: center;
+  padding: 10rpx 20rpx 10rpx 10rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.user-topbar-login-wrap:active {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.user-topbar-login-arrow {
+  width: 36rpx;
+  height: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8rpx;
+}
+
+.login-arrow-icon {
+  font-size: 36rpx;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 300;
+  line-height: 1;
+}
+
+.user-topbar-user {
+  display: flex;
+  align-items: center;
 }
 
 .user-topbar-right-group {
