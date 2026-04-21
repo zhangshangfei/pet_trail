@@ -66,6 +66,7 @@ function cloudRequest(options = {}) {
       header: header,
       method: options.method || 'GET',
       data: requestData,
+      timeout: options.timeout || 20000,
       success: (res) => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const data = res.data
@@ -135,6 +136,7 @@ function httpRequest(options = {}) {
       method: options.method || 'GET',
       data: requestData,
       header: header,
+      timeout: options.timeout || 20000,
       success: (res) => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const data = res.data
