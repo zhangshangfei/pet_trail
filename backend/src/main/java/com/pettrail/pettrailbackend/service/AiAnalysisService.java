@@ -149,7 +149,8 @@ public class AiAnalysisService {
 
         String effectiveBaseUrl = getGlmBaseUrl();
         String effectiveModel = getGlmModel();
-        String url = effectiveBaseUrl + (effectiveBaseUrl.endsWith("/") ? "" : "/") + "chat/completions";
+        String url = effectiveBaseUrl;
+        // String url = effectiveBaseUrl + (effectiveBaseUrl.endsWith("/") ? "" : "/") + "chat/completions";
 
         log.info("[AI调用] 验证GLM模型可用性 === 模型: {}, URL: {}", effectiveModel, url);
 
