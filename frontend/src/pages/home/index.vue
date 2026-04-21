@@ -248,7 +248,7 @@ import UserTopBar from '@/components/UserTopBar.vue'
 import * as postApi from '@/api/post'
 import * as notificationApi from '@/api/notification'
 import * as behaviorApi from '@/api/behavior'
-import wsManager from '@/utils/websocket'
+// import wsManager from '@/utils/websocket'
 import { checkLogin, wechatLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 
 export default {
@@ -290,7 +290,7 @@ export default {
 
     this.checkLoginStatus();
     this.fetchUnreadCount();
-    this.connectWebSocket();
+    // this.connectWebSocket();
     this.page = 1;
     this.postList = [];
     this.hasMore = true;
@@ -318,14 +318,14 @@ export default {
     })
   },
   onHide() {
-    this.disconnectWebSocket()
+    // this.disconnectWebSocket()
   },
   onUnload() {
     if (this.sysNoticeTimer) {
       clearTimeout(this.sysNoticeTimer)
       this.sysNoticeTimer = null
     }
-    this.disconnectWebSocket()
+    // this.disconnectWebSocket()
     uni.$off('loginSuccess')
   },
   onPullDownRefresh() {
@@ -793,55 +793,55 @@ export default {
       return `${date.getMonth() + 1}/${date.getDate()}`;
     },
 
-    connectWebSocket() {
-      if (!this.isLoggedIn) return
-      const token = uni.getStorageSync('token')
-      if (!token) return
+    // connectWebSocket() {
+    //   if (!this.isLoggedIn) return
+    //   const token = uni.getStorageSync('token')
+    //   if (!token) return
 
-      wsManager.off('notification', this._onWsNotification)
-      wsManager.off('unreadCount', this._onWsUnreadCount)
-      wsManager.off('init', this._onWsInit)
+    //   wsManager.off('notification', this._onWsNotification)
+    //   wsManager.off('unreadCount', this._onWsUnreadCount)
+    //   wsManager.off('init', this._onWsInit)
 
-      this._onWsNotification = (data) => {
-        if (data.notifyType === 'system' && !this.showSysNotice) {
-          const todayStr = new Date().toISOString().slice(0, 10)
-          const dismissedDate = uni.getStorageSync('sysNoticeDismissDate')
-          if (dismissedDate !== todayStr) {
-            this.loadSysNotices()
-          }
-        }
-      }
+    //   this._onWsNotification = (data) => {
+    //     if (data.notifyType === 'system' && !this.showSysNotice) {
+    //       const todayStr = new Date().toISOString().slice(0, 10)
+    //       const dismissedDate = uni.getStorageSync('sysNoticeDismissDate')
+    //       if (dismissedDate !== todayStr) {
+    //         this.loadSysNotices()
+    //       }
+    //     }
+    //   }
 
-      this._onWsUnreadCount = (data) => {
-        this.unreadNotificationCount = data.count || 0
-      }
+    //   this._onWsUnreadCount = (data) => {
+    //     this.unreadNotificationCount = data.count || 0
+    //   }
 
-      this._onWsInit = (data) => {
-        this.unreadNotificationCount = data.unreadCount || 0
-        if (data.systemMessages && data.systemMessages.length > 0 && !this.showSysNotice) {
-          const todayStr = new Date().toISOString().slice(0, 10)
-          const dismissedDate = uni.getStorageSync('sysNoticeDismissDate')
-          if (dismissedDate !== todayStr) {
-            this.sysNoticeList = data.systemMessages
-            this.showSysNotice = true
-            this.startSysNoticeTimer()
-          }
-        }
-      }
+    //   this._onWsInit = (data) => {
+    //     this.unreadNotificationCount = data.unreadCount || 0
+    //     if (data.systemMessages && data.systemMessages.length > 0 && !this.showSysNotice) {
+    //       const todayStr = new Date().toISOString().slice(0, 10)
+    //       const dismissedDate = uni.getStorageSync('sysNoticeDismissDate')
+    //       if (dismissedDate !== todayStr) {
+    //         this.sysNoticeList = data.systemMessages
+    //         this.showSysNotice = true
+    //         this.startSysNoticeTimer()
+    //       }
+    //     }
+    //   }
 
-      wsManager.on('notification', this._onWsNotification)
-      wsManager.on('unreadCount', this._onWsUnreadCount)
-      wsManager.on('init', this._onWsInit)
+    //   wsManager.on('notification', this._onWsNotification)
+    //   wsManager.on('unreadCount', this._onWsUnreadCount)
+    //   wsManager.on('init', this._onWsInit)
 
-      wsManager.connect(token)
-    },
+    //   wsManager.connect(token)
+    // },
 
-    disconnectWebSocket() {
-      wsManager.off('notification', this._onWsNotification)
-      wsManager.off('unreadCount', this._onWsUnreadCount)
-      wsManager.off('init', this._onWsInit)
-      wsManager.disconnect()
-    },
+    // disconnectWebSocket() {
+    //   wsManager.off('notification', this._onWsNotification)
+    //   wsManager.off('unreadCount', this._onWsUnreadCount)
+    //   wsManager.off('init', this._onWsInit)
+    //   wsManager.disconnect()
+    // },
 
     trackView(targetType, targetId, duration) {
       if (!this.isLoggedIn) return
