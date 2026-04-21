@@ -167,7 +167,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getHealthAnalysis } from '@/api/health'
-import { getPetList } from '@/api/pets'
+import { getPetList } from '@/api/pet'
 import { useUserStore } from '@/stores/user'
 import UserTopBar from '@/components/UserTopBar.vue'
 

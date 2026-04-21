@@ -57,6 +57,10 @@
           <el-icon><Setting /></el-icon>
           <template #title>系统设置</template>
         </el-menu-item>
+        <el-menu-item v-if="isSuperAdmin" index="/config">
+          <el-icon><Tools /></el-icon>
+          <template #title>系统配置管理</template>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

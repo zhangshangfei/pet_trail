@@ -22,6 +22,7 @@ public class SchemaMigrationConfig {
             migrateCheckinRemindersTable();
             migrateFeedingRemindersTable();
             migratePetAlbumTable();
+            migrateSysConfigTable();
         };
     }
 
@@ -82,6 +83,51 @@ public class SchemaMigrationConfig {
                 "KEY `idx_pet_id` (`pet_id`), " +
                 "KEY `idx_user_id` (`user_id`)",
                 "宠物相册表");
+    }
+
+    private void migrateSysConfigTable() {
+        createTableIfNotExists("sys_config",
+                "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
+                "`config_name` varchar(100) NOT NULL COMMENT '配置项名称', " +
+                "`config_key` varchar(100) NOT NULL COMMENT '配置项键名', " +
+                "`config_value` text COMMENT '配置项值', " +
+                "`config_desc` varchar(500) DEFAULT NULL COMMENT '配置项描述', " +
+                "`category` varchar(50) DEFAULT 'system' COMMENT '配置分类', " +
+                "`sort_order` int(11) DEFAULT '0' COMMENT '排序', " +
+                "`created_at` datetime DEFAULT CURRENT_TIMESTAMP, " +
+                "`updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+                "PRIMARY KEY (`id`), " +
+                "UNIQUE KEY `uk_config_key` (`config_key`), " +
+                "KEY `idx_category` (`category`)",
+                "系统配置表");
+        seedSysConfigData();
+    }
+
+    private void seedSysConfigData() {
+        String[][] initialConfigs = {
+                {"AI功能开关", "ai.enabled", "true", "控制AI分析功能的启用与禁用", "ai", "1"},
+                {"AI API密钥", "ai.api-key", "", "OpenRouter API密钥", "ai", "2"},
+                {"AI模型", "ai.model", "deepseek/deepseek-chat", "AI分析使用的模型", "ai", "3"},
+                {"AI接口地址", "ai.base-url", "https://openrouter.ai/api/v1", "AI接口基础地址", "ai", "4"},
+                {"内容审核模式", "content.audit-mode", "auto", "内容审核模式: auto-自动, manual-人工", "content", "1"},
+                {"屏蔽词列表", "content.block-words", "", "屏蔽词列表，逗号分隔", "content", "2"},
+                {"全局通知开关", "notification.enabled", "true", "全局通知开关", "notification", "1"},
+                {"新用户注册开关", "registration.enabled", "true", "新用户注册开关", "registration", "1"},
+                {"小程序版本号", "app.version", "1.0.0", "小程序版本号", "system", "1"},
+        };
+        for (String[] cfg : initialConfigs) {
+            try {
+                String checkSql = "SELECT COUNT(*) FROM sys_config WHERE config_key = ?";
+                Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, cfg[1]);
+                if (count != null && count == 0) {
+                    String insertSql = "INSERT INTO sys_config (config_name, config_key, config_value, config_desc, category, sort_order) VALUES (?, ?, ?, ?, ?, ?)";
+                    jdbcTemplate.update(insertSql, cfg[0], cfg[1], cfg[2], cfg[3], cfg[4], Integer.parseInt(cfg[5]));
+                    log.info("数据库迁移: 初始化系统配置 {}", cfg[1]);
+                }
+            } catch (Exception e) {
+                log.warn("数据库迁移失败: 初始化系统配置 {} - {}", cfg[1], e.getMessage());
+            }
+        }
     }
 
     private void addColumnIfNotExists(String tableName, String columnName, String columnDefinition) {
