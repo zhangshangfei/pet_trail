@@ -92,6 +92,11 @@ ai:
   api-key: ${AI_API_KEY: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}
   base-url: ${AI_BASE_URL:https://openrouter.ai/api/v1}
   model: ${AI_MODEL:openrouter/free}
+  glm:
+    enabled: ${AI_GLM_ENABLED:true}
+    api-key: ${AI_GLM_API_KEY:9369496ba97b4fb08b1fdfbf7907b049.LdjmNyZ81m6mQSEp}
+    base-url: ${AI_GLM_BASE_URL:https://open.bigmodel.cn/api/paas/v4}
+    model: ${AI_GLM_MODEL:glm-4.7-flash}
 
 # Sentinel 配置（可选，需要单独安装 Sentinel Dashboard）
 # spring.cloud:
