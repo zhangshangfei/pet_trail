@@ -67,6 +67,7 @@ const cloudRequest = (options = {}) => {
       header: header,
       method: options.method || 'GET',
       data: requestData,
+      timeout: options.timeout || 20000,
       success: (res) => {
         // 检查 HTTP 状态码
         if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -322,12 +323,13 @@ export default {
   },
 
   // POST 请求
-  post(url, data = {}, header = {}) {
+  post(url, data = {}, header = {}, timeout) {
     return request({
       url,
       method: 'POST',
       data,
-      header
+      header,
+      timeout
     })
   },
 

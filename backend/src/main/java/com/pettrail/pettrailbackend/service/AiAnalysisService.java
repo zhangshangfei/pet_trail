@@ -67,11 +67,11 @@ public class AiAnalysisService {
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("model", effectiveModel);
             body.put("messages", List.of(
-                    Map.of("role", "system", "content", "你是一位专业的宠物健康顾问，请根据提供的宠物健康数据给出专业、温暖的分析建议。回复控制在300字以内。"),
+                    Map.of("role", "system", "content", "你是专业宠物健康顾问，根据数据给出简洁分析建议，200字以内。"),
                     Map.of("role", "user", "content", prompt)
             ));
             body.put("temperature", 0.7);
-            body.put("max_tokens", 500);
+            body.put("max_tokens", 300);
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 

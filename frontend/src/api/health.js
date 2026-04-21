@@ -85,5 +85,5 @@ export const getHealthDashboard = (petId) => {
 }
 
 export const getHealthAnalysis = (petId) => {
-  return request.post(`/api/health/analysis/${petId}`)
+  return request.post(`/api/health/analysis/${petId}`, {}, {}, 60000)
 }
