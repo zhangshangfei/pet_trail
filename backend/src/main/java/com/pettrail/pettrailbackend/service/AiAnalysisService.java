@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
@@ -40,7 +42,7 @@ public class AiAnalysisService {
 
         String effectiveApiKey = getEffectiveApiKey();
         if (effectiveApiKey == null || effectiveApiKey.isEmpty()) {
-            log.debug("AI API Key未配置，跳过大模型调用");
+            log.warn("AI API Key未配置，跳过大模型调用。数据库和配置文件均未找到有效Key");
             return null;
         }
 
@@ -67,7 +69,12 @@ public class AiAnalysisService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
             String url = effectiveBaseUrl + (effectiveBaseUrl.endsWith("/") ? "" : "/") + "chat/completions";
 
+            log.info("AI分析请求: url={}, model={}, apiKey前缀={}", url, effectiveModel,
+                    effectiveApiKey.length() > 8 ? effectiveApiKey.substring(0, 8) + "..." : "***");
+
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, request, Map.class);
+
+            log.info("AI分析响应: statusCode={}", response.getStatusCode());
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map bodyResp = response.getBody();
@@ -75,16 +82,24 @@ public class AiAnalysisService {
                 if (choices != null && !choices.isEmpty()) {
                     Map message = (Map) choices.get(0).get("message");
                     if (message != null) {
-                        log.info("AI分析正常返回：{}",(String) message.get("content"));
-                        return (String) message.get("content");
+                        String content = (String) message.get("content");
+                        log.info("AI分析正常返回，内容长度={}", content != null ? content.length() : 0);
+                        return content;
                     }
                 }
+                log.warn("AI分析API返回200但响应体结构异常: {}", bodyResp.keySet());
+            } else {
+                log.warn("AI分析API返回异常: status={}, body={}", response.getStatusCode(), response.getBody());
             }
-
-            log.warn("AI分析API返回异常: status={}", response.getStatusCode());
+            return null;
+        } catch (HttpClientErrorException e) {
+            log.error("AI分析API认证/权限错误: status={}, responseBody={}", e.getStatusCode(), e.getResponseBodyAsString());
+            return null;
+        } catch (HttpServerErrorException e) {
+            log.error("AI分析API服务端错误: status={}, responseBody={}", e.getStatusCode(), e.getResponseBodyAsString());
             return null;
         } catch (Exception e) {
-            log.warn("AI分析API调用失败: {}", e.getMessage());
+            log.error("AI分析API调用失败: type={}, message={}", e.getClass().getSimpleName(), e.getMessage());
             return null;
         }
     }
@@ -108,8 +123,16 @@ public class AiAnalysisService {
         } catch (Exception e) {
             log.debug("读取数据库AI API Key失败，使用配置文件默认值");
         }
-        if (dbKey != null && !dbKey.isEmpty()) return dbKey;
-        return apiKey;
+        if (dbKey != null && !dbKey.isEmpty()) {
+            log.debug("使用数据库配置的API Key, 长度={}", dbKey.length());
+            return dbKey;
+        }
+        if (apiKey != null && !apiKey.isEmpty()) {
+            log.debug("使用配置文件的API Key, 长度={}", apiKey.length());
+            return apiKey;
+        }
+        log.warn("未找到有效的AI API Key（数据库和配置文件均为空）");
+        return null;
     }
 
     private String getEffectiveModel() {

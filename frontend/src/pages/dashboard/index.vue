@@ -18,11 +18,7 @@
         <view class="pet-selector">
           <view class="pet-selector-card" @touchstart.stop="togglePetSelector">
             <view class="pet-selector-left">
-              <image
-                class="pet-selector-avatar"
-                :src="selectedPet && selectedPet.avatar ? selectedPet.avatar : fallbackPetAvatar"
-                mode="aspectFill"
-              />
+              <avatar-view :src="selectedPet && selectedPet.avatar ? selectedPet.avatar : ''" :name="selectedPet ? selectedPet.name : ''" :id="selectedPet ? selectedPet.id : ''" :size="72" />
               <view class="pet-selector-meta">
                 <text class="pet-selector-name">{{ selectedPet ? selectedPet.name : "请选择宠物" }}</text>
                 <text class="pet-selector-breed">{{ selectedPet ? (selectedPet.breed || "") : "" }}</text>
@@ -43,11 +39,7 @@
                 @touchstart.stop="selectPet(pet)"
                 v-show="!searchQuery || (pet.name && pet.name.toLowerCase().includes(searchQuery.toLowerCase())) || (pet.breed && pet.breed.toLowerCase().includes(searchQuery.toLowerCase()))"
               >
-                <image
-                  class="pet-selector-item-avatar"
-                  :src="pet.avatar || fallbackPetAvatar"
-                  mode="aspectFill"
-                />
+                <avatar-view :src="pet.avatar || ''" :name="pet.name || ''" :id="pet.id" :size="56" />
                 <view class="pet-selector-item-meta">
                   <text class="pet-selector-item-name">{{ pet.name }}</text>
                   <text class="pet-selector-item-breed">{{ pet.breed || "" }}</text>
@@ -279,9 +271,10 @@
 <script>
 import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
 import UserTopBar from '@/components/UserTopBar.vue'
+import AvatarView from '@/components/AvatarView.vue'
 
 export default {
-  components: { UserTopBar },
+  components: { UserTopBar, AvatarView },
   data() {
     return {
       statusBarHeight: 20,

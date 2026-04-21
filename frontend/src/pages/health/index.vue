@@ -80,22 +80,6 @@
           </view>
         </scroll-view>
 
-        <!-- AI 健康分析入口 -->
-        <view class="ai-entry" @tap="goAiAnalysis">
-          <view class="ai-entry-left">
-            <text class="ai-entry-icon">🤖</text>
-            <view class="ai-entry-text">
-              <text class="ai-entry-title">AI 健康分析</text>
-              <text v-if="aiSummary" class="ai-entry-desc">综合评分 {{ aiSummary.score }} · {{ aiSummary.level }}</text>
-              <text v-else class="ai-entry-desc">智能评估宠物健康状况</text>
-            </view>
-          </view>
-          <view v-if="aiSummary && aiSummary.warningCount > 0" class="ai-entry-badge">
-            <text class="ai-entry-badge-text">{{ aiSummary.warningCount }}</text>
-          </view>
-          <text class="ai-entry-arrow">›</text>
-        </view>
-
         <!-- Tab：对齐 pages/test/add -->
         <view class="tab-container">
           <view class="tab-wrapper">
@@ -340,8 +324,7 @@ export default {
         medicine: "",
         remark: ""
       },
-      healthScore: 0,
-      aiSummary: null
+      healthScore: 0
     };
   },
   computed: {
@@ -530,26 +513,18 @@ export default {
     async loadHealthScore() {
       if (!this.currentPet || !this.currentPet.id) {
         this.healthScore = 0;
-        this.aiSummary = null;
         return;
       }
       try {
         const res = await uni.$request.post(`/api/health/analysis/${this.currentPet.id}`);
         if (res && res.success && res.data) {
           this.healthScore = res.data.score || 0;
-          this.aiSummary = {
-            score: res.data.score || 0,
-            level: res.data.level || '',
-            warningCount: (res.data.warnings && res.data.warnings.length) || 0
-          };
         } else {
           this.healthScore = 0;
-          this.aiSummary = null;
         }
       } catch (e) {
         console.error("加载健康评分失败:", e);
         this.healthScore = 0;
-        this.aiSummary = null;
       }
     },
     togglePetSelector() {
@@ -575,9 +550,6 @@ export default {
     },
     goBackToBoard() {
       uni.switchTab({ url: "/pages/dashboard/index" });
-    },
-    goAiAnalysis() {
-      uni.navigateTo({ url: "/pages/health/analysis" });
     },
     onSettings() {
       uni.showToast({ title: "未实现", icon: "none" });
@@ -864,19 +836,6 @@ export default {
 .core-row {
   margin-bottom: 22rpx;
 }
-.ai-entry {
-  display: flex; align-items: center; justify-content: space-between;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20rpx; padding: 24rpx 28rpx; margin-bottom: 22rpx;
-}
-.ai-entry-left { display: flex; align-items: center; gap: 16rpx; }
-.ai-entry-icon { font-size: 44rpx; }
-.ai-entry-text { display: flex; flex-direction: column; }
-.ai-entry-title { font-size: 30rpx; font-weight: 600; color: #fff; }
-.ai-entry-desc { font-size: 22rpx; color: rgba(255,255,255,0.8); margin-top: 4rpx; }
-.ai-entry-arrow { font-size: 40rpx; color: rgba(255,255,255,0.8); }
-.ai-entry-badge { width: 36rpx; height: 36rpx; border-radius: 18rpx; background: #ff3b30; display: flex; align-items: center; justify-content: center; margin-right: 8rpx; }
-.ai-entry-badge-text { font-size: 20rpx; font-weight: 700; color: #fff; }
 .core-row-inner {
   display: flex;
   gap: 14rpx;

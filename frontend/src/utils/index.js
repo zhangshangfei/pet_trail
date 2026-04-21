@@ -239,7 +239,8 @@ export const wechatLogin = () => {
 }
 
 const DEFAULT_AVATAR_COLORS = [
-  'FF7A3D', 'FF4D6A', '6C5CE7', '00B894', '0984E3', 'E17055', 'FDCB6E', 'A29BFE'
+  '#FF7A3D', '#FF4D6A', '#6C5CE7', '#00B894', '#0984E3', '#E17055', '#FDCB6E', '#A29BFE',
+  '#00CEC9', '#E84393', '#55A3E8', '#F39C12', '#2ECC71', '#9B59B6', '#1ABC9C', '#E74C3C'
 ]
 
 function simpleHash(str) {
@@ -252,26 +253,50 @@ function simpleHash(str) {
   return Math.abs(hash)
 }
 
-export const DEFAULT_USER_AVATAR = 'https://api.dicebear.com/7.x/thumbs/svg?seed=0&backgroundColor=FF7A3D'
+export function getFirstChar(name) {
+  if (!name || !name.trim()) return '?'
+  const trimmed = name.trim()
+  const first = trimmed.charAt(0)
+  if (/[\u4e00-\u9fff]/.test(first)) return first
+  if (/[a-zA-Z]/.test(first)) return first.toUpperCase()
+  if (/[0-9]/.test(first)) return first
+  return '?'
+}
 
-export const DEFAULT_PET_AVATAR_URL = 'https://api.dicebear.com/7.x/thumbs/svg?seed=pet&backgroundColor=FDCB6E'
+export function getAvatarColor(id) {
+  const colorIndex = simpleHash(String(id || 0)) % DEFAULT_AVATAR_COLORS.length
+  return DEFAULT_AVATAR_COLORS[colorIndex]
+}
+
+export function generateDefaultAvatar(name, id) {
+  const colorIndex = simpleHash(String(id || name || 0)) % DEFAULT_AVATAR_COLORS.length
+  const bgColor = DEFAULT_AVATAR_COLORS[colorIndex]
+  const char = getFirstChar(name)
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" rx="100" fill="${bgColor}"/><text x="100" y="108" font-size="80" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-weight="600" fill="white" text-anchor="middle" dominant-baseline="middle">${char}</text></svg>`
+
+  return 'data:image/svg+xml,' + encodeURIComponent(svg)
+}
+
+export const DEFAULT_USER_AVATAR = ''
+export const DEFAULT_PET_AVATAR_URL = ''
 
 export function getUserAvatar(userId, avatarUrl) {
   if (avatarUrl && avatarUrl.startsWith('http')) {
     return avatarUrl
   }
-  const colorIndex = simpleHash(userId) % DEFAULT_AVATAR_COLORS.length
-  const color = DEFAULT_AVATAR_COLORS[colorIndex]
-  return `https://api.dicebear.com/7.x/thumbs/svg?seed=${userId}&backgroundColor=${color}`
+  return ''
 }
 
 export function getPetAvatar(petId, avatarUrl) {
   if (avatarUrl && avatarUrl.startsWith('http')) {
     return avatarUrl
   }
-  const colorIndex = simpleHash(petId) % DEFAULT_AVATAR_COLORS.length
-  const color = DEFAULT_AVATAR_COLORS[colorIndex]
-  return `https://api.dicebear.com/7.x/thumbs/svg?seed=pet${petId}&backgroundColor=${color}`
+  return ''
+}
+
+export function isDefaultAvatar(url) {
+  return !url || url === '' || url.startsWith('data:image/svg+xml')
 }
 
 export const checkLogin = (content = '请先登录后再操作') => {

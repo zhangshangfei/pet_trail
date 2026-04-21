@@ -59,9 +59,9 @@
           </view>
         </view>
 
-        <view class="submit-btn" :class="{ disabled: !canSubmit }" @tap="onSubmit">
+        <button class="submit-btn" :class="{ disabled: !canSubmit }" :disabled="!canSubmit" @tap="onSubmit">
           <text class="submit-text">提交反馈</text>
-        </view>
+        </button>
 
         <view class="history-btn" @tap="goFeedbackList">
           <text class="history-icon">📋</text>
@@ -140,7 +140,15 @@ export default {
       uni.previewImage({ current: url, urls: this.imageList })
     },
     async onSubmit() {
-      if (!this.canSubmit) return
+      if (!this.form.content || !this.form.content.trim()) {
+        uni.showToast({ title: '请输入反馈内容', icon: 'none' })
+        return
+      }
+      if (this.form.content.trim().length < 10) {
+        uni.showToast({ title: '反馈内容至少10个字', icon: 'none' })
+        return
+      }
+      if (this.submitting) return
       const loggedIn = await checkLogin('请先登录后再提交反馈')
       if (!loggedIn) return
 
@@ -234,9 +242,12 @@ $text-light: #999999;
   height: 96rpx; border-radius: 48rpx; display: flex; align-items: center;
   justify-content: center; background: $primary; margin: 32rpx 0 20rpx;
   box-shadow: 0 8rpx 24rpx rgba(255,106,61,0.3);
+  border: none; padding: 0; line-height: 96rpx;
 }
+.submit-btn::after { border: none; }
 .submit-btn:active { opacity: 0.9; }
 .submit-btn.disabled { background: #ccc; box-shadow: none; }
+.submit-btn[disabled] { background: #ccc; box-shadow: none; color: #fff; }
 .submit-text { font-size: 32rpx; font-weight: 600; color: #fff; }
 
 .history-btn {

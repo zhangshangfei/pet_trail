@@ -6,7 +6,7 @@
         <text class="user-topbar-login-text">{{ loginText }}</text>
       </view>
       <view v-else class="user-topbar-user" @tap="$emit('userTap')">
-        <image class="user-topbar-avatar" :src="avatar" mode="aspectFill" />
+        <avatar-view :src="avatar" :name="name" :size="64" />
         <text class="user-topbar-name">{{ name }}</text>
       </view>
       <view class="user-topbar-right-group" :style="{ marginRight: rightMargin + 'px' }">
@@ -25,8 +25,11 @@
 </template>
 
 <script>
+import AvatarView from './AvatarView.vue'
+
 export default {
   name: 'UserTopBar',
+  components: { AvatarView },
   props: {
     statusBarHeight: {
       type: Number,
@@ -128,9 +131,6 @@ export default {
 }
 
 .user-topbar-avatar {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
   margin-right: 14rpx;
   border: 2rpx solid rgba(255, 255, 255, 0.85);
 }
