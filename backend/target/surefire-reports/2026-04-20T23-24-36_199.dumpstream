@@ -1,5 +1,0 @@
-# Created at 2026-04-20T23:24:36.439
-Boot Manifest-JAR contains absolute paths in classpath 'G:\openclaw_project\pet-trail\backend\target\test-classes'
-Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
-'other' has different root
-

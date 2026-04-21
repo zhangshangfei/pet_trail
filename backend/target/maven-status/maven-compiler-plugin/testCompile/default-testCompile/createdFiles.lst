@@ -1,3 +1,8 @@
+com\pettrail\pettrailbackend\service\CheckinServiceTest.class
+com\pettrail\pettrailbackend\service\RecommendServiceTest.class
+com\pettrail\pettrailbackend\service\FollowServiceTest.class
 com\pettrail\pettrailbackend\util\JwtUtilTest.class
+com\pettrail\pettrailbackend\service\ContentAuditServiceTest.class
 com\pettrail\pettrailbackend\service\NotificationServiceTest.class
+com\pettrail\pettrailbackend\service\PostServiceTest.class
 com\pettrail\pettrailbackend\util\NicknameUtilTest.class
