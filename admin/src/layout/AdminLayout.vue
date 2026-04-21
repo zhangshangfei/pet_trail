@@ -61,6 +61,10 @@
           <el-icon><Tools /></el-icon>
           <template #title>系统配置管理</template>
         </el-menu-item>
+        <el-menu-item index="/ai-models">
+          <el-icon><Cpu /></el-icon>
+          <template #title>AI模型管理</template>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

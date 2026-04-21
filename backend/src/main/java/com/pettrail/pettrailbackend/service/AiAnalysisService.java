@@ -2,10 +2,10 @@ package com.pettrail.pettrailbackend.service;
 
 import com.pettrail.pettrailbackend.dto.HealthAnalysisVO;
 import com.pettrail.pettrailbackend.dto.HealthAnalysisVO.*;
+import com.pettrail.pettrailbackend.entity.AiModel;
 import com.pettrail.pettrailbackend.entity.Pet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -19,20 +19,9 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AiAnalysisService {
 
-    @Value("${ai.api-key:}")
-    private String apiKey;
-
-    @Value("${ai.base-url:https://openrouter.ai/api/v1}")
-    private String baseUrl;
-
-    @Value("${ai.model:openrouter/free}")
-    private String model;
-
-    @Value("${ai.enabled:false}")
-    private boolean configEnabled;
-
     private final RestTemplate restTemplate;
     private final SysConfigService sysConfigService;
+    private final AiModelService aiModelService;
 
     public String generateAnalysis(Pet pet, HealthAnalysisVO analysis) {
         if (!isAiEnabled()) {
@@ -40,14 +29,29 @@ public class AiAnalysisService {
             return null;
         }
 
-        String effectiveApiKey = getEffectiveApiKey();
+        AiModel currentModel = aiModelService.getCurrentModel();
+        String effectiveApiKey;
+        String effectiveModel;
+        String effectiveBaseUrl;
+
+        if (currentModel != null) {
+            effectiveApiKey = currentModel.getApiKey();
+            effectiveModel = currentModel.getModelName();
+            effectiveBaseUrl = currentModel.getBaseUrl();
+            log.info("[AI调用] 使用模型管理系统配置 === 模型ID: {}, 名称: {}, provider: {}",
+                    currentModel.getId(), currentModel.getDisplayName(), currentModel.getProvider());
+        } else {
+            effectiveApiKey = getEffectiveApiKey();
+            effectiveModel = getEffectiveModel();
+            effectiveBaseUrl = getEffectiveBaseUrl();
+            log.info("[AI调用] 使用系统配置文件配置 === 模型: {}", effectiveModel);
+        }
+
         if (effectiveApiKey == null || effectiveApiKey.isEmpty()) {
-            log.warn("[AI调用] API Key未配置，跳过大模型调用。数据库和配置文件均未找到有效Key");
+            log.warn("[AI调用] API Key未配置，跳过大模型调用");
             return null;
         }
 
-        String effectiveModel = getEffectiveModel();
-        String effectiveBaseUrl = getEffectiveBaseUrl();
         String url = effectiveBaseUrl + (effectiveBaseUrl.endsWith("/") ? "" : "/") + "chat/completions";
 
         log.info("[AI调用] 开始调用 === 宠物: {}, 模型: {}, URL: {}, apiKey前缀: {}",
@@ -55,6 +59,7 @@ public class AiAnalysisService {
                 effectiveApiKey.length() > 8 ? effectiveApiKey.substring(0, 8) + "..." : "***");
 
         long startTime = System.currentTimeMillis();
+        Long modelId = currentModel != null ? currentModel.getId() : null;
 
         try {
             String prompt = buildPrompt(pet, analysis);
@@ -70,8 +75,13 @@ public class AiAnalysisService {
                     Map.of("role", "system", "content", "你是专业宠物健康顾问，根据数据给出简洁分析建议，200字以内。"),
                     Map.of("role", "user", "content", prompt)
             ));
-            body.put("temperature", 0.7);
-            body.put("max_tokens", 300);
+
+            if (currentModel != null && currentModel.getParameters() != null) {
+                applyModelParameters(body, currentModel.getParameters());
+            } else {
+                body.put("temperature", 0.7);
+                body.put("max_tokens", 300);
+            }
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
@@ -79,6 +89,7 @@ public class AiAnalysisService {
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.POST, request, (Class<Map<String, Object>>)(Class<?>)Map.class);
 
             long elapsed = System.currentTimeMillis() - startTime;
+            boolean success = false;
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> bodyResp = response.getBody();
@@ -89,10 +100,14 @@ public class AiAnalysisService {
                     Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
                     if (message != null) {
                         String content = (String) message.get("content");
+                        success = true;
                         log.info("[AI调用] 调用成功 === 耗时: {}ms, 状态码: {}, 内容长度: {}, 内容摘要: {}",
                                 elapsed, response.getStatusCode(),
                                 content != null ? content.length() : 0,
                                 content != null && content.length() > 100 ? content.substring(0, 100) + "..." : content);
+                        if (modelId != null) {
+                            aiModelService.recordModelCall(modelId, elapsed, true);
+                        }
                         return content;
                     }
                 }
@@ -100,19 +115,45 @@ public class AiAnalysisService {
             } else {
                 log.warn("[AI调用] 调用失败 === 耗时: {}ms, 状态码: {}, 响应体: {}", elapsed, response.getStatusCode(), response.getBody());
             }
+
+            if (modelId != null) {
+                aiModelService.recordModelCall(modelId, elapsed, success);
+            }
             return null;
         } catch (HttpClientErrorException e) {
             long elapsed = System.currentTimeMillis() - startTime;
             log.error("[AI调用] 认证/权限错误 === 耗时: {}ms, 状态码: {}, 响应体: {}", elapsed, e.getStatusCode(), e.getResponseBodyAsString());
+            if (modelId != null) aiModelService.recordModelCall(modelId, elapsed, false);
             return null;
         } catch (HttpServerErrorException e) {
             long elapsed = System.currentTimeMillis() - startTime;
             log.error("[AI调用] 服务端错误 === 耗时: {}ms, 状态码: {}, 响应体: {}", elapsed, e.getStatusCode(), e.getResponseBodyAsString());
+            if (modelId != null) aiModelService.recordModelCall(modelId, elapsed, false);
             return null;
         } catch (Exception e) {
             long elapsed = System.currentTimeMillis() - startTime;
             log.error("[AI调用] 调用异常 === 耗时: {}ms, 异常类型: {}, 信息: {}", elapsed, e.getClass().getSimpleName(), e.getMessage());
+            if (modelId != null) aiModelService.recordModelCall(modelId, elapsed, false);
             return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void applyModelParameters(Map<String, Object> body, String parametersJson) {
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            Map<String, Object> params = mapper.readValue(parametersJson, Map.class);
+            for (Map.Entry<String, Object> entry : params.entrySet()) {
+                if (!body.containsKey(entry.getKey())) {
+                    body.put(entry.getKey(), entry.getValue());
+                }
+            }
+            if (!body.containsKey("temperature")) body.put("temperature", 0.7);
+            if (!body.containsKey("max_tokens")) body.put("max_tokens", 300);
+        } catch (Exception e) {
+            log.warn("[AI调用] 解析模型参数失败，使用默认参数: {}", e.getMessage());
+            body.put("temperature", 0.7);
+            body.put("max_tokens", 300);
         }
     }
 
@@ -125,7 +166,7 @@ public class AiAnalysisService {
         } catch (Exception e) {
             log.debug("读取数据库AI开关失败，使用配置文件默认值: {}", e.getMessage());
         }
-        return configEnabled;
+        return false;
     }
 
     private String getEffectiveApiKey() {
@@ -135,16 +176,8 @@ public class AiAnalysisService {
         } catch (Exception e) {
             log.debug("读取数据库AI API Key失败，使用配置文件默认值");
         }
-        if (dbKey != null && !dbKey.isEmpty()) {
-            log.debug("使用数据库配置的API Key, 长度={}", dbKey.length());
-            return dbKey;
-        }
-        if (apiKey != null && !apiKey.isEmpty()) {
-            log.debug("使用配置文件的API Key, 长度={}", apiKey.length());
-            return apiKey;
-        }
-        log.warn("未找到有效的AI API Key（数据库和配置文件均为空）");
-        return null;
+        if (dbKey != null && !dbKey.isEmpty()) return dbKey;
+        return "";
     }
 
     private String getEffectiveModel() {
@@ -155,7 +188,7 @@ public class AiAnalysisService {
             log.debug("读取数据库AI模型失败，使用配置文件默认值");
         }
         if (dbModel != null && !dbModel.isEmpty()) return dbModel;
-        return model;
+        return "openrouter/free";
     }
 
     private String getEffectiveBaseUrl() {
@@ -166,7 +199,7 @@ public class AiAnalysisService {
             log.debug("读取数据库AI Base URL失败，使用配置文件默认值");
         }
         if (dbUrl != null && !dbUrl.isEmpty()) return dbUrl;
-        return baseUrl;
+        return "https://openrouter.ai/api/v1";
     }
 
     private String buildPrompt(Pet pet, HealthAnalysisVO analysis) {

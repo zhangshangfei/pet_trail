@@ -642,3 +642,54 @@ INSERT IGNORE INTO `sys_config` (`config_name`, `config_key`, `config_value`, `c
 ('新用户注册开关', 'registration.enabled', 'true', '新用户注册开关', 'registration', 1),
 ('小程序版本号', 'app.version', '1.0.0', '小程序版本号', 'system', 1);
 
+-- ========================================
+-- V3.0 AI模型管理系统
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS `ai_model` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `model_name` varchar(100) NOT NULL COMMENT '模型标识名(如deepseek/deepseek-chat)',
+  `display_name` varchar(100) NOT NULL COMMENT '模型显示名称',
+  `provider` varchar(50) NOT NULL COMMENT '模型提供商: openrouter/zhipu/openai/custom',
+  `base_url` varchar(255) NOT NULL COMMENT 'API基础地址',
+  `api_key` varchar(500) NOT NULL COMMENT 'API密钥',
+  `model_version` varchar(50) DEFAULT NULL COMMENT '模型版本号',
+  `parameters` json DEFAULT NULL COMMENT '模型参数配置(temperature/max_tokens等)',
+  `status` tinyint(4) DEFAULT 1 COMMENT '状态: 1-启用 0-禁用',
+  `is_default` tinyint(4) DEFAULT 0 COMMENT '是否为当前活动模型: 1-是 0-否',
+  `sort_order` int(11) DEFAULT 0 COMMENT '排序',
+  `description` varchar(500) DEFAULT NULL COMMENT '模型描述',
+  `icon` varchar(50) DEFAULT NULL COMMENT '模型图标emoji',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_is_default` (`is_default`),
+  KEY `idx_provider` (`provider`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI模型配置表';
+
+CREATE TABLE IF NOT EXISTS `ai_model_switch_log` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `from_model_id` bigint(20) DEFAULT NULL COMMENT '切换前模型ID',
+  `from_model_name` varchar(100) DEFAULT NULL COMMENT '切换前模型名称',
+  `to_model_id` bigint(20) NOT NULL COMMENT '切换后模型ID',
+  `to_model_name` varchar(100) NOT NULL COMMENT '切换后模型名称',
+  `switch_type` varchar(20) NOT NULL COMMENT '切换类型: manual-手动/auto-自动',
+  `operator_id` bigint(20) DEFAULT NULL COMMENT '操作者ID',
+  `operator_name` varchar(50) DEFAULT NULL COMMENT '操作者名称',
+  `reason` varchar(500) DEFAULT NULL COMMENT '切换原因',
+  `status` varchar(20) NOT NULL COMMENT '切换状态: success/failed',
+  `duration` bigint(20) DEFAULT NULL COMMENT '切换耗时(毫秒)',
+  `error_message` varchar(500) DEFAULT NULL COMMENT '错误信息',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_to_model_id` (`to_model_id`),
+  KEY `idx_switch_type` (`switch_type`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI模型切换日志表';
+
+INSERT IGNORE INTO `ai_model` (`model_name`, `display_name`, `provider`, `base_url`, `api_key`, `model_version`, `parameters`, `status`, `is_default`, `sort_order`, `description`, `icon`) VALUES
+('deepseek/deepseek-chat', 'DeepSeek 智能分析', 'openrouter', 'https://openrouter.ai/api/v1', '', 'v3', '{"temperature": 0.7, "max_tokens": 300}', 1, 1, 1, '基于DeepSeek大模型的宠物健康智能分析，擅长综合评估与建议', '🧠'),
+('glm-4-flash', '智谱GLM快速分析', 'zhipu', 'https://open.bigmodel.cn/api/paas/v4', '', 'v4', '{"temperature": 0.6, "max_tokens": 250}', 1, 0, 2, '基于智谱GLM-4-Flash的快速健康分析，响应速度快', '⚡'),
+('openrouter/free', '通用免费模型', 'openrouter', 'https://openrouter.ai/api/v1', '', 'free', '{"temperature": 0.7, "max_tokens": 200}', 1, 0, 3, '免费通用模型，适合基础健康分析需求', '🎁');
+
