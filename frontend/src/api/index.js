@@ -5,6 +5,8 @@ import * as reminder from './reminder'
 import * as post from './post'
 import * as checkin from './checkin'
 
+export { auth, pet, health, reminder, post, checkin }
+
 export default {
   auth,
   pet,

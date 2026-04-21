@@ -1,5 +1,7 @@
 const THEME_KEY = 'app_theme'
 
+const USE_CUSTOM_TABBAR = true
+
 export function getTheme() {
   return uni.getStorageSync(THEME_KEY) || 'light'
 }
@@ -20,15 +22,9 @@ export function isDark() {
 }
 
 export function applyTheme(theme) {
-  if (theme === 'dark') {
-    uni.setTabBarStyle({
-      backgroundColor: '#1a1a1a',
-      borderStyle: 'black'
-    })
-  } else {
-    uni.setTabBarStyle({
-      backgroundColor: '#ffffff',
-      borderStyle: 'black'
-    })
-  }
+  if (USE_CUSTOM_TABBAR) return
+  const style = theme === 'dark'
+    ? { backgroundColor: '#1a1a1a', borderStyle: 'black' }
+    : { backgroundColor: '#ffffff', borderStyle: 'black' }
+  uni.setTabBarStyle(style)
 }

@@ -75,6 +75,7 @@ public class AiAnalysisService {
                 if (choices != null && !choices.isEmpty()) {
                     Map message = (Map) choices.get(0).get("message");
                     if (message != null) {
+                        log.info("AI分析正常返回：{}",(String) message.get("content"));
                         return (String) message.get("content");
                     }
                 }

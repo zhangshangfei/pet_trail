@@ -25,7 +25,7 @@
                 <text class="score-label">健康评分</text>
               </view>
             </view>
-            <text class="level-badge" :class="'level-' + analysis.level">{{ analysis.level }}</text>
+            <text class="level-badge" :class="levelClass">{{ analysis.level }}</text>
           </view>
 
           <view class="detail-section">
@@ -71,7 +71,7 @@
             <view class="trends-list">
               <view v-for="(value, key) in analysis.trends" :key="key" class="trend-item">
                 <text class="trend-key">{{ trendLabels[key] || key }}</text>
-                <text class="trend-value" :class="'trend-' + value">{{ value }}</text>
+                <text class="trend-value" :class="trendClass(value)">{{ value }}</text>
               </view>
             </view>
           </view>
@@ -115,7 +115,7 @@
               </view>
               <view class="weight-item">
                 <text class="weight-label">趋势</text>
-                <text class="weight-value" :class="'trend-' + analysis.detail.weightAnalysis.trend">{{ analysis.detail.weightAnalysis.trend }}</text>
+                <text class="weight-value" :class="trendClass(analysis.detail.weightAnalysis.trend)">{{ analysis.detail.weightAnalysis.trend }}</text>
               </view>
             </view>
           </view>
@@ -168,7 +168,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { getHealthAnalysis } from '@/api/health'
 import { getPetList } from '@/api/pet'
-import { useUserStore } from '@/stores/user'
+import { useUserStore } from '@/store/user'
 import UserTopBar from '@/components/UserTopBar.vue'
 
 const userStore = useUserStore()
@@ -190,11 +190,26 @@ const scoreClass = computed(() => {
   return 'score-poor'
 })
 
+const levelClass = computed(() => {
+  if (!analysis.value) return ''
+  const map = { '优秀': 'excellent', '良好': 'good', '一般': 'fair', '需关注': 'poor' }
+  return 'level-' + (map[analysis.value.level] || 'fair')
+})
+
 const trendLabels = {
   vaccine: '疫苗',
   parasite: '驱虫',
   weight: '体重',
   activity: '活跃度'
+}
+
+const trendClass = (value) => {
+  const map = {
+    '稳定': 'stable', '已完成': 'done', '活跃': 'active',
+    '进行中': 'progress', '上升': 'up', '需关注': 'attention',
+    '不活跃': 'inactive', '下降': 'down', '无数据': 'nodata'
+  }
+  return 'trend-' + (map[value] || 'stable')
 }
 
 const goBack = () => {
@@ -237,9 +252,7 @@ onMounted(async () => {
         uni.setStorageSync('currentPetId', res.data[0].id)
         await runAnalysis()
       }
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
   }
 })
 </script>
@@ -275,10 +288,10 @@ $red: #ff3b30;
 .score-number { font-size: 56rpx; font-weight: 700; color: $text-primary; }
 .score-label { font-size: 22rpx; color: $text-secondary; margin-top: 4rpx; }
 .level-badge { font-size: 26rpx; font-weight: 600; padding: 6rpx 24rpx; border-radius: 20rpx; color: #fff; }
-.level-优秀 { background: $green; }
-.level-良好 { background: $blue; }
-.level-一般 { background: $orange; }
-.level-需关注 { background: $red; }
+.level-excellent { background: $green; }
+.level-good { background: $blue; }
+.level-fair { background: $orange; }
+.level-poor { background: $red; }
 
 .section-title { font-size: 30rpx; font-weight: 600; color: $text-primary; margin-bottom: 16rpx; display: block; }
 
@@ -300,11 +313,11 @@ $red: #ff3b30;
 .trend-item { display: flex; align-items: center; gap: 8rpx; background: #f8f9fb; padding: 12rpx 20rpx; border-radius: 12rpx; }
 .trend-key { font-size: 24rpx; color: $text-secondary; }
 .trend-value { font-size: 24rpx; font-weight: 600; }
-.trend-稳定, .trend-已完成, .trend-活跃 { color: $green; }
-.trend-进行中, .trend-一般 { color: $orange; }
-.trend-上升, .trend-需关注, .trend-不活跃 { color: $red; }
-.trend-下降 { color: $blue; }
-.trend-无数据 { color: $text-light; }
+.trend-stable, .trend-done, .trend-active { color: $green; }
+.trend-progress { color: $orange; }
+.trend-up, .trend-attention, .trend-inactive { color: $red; }
+.trend-down { color: $blue; }
+.trend-nodata { color: $text-light; }
 
 .warnings-section { background: $card-bg; border-radius: 20rpx; padding: 24rpx; margin-bottom: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
 .warnings-list { display: flex; flex-direction: column; gap: 16rpx; }

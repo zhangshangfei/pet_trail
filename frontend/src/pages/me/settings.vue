@@ -188,11 +188,6 @@ export default {
           page.$page && uni.setPageStyle({ pageStyle: { darkmode: true } })
         }
       }
-      if (isDark) {
-        uni.setTabBarStyle({ backgroundColor: '#1a1a1a', borderStyle: 'black' })
-      } else {
-        uni.setTabBarStyle({ backgroundColor: '#ffffff', borderStyle: 'black' })
-      }
     },
     calcCacheSize() {
       try {

@@ -130,11 +130,10 @@ const cloudRequest = (options = {}) => {
       fail: (err) => {
         console.error('云托管请求失败:', err)
 
-        // 判断错误类型
         let errorMessage = '网络请求失败'
-        if (err.errMsg && err.errMsg.includes('timeout')) {
+        if (err && err.errMsg && err.errMsg.includes('timeout')) {
           errorMessage = '请求超时，请检查网络连接'
-        } else if (err.errMsg && err.errMsg.includes('fail')) {
+        } else if (err && err.errMsg && err.errMsg.includes('fail')) {
           errorMessage = '网络连接失败，请检查网络'
         }
 
@@ -232,11 +231,10 @@ const httpRequest = (options = {}) => {
       fail: (err) => {
         console.error('网络请求失败:', err)
 
-        // 判断错误类型
         let errorMessage = '网络请求失败'
-        if (err.errMsg && err.errMsg.includes('timeout')) {
+        if (err && err.errMsg && err.errMsg.includes('timeout')) {
           errorMessage = '请求超时，请检查网络连接'
-        } else if (err.errMsg && err.errMsg.includes('fail')) {
+        } else if (err && err.errMsg && err.errMsg.includes('fail')) {
           errorMessage = '网络连接失败，请检查网络'
         }
 

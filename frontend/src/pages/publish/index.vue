@@ -660,7 +660,7 @@ export default {
           this.selectedLocation = res.name || res.address
         },
         fail: (err) => {
-          if (err.errMsg && err.errMsg.indexOf('auth deny') !== -1) {
+          if (err && err.errMsg && err.errMsg.indexOf('auth deny') !== -1) {
             uni.showModal({
               title: '位置权限',
               content: '需要获取您的位置信息，请在设置中开启',
