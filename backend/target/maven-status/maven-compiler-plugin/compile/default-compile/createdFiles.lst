@@ -40,7 +40,6 @@ com\pettrail\pettrailbackend\config\SecurityConfig.class
 com\pettrail\pettrailbackend\task\AchievementCheckTask.class
 com\pettrail\pettrailbackend\entity\User.class
 com\pettrail\pettrailbackend\annotation\RequireRole.class
-com\pettrail\pettrailbackend\service\AiModelService$ModelStats.class
 com\pettrail\pettrailbackend\dto\ReminderStatusDTO.class
 com\pettrail\pettrailbackend\task\PostAuditScheduledTask.class
 com\pettrail\pettrailbackend\controller\admin\AdminReportController.class

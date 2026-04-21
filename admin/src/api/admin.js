@@ -82,3 +82,6 @@ export const refreshAiModelCache = () => request.post('/api/admin/ai-models/refr
 export const getAiModelCacheStats = () => request.get('/api/admin/ai-models/cache/stats')
 export const clearAiModelAllCache = () => request.delete('/api/admin/ai-models/cache')
 export const clearAiModelPetCache = (petId) => request.delete(`/api/admin/ai-models/cache/pet/${petId}`)
+export const getAiModelStats = (id) => request.get(`/api/admin/ai-models/${id}/stats`)
+export const getAiModelDailyStats = (id, limit) => request.get(`/api/admin/ai-models/${id}/stats/daily`, { params: { limit } })
+export const flushAiModelStats = () => request.post('/api/admin/ai-models/stats/flush')

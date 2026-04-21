@@ -25,6 +25,7 @@ public class SchemaMigrationConfig {
             migrateSysConfigTable();
             migrateAiModelTable();
             migrateAiModelSwitchLogTable();
+            migrateAiModelStatsTable();
         };
     }
 
@@ -181,6 +182,28 @@ public class SchemaMigrationConfig {
                 "KEY `idx_switch_type` (`switch_type`), " +
                 "KEY `idx_created_at` (`created_at`)",
                 "AI模型切换日志表");
+    }
+
+    private void migrateAiModelStatsTable() {
+        createTableIfNotExists("ai_model_stats",
+                "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
+                "`model_id` bigint(20) NOT NULL COMMENT '模型ID', " +
+                "`stats_date` date NOT NULL COMMENT '统计日期', " +
+                "`call_count` bigint(20) DEFAULT 0 COMMENT '调用次数', " +
+                "`success_count` bigint(20) DEFAULT 0 COMMENT '成功次数', " +
+                "`fail_count` bigint(20) DEFAULT 0 COMMENT '失败次数', " +
+                "`total_response_time` bigint(20) DEFAULT 0 COMMENT '总响应时间(毫秒)', " +
+                "`avg_response_time` double DEFAULT NULL COMMENT '平均响应时间(毫秒)', " +
+                "`success_rate` double DEFAULT NULL COMMENT '成功率(%)', " +
+                "`min_response_time` bigint(20) DEFAULT NULL COMMENT '最小响应时间(毫秒)', " +
+                "`max_response_time` bigint(20) DEFAULT NULL COMMENT '最大响应时间(毫秒)', " +
+                "`created_at` datetime DEFAULT CURRENT_TIMESTAMP, " +
+                "`updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+                "PRIMARY KEY (`id`), " +
+                "UNIQUE KEY `uk_model_date` (`model_id`, `stats_date`), " +
+                "KEY `idx_stats_date` (`stats_date`), " +
+                "KEY `idx_model_id` (`model_id`)",
+                "AI模型性能统计表");
     }
 
     private void seedAiModelData() {

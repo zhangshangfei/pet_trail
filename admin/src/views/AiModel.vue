@@ -43,7 +43,10 @@
     <div class="cache-section" v-if="cacheStats">
       <div class="section-header-inline">
         <h3>分析缓存状态</h3>
-        <el-button size="small" type="danger" @click="handleClearCache" v-if="isSuperAdmin">清除全部缓存</el-button>
+        <div style="display: flex; gap: 8px;">
+          <el-button size="small" @click="handleFlushStats" v-if="isSuperAdmin">持久化统计</el-button>
+          <el-button size="small" type="danger" @click="handleClearCache" v-if="isSuperAdmin">清除全部缓存</el-button>
+        </div>
       </div>
       <el-row :gutter="16">
         <el-col :span="4">
@@ -134,10 +137,11 @@
       <el-table-column label="平均耗时" width="100">
         <template #default="{ row }">{{ row.avgResponseTime ? Math.round(row.avgResponseTime) + 'ms' : '-' }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="240" fixed="right">
+      <el-table-column label="操作" width="280" fixed="right">
         <template #default="{ row }">
           <el-button size="small" type="primary" @click="openEdit(row)" v-if="isSuperAdmin">编辑</el-button>
           <el-button size="small" @click="openParams(row)">参数</el-button>
+          <el-button size="small" @click="openStatsDetail(row)">统计</el-button>
           <el-button size="small" type="success" @click="handleSwitch(row)" :disabled="row.isActive" v-if="isSuperAdmin">切换</el-button>
           <el-button size="small" type="danger" @click="handleDelete(row)" :disabled="row.isActive" v-if="isSuperAdmin">删除</el-button>
         </template>
@@ -277,6 +281,50 @@
         <el-button type="primary" @click="handleSaveParams">保存参数</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="showStatsDetail" title="模型性能统计" width="700px">
+      <div v-if="statsDetail" class="stats-detail">
+        <el-row :gutter="16" style="margin-bottom: 20px;">
+          <el-col :span="6">
+            <div class="stat-card mini">
+              <div class="stat-label">总调用</div>
+              <div class="stat-value">{{ statsDetail.total_calls || 0 }}</div>
+            </div>
+          </el-col>
+          <el-col :span="6">
+            <div class="stat-card mini">
+              <div class="stat-label">成功率</div>
+              <div class="stat-value text-success">{{ statsDetail.success_rate || 0 }}%</div>
+            </div>
+          </el-col>
+          <el-col :span="6">
+            <div class="stat-card mini">
+              <div class="stat-label">成功/失败</div>
+              <div class="stat-value"><span class="text-success">{{ statsDetail.success_calls || 0 }}</span> / <span class="text-danger">{{ statsDetail.failed_calls || 0 }}</span></div>
+            </div>
+          </el-col>
+          <el-col :span="6">
+            <div class="stat-card mini">
+              <div class="stat-label">平均耗时</div>
+              <div class="stat-value">{{ statsDetail.avg_response_time ? Math.round(statsDetail.avg_response_time) : 0 }}ms</div>
+            </div>
+          </el-col>
+        </el-row>
+        <h4 style="margin: 0 0 12px;">每日统计</h4>
+        <el-table :data="dailyStats" border stripe size="small" max-height="300">
+          <el-table-column prop="stats_date" label="日期" width="120" />
+          <el-table-column prop="call_count" label="调用次数" width="90" />
+          <el-table-column prop="success_count" label="成功" width="70" />
+          <el-table-column prop="fail_count" label="失败" width="70" />
+          <el-table-column prop="success_rate" label="成功率" width="80">
+            <template #default="{ row }">{{ row.success_rate }}%</template>
+          </el-table-column>
+          <el-table-column prop="avg_response_time" label="平均耗时" width="90">
+            <template #default="{ row }">{{ row.avg_response_time ? Math.round(row.avg_response_time) + 'ms' : '-' }}</template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -285,7 +333,8 @@ import { ref, computed, onMounted } from 'vue'
 import {
   getAiModelList, getAiModelDashboard, createAiModel, updateAiModel,
   setAiModelStatus, switchAiModel, deleteAiModel, getAiModelSwitchLogs,
-  getAiModelParameters, updateAiModelParameters, getAiModelCacheStats, clearAiModelAllCache
+  getAiModelParameters, updateAiModelParameters, getAiModelCacheStats, clearAiModelAllCache,
+  getAiModelStats, getAiModelDailyStats, flushAiModelStats
 } from '../api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Right } from '@element-plus/icons-vue'
@@ -300,6 +349,10 @@ const showEdit = ref(false)
 const showParams = ref(false)
 const currentParamsModelId = ref(null)
 const paramList = ref([])
+const showStatsDetail = ref(false)
+const statsDetail = ref(null)
+const dailyStats = ref([])
+const currentStatsModelId = ref(null)
 
 const addForm = ref({
   modelName: '', displayName: '', provider: 'openrouter', baseUrl: '',
@@ -472,6 +525,31 @@ const handleClearCache = async () => {
     if (e !== 'cancel') {
       ElMessage.error('清除缓存失败')
     }
+  }
+}
+
+const openStatsDetail = async (row) => {
+  currentStatsModelId.value = row.id
+  try {
+    const [statsRes, dailyRes] = await Promise.all([
+      getAiModelStats(row.id),
+      getAiModelDailyStats(row.id, 30)
+    ])
+    statsDetail.value = statsRes.data || {}
+    dailyStats.value = dailyRes.data || []
+    showStatsDetail.value = true
+  } catch (e) {
+    ElMessage.error('获取统计数据失败')
+  }
+}
+
+const handleFlushStats = async () => {
+  try {
+    await flushAiModelStats()
+    ElMessage.success('统计数据已持久化到数据库')
+    loadDashboard()
+  } catch (e) {
+    ElMessage.error('持久化失败')
   }
 }
 

@@ -6,15 +6,19 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pettrail.pettrailbackend.dto.*;
 import com.pettrail.pettrailbackend.entity.AiModel;
+import com.pettrail.pettrailbackend.entity.AiModelStats;
 import com.pettrail.pettrailbackend.entity.AiModelSwitchLog;
 import com.pettrail.pettrailbackend.mapper.AiModelMapper;
+import com.pettrail.pettrailbackend.mapper.AiModelStatsMapper;
 import com.pettrail.pettrailbackend.mapper.AiModelSwitchLogMapper;
 import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,13 +31,12 @@ public class AiModelService {
 
     private final AiModelMapper aiModelMapper;
     private final AiModelSwitchLogMapper switchLogMapper;
+    private final AiModelStatsMapper statsMapper;
     private final ObjectMapper objectMapper;
     private final HealthAnalysisCacheService cacheService;
 
     private final AtomicReference<AiModel> currentActiveModel = new AtomicReference<>();
-    private final Map<Long, ModelStats> modelStatsMap = new ConcurrentHashMap<>();
-
-    private static final long SWITCH_TIMEOUT_MS = 2000;
+    private final Map<Long, InMemoryStats> pendingStatsMap = new ConcurrentHashMap<>();
 
     public AiModel getCurrentModel() {
         AiModel model = currentActiveModel.get();
@@ -107,8 +110,8 @@ public class AiModelService {
 
             currentActiveModel.set(toModel);
 
+            flushPendingStats();
             cacheService.invalidateAll();
-            log.info("[模型切换] 已清除所有健康分析缓存");
 
             long duration = System.currentTimeMillis() - startTime;
             switchLog.setStatus("success");
@@ -142,13 +145,7 @@ public class AiModelService {
         return models.stream().map(m -> {
             AiModelVO vo = convertToVO(m);
             vo.setIsActive(m.getId().equals(currentId));
-            ModelStats stats = modelStatsMap.get(m.getId());
-            if (stats != null) {
-                vo.setCallCount(stats.callCount);
-                vo.setSuccessCount(stats.successCount);
-                vo.setFailCount(stats.failCount);
-                vo.setAvgResponseTime(stats.getAvgResponseTime());
-            }
+            enrichWithStats(vo, m.getId());
             return vo;
         }).toList();
     }
@@ -159,6 +156,7 @@ public class AiModelService {
         AiModel current = getCurrentModel();
         AiModelVO vo = convertToVO(model);
         vo.setIsActive(model.getId().equals(current != null ? current.getId() : null));
+        enrichWithStats(vo, id);
         return vo;
     }
 
@@ -226,7 +224,7 @@ public class AiModelService {
         }
 
         aiModelMapper.deleteById(id);
-        modelStatsMap.remove(id);
+        pendingStatsMap.remove(id);
         log.info("[模型管理] 删除模型: id={}, name={}", id, model.getDisplayName());
         return true;
     }
@@ -270,38 +268,138 @@ public class AiModelService {
         if (current != null) {
             AiModelVO currentVO = convertToVO(current);
             currentVO.setIsActive(true);
-            ModelStats stats = modelStatsMap.get(current.getId());
-            if (stats != null) {
-                currentVO.setCallCount(stats.callCount);
-                currentVO.setSuccessCount(stats.successCount);
-                currentVO.setFailCount(stats.failCount);
-                currentVO.setAvgResponseTime(stats.getAvgResponseTime());
-            }
+            enrichWithStats(currentVO, current.getId());
             dashboard.setCurrentModel(currentVO);
         }
 
         dashboard.setAvailableModels(listAllModels());
 
-        long totalCalls = modelStatsMap.values().stream().mapToLong(s -> s.callCount).sum();
-        long successCalls = modelStatsMap.values().stream().mapToLong(s -> s.successCount).sum();
-        long failedCalls = modelStatsMap.values().stream().mapToLong(s -> s.failCount).sum();
-        double avgTime = modelStatsMap.values().stream()
-                .filter(s -> s.callCount > 0)
-                .mapToDouble(ModelStats::getAvgResponseTime)
-                .average().orElse(0);
+        Map<String, Object> globalStats = statsMapper.selectGlobalAggregatedStats();
+        if (globalStats != null) {
+            dashboard.setTotalCalls(toLong(globalStats.get("total_calls")));
+            dashboard.setSuccessCalls(toLong(globalStats.get("success_calls")));
+            dashboard.setFailedCalls(toLong(globalStats.get("failed_calls")));
+            dashboard.setAvgResponseTime(toDouble(globalStats.get("avg_response_time")));
+        }
 
-        dashboard.setTotalCalls(totalCalls);
-        dashboard.setSuccessCalls(successCalls);
-        dashboard.setFailedCalls(failedCalls);
-        dashboard.setAvgResponseTime(avgTime);
         dashboard.setRecentSwitches(getSwitchLogs(10));
 
         return dashboard;
     }
 
     public void recordModelCall(Long modelId, long responseTime, boolean success) {
-        modelStatsMap.computeIfAbsent(modelId, k -> new ModelStats())
+        pendingStatsMap.computeIfAbsent(modelId, k -> new InMemoryStats())
                 .record(responseTime, success);
+    }
+
+    public Map<String, Object> getModelStats(Long modelId) {
+        Map<String, Object> dbStats = statsMapper.selectAggregatedStats(modelId);
+        InMemoryStats pending = pendingStatsMap.get(modelId);
+        if (pending == null || pending.callCount == 0) {
+            return dbStats != null ? dbStats : new HashMap<>();
+        }
+
+        long dbCalls = toLong(dbStats != null ? dbStats.get("total_calls") : 0);
+        long dbSuccess = toLong(dbStats != null ? dbStats.get("success_calls") : 0);
+        long dbFailed = toLong(dbStats != null ? dbStats.get("failed_calls") : 0);
+        long dbTotalTime = 0;
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("total_calls", dbCalls + pending.callCount);
+        result.put("success_calls", dbSuccess + pending.successCount);
+        result.put("failed_calls", dbFailed + pending.failCount);
+        long totalCalls = dbCalls + pending.callCount;
+        long totalSuccess = dbSuccess + pending.successCount;
+        result.put("success_rate", totalCalls > 0 ? Math.round(totalSuccess * 1000.0 / totalCalls) / 10.0 : 0);
+        result.put("avg_response_time", totalCalls > 0 ? Math.round((dbTotalTime + pending.totalResponseTime) * 1.0 / totalCalls) : 0);
+
+        return result;
+    }
+
+    public List<Map<String, Object>> getModelDailyStats(Long modelId, int limit) {
+        return statsMapper.selectDailyStats(modelId, limit);
+    }
+
+    @Scheduled(fixedRate = 300000)
+    public void scheduledFlushStats() {
+        flushPendingStats();
+    }
+
+    @Transactional
+    public void flushPendingStats() {
+        if (pendingStatsMap.isEmpty()) return;
+
+        LocalDate today = LocalDate.now();
+        List<Long> flushed = new ArrayList<>();
+
+        for (Map.Entry<Long, InMemoryStats> entry : pendingStatsMap.entrySet()) {
+            Long modelId = entry.getKey();
+            InMemoryStats pending = entry.getValue();
+
+            if (pending.callCount == 0) continue;
+
+            synchronized (pending) {
+                long callCount = pending.callCount;
+                long successCount = pending.successCount;
+                long failCount = pending.failCount;
+                long totalResponseTime = pending.totalResponseTime;
+                long minResponseTime = pending.minResponseTime;
+                long maxResponseTime = pending.maxResponseTime;
+
+                pending.callCount = 0;
+                pending.successCount = 0;
+                pending.failCount = 0;
+                pending.totalResponseTime = 0;
+                pending.minResponseTime = Long.MAX_VALUE;
+                pending.maxResponseTime = 0;
+
+                AiModelStats existing = statsMapper.selectOne(
+                        new LambdaQueryWrapper<AiModelStats>()
+                                .eq(AiModelStats::getModelId, modelId)
+                                .eq(AiModelStats::getStatsDate, today)
+                );
+
+                if (existing != null) {
+                    existing.setCallCount(existing.getCallCount() + callCount);
+                    existing.setSuccessCount(existing.getSuccessCount() + successCount);
+                    existing.setFailCount(existing.getFailCount() + failCount);
+                    existing.setTotalResponseTime(existing.getTotalResponseTime() + totalResponseTime);
+                    existing.setAvgResponseTime(existing.getCallCount() > 0
+                            ? Math.round(existing.getTotalResponseTime() * 100.0 / existing.getCallCount()) / 100.0 : 0);
+                    existing.setSuccessRate(existing.getCallCount() > 0
+                            ? Math.round(existing.getSuccessCount() * 1000.0 / existing.getCallCount()) / 10.0 : 0);
+                    if (minResponseTime < (existing.getMinResponseTime() != null ? existing.getMinResponseTime() : Long.MAX_VALUE)) {
+                        existing.setMinResponseTime(minResponseTime);
+                    }
+                    if (maxResponseTime > (existing.getMaxResponseTime() != null ? existing.getMaxResponseTime() : 0)) {
+                        existing.setMaxResponseTime(maxResponseTime);
+                    }
+                    existing.setUpdatedAt(LocalDateTime.now());
+                    statsMapper.updateById(existing);
+                } else {
+                    AiModelStats newStats = new AiModelStats();
+                    newStats.setModelId(modelId);
+                    newStats.setStatsDate(today);
+                    newStats.setCallCount(callCount);
+                    newStats.setSuccessCount(successCount);
+                    newStats.setFailCount(failCount);
+                    newStats.setTotalResponseTime(totalResponseTime);
+                    newStats.setAvgResponseTime(callCount > 0 ? Math.round(totalResponseTime * 100.0 / callCount) / 100.0 : 0);
+                    newStats.setSuccessRate(callCount > 0 ? Math.round(successCount * 1000.0 / callCount) / 10.0 : 0);
+                    newStats.setMinResponseTime(minResponseTime != Long.MAX_VALUE ? minResponseTime : null);
+                    newStats.setMaxResponseTime(maxResponseTime > 0 ? maxResponseTime : null);
+                    newStats.setCreatedAt(LocalDateTime.now());
+                    newStats.setUpdatedAt(LocalDateTime.now());
+                    statsMapper.insert(newStats);
+                }
+
+                flushed.add(modelId);
+            }
+        }
+
+        if (!flushed.isEmpty()) {
+            log.info("[模型统计] 持久化完成: 模型数={}, 模型IDs={}", flushed.size(), flushed);
+        }
     }
 
     public Map<String, Object> getModelParameters(Long modelId) {
@@ -338,6 +436,16 @@ public class AiModelService {
             currentActiveModel.set(loadActiveModel());
         }
         log.info("[模型管理] 刷新当前活动模型缓存");
+    }
+
+    private void enrichWithStats(AiModelVO vo, Long modelId) {
+        Map<String, Object> stats = getModelStats(modelId);
+        if (stats != null && !stats.isEmpty()) {
+            vo.setCallCount(toLong(stats.get("total_calls")));
+            vo.setSuccessCount(toLong(stats.get("success_calls")));
+            vo.setFailCount(toLong(stats.get("failed_calls")));
+            vo.setAvgResponseTime(toDouble(stats.get("avg_response_time")));
+        }
     }
 
     private AiModelVO convertToVO(AiModel model) {
@@ -383,21 +491,33 @@ public class AiModelService {
         return apiKey.substring(0, 4) + "****" + apiKey.substring(apiKey.length() - 4);
     }
 
-    private static class ModelStats {
+    private long toLong(Object val) {
+        if (val == null) return 0;
+        if (val instanceof Number) return ((Number) val).longValue();
+        try { return Long.parseLong(val.toString()); } catch (Exception e) { return 0; }
+    }
+
+    private double toDouble(Object val) {
+        if (val == null) return 0;
+        if (val instanceof Number) return ((Number) val).doubleValue();
+        try { return Double.parseDouble(val.toString()); } catch (Exception e) { return 0; }
+    }
+
+    private static class InMemoryStats {
         long callCount = 0;
         long successCount = 0;
         long failCount = 0;
         long totalResponseTime = 0;
+        long minResponseTime = Long.MAX_VALUE;
+        long maxResponseTime = 0;
 
         synchronized void record(long responseTime, boolean success) {
             callCount++;
             totalResponseTime += responseTime;
             if (success) successCount++;
             else failCount++;
-        }
-
-        double getAvgResponseTime() {
-            return callCount > 0 ? (double) totalResponseTime / callCount : 0;
+            if (responseTime < minResponseTime) minResponseTime = responseTime;
+            if (responseTime > maxResponseTime) maxResponseTime = responseTime;
         }
     }
 }

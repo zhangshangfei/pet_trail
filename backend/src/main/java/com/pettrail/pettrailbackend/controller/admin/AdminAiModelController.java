@@ -196,4 +196,29 @@ public class AdminAiModelController extends BaseAdminController {
         healthAnalysisService.invalidateCacheByPetId(petId);
         return Result.success(null);
     }
+
+    @GetMapping("/{id}/stats")
+    @Operation(summary = "获取模型性能指标统计")
+    @RequireRole("ADMIN")
+    public Result<Map<String, Object>> getModelStats(@PathVariable Long id) {
+        return Result.success(aiModelService.getModelStats(id));
+    }
+
+    @GetMapping("/{id}/stats/daily")
+    @Operation(summary = "获取模型每日性能指标")
+    @RequireRole("ADMIN")
+    public Result<List<Map<String, Object>>> getModelDailyStats(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "30") int limit) {
+        return Result.success(aiModelService.getModelDailyStats(id, limit));
+    }
+
+    @PostMapping("/stats/flush")
+    @Operation(summary = "手动持久化内存中的统计数据")
+    @RequireRole("SUPER_ADMIN")
+    @OperationLog(module = "ai_model", action = "flush_stats", detail = "手动持久化统计数据")
+    public Result<Void> flushStats() {
+        aiModelService.flushPendingStats();
+        return Result.success(null);
+    }
 }
