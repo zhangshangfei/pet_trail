@@ -80,7 +80,8 @@ public class AiAnalysisService {
         } catch (Exception e) {
             log.debug("读取数据库GLM开关失败，使用配置文件默认值: {}", e.getMessage());
         }
-        return glmEnabled;
+        return true;
+        // return glmEnabled;
     }
 
     private String getGlmApiKey() {
