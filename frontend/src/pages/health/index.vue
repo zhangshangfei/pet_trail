@@ -3,7 +3,7 @@
     <user-top-bar
       :status-bar-height="statusBarHeight"
       :avatar="userAvatar"
-      :name="isLoggedIn ? (userName || '萌宠主人') : '请登录'"
+      :name="userName || '宠'"
       :show-login-button="!isLoggedIn"
       :unread-count="0"
       :show-discover="false"

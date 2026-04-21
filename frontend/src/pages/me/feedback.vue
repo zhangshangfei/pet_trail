@@ -31,7 +31,7 @@
           <textarea
             class="feedback-textarea"
             v-model="form.content"
-            placeholder="请详细描述您遇到的问题或建议..."
+            placeholder="请详细描述您遇到的问题或者建议，至少10字哦～我们会认真对待每一条反馈💕"
             maxlength="500"
             :auto-height="false"
           />
@@ -62,6 +62,7 @@
         <button class="submit-btn" :class="{ disabled: !canSubmit }" :disabled="!canSubmit" @tap="onSubmit">
           <text class="submit-text">提交反馈</text>
         </button>
+        <text v-if="form.content && form.content.trim().length > 0 && form.content.trim().length < 10" class="submit-hint">还需输入{{ 10 - form.content.trim().length }}个字才能提交哦～</text>
 
         <view class="history-btn" @tap="goFeedbackList">
           <text class="history-icon">📋</text>
@@ -249,6 +250,7 @@ $text-light: #999999;
 .submit-btn.disabled { background: #ccc; box-shadow: none; }
 .submit-btn[disabled] { background: #ccc; box-shadow: none; color: #fff; }
 .submit-text { font-size: 32rpx; font-weight: 600; color: #fff; }
+.submit-hint { display: block; text-align: center; font-size: 24rpx; color: #ff9500; margin-top: -8rpx; margin-bottom: 16rpx; }
 
 .history-btn {
   display: flex; flex-direction: row; align-items: center; justify-content: center;

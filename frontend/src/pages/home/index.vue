@@ -4,7 +4,7 @@
     <user-top-bar
       :status-bar-height="statusBarHeight"
       :avatar="avatarUrl"
-      :name="isLoggedIn ? (userName || '萌宠主人') : '请登录'"
+      :name="userName || '宠'"
       :unread-count="unreadNotificationCount"
       @rightTap="onBellTap"
       @userTap="onTopUserTap"
