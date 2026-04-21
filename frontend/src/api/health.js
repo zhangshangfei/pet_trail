@@ -83,3 +83,7 @@ export const recordWater = (amount, recordDate, recordTime, petId) => {
 export const getHealthDashboard = (petId) => {
   return request.get('/api/health/dashboard', { pet_id: petId })
 }
+
+export const getHealthAnalysis = (petId) => {
+  return request.post(`/api/health/analysis/${petId}`)
+}

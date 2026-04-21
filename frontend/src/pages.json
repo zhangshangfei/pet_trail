@@ -215,6 +215,13 @@
         "navigationBarTitleText": "打卡提醒",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/health/analysis",
+      "style": {
+        "navigationBarTitleText": "AI健康分析",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

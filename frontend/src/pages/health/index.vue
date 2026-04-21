@@ -80,6 +80,18 @@
           </view>
         </scroll-view>
 
+        <!-- AI 健康分析入口 -->
+        <view class="ai-entry" @tap="goAiAnalysis">
+          <view class="ai-entry-left">
+            <text class="ai-entry-icon">🤖</text>
+            <view class="ai-entry-text">
+              <text class="ai-entry-title">AI 健康分析</text>
+              <text class="ai-entry-desc">智能评估宠物健康状况</text>
+            </view>
+          </view>
+          <text class="ai-entry-arrow">›</text>
+        </view>
+
         <!-- Tab：对齐 pages/test/add -->
         <view class="tab-container">
           <view class="tab-wrapper">
@@ -545,6 +557,9 @@ export default {
     goBackToBoard() {
       uni.switchTab({ url: "/pages/dashboard/index" });
     },
+    goAiAnalysis() {
+      uni.navigateTo({ url: "/pages/health/analysis" });
+    },
     onSettings() {
       uni.showToast({ title: "未实现", icon: "none" });
     },
@@ -830,6 +845,17 @@ export default {
 .core-row {
   margin-bottom: 22rpx;
 }
+.ai-entry {
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20rpx; padding: 24rpx 28rpx; margin-bottom: 22rpx;
+}
+.ai-entry-left { display: flex; align-items: center; gap: 16rpx; }
+.ai-entry-icon { font-size: 44rpx; }
+.ai-entry-text { display: flex; flex-direction: column; }
+.ai-entry-title { font-size: 30rpx; font-weight: 600; color: #fff; }
+.ai-entry-desc { font-size: 22rpx; color: rgba(255,255,255,0.8); margin-top: 4rpx; }
+.ai-entry-arrow { font-size: 40rpx; color: rgba(255,255,255,0.8); }
 .core-row-inner {
   display: flex;
   gap: 14rpx;
