@@ -150,7 +150,7 @@
           </view>
 
           <view class="action-section">
-            <button class="back-btn" @tap="goBack">← 返回</button>
+            <button class="back-btn" @tap="goBack">返回</button>
             <button class="reanalyze-btn" @tap="runAnalysis" :disabled="loading">重新分析</button>
           </view>
         </template>

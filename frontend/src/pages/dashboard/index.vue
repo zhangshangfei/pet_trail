@@ -57,6 +57,22 @@
           </view>
         </view>
 
+        <!-- AI 健康分析入口 -->
+        <view class="ai-entry" @tap="goAiAnalysis">
+          <view class="ai-entry-left">
+            <text class="ai-entry-icon">🤖</text>
+            <view class="ai-entry-text">
+              <text class="ai-entry-title">AI 健康分析</text>
+              <text v-if="aiSummary" class="ai-entry-desc">综合评分 {{ aiSummary.score }} · {{ aiSummary.level }}</text>
+              <text v-else class="ai-entry-desc">智能评估宠物健康状况</text>
+            </view>
+          </view>
+          <view v-if="aiSummary && aiSummary.warningCount > 0" class="ai-entry-badge">
+            <text class="ai-entry-badge-text">{{ aiSummary.warningCount }}</text>
+          </view>
+          <text class="ai-entry-arrow">›</text>
+        </view>
+
         <!-- 体重趋势（对齐 pages/test/health 布局） -->
         <view class="dash-section">
           <view class="section-header">
@@ -291,7 +307,8 @@ export default {
       chartRangeOptions: [
         { value: 7, label: '7天' },
         { value: 30, label: '30天' }
-      ]
+      ],
+      aiSummary: null
     };
   },
   computed: {
@@ -505,6 +522,7 @@ export default {
       this.weightStats = { current: "--", avg: "--", delta: "--", deltaNum: 0 };
       this.vaccineReminders = [];
       this.parasiteReminders = [];
+      this.aiSummary = null;
     },
     async loadDashboardData() {
       if (!this.selectedPet || !this.selectedPet.id) {
@@ -519,6 +537,8 @@ export default {
           uni.$request.get(`/api/pets/${petId}/vaccine-reminders`),
           uni.$request.get(`/api/pets/${petId}/parasite-reminders`)
         ]);
+
+        this.loadAiSummary(petId);
 
         if (vaccineRes && vaccineRes.success && Array.isArray(vaccineRes.data)) {
           this.vaccineReminders = vaccineRes.data;
@@ -729,9 +749,28 @@ export default {
       if (!this.selectedPet || !this.selectedPet.id) return
       uni.navigateTo({ url: `/pages/health/parasite-list?petId=${this.selectedPet.id}` })
     },
+    goAiAnalysis() {
+      uni.navigateTo({ url: "/pages/health/analysis" });
+    },
     onChartRangeChange(range) {
       this.chartRange = range
       this.loadDashboardData()
+    },
+    async loadAiSummary(petId) {
+      try {
+        const res = await uni.$request.post(`/api/health/analysis/${petId}`);
+        if (res && res.success && res.data) {
+          this.aiSummary = {
+            score: res.data.score || 0,
+            level: res.data.level || '',
+            warningCount: (res.data.warnings && res.data.warnings.length) || 0
+          };
+        } else {
+          this.aiSummary = null;
+        }
+      } catch (e) {
+        this.aiSummary = null;
+      }
     }
   }
 };
@@ -793,6 +832,20 @@ export default {
   font-size: 30rpx;
   color: #6b7280;
 }
+
+.ai-entry {
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20rpx; padding: 24rpx 28rpx; margin-bottom: 24rpx;
+}
+.ai-entry-left { display: flex; align-items: center; gap: 16rpx; }
+.ai-entry-icon { font-size: 44rpx; }
+.ai-entry-text { display: flex; flex-direction: column; }
+.ai-entry-title { font-size: 30rpx; font-weight: 600; color: #fff; }
+.ai-entry-desc { font-size: 22rpx; color: rgba(255,255,255,0.8); margin-top: 4rpx; }
+.ai-entry-badge { width: 36rpx; height: 36rpx; border-radius: 18rpx; background: #ff3b30; display: flex; align-items: center; justify-content: center; margin-right: 8rpx; }
+.ai-entry-badge-text { font-size: 20rpx; font-weight: 700; color: #fff; }
+.ai-entry-arrow { font-size: 40rpx; color: rgba(255,255,255,0.8); }
 
 .pet-selector-pop {
   position: absolute;

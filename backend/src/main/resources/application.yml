@@ -91,7 +91,7 @@ ai:
   enabled: ${AI_ENABLED:true}
   api-key: ${AI_API_KEY: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}
   base-url: ${AI_BASE_URL:https://openrouter.ai/api/v1}
-  model: ${AI_MODEL:deepseek/deepseek-chat}
+  model: ${AI_MODEL:openrouter/free}
 
 # Sentinel 配置（可选，需要单独安装 Sentinel Dashboard）
 # spring.cloud:

@@ -23,7 +23,7 @@ public class AiAnalysisService {
     @Value("${ai.base-url:https://openrouter.ai/api/v1}")
     private String baseUrl;
 
-    @Value("${ai.model:deepseek/deepseek-chat}")
+    @Value("${ai.model:openrouter/free}")
     private String model;
 
     @Value("${ai.enabled:false}")
