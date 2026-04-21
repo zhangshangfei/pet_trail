@@ -3,7 +3,7 @@
     <view class="user-topbar-statusbar" :style="{ height: statusBarHeight + 'px' }"></view>
     <view class="user-topbar-inner">
       <view v-if="showLoginButton" class="user-topbar-login-wrap" @tap="$emit('loginTap')">
-        <avatar-view :src="avatar" :name="name" :size="64" />
+        <avatar-view :src="avatar" :name="name" :size="64" :default-icon="true" />
         <text class="user-topbar-name">点击登录</text>
       </view>
       <view v-else class="user-topbar-user" @tap="$emit('userTap')">

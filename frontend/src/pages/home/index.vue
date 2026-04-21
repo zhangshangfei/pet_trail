@@ -399,7 +399,7 @@ export default {
       const token = uni.getStorageSync('token');
       if (!token) {
         this.isLoggedIn = false;
-        this.userName = '请登录';
+        this.userName = '';
         this.avatarUrl = DEFAULT_USER_AVATAR;
         return;
       }

@@ -36,15 +36,25 @@ public class AiAnalysisService {
 
     public String generateAnalysis(Pet pet, HealthAnalysisVO analysis) {
         if (!isAiEnabled()) {
-            log.debug("AI分析未启用，跳过大模型调用");
+            log.info("[AI调用] AI分析未启用，跳过大模型调用");
             return null;
         }
 
         String effectiveApiKey = getEffectiveApiKey();
         if (effectiveApiKey == null || effectiveApiKey.isEmpty()) {
-            log.warn("AI API Key未配置，跳过大模型调用。数据库和配置文件均未找到有效Key");
+            log.warn("[AI调用] API Key未配置，跳过大模型调用。数据库和配置文件均未找到有效Key");
             return null;
         }
+
+        String effectiveModel = getEffectiveModel();
+        String effectiveBaseUrl = getEffectiveBaseUrl();
+        String url = effectiveBaseUrl + (effectiveBaseUrl.endsWith("/") ? "" : "/") + "chat/completions";
+
+        log.info("[AI调用] 开始调用 === 宠物: {}, 模型: {}, URL: {}, apiKey前缀: {}",
+                pet.getName(), effectiveModel, url,
+                effectiveApiKey.length() > 8 ? effectiveApiKey.substring(0, 8) + "..." : "***");
+
+        long startTime = System.currentTimeMillis();
 
         try {
             String prompt = buildPrompt(pet, analysis);
@@ -53,9 +63,6 @@ public class AiAnalysisService {
             headers.setBearerAuth(effectiveApiKey);
             headers.set("HTTP-Referer", "https://pet-trail.app");
             headers.set("X-Title", "PetTrail");
-
-            String effectiveModel = getEffectiveModel();
-            String effectiveBaseUrl = getEffectiveBaseUrl();
 
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("model", effectiveModel);
@@ -67,14 +74,10 @@ public class AiAnalysisService {
             body.put("max_tokens", 500);
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-            String url = effectiveBaseUrl + (effectiveBaseUrl.endsWith("/") ? "" : "/") + "chat/completions";
-
-            log.info("AI分析请求: url={}, model={}, apiKey前缀={}", url, effectiveModel,
-                    effectiveApiKey.length() > 8 ? effectiveApiKey.substring(0, 8) + "..." : "***");
 
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, request, Map.class);
 
-            log.info("AI分析响应: statusCode={}", response.getStatusCode());
+            long elapsed = System.currentTimeMillis() - startTime;
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map bodyResp = response.getBody();
@@ -83,23 +86,29 @@ public class AiAnalysisService {
                     Map message = (Map) choices.get(0).get("message");
                     if (message != null) {
                         String content = (String) message.get("content");
-                        log.info("AI分析正常返回，内容长度={}", content != null ? content.length() : 0);
+                        log.info("[AI调用] 调用成功 === 耗时: {}ms, 状态码: {}, 内容长度: {}, 内容摘要: {}",
+                                elapsed, response.getStatusCode(),
+                                content != null ? content.length() : 0,
+                                content != null && content.length() > 100 ? content.substring(0, 100) + "..." : content);
                         return content;
                     }
                 }
-                log.warn("AI分析API返回200但响应体结构异常: {}", bodyResp.keySet());
+                log.warn("[AI调用] 调用异常 === 耗时: {}ms, 状态码: 200, 响应体结构异常, keys: {}", elapsed, response.getBody().keySet());
             } else {
-                log.warn("AI分析API返回异常: status={}, body={}", response.getStatusCode(), response.getBody());
+                log.warn("[AI调用] 调用失败 === 耗时: {}ms, 状态码: {}, 响应体: {}", elapsed, response.getStatusCode(), response.getBody());
             }
             return null;
         } catch (HttpClientErrorException e) {
-            log.error("AI分析API认证/权限错误: status={}, responseBody={}", e.getStatusCode(), e.getResponseBodyAsString());
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.error("[AI调用] 认证/权限错误 === 耗时: {}ms, 状态码: {}, 响应体: {}", elapsed, e.getStatusCode(), e.getResponseBodyAsString());
             return null;
         } catch (HttpServerErrorException e) {
-            log.error("AI分析API服务端错误: status={}, responseBody={}", e.getStatusCode(), e.getResponseBodyAsString());
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.error("[AI调用] 服务端错误 === 耗时: {}ms, 状态码: {}, 响应体: {}", elapsed, e.getStatusCode(), e.getResponseBodyAsString());
             return null;
         } catch (Exception e) {
-            log.error("AI分析API调用失败: type={}, message={}", e.getClass().getSimpleName(), e.getMessage());
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.error("[AI调用] 调用异常 === 耗时: {}ms, 异常类型: {}, 信息: {}", elapsed, e.getClass().getSimpleName(), e.getMessage());
             return null;
         }
     }

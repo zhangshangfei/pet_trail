@@ -443,7 +443,7 @@ export default {
         this.userName = userInfo.nickname || "小萌宠主人";
       } else if (!token) {
         this.userAvatar = DEFAULT_USER_AVATAR;
-        this.userName = "小萌宠主人";
+        this.userName = "";
       }
 
       if (token) {
