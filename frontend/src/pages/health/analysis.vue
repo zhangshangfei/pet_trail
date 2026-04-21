@@ -17,133 +17,179 @@
         </view>
 
         <template v-else-if="analysis">
-          <view class="score-section">
-            <view class="score-ring-wrap">
+          <!-- 顶部评分区域 -->
+          <view class="score-card">
+            <view class="score-left">
               <view class="score-ring" :class="scoreClass">
                 <text class="score-number">{{ analysis.score }}</text>
                 <text class="score-label">健康评分</text>
               </view>
             </view>
-            <text class="level-badge" :class="levelClass">{{ analysis.level }}</text>
+            <view class="score-right">
+              <view class="level-badge" :class="levelClass">{{ analysis.level }}</view>
+              <text class="score-desc">基于疫苗、驱虫、体重等多维度综合评估</text>
+            </view>
           </view>
 
+          <!-- 分项评分 -->
           <view class="detail-section">
-            <text class="section-title">📊 分项评分</text>
-            <view class="detail-grid">
-              <view class="detail-card">
-                <text class="detail-icon">💉</text>
-                <text class="detail-name">疫苗</text>
-                <view class="detail-bar-bg">
-                  <view class="detail-bar-fill vaccine" :style="{ width: (analysis.detail.vaccineScore || 0) + '%' }"></view>
+            <view class="section-header">
+              <image class="section-icon" src="/static/icons/chart.png" mode="aspectFit" />
+              <text class="section-title">分项评分</text>
+            </view>
+            <view class="detail-list">
+              <view class="detail-row">
+                <view class="detail-label">
+                  <text class="detail-icon vaccine-icon">💉</text>
+                  <text class="detail-name">疫苗</text>
+                </view>
+                <view class="detail-bar-wrap">
+                  <view class="detail-bar-bg">
+                    <view class="detail-bar-fill vaccine" :style="{ width: (analysis.detail.vaccineScore || 0) + '%' }"></view>
+                  </view>
                 </view>
                 <text class="detail-score">{{ analysis.detail.vaccineScore || 0 }}</text>
               </view>
-              <view class="detail-card">
-                <text class="detail-icon">🐛</text>
-                <text class="detail-name">驱虫</text>
-                <view class="detail-bar-bg">
-                  <view class="detail-bar-fill parasite" :style="{ width: (analysis.detail.parasiteScore || 0) + '%' }"></view>
+              <view class="detail-row">
+                <view class="detail-label">
+                  <text class="detail-icon parasite-icon">🐛</text>
+                  <text class="detail-name">驱虫</text>
+                </view>
+                <view class="detail-bar-wrap">
+                  <view class="detail-bar-bg">
+                    <view class="detail-bar-fill parasite" :style="{ width: (analysis.detail.parasiteScore || 0) + '%' }"></view>
+                  </view>
                 </view>
                 <text class="detail-score">{{ analysis.detail.parasiteScore || 0 }}</text>
               </view>
-              <view class="detail-card">
-                <text class="detail-icon">⚖️</text>
-                <text class="detail-name">体重</text>
-                <view class="detail-bar-bg">
-                  <view class="detail-bar-fill weight" :style="{ width: (analysis.detail.weightScore || 0) + '%' }"></view>
+              <view class="detail-row">
+                <view class="detail-label">
+                  <text class="detail-icon weight-icon">⚖️</text>
+                  <text class="detail-name">体重</text>
+                </view>
+                <view class="detail-bar-wrap">
+                  <view class="detail-bar-bg">
+                    <view class="detail-bar-fill weight" :style="{ width: (analysis.detail.weightScore || 0) + '%' }"></view>
+                  </view>
                 </view>
                 <text class="detail-score">{{ analysis.detail.weightScore || 0 }}</text>
               </view>
-              <view class="detail-card">
-                <text class="detail-icon">✅</text>
-                <text class="detail-name">打卡</text>
-                <view class="detail-bar-bg">
-                  <view class="detail-bar-fill checkin" :style="{ width: (analysis.detail.checkinScore || 0) + '%' }"></view>
+              <view class="detail-row">
+                <view class="detail-label">
+                  <text class="detail-icon checkin-icon">✅</text>
+                  <text class="detail-name">打卡</text>
+                </view>
+                <view class="detail-bar-wrap">
+                  <view class="detail-bar-bg">
+                    <view class="detail-bar-fill checkin" :style="{ width: (analysis.detail.checkinScore || 0) + '%' }"></view>
+                  </view>
                 </view>
                 <text class="detail-score">{{ analysis.detail.checkinScore || 0 }}</text>
               </view>
             </view>
           </view>
 
+          <!-- 健康趋势 -->
           <view v-if="analysis.trends && Object.keys(analysis.trends).length" class="trends-section">
-            <text class="section-title">📈 健康趋势</text>
+            <view class="section-header">
+              <image class="section-icon" src="/static/icons/trend.png" mode="aspectFit" />
+              <text class="section-title">健康趋势</text>
+            </view>
             <view class="trends-list">
-              <view v-for="(value, key) in analysis.trends" :key="key" class="trend-item">
+              <view v-for="(value, key) in analysis.trends" :key="key" class="trend-tag">
                 <text class="trend-key">{{ trendLabels[key] || key }}</text>
                 <text class="trend-value" :class="trendClass(value)">{{ value }}</text>
               </view>
             </view>
           </view>
 
+          <!-- 健康预警 -->
           <view v-if="analysis.warnings && analysis.warnings.length" class="warnings-section">
-            <text class="section-title">⚠️ 健康预警</text>
+            <view class="section-header">
+              <image class="section-icon" src="/static/icons/warning.png" mode="aspectFit" />
+              <text class="section-title">健康预警</text>
+            </view>
             <view class="warnings-list">
               <view v-for="(w, i) in analysis.warnings" :key="i" class="warning-item" :class="'severity-' + w.severity">
-                <text class="warning-icon">{{ w.severity === 'high' ? '🔴' : w.severity === 'medium' ? '🟡' : '🟢' }}</text>
-                <view class="warning-content">
-                  <text class="warning-msg">{{ w.message }}</text>
+                <view class="warning-icon-wrap">
+                  <text class="warning-icon">{{ w.severity === 'high' ? '!' : w.severity === 'medium' ? '⚠' : 'ℹ' }}</text>
                 </view>
+                <text class="warning-msg">{{ w.message }}</text>
               </view>
             </view>
           </view>
 
+          <!-- 健康建议 -->
           <view v-if="analysis.suggestions && analysis.suggestions.length" class="suggestions-section">
-            <text class="section-title">💡 健康建议</text>
+            <view class="section-header">
+              <image class="section-icon" src="/static/icons/lightbulb.png" mode="aspectFit" />
+              <text class="section-title">健康建议</text>
+            </view>
             <view class="suggestions-list">
               <view v-for="(s, i) in analysis.suggestions" :key="i" class="suggestion-item">
-                <text class="suggestion-num">{{ i + 1 }}</text>
+                <view class="suggestion-dot"></view>
                 <text class="suggestion-text">{{ s }}</text>
               </view>
             </view>
           </view>
 
+          <!-- 体重分析 -->
           <view v-if="analysis.detail && analysis.detail.weightAnalysis" class="weight-section">
-            <text class="section-title">⚖️ 体重分析</text>
-            <view class="weight-detail">
-              <view class="weight-item">
-                <text class="weight-label">当前体重</text>
-                <text class="weight-value">{{ analysis.detail.weightAnalysis.currentWeight || '-' }} kg</text>
+            <view class="section-header">
+              <image class="section-icon" src="/static/icons/weight.png" mode="aspectFit" />
+              <text class="section-title">体重分析</text>
+            </view>
+            <view class="weight-grid">
+              <view class="weight-cell">
+                <text class="weight-cell-label">当前体重</text>
+                <text class="weight-cell-value">{{ analysis.detail.weightAnalysis.currentWeight || '-' }} <text class="weight-unit">kg</text></text>
               </view>
-              <view class="weight-item">
-                <text class="weight-label">30日均值</text>
-                <text class="weight-value">{{ analysis.detail.weightAnalysis.avgWeight30d || '-' }} kg</text>
+              <view class="weight-cell">
+                <text class="weight-cell-label">30日均值</text>
+                <text class="weight-cell-value">{{ analysis.detail.weightAnalysis.avgWeight30d || '-' }} <text class="weight-unit">kg</text></text>
               </view>
-              <view class="weight-item">
-                <text class="weight-label">波动率</text>
-                <text class="weight-value">{{ analysis.detail.weightAnalysis.weightChangeRate || '-' }}%</text>
+              <view class="weight-cell">
+                <text class="weight-cell-label">波动率</text>
+                <text class="weight-cell-value">{{ analysis.detail.weightAnalysis.weightChangeRate || '-' }}%</text>
               </view>
-              <view class="weight-item">
-                <text class="weight-label">趋势</text>
-                <text class="weight-value" :class="trendClass(analysis.detail.weightAnalysis.trend)">{{ analysis.detail.weightAnalysis.trend }}</text>
+              <view class="weight-cell">
+                <text class="weight-cell-label">趋势</text>
+                <text class="weight-cell-value" :class="trendClass(analysis.detail.weightAnalysis.trend)">{{ analysis.detail.weightAnalysis.trend }}</text>
               </view>
             </view>
           </view>
 
+          <!-- 疫苗分析 -->
           <view v-if="analysis.detail && analysis.detail.vaccineAnalysis" class="vaccine-section">
-            <text class="section-title">💉 疫苗分析</text>
-            <view class="vaccine-detail">
-              <view class="vaccine-item">
-                <text class="vaccine-label">总记录</text>
-                <text class="vaccine-value">{{ analysis.detail.vaccineAnalysis.total || 0 }}</text>
+            <view class="section-header">
+              <image class="section-icon" src="/static/icons/vaccine.png" mode="aspectFit" />
+              <text class="section-title">疫苗分析</text>
+            </view>
+            <view class="vaccine-grid">
+              <view class="vaccine-cell">
+                <text class="vaccine-cell-label">总记录</text>
+                <text class="vaccine-cell-value">{{ analysis.detail.vaccineAnalysis.total || 0 }}</text>
               </view>
-              <view class="vaccine-item">
-                <text class="vaccine-label">已完成</text>
-                <text class="vaccine-value vaccine-done">{{ analysis.detail.vaccineAnalysis.completed || 0 }}</text>
+              <view class="vaccine-cell">
+                <text class="vaccine-cell-label">已完成</text>
+                <text class="vaccine-cell-value text-green">{{ analysis.detail.vaccineAnalysis.completed || 0 }}</text>
               </view>
-              <view class="vaccine-item">
-                <text class="vaccine-label">已逾期</text>
-                <text class="vaccine-value" :class="analysis.detail.vaccineAnalysis.overdue > 0 ? 'vaccine-overdue' : ''">{{ analysis.detail.vaccineAnalysis.overdue || 0 }}</text>
+              <view class="vaccine-cell">
+                <text class="vaccine-cell-label">已逾期</text>
+                <text class="vaccine-cell-value" :class="analysis.detail.vaccineAnalysis.overdue > 0 ? 'text-red' : ''">{{ analysis.detail.vaccineAnalysis.overdue || 0 }}</text>
               </view>
-              <view v-if="analysis.detail.vaccineAnalysis.nextVaccineName" class="vaccine-item">
-                <text class="vaccine-label">下次接种</text>
-                <text class="vaccine-value">{{ analysis.detail.vaccineAnalysis.nextVaccineName }} ({{ analysis.detail.vaccineAnalysis.nextVaccineDate }})</text>
-              </view>
+            </view>
+            <view v-if="analysis.detail.vaccineAnalysis.nextVaccineName" class="vaccine-next">
+              <view class="vaccine-next-icon">📅</view>
+              <text class="vaccine-next-text">下次接种: {{ analysis.detail.vaccineAnalysis.nextVaccineName }} ({{ analysis.detail.vaccineAnalysis.nextVaccineDate }})</text>
             </view>
           </view>
 
+          <!-- AI 深度分析 -->
           <view v-if="analysis.aiAnalysis" class="ai-section">
-            <view class="ai-header">
-              <text class="section-title ai-title">🤖 AI 深度分析</text>
+            <view class="section-header">
+              <image class="section-icon" src="/static/icons/ai.png" mode="aspectFit" />
+              <text class="section-title">AI 深度分析</text>
               <view class="model-switch-btn" @tap="showModelSwitcher = true">
                 <text class="model-switch-text">{{ currentModelName || '选择模型' }}</text>
                 <text class="model-switch-arrow">▸</text>
@@ -153,24 +199,37 @@
               <text class="ai-text">{{ analysis.aiAnalysis }}</text>
             </view>
             <view v-if="currentModelInfo" class="ai-model-info">
-              <text class="model-info-text">{{ currentModelInfo.icon || '🤖' }} {{ currentModelInfo.displayName }} · {{ currentModelInfo.provider }}</text>
+              <text class="model-info-text">{{ currentModelInfo.icon || '🤖' }} {{ currentModelInfo.displayName }}</text>
             </view>
           </view>
 
+          <!-- 底部按钮 -->
           <view class="action-section">
-            <button class="back-btn" @tap="goBack">返回</button>
-            <button class="reanalyze-btn" @tap="runAnalysis" :disabled="loading">重新分析</button>
+            <view class="btn-group">
+              <view class="btn-back" @tap="goBack">
+                <text class="btn-back-text">返回</text>
+              </view>
+              <view class="btn-reanalyze" @tap="runAnalysis" :class="{ disabled: loading }">
+                <text class="btn-reanalyze-text">重新分析</text>
+              </view>
+            </view>
           </view>
         </template>
 
         <view v-else class="empty-wrap">
-          <text class="empty-icon">🏥</text>
+          <view class="empty-illustration">
+            <text class="empty-icon">🏥</text>
+          </view>
           <text class="empty-text">暂无健康分析数据</text>
-          <button class="analyze-btn" @tap="runAnalysis">开始分析</button>
+          <text class="empty-sub">点击下方按钮开始为您的宠物进行健康分析</text>
+          <view class="btn-analyze" @tap="runAnalysis">
+            <text class="btn-analyze-text">开始分析</text>
+          </view>
         </view>
       </view>
     </scroll-view>
 
+    <!-- 模型切换弹窗 -->
     <view v-if="showModelSwitcher" class="model-switcher-mask" @tap="showModelSwitcher = false">
       <view class="model-switcher" @tap.stop>
         <view class="switcher-header">
@@ -193,8 +252,7 @@
               </view>
             </view>
             <view class="model-item-right">
-              <view v-if="model.isActive" class="model-active-dot"></view>
-              <text v-if="model.isActive" class="model-active-text">使用中</text>
+              <view v-if="model.isActive" class="model-active-tag">使用中</view>
             </view>
           </view>
         </view>
@@ -219,7 +277,6 @@ const showModelSwitcher = ref(false)
 const availableModels = ref([])
 const currentModelInfo = ref(null)
 
-const isLoggedIn = computed(() => !!userStore.token)
 const userName = computed(() => userStore.userInfo?.nickname || '')
 const userAvatar = computed(() => userStore.userInfo?.avatar || '')
 
@@ -349,7 +406,7 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-$bg: #f5f6fa;
+$bg: #f0f2f5;
 $card-bg: #ffffff;
 $text-primary: #1a1a2e;
 $text-secondary: #6b7280;
@@ -362,46 +419,63 @@ $red: #ff3b30;
 
 .analysis-page { min-height: 100vh; background: $bg; }
 .analysis-scroll { height: 100vh; box-sizing: border-box; }
-.analysis-content { padding: 20rpx 24rpx 120rpx; }
+.analysis-content { padding: 16rpx 24rpx 160rpx; }
 
+/* ===== 加载 ===== */
 .loading-wrap { display: flex; flex-direction: column; align-items: center; padding-top: 200rpx; }
 .loading-spinner { width: 60rpx; height: 60rpx; border: 4rpx solid #e0e0e0; border-top-color: $accent; border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-text { margin-top: 20rpx; font-size: 28rpx; color: $text-secondary; }
 
-.score-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 32rpx; }
-.score-ring-wrap { margin-bottom: 16rpx; }
-.score-ring { width: 200rpx; height: 200rpx; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 8rpx solid #e0e0e0; }
-.score-excellent { border-color: $green; }
-.score-good { border-color: $blue; }
-.score-fair { border-color: $orange; }
-.score-poor { border-color: $red; }
-.score-number { font-size: 56rpx; font-weight: 700; color: $text-primary; }
-.score-label { font-size: 22rpx; color: $text-secondary; margin-top: 4rpx; }
-.level-badge { font-size: 26rpx; font-weight: 600; padding: 6rpx 24rpx; border-radius: 20rpx; color: #fff; }
-.level-excellent { background: $green; }
-.level-good { background: $blue; }
-.level-fair { background: $orange; }
-.level-poor { background: $red; }
+/* ===== 顶部评分卡片 ===== */
+.score-card { background: $card-bg; border-radius: 24rpx; padding: 32rpx; margin-bottom: 20rpx; display: flex; align-items: center; gap: 28rpx; box-shadow: 0 2rpx 16rpx rgba(0,0,0,0.04); }
+.score-left { flex-shrink: 0; }
+.score-ring { width: 180rpx; height: 180rpx; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 10rpx solid #e8e8e8; position: relative; }
+.score-ring::before { content: ''; position: absolute; top: -10rpx; left: -10rpx; right: -10rpx; bottom: -10rpx; border-radius: 50%; border: 10rpx solid transparent; border-top-color: currentColor; transform: rotate(-45deg); }
+.score-excellent { color: $green; border-color: #e0f0e0; }
+.score-excellent::before { border-top-color: $green; }
+.score-good { color: $blue; border-color: #e0eaf5; }
+.score-good::before { border-top-color: $blue; }
+.score-fair { color: $orange; border-color: #f5f0e0; }
+.score-fair::before { border-top-color: $orange; }
+.score-poor { color: $red; border-color: #f5e0e0; }
+.score-poor::before { border-top-color: $red; }
+.score-number { font-size: 52rpx; font-weight: 800; color: $text-primary; line-height: 1; }
+.score-label { font-size: 22rpx; color: $text-secondary; margin-top: 6rpx; }
+.score-right { flex: 1; display: flex; flex-direction: column; gap: 12rpx; }
+.level-badge { align-self: flex-start; font-size: 26rpx; font-weight: 700; padding: 8rpx 28rpx; border-radius: 28rpx; color: #fff; }
+.level-excellent { background: linear-gradient(135deg, #34c759 0%, #2ecc71 100%); }
+.level-good { background: linear-gradient(135deg, #4a90d9 0%, #5b9bd5 100%); }
+.level-fair { background: linear-gradient(135deg, #ff9500 0%, #ffaa33 100%); }
+.level-poor { background: linear-gradient(135deg, #ff3b30 0%, #ff5544 100%); }
+.score-desc { font-size: 24rpx; color: $text-light; line-height: 1.5; }
 
-.section-title { font-size: 30rpx; font-weight: 600; color: $text-primary; margin-bottom: 16rpx; display: block; }
+/* ===== 通用区块 ===== */
+.detail-section, .trends-section, .warnings-section, .suggestions-section, .weight-section, .vaccine-section, .ai-section {
+  background: $card-bg; border-radius: 24rpx; padding: 28rpx; margin-bottom: 20rpx; box-shadow: 0 2rpx 16rpx rgba(0,0,0,0.04);
+}
+.section-header { display: flex; align-items: center; gap: 10rpx; margin-bottom: 20rpx; }
+.section-icon { width: 36rpx; height: 36rpx; }
+.section-title { font-size: 30rpx; font-weight: 700; color: $text-primary; }
 
-.detail-section { background: $card-bg; border-radius: 20rpx; padding: 24rpx; margin-bottom: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
-.detail-grid { display: flex; flex-direction: column; gap: 20rpx; }
-.detail-card { display: flex; align-items: center; gap: 12rpx; }
-.detail-icon { font-size: 32rpx; }
-.detail-name { font-size: 26rpx; color: $text-secondary; min-width: 60rpx; }
-.detail-bar-bg { flex: 1; height: 16rpx; background: #f0f0f0; border-radius: 8rpx; overflow: hidden; }
-.detail-bar-fill { height: 100%; border-radius: 8rpx; transition: width 0.6s ease; }
-.detail-bar-fill.vaccine { background: $blue; }
-.detail-bar-fill.parasite { background: $green; }
-.detail-bar-fill.weight { background: $orange; }
-.detail-bar-fill.checkin { background: $accent; }
-.detail-score { font-size: 26rpx; font-weight: 600; color: $text-primary; min-width: 50rpx; text-align: right; }
+/* ===== 分项评分 ===== */
+.detail-list { display: flex; flex-direction: column; gap: 24rpx; }
+.detail-row { display: flex; align-items: center; gap: 16rpx; }
+.detail-label { display: flex; align-items: center; gap: 10rpx; min-width: 100rpx; }
+.detail-icon { font-size: 32rpx; width: 40rpx; height: 40rpx; display: flex; align-items: center; justify-content: center; }
+.detail-name { font-size: 26rpx; color: $text-secondary; }
+.detail-bar-wrap { flex: 1; }
+.detail-bar-bg { height: 14rpx; background: #f0f0f0; border-radius: 7rpx; overflow: hidden; }
+.detail-bar-fill { height: 100%; border-radius: 7rpx; transition: width 0.8s ease; }
+.detail-bar-fill.vaccine { background: linear-gradient(90deg, #4a90d9, #6ba3e0); }
+.detail-bar-fill.parasite { background: linear-gradient(90deg, #34c759, #5dd87a); }
+.detail-bar-fill.weight { background: linear-gradient(90deg, #ff9500, #ffb347); }
+.detail-bar-fill.checkin { background: linear-gradient(90deg, #ff6a3d, #ff8a5d); }
+.detail-score { font-size: 28rpx; font-weight: 700; color: $text-primary; min-width: 60rpx; text-align: right; }
 
-.trends-section { background: $card-bg; border-radius: 20rpx; padding: 24rpx; margin-bottom: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
+/* ===== 健康趋势 ===== */
 .trends-list { display: flex; flex-wrap: wrap; gap: 16rpx; }
-.trend-item { display: flex; align-items: center; gap: 8rpx; background: #f8f9fb; padding: 12rpx 20rpx; border-radius: 12rpx; }
+.trend-tag { display: flex; align-items: center; gap: 8rpx; background: #f5f7fa; padding: 12rpx 20rpx; border-radius: 12rpx; }
 .trend-key { font-size: 24rpx; color: $text-secondary; }
 .trend-value { font-size: 24rpx; font-weight: 600; }
 .trend-stable, .trend-done, .trend-active { color: $green; }
@@ -410,56 +484,80 @@ $red: #ff3b30;
 .trend-down { color: $blue; }
 .trend-nodata { color: $text-light; }
 
-.warnings-section { background: $card-bg; border-radius: 20rpx; padding: 24rpx; margin-bottom: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
-.warnings-list { display: flex; flex-direction: column; gap: 16rpx; }
-.warning-item { display: flex; align-items: flex-start; gap: 12rpx; padding: 16rpx; border-radius: 12rpx; }
-.severity-high { background: #fff5f5; }
-.severity-medium { background: #fffbeb; }
-.severity-low { background: #f0fdf4; }
-.warning-icon { font-size: 28rpx; margin-top: 2rpx; }
-.warning-content { flex: 1; }
-.warning-msg { font-size: 26rpx; color: $text-primary; line-height: 1.5; }
+/* ===== 健康预警 ===== */
+.warnings-list { display: flex; flex-direction: column; gap: 14rpx; }
+.warning-item { display: flex; align-items: center; gap: 16rpx; padding: 18rpx 20rpx; border-radius: 16rpx; }
+.severity-high { background: #fff2f0; }
+.severity-medium { background: #fffbe6; }
+.severity-low { background: #f6ffed; }
+.warning-icon-wrap { width: 48rpx; height: 48rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.severity-high .warning-icon-wrap { background: #ffccc7; }
+.severity-medium .warning-icon-wrap { background: #ffe58f; }
+.severity-low .warning-icon-wrap { background: #d9f7be; }
+.warning-icon { font-size: 24rpx; font-weight: 700; color: $text-primary; }
+.warning-msg { font-size: 26rpx; color: $text-primary; line-height: 1.5; flex: 1; }
 
-.suggestions-section { background: $card-bg; border-radius: 20rpx; padding: 24rpx; margin-bottom: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
+/* ===== 健康建议 ===== */
 .suggestions-list { display: flex; flex-direction: column; gap: 16rpx; }
-.suggestion-item { display: flex; align-items: flex-start; gap: 12rpx; }
-.suggestion-num { width: 36rpx; height: 36rpx; border-radius: 50%; background: $accent; color: #fff; font-size: 22rpx; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2rpx; }
+.suggestion-item { display: flex; align-items: flex-start; gap: 14rpx; padding: 4rpx 0; }
+.suggestion-dot { width: 10rpx; height: 10rpx; border-radius: 50%; background: $accent; flex-shrink: 0; margin-top: 14rpx; }
 .suggestion-text { font-size: 26rpx; color: $text-primary; line-height: 1.6; flex: 1; }
 
-.weight-section, .vaccine-section { background: $card-bg; border-radius: 20rpx; padding: 24rpx; margin-bottom: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
-.weight-detail, .vaccine-detail { display: flex; flex-direction: column; gap: 16rpx; }
-.weight-item, .vaccine-item { display: flex; justify-content: space-between; align-items: center; padding: 8rpx 0; border-bottom: 1rpx solid #f0f0f0; }
-.weight-item:last-child, .vaccine-item:last-child { border-bottom: none; }
-.weight-label, .vaccine-label { font-size: 26rpx; color: $text-secondary; }
-.weight-value, .vaccine-value { font-size: 26rpx; font-weight: 600; color: $text-primary; }
-.vaccine-done { color: $green; }
-.vaccine-overdue { color: $red; }
+/* ===== 体重分析 ===== */
+.weight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16rpx; }
+.weight-cell { background: #f8f9fb; border-radius: 16rpx; padding: 20rpx; display: flex; flex-direction: column; gap: 8rpx; }
+.weight-cell-label { font-size: 24rpx; color: $text-secondary; }
+.weight-cell-value { font-size: 32rpx; font-weight: 700; color: $text-primary; }
+.weight-unit { font-size: 22rpx; color: $text-light; font-weight: 400; }
 
-.ai-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20rpx; padding: 24rpx; margin-bottom: 24rpx; }
-.ai-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
-.ai-title { color: #fff; margin-bottom: 0; }
-.model-switch-btn { display: flex; align-items: center; gap: 6rpx; background: rgba(255,255,255,0.2); padding: 8rpx 16rpx; border-radius: 20rpx; }
+/* ===== 疫苗分析 ===== */
+.vaccine-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16rpx; margin-bottom: 16rpx; }
+.vaccine-cell { background: #f8f9fb; border-radius: 16rpx; padding: 20rpx; display: flex; flex-direction: column; align-items: center; gap: 8rpx; }
+.vaccine-cell-label { font-size: 24rpx; color: $text-secondary; }
+.vaccine-cell-value { font-size: 36rpx; font-weight: 700; color: $text-primary; }
+.text-green { color: $green; }
+.text-red { color: $red; }
+.vaccine-next { display: flex; align-items: center; gap: 12rpx; background: #f0f7ff; border-radius: 16rpx; padding: 18rpx 20rpx; }
+.vaccine-next-icon { font-size: 32rpx; }
+.vaccine-next-text { font-size: 26rpx; color: $text-primary; }
+
+/* ===== AI 深度分析 ===== */
+.ai-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.ai-section .section-title { color: #fff; }
+.ai-section .section-icon { filter: brightness(0) invert(1); }
+.model-switch-btn { display: flex; align-items: center; gap: 6rpx; background: rgba(255,255,255,0.2); padding: 8rpx 16rpx; border-radius: 20rpx; margin-left: auto; }
 .model-switch-text { font-size: 22rpx; color: #fff; }
 .model-switch-arrow { font-size: 22rpx; color: rgba(255,255,255,0.7); }
-.ai-card { background: rgba(255,255,255,0.15); border-radius: 16rpx; padding: 20rpx; }
+.ai-card { background: rgba(255,255,255,0.12); border-radius: 16rpx; padding: 24rpx; margin-top: 8rpx; }
 .ai-text { font-size: 26rpx; color: #fff; line-height: 1.8; }
-.ai-model-info { margin-top: 12rpx; display: flex; justify-content: flex-end; }
+.ai-model-info { margin-top: 16rpx; display: flex; justify-content: flex-end; }
 .model-info-text { font-size: 20rpx; color: rgba(255,255,255,0.6); }
 
-.action-section { margin-top: 16rpx; padding-bottom: 40rpx; display: flex; gap: 20rpx; }
-.back-btn { width: 200rpx; height: 88rpx; line-height: 88rpx; background: #f0f0f0; color: #666; font-size: 28rpx; font-weight: 600; border-radius: 44rpx; border: none; }
-.back-btn:active { background: #e0e0e0; }
-.reanalyze-btn { flex: 1; height: 88rpx; line-height: 88rpx; background: $accent; color: #fff; font-size: 30rpx; font-weight: 600; border-radius: 44rpx; border: none; }
-.reanalyze-btn[disabled] { opacity: 0.6; }
+/* ===== 底部按钮 ===== */
+.action-section { margin-top: 8rpx; padding-bottom: 40rpx; }
+.btn-group { display: flex; gap: 20rpx; }
+.btn-back { flex: 1; height: 90rpx; border-radius: 45rpx; background: #f0f0f0; display: flex; align-items: center; justify-content: center; }
+.btn-back-text { font-size: 28rpx; font-weight: 600; color: #666; }
+.btn-back:active { background: #e5e5e5; }
+.btn-reanalyze { flex: 2; height: 90rpx; border-radius: 45rpx; background: linear-gradient(135deg, #ff6a3d 0%, #ff4d4f 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4rpx 16rpx rgba(255,106,61,0.3); }
+.btn-reanalyze-text { font-size: 30rpx; font-weight: 700; color: #fff; }
+.btn-reanalyze:active { opacity: 0.9; transform: scale(0.98); }
+.btn-reanalyze.disabled { opacity: 0.5; pointer-events: none; }
 
-.empty-wrap { display: flex; flex-direction: column; align-items: center; padding-top: 200rpx; }
-.empty-icon { font-size: 80rpx; margin-bottom: 20rpx; }
-.empty-text { font-size: 28rpx; color: $text-secondary; margin-bottom: 40rpx; }
-.analyze-btn { width: 320rpx; height: 80rpx; line-height: 80rpx; background: $accent; color: #fff; font-size: 28rpx; font-weight: 600; border-radius: 40rpx; border: none; }
+/* ===== 空状态 ===== */
+.empty-wrap { display: flex; flex-direction: column; align-items: center; padding-top: 180rpx; }
+.empty-illustration { width: 160rpx; height: 160rpx; background: #f0f2f5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 32rpx; }
+.empty-icon { font-size: 72rpx; }
+.empty-text { font-size: 32rpx; font-weight: 700; color: $text-primary; margin-bottom: 12rpx; }
+.empty-sub { font-size: 26rpx; color: $text-light; margin-bottom: 48rpx; text-align: center; padding: 0 40rpx; }
+.btn-analyze { width: 400rpx; height: 90rpx; border-radius: 45rpx; background: linear-gradient(135deg, #ff6a3d 0%, #ff4d4f 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4rpx 16rpx rgba(255,106,61,0.3); }
+.btn-analyze-text { font-size: 30rpx; font-weight: 700; color: #fff; }
+.btn-analyze:active { opacity: 0.9; transform: scale(0.98); }
 
+/* ===== 模型切换弹窗 ===== */
 .model-switcher-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: flex; align-items: flex-end; }
 .model-switcher { width: 100%; background: #fff; border-radius: 32rpx 32rpx 0 0; padding: 32rpx 24rpx; padding-bottom: calc(32rpx + env(safe-area-inset-bottom)); max-height: 70vh; overflow-y: auto; }
-.switcher-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24rpx; }
+.switcher-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28rpx; }
 .switcher-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
 .switcher-close { font-size: 36rpx; color: $text-light; padding: 8rpx; }
 .switcher-list { display: flex; flex-direction: column; gap: 16rpx; }
@@ -470,7 +568,6 @@ $red: #ff3b30;
 .model-item-info { display: flex; flex-direction: column; gap: 4rpx; }
 .model-item-name { font-size: 28rpx; font-weight: 600; color: $text-primary; }
 .model-item-desc { font-size: 22rpx; color: $text-secondary; }
-.model-item-right { display: flex; align-items: center; gap: 8rpx; }
-.model-active-dot { width: 12rpx; height: 12rpx; border-radius: 50%; background: $accent; }
-.model-active-text { font-size: 22rpx; color: $accent; font-weight: 600; }
+.model-item-right { display: flex; align-items: center; }
+.model-active-tag { font-size: 22rpx; color: $accent; font-weight: 600; background: #fff0eb; padding: 4rpx 14rpx; border-radius: 10rpx; }
 </style>
