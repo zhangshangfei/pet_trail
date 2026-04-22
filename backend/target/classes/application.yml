@@ -17,9 +17,9 @@ spring:
   # Redis 配置
   data:
     redis:
-      host: mdaeiviu.redis.6f1dix0k.gah2912p.com
+      host: 124.222.51.71
       port: 6379
-      password:
+      password: iherhj45135*
       database: 0
       timeout: 3000ms
       lettuce:
