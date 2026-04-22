@@ -1,0 +1,84 @@
+/* ============================================
+   方案B：奶油暖灰专业风（中性暖色）
+   设计理念：以奶油暖灰为基底，平衡专业感与温馨感
+   适用场景：面向注重品质的宠物主人，强调专业、可信赖、现代感
+   ============================================ */
+
+@import url('style.css');
+
+:root {
+  /* 品牌主色 - 略深的珊瑚橙，在暖灰背景上更醒目 */
+  --primary: #e06035;
+  --primary-light: #ec8058;
+  --primary-dark: #c84d24;
+  --primary-glow: rgba(224, 96, 53, 0.15);
+
+  /* 背景色阶 - 奶油暖灰系列 */
+  --bg: #f0ebe4;
+  --bg-elevated: #e8e2d9;
+  --bg-card: #f7f4ef;
+  --bg-card-hover: #fdfcfa;
+  --bg-glass: rgba(247, 244, 239, 0.85);
+
+  /* 文字色阶 - 深褐灰系列 */
+  --text: #3a3530;
+  --text-secondary: #6b655e;
+  --text-muted: #a39d96;
+  --text-ghost: #c9c4bd;
+
+  /* 边框与分割 */
+  --border: rgba(107, 101, 94, 0.1);
+  --border-light: rgba(107, 101, 94, 0.18);
+  --border-glow: rgba(224, 96, 53, 0.15);
+
+  /* 强调色 - 低饱和自然系 */
+  --accent-green: #4a8a5e;
+  --accent-blue: #4a7fb7;
+  --accent-purple: #8a6eb7;
+  --accent-pink: #c4688a;
+  --accent-yellow: #c49833;
+
+  /* 阴影系统 */
+  --shadow-sm: 0 2px 8px rgba(107, 101, 94, 0.08);
+  --shadow: 0 8px 32px rgba(107, 101, 94, 0.1);
+  --shadow-lg: 0 16px 48px rgba(107, 101, 94, 0.12);
+  --shadow-glow: 0 0 40px rgba(224, 96, 53, 0.1);
+}
+
+/* 导航栏滚动效果调整 */
+.navbar.scrolled {
+  background: rgba(240, 235, 228, 0.92);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Hero 背景渐变调整 */
+.hero-gradient {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 30%, rgba(224, 96, 53, 0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 20% 70%, rgba(138, 110, 183, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 35% at 80% 20%, rgba(74, 127, 183, 0.02) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(224, 96, 53, 0.02) 0%, transparent 50%);
+}
+
+/* 网格背景调整 */
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(107, 101, 94, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(107, 101, 94, 0.035) 1px, transparent 1px);
+}
+
+/* 按钮调整 */
+.btn-ghost {
+  background: rgba(58, 53, 48, 0.03);
+  color: var(--text);
+  border: 1px solid var(--border-light);
+}
+
+.btn-ghost:hover {
+  background: rgba(58, 53, 48, 0.06);
+}
+
+/* 选中文字颜色 */
+::selection {
+  background: rgba(224, 96, 53, 0.2);
+}
