@@ -165,10 +165,6 @@
             <text class="pet-item-name">{{ pet.name }}</text>
             <text v-if="selectedPet && selectedPet.id === pet.id" class="pet-item-check">✓</text>
           </view>
-          <view class="pet-item add-pet" @click="addNewPet">
-            <text class="add-pet-icon">+</text>
-            <text class="pet-item-name">添加宠物</text>
-          </view>
         </view>
       </view>
     </view>

@@ -27,16 +27,12 @@
           </view>
 
           <view v-show="petSelectorOpen" class="pet-selector-pop" @touchstart.stop="closePetSelector">
-            <view class="pet-selector-search">
-              <input class="pet-selector-input" v-model="searchQuery" placeholder="搜索宠物..." />
-            </view>
             <scroll-view scroll-y class="pet-selector-list">
               <view
                 v-for="pet in pets"
                 :key="pet.id"
                 class="pet-selector-item"
                 @touchstart.stop="selectPet(pet)"
-                v-show="!searchQuery || (pet.name && pet.name.toLowerCase().includes(searchQuery.toLowerCase())) || (pet.breed && pet.breed.toLowerCase().includes(searchQuery.toLowerCase()))"
               >
                 <avatar-view :src="pet.avatar || ''" :name="pet.name || ''" :id="pet.id" :size="56" />
                 <view class="pet-selector-item-meta">
