@@ -72,10 +72,6 @@
               <view class="feature-icon-wrap feature-icon-green"><text class="feature-emoji">🔍</text></view>
               <text class="feature-text">发现用户</text>
             </view>
-            <view class="feature-item" @tap="goToMembership">
-              <view class="feature-icon-wrap feature-icon-gold"><text class="feature-emoji">👑</text></view>
-              <text class="feature-text">宠迹Pro</text>
-            </view>
             <view class="feature-item" @tap="goToAchievement">
               <view class="feature-icon-wrap feature-icon-purple"><text class="feature-emoji">🏆</text></view>
               <text class="feature-text">成就墙</text>
