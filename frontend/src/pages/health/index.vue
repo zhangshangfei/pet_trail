@@ -156,60 +156,8 @@
           </view>
         </view>
 
-        <!-- 疫苗 -->
-        <view v-show="currentTab === 1" class="form-section">
-          <view class="form-card">
-            <view class="form-group">
-              <view class="form-label">
-                <text class="label-emoji">💉</text>
-                <text class="label-text">疫苗名称</text>
-              </view>
-              <picker mode="selector" :range="vaccineTypes" :value="vaccineForm.typeIndex" @change="onVaccineTypeChange">
-                <view class="picker-value selected">
-                  <text class="value-text">{{ vaccineTypes[vaccineForm.typeIndex] }}</text>
-                  <text class="picker-arrow">▼</text>
-                </view>
-              </picker>
-            </view>
-
-            <view class="form-group">
-              <view class="form-label">
-                <text class="label-emoji">📅</text>
-                <text class="label-text">接种日期</text>
-              </view>
-              <picker mode="date" :value="vaccineForm.date" @change="onVaccineDateChange">
-                <view class="picker-value">
-                  <text class="value-text">{{ vaccineForm.date }}</text>
-                  <text class="picker-arrow">▼</text>
-                </view>
-              </picker>
-            </view>
-
-            <view class="form-group">
-              <view class="form-label">
-                <text class="label-emoji">🏥</text>
-                <text class="label-text">接种医院 (可选)</text>
-              </view>
-              <input class="form-input" type="text" v-model="vaccineForm.hospital" placeholder="请输入医院名称" />
-            </view>
-
-            <view class="form-group">
-              <view class="form-label">
-                <text class="label-emoji">📝</text>
-                <text class="label-text">备注 (可选)</text>
-              </view>
-              <textarea
-                class="form-textarea"
-                v-model="vaccineForm.remark"
-                placeholder="记录疫苗批次、反应情况等..."
-                maxlength="200"
-              />
-            </view>
-          </view>
-        </view>
-
         <!-- 驱虫 -->
-        <view v-show="currentTab === 2" class="form-section">
+        <view v-show="currentTab === 1" class="form-section">
           <view class="form-card">
             <view class="form-group">
               <view class="form-label">
@@ -259,6 +207,58 @@
             </view>
           </view>
         </view>
+
+        <!-- 疫苗 -->
+        <view v-show="currentTab === 2" class="form-section">
+          <view class="form-card">
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">💉</text>
+                <text class="label-text">疫苗名称</text>
+              </view>
+              <picker mode="selector" :range="vaccineTypes" :value="vaccineForm.typeIndex" @change="onVaccineTypeChange">
+                <view class="picker-value selected">
+                  <text class="value-text">{{ vaccineTypes[vaccineForm.typeIndex] }}</text>
+                  <text class="picker-arrow">▼</text>
+                </view>
+              </picker>
+            </view>
+
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">📅</text>
+                <text class="label-text">接种日期</text>
+              </view>
+              <picker mode="date" :value="vaccineForm.date" @change="onVaccineDateChange">
+                <view class="picker-value">
+                  <text class="value-text">{{ vaccineForm.date }}</text>
+                  <text class="picker-arrow">▼</text>
+                </view>
+              </picker>
+            </view>
+
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">🏥</text>
+                <text class="label-text">接种医院 (可选)</text>
+              </view>
+              <input class="form-input" type="text" v-model="vaccineForm.hospital" placeholder="请输入医院名称" />
+            </view>
+
+            <view class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">📝</text>
+                <text class="label-text">备注 (可选)</text>
+              </view>
+              <textarea
+                class="form-textarea"
+                v-model="vaccineForm.remark"
+                placeholder="记录疫苗批次、反应情况等..."
+                maxlength="200"
+              />
+            </view>
+          </view>
+        </view>
       </view>
     </scroll-view>
 
@@ -300,8 +300,8 @@ export default {
       currentTab: 0,
       entryTabs: [
         { type: "weight", name: "体重", emoji: "⚖️" },
-        { type: "vaccine", name: "疫苗", emoji: "💉" },
-        { type: "deworm", name: "驱虫", emoji: "💊" }
+        { type: "deworm", name: "驱虫", emoji: "💊" },
+        { type: "vaccine", name: "疫苗", emoji: "💉" }
       ],
       weightForm: {
         date: todayStr(),

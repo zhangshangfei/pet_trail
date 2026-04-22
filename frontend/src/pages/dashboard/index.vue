@@ -133,58 +133,6 @@
           </view>
         </view>
 
-        <!-- 疫苗提醒（对齐 pages/test/health 布局） -->
-        <view class="dash-section">
-          <view class="section-header">
-            <text class="section-title">💉 疫苗提醒</text>
-            <view v-if="vaccineCards.length > vaccineCardsLimited.length" class="view-all-btn" @tap="goVaccineList">
-              <text class="view-all-text">查看全部</text>
-              <text class="view-all-arrow">›</text>
-            </view>
-          </view>
-
-          <view v-if="vaccineCards.length" class="vaccine-list">
-            <view
-              v-for="item in vaccineCardsLimited"
-              :key="item.id"
-              class="dash-card vaccine-card"
-              :class="{ urgent: item.isUrgent }"
-            >
-              <view class="vaccine-header">
-                <view class="vaccine-info">
-                  <text class="vaccine-name">{{ item.name }}</text>
-                  <text class="vaccine-date">计划日期: {{ item.date }}</text>
-                </view>
-                <view class="vaccine-countdown">
-                  <text class="countdown-number">{{ item.daysLeft }}</text>
-                  <text class="countdown-unit">天</text>
-                </view>
-              </view>
-
-              <view class="vaccine-progress">
-                <view class="progress-bar">
-                  <view class="progress-fill" :style="{ width: item.progressPercent + '%' }"></view>
-                </view>
-                <text class="progress-text">{{ item.progressPercent }}%</text>
-              </view>
-
-              <view class="vaccine-actions">
-                <button
-                  class="btn-vaccine"
-                  :class="{ completed: item.isCompleted }"
-                  :disabled="item.isCompleted"
-                  @tap="onMarkVaccineDone(item)"
-                >
-                  <text class="btn-text">{{ item.isCompleted ? "已完成" : "标记完成" }}</text>
-                </button>
-              </view>
-            </view>
-          </view>
-          <view v-else class="dash-card vaccine-empty">
-            <text class="vaccine-empty-text">暂无疫苗提醒</text>
-          </view>
-        </view>
-
         <!-- 驱虫提醒（对齐 pages/test/health 布局） -->
         <view class="dash-section">
           <view class="section-header">
@@ -234,6 +182,58 @@
           </view>
           <view v-else class="dash-card vaccine-empty">
             <text class="vaccine-empty-text">暂无驱虫提醒</text>
+          </view>
+        </view>
+
+        <!-- 疫苗提醒（对齐 pages/test/health 布局） -->
+        <view class="dash-section">
+          <view class="section-header">
+            <text class="section-title">💉 疫苗提醒</text>
+            <view v-if="vaccineCards.length > vaccineCardsLimited.length" class="view-all-btn" @tap="goVaccineList">
+              <text class="view-all-text">查看全部</text>
+              <text class="view-all-arrow">›</text>
+            </view>
+          </view>
+
+          <view v-if="vaccineCards.length" class="vaccine-list">
+            <view
+              v-for="item in vaccineCardsLimited"
+              :key="item.id"
+              class="dash-card vaccine-card"
+              :class="{ urgent: item.isUrgent }"
+            >
+              <view class="vaccine-header">
+                <view class="vaccine-info">
+                  <text class="vaccine-name">{{ item.name }}</text>
+                  <text class="vaccine-date">计划日期: {{ item.date }}</text>
+                </view>
+                <view class="vaccine-countdown">
+                  <text class="countdown-number">{{ item.daysLeft }}</text>
+                  <text class="countdown-unit">天</text>
+                </view>
+              </view>
+
+              <view class="vaccine-progress">
+                <view class="progress-bar">
+                  <view class="progress-fill" :style="{ width: item.progressPercent + '%' }"></view>
+                </view>
+                <text class="progress-text">{{ item.progressPercent }}%</text>
+              </view>
+
+              <view class="vaccine-actions">
+                <button
+                  class="btn-vaccine"
+                  :class="{ completed: item.isCompleted }"
+                  :disabled="item.isCompleted"
+                  @tap="onMarkVaccineDone(item)"
+                >
+                  <text class="btn-text">{{ item.isCompleted ? "已完成" : "标记完成" }}</text>
+                </button>
+              </view>
+            </view>
+          </view>
+          <view v-else class="dash-card vaccine-empty">
+            <text class="vaccine-empty-text">暂无疫苗提醒</text>
           </view>
         </view>
       </view>
