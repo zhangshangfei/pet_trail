@@ -185,21 +185,13 @@
             </view>
           </view>
 
-          <!-- AI 深度分析 -->
+          <!-- AI 快速分析 -->
           <view v-if="analysis.aiAnalysis" class="ai-section">
             <view class="section-header">
-              <image class="section-icon" src="/static/icons/ai.png" mode="aspectFit" />
-              <text class="section-title">AI 深度分析</text>
-              <view class="model-switch-btn" @tap="showModelSwitcher = true">
-                <text class="model-switch-text">{{ currentModelName || '选择模型' }}</text>
-                <text class="model-switch-arrow">▸</text>
-              </view>
+              <text class="ai-section-title">🤖 大模型快速分析</text>
             </view>
             <view class="ai-card">
               <text class="ai-text">{{ analysis.aiAnalysis }}</text>
-            </view>
-            <view v-if="currentModelInfo" class="ai-model-info">
-              <text class="model-info-text">{{ currentModelInfo.icon || '🤖' }} {{ currentModelInfo.displayName }}</text>
             </view>
           </view>
 
@@ -228,42 +220,12 @@
         </view>
       </view>
     </scroll-view>
-
-    <!-- 模型切换弹窗 -->
-    <view v-if="showModelSwitcher" class="model-switcher-mask" @tap="showModelSwitcher = false">
-      <view class="model-switcher" @tap.stop>
-        <view class="switcher-header">
-          <text class="switcher-title">切换AI分析模型</text>
-          <text class="switcher-close" @tap="showModelSwitcher = false">✕</text>
-        </view>
-        <view class="switcher-list">
-          <view
-            v-for="model in availableModels"
-            :key="model.id"
-            class="switcher-item"
-            :class="{ active: model.isActive }"
-            @tap="handleSwitchModel(model)"
-          >
-            <view class="model-item-left">
-              <text class="model-item-icon">{{ model.icon || '🤖' }}</text>
-              <view class="model-item-info">
-                <text class="model-item-name">{{ model.displayName }}</text>
-                <text class="model-item-desc">{{ model.description || model.provider }}</text>
-              </view>
-            </view>
-            <view class="model-item-right">
-              <view v-if="model.isActive" class="model-active-tag">使用中</view>
-            </view>
-          </view>
-        </view>
-      </view>
-    </view>
   </view>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getHealthAnalysis, getAiModels, getCurrentAiModel, switchAiModel } from '@/api/health'
+import { getHealthAnalysis } from '@/api/health'
 import { getPetList } from '@/api/pet'
 import { useUserStore } from '@/store/user'
 import UserTopBar from '@/components/UserTopBar.vue'
@@ -273,16 +235,9 @@ const statusBarHeight = ref(44)
 const loading = ref(false)
 const analysis = ref(null)
 const currentPetId = ref(null)
-const showModelSwitcher = ref(false)
-const availableModels = ref([])
-const currentModelInfo = ref(null)
 
 const userName = computed(() => userStore.userInfo?.nickname || '')
 const userAvatar = computed(() => userStore.userInfo?.avatar || '')
-
-const currentModelName = computed(() => {
-  return currentModelInfo.value?.displayName || ''
-})
 
 const scoreClass = computed(() => {
   if (!analysis.value) return ''
@@ -317,48 +272,6 @@ const trendClass = (value) => {
 
 const goBack = () => {
   uni.navigateBack()
-}
-
-const loadModels = async () => {
-  try {
-    const [modelsRes, currentRes] = await Promise.all([
-      getAiModels(),
-      getCurrentAiModel()
-    ])
-    if (modelsRes.code === 200) {
-      availableModels.value = (modelsRes.data || []).filter(m => m.status === 1)
-    }
-    if (currentRes.code === 200) {
-      currentModelInfo.value = currentRes.data
-    }
-  } catch (e) {}
-}
-
-const handleSwitchModel = async (model) => {
-  if (model.isActive) {
-    showModelSwitcher.value = false
-    return
-  }
-  uni.showLoading({ title: '切换模型中...' })
-  try {
-    const res = await switchAiModel(model.id)
-    if (res.code === 200) {
-      currentModelInfo.value = res.data
-      availableModels.value = availableModels.value.map(m => ({
-        ...m,
-        isActive: m.id === model.id
-      }))
-      uni.showToast({ title: '模型切换成功', icon: 'success' })
-      showModelSwitcher.value = false
-      await runAnalysis()
-    } else {
-      uni.showToast({ title: res.message || '切换失败', icon: 'none' })
-    }
-  } catch (e) {
-    uni.showToast({ title: '切换失败，请重试', icon: 'none' })
-  } finally {
-    uni.hideLoading()
-  }
 }
 
 const runAnalysis = async () => {
@@ -398,7 +311,6 @@ onMounted(async () => {
     } catch (e) {}
   }
 
-  loadModels()
   if (currentPetId.value) {
     await runAnalysis()
   }
@@ -521,17 +433,11 @@ $red: #ff3b30;
 .vaccine-next-icon { font-size: 32rpx; }
 .vaccine-next-text { font-size: 26rpx; color: $text-primary; }
 
-/* ===== AI 深度分析 ===== */
+/* ===== AI 快速分析 ===== */
 .ai-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-.ai-section .section-title { color: #fff; }
-.ai-section .section-icon { filter: brightness(0) invert(1); }
-.model-switch-btn { display: flex; align-items: center; gap: 6rpx; background: rgba(255,255,255,0.2); padding: 8rpx 16rpx; border-radius: 20rpx; margin-left: auto; }
-.model-switch-text { font-size: 22rpx; color: #fff; }
-.model-switch-arrow { font-size: 22rpx; color: rgba(255,255,255,0.7); }
+.ai-section-title { font-size: 30rpx; font-weight: 700; color: #fff; }
 .ai-card { background: rgba(255,255,255,0.12); border-radius: 16rpx; padding: 24rpx; margin-top: 8rpx; }
 .ai-text { font-size: 26rpx; color: #fff; line-height: 1.8; }
-.ai-model-info { margin-top: 16rpx; display: flex; justify-content: flex-end; }
-.model-info-text { font-size: 20rpx; color: rgba(255,255,255,0.6); }
 
 /* ===== 底部按钮 ===== */
 .action-section { margin-top: 8rpx; padding-bottom: 40rpx; }
@@ -553,21 +459,4 @@ $red: #ff3b30;
 .btn-analyze { width: 400rpx; height: 90rpx; border-radius: 45rpx; background: linear-gradient(135deg, #ff6a3d 0%, #ff4d4f 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4rpx 16rpx rgba(255,106,61,0.3); }
 .btn-analyze-text { font-size: 30rpx; font-weight: 700; color: #fff; }
 .btn-analyze:active { opacity: 0.9; transform: scale(0.98); }
-
-/* ===== 模型切换弹窗 ===== */
-.model-switcher-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: flex; align-items: flex-end; }
-.model-switcher { width: 100%; background: #fff; border-radius: 32rpx 32rpx 0 0; padding: 32rpx 24rpx; padding-bottom: calc(32rpx + env(safe-area-inset-bottom)); max-height: 70vh; overflow-y: auto; }
-.switcher-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28rpx; }
-.switcher-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
-.switcher-close { font-size: 36rpx; color: $text-light; padding: 8rpx; }
-.switcher-list { display: flex; flex-direction: column; gap: 16rpx; }
-.switcher-item { display: flex; justify-content: space-between; align-items: center; padding: 24rpx; background: #f8f9fb; border-radius: 16rpx; border: 2rpx solid transparent; }
-.switcher-item.active { border-color: $accent; background: #fff8f5; }
-.model-item-left { display: flex; align-items: center; gap: 16rpx; flex: 1; }
-.model-item-icon { font-size: 40rpx; }
-.model-item-info { display: flex; flex-direction: column; gap: 4rpx; }
-.model-item-name { font-size: 28rpx; font-weight: 600; color: $text-primary; }
-.model-item-desc { font-size: 22rpx; color: $text-secondary; }
-.model-item-right { display: flex; align-items: center; }
-.model-active-tag { font-size: 22rpx; color: $accent; font-weight: 600; background: #fff0eb; padding: 4rpx 14rpx; border-radius: 10rpx; }
 </style>
