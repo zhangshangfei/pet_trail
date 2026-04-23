@@ -1,96 +1,63 @@
 import { defineStore } from 'pinia'
-import { pet as petApi } from '@/api'
+import { ref, computed } from 'vue'
 
-export const usePetStore = defineStore('pet', {
-  state: () => ({
-    pets: [],
-    currentPetId: null
-  }),
+const DEFAULT_PET_AVATAR = '/static/images/default-pet.png'
 
-  getters: {
-    petList: (state) => {
-      return state.pets || []
-    },
-    currentPet: (state) => {
-      return state.pets.find(p => p.id === state.currentPetId) || null
-    },
-    hasPets: (state) => {
-      return state.pets.length > 0
+export const usePetStore = defineStore('pet', () => {
+  const petList = ref([])
+  const currentPetId = ref(null)
+  const loaded = ref(false)
+
+  const currentPet = computed(() => {
+    if (!currentPetId.value || petList.value.length === 0) return null
+    return petList.value.find(p => p.id === currentPetId.value) || petList.value[0] || null
+  })
+
+  const currentPetAvatar = computed(() => {
+    const pet = currentPet.value
+    if (!pet) return DEFAULT_PET_AVATAR
+    return pet.avatar || DEFAULT_PET_AVATAR
+  })
+
+  async function loadPets() {
+    try {
+      const res = await uni.$request.get('/api/pets/my')
+      if (res.success && res.data) {
+        petList.value = res.data
+        loaded.value = true
+        if (!currentPetId.value && res.data.length > 0) {
+          currentPetId.value = res.data[0].id
+        }
+      }
+    } catch (e) {
+      console.error('加载宠物列表失败:', e)
     }
-  },
+  }
 
-  actions: {
-    // 加载宠物列表
-    async loadPets() {
-      try {
-        const res = await petApi.getList()
-        if (res.success && Array.isArray(res.data)) {
-          this.pets = res.data
-          return { success: true }
-        }
-        this.pets = []
-        return { success: false }
-      } catch (error) {
-        console.error('加载宠物列表失败:', error)
-        this.pets = []
-        return { success: false, error }
-      }
-    },
+  function setCurrentPet(petId) {
+    currentPetId.value = petId
+  }
 
-    // 添加宠物
-    async addPet(petData) {
-      try {
-        const res = await petApi.add(petData)
-        if (res.success) {
-          this.pets.push(res.data)
-          return { success: true, data: res.data }
-        }
-        throw new Error(res.message || '添加失败')
-      } catch (error) {
-        console.error('添加宠物失败:', error)
-        return { success: false, message: error.message }
-      }
-    },
+  function getPetAvatar(pet) {
+    if (!pet) return DEFAULT_PET_AVATAR
+    return pet.avatar || DEFAULT_PET_AVATAR
+  }
 
-    // 更新宠物
-    async updatePet(petId, petData) {
-      try {
-        const res = await petApi.update(petId, petData)
-        if (res.success) {
-          const index = this.pets.findIndex(p => p.id === petId)
-          if (index !== -1) {
-            this.pets[index] = { ...this.pets[index], ...petData }
-          }
-          return { success: true }
-        }
-        throw new Error(res.message || '更新失败')
-      } catch (error) {
-        console.error('更新宠物失败:', error)
-        return { success: false, message: error.message }
-      }
-    },
+  function clearPets() {
+    petList.value = []
+    currentPetId.value = null
+    loaded.value = false
+  }
 
-    // 删除宠物
-    async deletePet(petId) {
-      try {
-        const res = await petApi.delete(petId)
-        if (res.success) {
-          this.pets = this.pets.filter(p => p.id !== petId)
-          if (this.currentPetId === petId) {
-            this.currentPetId = null
-          }
-          return { success: true }
-        }
-        throw new Error(res.message || '删除失败')
-      } catch (error) {
-        console.error('删除宠物失败:', error)
-        return { success: false, message: error.message }
-      }
-    },
-
-    // 设置当前宠物
-    setCurrentPet(petId) {
-      this.currentPetId = petId
-    }
+  return {
+    petList,
+    currentPetId,
+    currentPet,
+    currentPetAvatar,
+    loaded,
+    loadPets,
+    setCurrentPet,
+    getPetAvatar,
+    clearPets
   }
 })

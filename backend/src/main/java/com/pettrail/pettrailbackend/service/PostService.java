@@ -6,6 +6,8 @@ import com.pettrail.pettrailbackend.entity.PostEe;
 import com.pettrail.pettrailbackend.entity.PostLike;
 import com.pettrail.pettrailbackend.event.PostCreateEvent;
 import com.pettrail.pettrailbackend.exception.NotFoundException;
+import com.pettrail.pettrailbackend.exception.BusinessException;
+import com.pettrail.pettrailbackend.exception.ForbiddenException;
 import com.pettrail.pettrailbackend.mapper.PostEeMapper;
 import com.pettrail.pettrailbackend.mapper.PostLikeMapper;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
@@ -42,13 +44,13 @@ public class PostService {
     public Post createPost(Long userId, Long petId, String content, List<String> images, List<String> videos,
                            List<String> stickers, Map<String, String> bubble, String location) {
         if (!contentAuditService.auditText(content)) {
-            throw new RuntimeException("内容包含违规信息，请修改后重新发布");
+            throw new BusinessException("内容包含违规信息，请修改后重新发布");
         }
 
         if (images != null) {
             for (String imageUrl : images) {
                 if (!contentAuditService.auditImage(imageUrl)) {
-                    throw new RuntimeException("图片包含违规内容，请更换后重新发布");
+                    throw new BusinessException("图片包含违规内容，请更换后重新发布");
                 }
             }
         }
@@ -148,21 +150,16 @@ public class PostService {
         Boolean isLiked = redisTemplate.hasKey(userLikeKey);
 
         if (isLiked) {
-            // 取消点赞
             redisTemplate.delete(userLikeKey);
             redisTemplate.opsForHash().increment(likeKey, "count", -1);
-            redisTemplate.expire(likeKey, 7, TimeUnit.DAYS); // 设置 TTL
+            redisTemplate.expire(likeKey, 7, TimeUnit.DAYS);
             postLikeMapper.deleteByPostIdAndUserId(postId, userId);
-            // 更新点赞计数
-            post.setLikeCount(post.getLikeCount() - 1);
-            postMapper.updateById(post);
+            postMapper.updateLikeCountAtomic(postId, -1);
         } else {
-            // 点赞
             redisTemplate.opsForValue().set(userLikeKey, "1", 7, TimeUnit.DAYS);
             redisTemplate.opsForHash().increment(likeKey, "count", 1);
-            redisTemplate.expire(likeKey, 7, TimeUnit.DAYS); // 设置 TTL
+            redisTemplate.expire(likeKey, 7, TimeUnit.DAYS);
 
-            // 写入数据库
             PostLike postLike = new PostLike();
             postLike.setPostId(postId);
             postLike.setUserId(userId);
@@ -173,9 +170,7 @@ public class PostService {
                 return true;
             }
 
-            // 更新点赞计数
-            post.setLikeCount(post.getLikeCount() + 1);
-            postMapper.updateById(post);
+            postMapper.updateLikeCountAtomic(postId, 1);
 
             notificationService.createNotification(
                 post.getUserId(), userId, "like", postId, "赞了你的动态");
@@ -239,25 +234,17 @@ public class PostService {
         Boolean isEeLiked = redisTemplate.hasKey(userEeKey);
 
         if (isEeLiked) {
-            // 取消收藏
             redisTemplate.delete(userEeKey);
             redisTemplate.opsForHash().increment(eeKey, "count", -1);
-            redisTemplate.expire(eeKey, 7, TimeUnit.DAYS); // 设置 TTL
+            redisTemplate.expire(eeKey, 7, TimeUnit.DAYS);
 
-            // 删除数据库记录
             postEeMapper.deleteByPostIdAndUserId(postId, userId);
-
-            // 更新收藏计数
-            int newCount = Math.max(0, (post.getEeCount() != null ? post.getEeCount() : 0) - 1);
-            post.setEeCount(newCount);
-            postMapper.updateById(post);
+            postMapper.updateEeCountAtomic(postId, -1);
         } else {
-            // 收藏
             redisTemplate.opsForValue().set(userEeKey, "1", 7, TimeUnit.DAYS);
             redisTemplate.opsForHash().increment(eeKey, "count", 1);
-            redisTemplate.expire(eeKey, 7, TimeUnit.DAYS); // 设置 TTL
+            redisTemplate.expire(eeKey, 7, TimeUnit.DAYS);
 
-            // 写入数据库
             PostEe postEe = new PostEe();
             postEe.setPostId(postId);
             postEe.setUserId(userId);
@@ -268,10 +255,7 @@ public class PostService {
                 return true;
             }
 
-            // 更新收藏计数
-            int newCount = (post.getEeCount() != null ? post.getEeCount() : 0) + 1;
-            post.setEeCount(newCount);
-            postMapper.updateById(post);
+            postMapper.updateEeCountAtomic(postId, 1);
 
             notificationService.createNotification(
                 post.getUserId(), userId, "favorite", postId, "收藏了你的动态");
@@ -353,7 +337,7 @@ public class PostService {
             throw new NotFoundException("动态不存在");
         }
         if (!post.getUserId().equals(userId)) {
-            throw new RuntimeException("无权删除他人动态");
+            throw new ForbiddenException("无权删除他人动态");
         }
         post.setStatus(0);
         postMapper.updateById(post);

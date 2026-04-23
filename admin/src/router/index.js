@@ -24,7 +24,8 @@ const routes = [
       { path: 'logs', name: 'Logs', component: () => import('../views/Logs.vue'), meta: { title: '操作日志', roles: ['ADMIN', 'SUPER_ADMIN'] } },
       { path: 'settings', name: 'Settings', component: () => import('../views/Settings.vue'), meta: { title: '系统设置', roles: ['SUPER_ADMIN'] } },
       { path: 'config', name: 'Config', component: () => import('../views/Config.vue'), meta: { title: '系统配置管理', roles: ['SUPER_ADMIN'] } },
-      { path: 'ai-models', name: 'AiModels', component: () => import('../views/AiModel.vue'), meta: { title: 'AI模型管理', roles: ['ADMIN', 'SUPER_ADMIN'] } }
+      { path: 'ai-models', name: 'AiModels', component: () => import('../views/AiModel.vue'), meta: { title: 'AI模型管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
+      { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('../views/NotFound.vue'), meta: { title: '页面不存在' } }
     ]
   }
 ]

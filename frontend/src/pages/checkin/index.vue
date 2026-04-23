@@ -316,18 +316,20 @@ export default {
     },
     async loadCalendarRecords() {
       const requests = this.getMonthRequests(3)
-      const result = []
-      for (const item of requests) {
-        try {
-          const res = await uni.$request.get('/api/checkin/calendar', item)
+      try {
+        const responses = await Promise.all(
+          requests.map(item => uni.$request.get('/api/checkin/calendar', item).catch(() => null))
+        )
+        const result = []
+        for (const res of responses) {
           if (res && res.success && Array.isArray(res.data)) {
             result.push(...res.data)
           }
-        } catch (error) {
-          console.error('加载打卡记录失败:', error)
         }
+        this.allRecords = this.filterPetRecords(result)
+      } catch (error) {
+        console.error('加载打卡记录失败:', error)
       }
-      this.allRecords = this.filterPetRecords(result)
     },
     getMonthRequests(count) {
       const requests = []

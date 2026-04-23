@@ -3,6 +3,7 @@ package com.pettrail.pettrailbackend.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pettrail.pettrailbackend.entity.ParasiteReminder;
+import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.mapper.ParasiteReminderMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +19,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper, ParasiteReminder> {
 
-    /**
-     * 获取宠物的寄生虫提醒列表
-     */
     public List<ParasiteReminder> listByPetId(Long petId) {
         LambdaQueryWrapper<ParasiteReminder> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ParasiteReminder::getPetId, petId);
@@ -28,21 +26,15 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
         return this.list(queryWrapper);
     }
 
-    /**
-     * 获取即将到期的寄生虫提醒（未来7天内）
-     */
     public List<ParasiteReminder> listUpcoming(Long petId) {
         LambdaQueryWrapper<ParasiteReminder> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ParasiteReminder::getPetId, petId);
-        queryWrapper.eq(ParasiteReminder::getStatus, 0); // 未完成
+        queryWrapper.eq(ParasiteReminder::getStatus, 0);
         queryWrapper.le(ParasiteReminder::getNextDate, LocalDate.now().plusDays(7));
         queryWrapper.orderByAsc(ParasiteReminder::getNextDate);
         return this.list(queryWrapper);
     }
 
-    /**
-     * 创建寄生虫提醒
-     */
     @Transactional(rollbackFor = Exception.class)
     public ParasiteReminder createReminder(Long petId, Long userId, Integer type, LocalDate nextDate, String note) {
         ParasiteReminder reminder = new ParasiteReminder();
@@ -51,7 +43,7 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
         reminder.setType(type);
         reminder.setNextDate(nextDate);
         reminder.setNote(note);
-        reminder.setStatus(0); // 0-待驱虫
+        reminder.setStatus(0);
         reminder.setCreatedAt(LocalDateTime.now());
         reminder.setUpdatedAt(LocalDateTime.now());
 
@@ -60,25 +52,19 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
         return reminder;
     }
 
-    /**
-     * 获取提醒详情
-     */
     public ParasiteReminder getReminderById(Long reminderId) {
         ParasiteReminder reminder = this.getById(reminderId);
         if (reminder == null) {
-            throw new RuntimeException("提醒不存在");
+            throw new BusinessException(404, "提醒不存在");
         }
         return reminder;
     }
 
-    /**
-     * 更新提醒信息（通用编辑接口）
-     */
     @Transactional(rollbackFor = Exception.class)
     public ParasiteReminder updateReminder(Long reminderId, Integer type, LocalDate nextDate, String note) {
         ParasiteReminder reminder = this.getById(reminderId);
         if (reminder == null) {
-            throw new RuntimeException("提醒不存在");
+            throw new BusinessException(404, "提醒不存在");
         }
         if (type != null) {
             reminder.setType(type);
@@ -95,14 +81,11 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
         return reminder;
     }
 
-    /**
-     * 更新提醒状态
-     */
     @Transactional(rollbackFor = Exception.class)
     public ParasiteReminder updateStatus(Long reminderId, Integer status) {
         ParasiteReminder reminder = this.getById(reminderId);
         if (reminder == null) {
-            throw new RuntimeException("提醒不存在");
+            throw new BusinessException(404, "提醒不存在");
         }
         reminder.setStatus(status);
         reminder.setUpdatedAt(LocalDateTime.now());
@@ -111,14 +94,11 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
         return reminder;
     }
 
-    /**
-     * 更新提醒日期
-     */
     @Transactional(rollbackFor = Exception.class)
     public ParasiteReminder updateNextDate(Long reminderId, LocalDate nextDate) {
         ParasiteReminder reminder = this.getById(reminderId);
         if (reminder == null) {
-            throw new RuntimeException("提醒不存在");
+            throw new BusinessException(404, "提醒不存在");
         }
         reminder.setNextDate(nextDate);
         reminder.setUpdatedAt(LocalDateTime.now());
@@ -127,14 +107,11 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
         return reminder;
     }
 
-    /**
-     * 删除提醒
-     */
     @Transactional(rollbackFor = Exception.class)
     public void deleteReminder(Long reminderId) {
         ParasiteReminder reminder = this.getById(reminderId);
         if (reminder == null) {
-            throw new RuntimeException("提醒不存在");
+            throw new BusinessException(404, "提醒不存在");
         }
         this.removeById(reminderId);
         log.info("删除提醒成功: reminderId={}", reminderId);

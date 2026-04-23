@@ -5,6 +5,8 @@ import com.pettrail.pettrailbackend.dto.CommentVO;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.entity.PostComment;
 import com.pettrail.pettrailbackend.entity.User;
+import com.pettrail.pettrailbackend.exception.BusinessException;
+import com.pettrail.pettrailbackend.exception.ForbiddenException;
 import com.pettrail.pettrailbackend.mapper.PostCommentMapper;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
@@ -33,11 +35,11 @@ public class CommentService {
     public CommentVO createComment(Long postId, Long userId, String content, Long parentId, Long replyToId) {
         Post post = postMapper.selectById(postId);
         if (post == null) {
-            throw new RuntimeException("动态不存在");
+            throw new BusinessException(404, "动态不存在");
         }
 
         if (!contentAuditService.auditText(content)) {
-            throw new RuntimeException("评论内容包含违规信息，请修改后重新发布");
+            throw new BusinessException("评论内容包含违规信息，请修改后重新发布");
         }
 
         PostComment comment = new PostComment();
@@ -93,14 +95,14 @@ public class CommentService {
     public void deleteComment(Long commentId, Long userId) {
         PostComment comment = commentMapper.selectById(commentId);
         if (comment == null || comment.getStatus() == 0) {
-            throw new RuntimeException("评论不存在");
+            throw new BusinessException(404, "评论不存在");
         }
 
         Post post = postMapper.selectById(comment.getPostId());
         boolean isCommentAuthor = comment.getUserId().equals(userId);
         boolean isPostAuthor = post != null && post.getUserId().equals(userId);
         if (!isCommentAuthor && !isPostAuthor) {
-            throw new RuntimeException("无权删除该评论");
+            throw new ForbiddenException("无权删除该评论");
         }
 
         comment.setStatus(0);
@@ -193,7 +195,6 @@ public class CommentService {
                     }
                 }
             } catch (Exception e) {
-                // ignore
             }
         }
 

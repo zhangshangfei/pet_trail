@@ -3,6 +3,7 @@ package com.pettrail.pettrailbackend.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.pettrail.pettrailbackend.dto.AdminVO;
 import com.pettrail.pettrailbackend.entity.Admin;
+import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.mapper.AdminMapper;
 import com.pettrail.pettrailbackend.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class AdminService {
         );
 
         if (admin == null || !passwordEncoder.matches(password, admin.getPassword())) {
-            throw new RuntimeException("用户名或密码错误");
+            throw new BusinessException(401, "用户名或密码错误");
         }
 
         admin.setLastLoginAt(LocalDateTime.now());
@@ -48,7 +49,7 @@ public class AdminService {
     public AdminVO getProfile(Long adminId) {
         Admin admin = adminMapper.selectById(adminId);
         if (admin == null) {
-            throw new RuntimeException("管理员不存在");
+            throw new BusinessException(404, "管理员不存在");
         }
         return convertToVO(admin);
     }

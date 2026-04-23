@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pettrail.pettrailbackend.dto.*;
 import com.pettrail.pettrailbackend.entity.AiModel;
+import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.entity.AiModelStats;
 import com.pettrail.pettrailbackend.entity.AiModelSwitchLog;
 import com.pettrail.pettrailbackend.mapper.AiModelMapper;
@@ -82,10 +83,10 @@ public class AiModelService {
         AiModel toModel = aiModelMapper.selectById(targetModelId);
 
         if (toModel == null) {
-            throw new RuntimeException("目标模型不存在");
+            throw new BusinessException(404, "目标模型不存在");
         }
         if (toModel.getStatus() != 1) {
-            throw new RuntimeException("目标模型未启用");
+            throw new BusinessException("目标模型未启用");
         }
 
         AiModelSwitchLog switchLog = new AiModelSwitchLog();
@@ -129,7 +130,7 @@ public class AiModelService {
             switchLogMapper.insert(switchLog);
 
             log.error("[模型切换] 切换失败: {}", e.getMessage());
-            throw new RuntimeException("模型切换失败: " + e.getMessage());
+            throw new BusinessException("模型切换失败: " + e.getMessage());
         }
     }
 
@@ -188,7 +189,7 @@ public class AiModelService {
     public AiModelVO updateModel(Long id, AiModelUpdateDTO dto) {
         AiModel model = aiModelMapper.selectById(id);
         if (model == null) {
-            throw new RuntimeException("模型不存在");
+            throw new BusinessException(404, "模型不存在");
         }
 
         if (dto.getDisplayName() != null) model.setDisplayName(dto.getDisplayName());
@@ -217,10 +218,12 @@ public class AiModelService {
     @Transactional
     public boolean deleteModel(Long id) {
         AiModel model = aiModelMapper.selectById(id);
-        if (model == null) return false;
+        if (model == null) {
+            throw new BusinessException(404, "模型不存在");
+        }
 
         if (model.getIsDefault() == 1) {
-            throw new RuntimeException("无法删除默认模型，请先切换到其他模型");
+            throw new BusinessException("无法删除默认模型，请先切换到其他模型");
         }
 
         aiModelMapper.deleteById(id);
@@ -233,11 +236,11 @@ public class AiModelService {
     public AiModelVO setModelStatus(Long id, Integer status) {
         AiModel model = aiModelMapper.selectById(id);
         if (model == null) {
-            throw new RuntimeException("模型不存在");
+            throw new BusinessException(404, "模型不存在");
         }
 
         if (status == 0 && model.getIsDefault() == 1) {
-            throw new RuntimeException("无法禁用默认模型，请先切换到其他模型");
+            throw new BusinessException("无法禁用默认模型，请先切换到其他模型");
         }
 
         model.setStatus(status);
@@ -419,7 +422,7 @@ public class AiModelService {
     public void updateModelParameters(Long modelId, Map<String, Object> parameters) {
         AiModel model = aiModelMapper.selectById(modelId);
         if (model == null) {
-            throw new RuntimeException("模型不存在");
+            throw new BusinessException(404, "模型不存在");
         }
         try {
             model.setParameters(objectMapper.writeValueAsString(parameters));
@@ -427,7 +430,7 @@ public class AiModelService {
             aiModelMapper.updateById(model);
             log.info("[模型管理] 更新模型参数: id={}", modelId);
         } catch (Exception e) {
-            throw new RuntimeException("参数序列化失败: " + e.getMessage());
+            throw new BusinessException("参数序列化失败: " + e.getMessage());
         }
     }
 

@@ -139,20 +139,17 @@ public class CheckinService {
         String todayStr = today.format(DateTimeFormatter.ISO_DATE);
         log.info("开始打卡: userId={}, petId={}, itemId={}, date={}", userId, petId, itemId, todayStr);
 
-        // // 1. Redis 防重（原子操作）
-        // String redisKey = String.format("checkin:%s:user:%d", todayStr, userId);
-        // String fieldKey = String.valueOf(itemId);
-        //
-        // Boolean isNew = redisTemplate.opsForHash()
-        //     .putIfAbsent(redisKey, fieldKey, todayStr);
-        //
-        // if (Boolean.FALSE.equals(isNew)) {
-        //     throw new BusinessException("今日已完成该打卡项");
-        // }
-        // redisTemplate.expire(redisKey, 2, TimeUnit.DAYS);
+        String redisKey = String.format("checkin:%s:user:%d", todayStr, userId);
+        String fieldKey = String.valueOf(itemId);
 
-        // 2. 检查是否已打卡
-        log.info("检查是否已打卡: userId={}, petId={}, itemId={}, date={}", userId, petId, itemId, todayStr);
+        Boolean isNew = redisTemplate.opsForHash()
+            .putIfAbsent(redisKey, fieldKey, todayStr);
+
+        if (Boolean.FALSE.equals(isNew)) {
+            throw new BusinessException("今日已完成该打卡项");
+        }
+        redisTemplate.expire(redisKey, 2, TimeUnit.DAYS);
+
         CheckinRecord existing = checkinRecordMapper.selectByUserIdItemIdAndDate(userId, petId, itemId, today);
         if (existing != null) {
             log.warn("重复打卡: userId={}, petId={}, itemId={}, date={}, existingId={}", userId, petId, itemId, todayStr, existing.getId());

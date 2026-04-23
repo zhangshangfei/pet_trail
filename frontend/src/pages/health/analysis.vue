@@ -298,6 +298,10 @@ onMounted(async () => {
   const sysInfo = uni.getSystemInfoSync()
   statusBarHeight.value = sysInfo.statusBarHeight || 44
 
+  if (userStore.isLoggedIn && !userStore.userInfo) {
+    await userStore.loadUserInfo()
+  }
+
   const petId = uni.getStorageSync('currentPetId')
   if (petId) {
     currentPetId.value = petId
