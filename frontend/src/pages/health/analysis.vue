@@ -21,7 +21,7 @@
           <view class="score-card">
             <view class="score-left">
               <view class="score-ring" :class="scoreClass">
-                <text class="score-number">{{ analysis.score }}</text>
+                <text class="score-number">{{ formatScore(analysis.score) }}</text>
                 <text class="score-label">健康评分</text>
               </view>
             </view>
@@ -48,7 +48,7 @@
                     <view class="detail-bar-fill vaccine" :style="{ width: (analysis.detail.vaccineScore || 0) + '%' }"></view>
                   </view>
                 </view>
-                <text class="detail-score">{{ analysis.detail.vaccineScore || 0 }}</text>
+                <text class="detail-score">{{ formatScore(analysis.detail.vaccineScore || 0) }}</text>
               </view>
               <view class="detail-row">
                 <view class="detail-label">
@@ -60,7 +60,7 @@
                     <view class="detail-bar-fill parasite" :style="{ width: (analysis.detail.parasiteScore || 0) + '%' }"></view>
                   </view>
                 </view>
-                <text class="detail-score">{{ analysis.detail.parasiteScore || 0 }}</text>
+                <text class="detail-score">{{ formatScore(analysis.detail.parasiteScore || 0) }}</text>
               </view>
               <view class="detail-row">
                 <view class="detail-label">
@@ -72,7 +72,7 @@
                     <view class="detail-bar-fill weight" :style="{ width: (analysis.detail.weightScore || 0) + '%' }"></view>
                   </view>
                 </view>
-                <text class="detail-score">{{ analysis.detail.weightScore || 0 }}</text>
+                <text class="detail-score">{{ formatScore(analysis.detail.weightScore || 0) }}</text>
               </view>
               <view class="detail-row">
                 <view class="detail-label">
@@ -84,7 +84,7 @@
                     <view class="detail-bar-fill checkin" :style="{ width: (analysis.detail.checkinScore || 0) + '%' }"></view>
                   </view>
                 </view>
-                <text class="detail-score">{{ analysis.detail.checkinScore || 0 }}</text>
+                <text class="detail-score">{{ formatScore(analysis.detail.checkinScore || 0) }}</text>
               </view>
             </view>
           </view>
@@ -231,6 +231,13 @@ import { useUserStore } from '@/store/user'
 import UserTopBar from '@/components/UserTopBar.vue'
 
 const userStore = useUserStore()
+
+function formatScore(val) {
+  if (val == null) return '0'
+  const num = Number(val)
+  if (Number.isInteger(num)) return String(num)
+  return num.toFixed(1)
+}
 const statusBarHeight = ref(44)
 const loading = ref(false)
 const analysis = ref(null)

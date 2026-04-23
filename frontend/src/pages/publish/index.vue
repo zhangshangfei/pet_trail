@@ -407,7 +407,7 @@ export default {
   },
   computed: {
     canSubmit() {
-      return this.content.trim().length > 0
+      return this.content.trim().length > 0 || this.mediaList.length > 0
     },
     currentStickers() {
       return this.stickerMap[this.currentStickerCat] || []
@@ -478,7 +478,7 @@ export default {
           const media = imageFiles[i]
           uploadedCount++
           uni.showLoading({
-            title: `压缩并上传 ${uploadedCount}/${totalFiles}...`,
+            title: `上传 ${uploadedCount}/${totalFiles}...`,
             mask: true
           })
 

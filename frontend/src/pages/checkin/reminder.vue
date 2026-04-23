@@ -32,7 +32,7 @@
           <view v-for="item in reminders" :key="item.id" class="reminder-card">
             <view class="reminder-info">
               <text class="reminder-time">{{ formatTime(item.remindTime) }}</text>
-              <text class="reminder-target">{{ item.itemId ? '指定打卡项' : '全部打卡项' }}</text>
+              <text class="reminder-target">{{ item.itemName || '全部打卡项' }}</text>
             </view>
             <view class="reminder-actions">
               <switch
@@ -72,6 +72,15 @@
               </view>
             </picker>
           </view>
+          <view class="form-item">
+            <text class="form-label">打卡项</text>
+            <picker :range="checkinItemNames" :value="selectedItemIndex" @change="onItemChange">
+              <view class="time-picker">
+                <text class="time-picker-text">{{ checkinItemNames[selectedItemIndex] }}</text>
+                <text class="time-picker-arrow">›</text>
+              </view>
+            </picker>
+          </view>
         </view>
         <view class="modal-footer">
           <text class="modal-cancel" @click="showAddModal = false">取消</text>
@@ -93,7 +102,9 @@ export default {
       reminders: [],
       loading: false,
       showAddModal: false,
-      newRemindTime: '09:00'
+      newRemindTime: '09:00',
+      checkinItems: [],
+      selectedItemIndex: 0
     }
   },
   onLoad() {
@@ -105,6 +116,12 @@ export default {
       this.navHeight = 64
     }
     this.loadReminders()
+    this.loadCheckinItems()
+  },
+  computed: {
+    checkinItemNames() {
+      return ['全部打卡项', ...this.checkinItems.map(item => (item.emoji || '📋') + ' ' + item.label)]
+    }
   },
   methods: {
     async loadReminders() {
@@ -151,14 +168,31 @@ export default {
     onTimeChange(event) {
       this.newRemindTime = event.detail.value
     },
+    onItemChange(event) {
+      this.selectedItemIndex = event.detail.value
+    },
+    async loadCheckinItems() {
+      try {
+        const res = await checkinApi.getCheckinItems()
+        if (res && res.success && Array.isArray(res.data)) {
+          this.checkinItems = res.data
+        }
+      } catch (e) {
+        console.error('加载打卡项失败:', e)
+      }
+    },
     async onAddReminder() {
       try {
-        const res = await checkinApi.createCheckinReminder({
-          remindTime: this.newRemindTime
-        })
+        const params = { remindTime: this.newRemindTime }
+        if (this.selectedItemIndex > 0 && this.checkinItems.length > 0) {
+          const item = this.checkinItems[this.selectedItemIndex - 1]
+          params.itemId = item.id
+        }
+        const res = await checkinApi.createCheckinReminder(params)
         if (res && res.success) {
           uni.showToast({ title: '添加成功', icon: 'success' })
           this.showAddModal = false
+          this.selectedItemIndex = 0
           this.loadReminders()
         }
       } catch (e) {

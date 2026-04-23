@@ -123,25 +123,31 @@
           </view>
 
           <view v-if="recentRecords.length" class="records-list">
-            <view v-for="record in recentRecords" :key="record.date" class="record-card">
-              <view class="record-header">
-                <text class="record-date">{{ record.displayDate }}</text>
-                <view class="record-progress">
-                  <view class="progress-bar">
-                    <view class="progress-fill" :style="{ width: record.progress + '%' }"></view>
-                  </view>
-                  <text class="progress-text">{{ record.completedCount }}/{{ record.totalCount }}</text>
-                </view>
+            <view v-for="group in recordGroups" :key="group.label" class="record-group">
+              <view class="record-group-header">
+                <text class="record-group-label">{{ group.label }}</text>
+                <text class="record-group-range">{{ group.dateRange }}</text>
               </view>
-              <view class="record-items">
-                <view
-                  v-for="recordItem in record.items"
-                  :key="record.date + '-' + recordItem.id"
-                  class="record-item"
-                  :class="{ done: recordItem.checked }"
-                >
-                  <text class="record-item-icon">{{ recordItem.emoji || '📋' }}</text>
-                  <text class="record-item-name">{{ recordItem.label }}</text>
+              <view v-for="record in group.records" :key="record.date" class="record-card">
+                <view class="record-header">
+                  <text class="record-date">{{ record.displayDate }}</text>
+                  <view class="record-progress">
+                    <view class="progress-bar">
+                      <view class="progress-fill" :style="{ width: record.progress + '%' }"></view>
+                    </view>
+                    <text class="progress-text">{{ record.completedCount }}/{{ record.totalCount }}</text>
+                  </view>
+                </view>
+                <view class="record-items">
+                  <view
+                    v-for="recordItem in record.items"
+                    :key="record.date + '-' + recordItem.id"
+                    class="record-item"
+                    :class="{ done: recordItem.checked }"
+                  >
+                    <text class="record-item-icon">{{ recordItem.emoji || '📋' }}</text>
+                    <text class="record-item-name">{{ recordItem.label }}</text>
+                  </view>
                 </view>
               </view>
             </view>
@@ -213,6 +219,45 @@ export default {
     },
     todayCompleted() {
       return this.visibleItems.filter((item) => item.checked).length
+    },
+    recordGroups() {
+      if (!this.recentRecords.length) return []
+      const now = new Date()
+      const dayOfWeek = now.getDay() || 7
+      const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1)
+      const weekEnd = new Date(weekStart.getTime() + 6 * 86400000)
+      const weekStartKey = this.getDateKey(weekStart)
+      const weekEndKey = this.getDateKey(weekEnd)
+
+      const thisWeek = []
+      const earlier = []
+      for (const record of this.recentRecords) {
+        const d = this.normalizeDate(record.date)
+        if (!d) { earlier.push(record); continue }
+        const key = this.getDateKey(d)
+        if (key >= weekStartKey && key <= weekEndKey) {
+          thisWeek.push(record)
+        } else {
+          earlier.push(record)
+        }
+      }
+
+      const groups = []
+      if (thisWeek.length) {
+        const dates = thisWeek.map(r => this.normalizeDate(r.date)).filter(Boolean).sort((a, b) => a - b)
+        const from = dates[0]
+        const to = dates[dates.length - 1]
+        const range = this.formatDateRange(from, to)
+        groups.push({ label: '本周', dateRange: range, records: thisWeek })
+      }
+      if (earlier.length) {
+        const dates = earlier.map(r => this.normalizeDate(r.date)).filter(Boolean).sort((a, b) => a - b)
+        const from = dates[0]
+        const to = dates[dates.length - 1]
+        const range = this.formatDateRange(from, to)
+        groups.push({ label: '更早', dateRange: range, records: earlier })
+      }
+      return groups
     }
   },
   onLoad(options) {
@@ -577,6 +622,16 @@ export default {
       if (key === yesterdayKey) return '昨天'
       return `${date.getMonth() + 1}月${date.getDate()}日`
     },
+    formatDateRange(from, to) {
+      if (!from || !to) return ''
+      const fromStr = `${from.getMonth() + 1}月${from.getDate()}日`
+      const toStr = `${to.getMonth() + 1}月${to.getDate()}日`
+      return fromStr === toStr ? fromStr : `${fromStr} - ${toStr}`
+    },
+    getDateKey(date) {
+      if (!date) return ''
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    },
     normalizeDate(input) {
       if (!input) return null
       if (input instanceof Date) return input
@@ -726,6 +781,10 @@ $radius: 24rpx;
 .empty-checkin-text { font-size: 28rpx; color: $text-light; }
 
 .records-list { display: flex; flex-direction: column; gap: 16rpx; }
+.record-group { margin-bottom: 8rpx; }
+.record-group-header { display: flex; align-items: baseline; gap: 12rpx; margin-bottom: 12rpx; padding-left: 4rpx; }
+.record-group-label { font-size: 28rpx; font-weight: 700; color: $text-primary; }
+.record-group-range { font-size: 22rpx; color: $text-light; }
 .record-card {
   background: $card-bg; border-radius: $radius; padding: 24rpx;
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
