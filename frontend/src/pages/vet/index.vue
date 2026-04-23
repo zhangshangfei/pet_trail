@@ -105,7 +105,7 @@
               v-for="slot in timeSlots"
               :key="slot"
               class="time-slot"
-              :class="{ active: appointmentTime === slot, disabled: isSlotPast(slot) }"
+              :class="{ active: appointmentTime === slot && !isSlotPast(slot), disabled: isSlotPast(slot) }"
               @tap="onSelectSlot(slot)"
             >
               <text class="slot-text">{{ slot }}</text>
@@ -157,7 +157,7 @@ export default {
       appointmentDate: '',
       appointmentTime: '',
       symptom: '',
-      timeSlots: ['09:00-10:00', '10:00-11:00', '11:00-12:00', '14:00-15:00', '15:00-16:00', '16:00-17:00']
+      timeSlots: []
     }
   },
   computed: {
@@ -214,22 +214,48 @@ export default {
       this.appointmentDate = ''
       this.appointmentTime = ''
       this.symptom = ''
+      this.timeSlots = this.generateTimeSlots(clinic.businessHours)
       this.showBookPopup = true
       this.loadMyPets()
+    },
+    generateTimeSlots(businessHours) {
+      let startHour = 9
+      let endHour = 18
+      if (businessHours) {
+        const match = businessHours.match(/(\d{1,2})\s*[:：]\s*(\d{0,2})\s*[-–—]\s*(\d{1,2})\s*[:：]\s*(\d{0,2})/)
+        if (match) {
+          startHour = parseInt(match[1], 10)
+          const startMin = match[2] ? parseInt(match[2], 10) : 0
+          endHour = parseInt(match[3], 10)
+          const endMin = match[4] ? parseInt(match[4], 10) : 0
+          if (startMin > 0) startHour += 1
+          if (endMin > 0) endHour += 1
+        }
+      }
+      const slots = []
+      for (let h = startHour; h < endHour; h++) {
+        const start = String(h).padStart(2, '0') + ':00'
+        const end = String(h + 1).padStart(2, '0') + ':00'
+        slots.push(start + '-' + end)
+      }
+      return slots
     },
     onDateChange(e) {
       this.appointmentDate = e.detail.value
       this.appointmentTime = ''
     },
     isSlotPast(slot) {
-      if (!this.appointmentDate) return false
+      const selectedDate = this.appointmentDate || this.todayStr
       const today = this.todayStr
-      if (this.appointmentDate > today) return false
-      if (this.appointmentDate < today) return true
+      if (selectedDate > today) return false
+      if (selectedDate < today) return true
       const now = new Date()
-      const slotEnd = slot.split('-')[1] || slot
-      const [h, m] = slotEnd.split(':').map(Number)
-      return now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m)
+      const parts = slot.split('-')
+      const endTimeStr = parts.length > 1 ? parts[1] : parts[0]
+      const endParts = endTimeStr.split(':')
+      const endHour = parseInt(endParts[0], 10)
+      const endMinute = parseInt(endParts[1], 10)
+      return now.getHours() > endHour || (now.getHours() === endHour && now.getMinutes() >= endMinute)
     },
     onSelectSlot(slot) {
       if (this.isSlotPast(slot)) {
@@ -531,11 +557,13 @@ export default {
   color: #fff;
 }
 .time-slot.disabled {
-  background: #f0f0f0;
-  opacity: 0.5;
+  background: #ececec;
+  opacity: 0.45;
+  pointer-events: none;
 }
 .time-slot.disabled .slot-text {
   color: #bbb;
+  text-decoration: line-through;
 }
 .slot-text {
   font-size: 13px;
