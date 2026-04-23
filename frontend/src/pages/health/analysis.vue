@@ -224,7 +224,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getHealthAnalysis } from '@/api/health'
 import { getPetList } from '@/api/pet'
 import { useUserStore } from '@/store/user'
@@ -318,6 +318,26 @@ onMounted(async () => {
   if (currentPetId.value) {
     await runAnalysis()
   }
+
+  uni.$on('loginSuccess', async () => {
+    await userStore.loadUserInfo()
+    if (!currentPetId.value) {
+      try {
+        const res = await getPetList()
+        if (res.code === 200 && res.data && res.data.length > 0) {
+          currentPetId.value = res.data[0].id
+          uni.setStorageSync('currentPetId', res.data[0].id)
+        }
+      } catch (e) {}
+    }
+    if (currentPetId.value) {
+      await runAnalysis()
+    }
+  })
+})
+
+onUnmounted(() => {
+  uni.$off('loginSuccess')
 })
 </script>
 

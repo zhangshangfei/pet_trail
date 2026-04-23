@@ -229,12 +229,20 @@ export default {
     await this.loadPets()
     await this.loadCheckinItems()
     await this.refreshPageData()
+
+    uni.$on('loginSuccess', () => {
+      this.loadUserProfile()
+      this.loadPets()
+      this.loadCheckinItems()
+      this.refreshPageData()
+    })
   },
   onUnload() {
     if (this.animationTimer) {
       clearTimeout(this.animationTimer)
       this.animationTimer = null
     }
+    uni.$off('loginSuccess')
   },
   methods: {
     async initPage() {

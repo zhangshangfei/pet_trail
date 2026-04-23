@@ -70,7 +70,22 @@
       <el-form :model="form" label-width="100px">
         <el-form-item label="医院名称" required><el-input v-model="form.name" /></el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" :rows="3" /></el-form-item>
-        <el-form-item label="封面图"><el-input v-model="form.coverImage" placeholder="图片URL" /></el-form-item>
+        <el-form-item label="封面图">
+          <el-upload
+            class="cover-uploader"
+            :action="uploadUrl"
+            :headers="uploadHeaders"
+            name="file"
+            :show-file-list="false"
+            :on-success="handleCoverSuccess"
+            :before-upload="beforeCoverUpload"
+            accept="image/*"
+          >
+            <el-image v-if="form.coverImage" :src="form.coverImage" fit="cover" class="cover-preview" preview-teleported />
+            <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
+          </el-upload>
+          <el-input v-model="form.coverImage" placeholder="或手动输入图片URL" style="margin-top: 8px" />
+        </el-form-item>
         <el-form-item label="地址" required><el-input v-model="form.address" /></el-form-item>
         <el-row :gutter="16">
           <el-col :span="12">
@@ -143,11 +158,15 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { useAdminStore } from '@/store/admin'
 import { getClinicList, createClinic, updateClinic, deleteClinic, updateClinicStatus, setClinicPartner, getClinicStats, getAppointmentList, updateAppointmentStatus } from '@/api/admin'
 
 const adminStore = useAdminStore()
 const isSuperAdmin = ref(adminStore.isSuperAdmin)
+
+const uploadUrl = (import.meta.env.VITE_API_BASE_URL || '') + '/api/upload'
+const uploadHeaders = { Authorization: 'Bearer ' + (localStorage.getItem('admin_token') || '') }
 
 const loading = ref(false)
 const tableData = ref([])
@@ -259,6 +278,23 @@ async function openAppointments() {
 }
 
 onMounted(() => { loadData(); loadStats() })
+
+function handleCoverSuccess(response) {
+  if (response.success && response.data && response.data.url) {
+    form.value.coverImage = response.data.url
+    ElMessage.success('图片上传成功')
+  } else {
+    ElMessage.error('上传失败')
+  }
+}
+
+function beforeCoverUpload(file) {
+  const isImage = file.type.startsWith('image/')
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isImage) { ElMessage.error('只能上传图片文件'); return false }
+  if (!isLt5M) { ElMessage.error('图片大小不能超过5MB'); return false }
+  return true
+}
 </script>
 
 <style scoped>
@@ -267,4 +303,8 @@ onMounted(() => { loadData(); loadStats() })
 .header-actions { display: flex; gap: 8px; align-items: center; }
 .pagination-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
 .stats-row .el-card { text-align: center; }
+.cover-uploader :deep(.el-upload) { border: 1px dashed #d9d9d9; border-radius: 6px; cursor: pointer; position: relative; overflow: hidden; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; }
+.cover-uploader :deep(.el-upload:hover) { border-color: #409eff; }
+.cover-preview { width: 120px; height: 120px; }
+.cover-uploader-icon { font-size: 28px; color: #8c939d; }
 </style>

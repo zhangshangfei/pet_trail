@@ -174,6 +174,7 @@ export default {
 
     uni.$on('loginSuccess', () => {
       this.loadUserInfo()
+      this.loadPets()
     })
   },
   onHide() {
