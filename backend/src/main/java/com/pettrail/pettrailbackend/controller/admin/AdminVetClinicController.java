@@ -3,8 +3,13 @@ package com.pettrail.pettrailbackend.controller.admin;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.VetAppointmentVO;
+import com.pettrail.pettrailbackend.entity.Pet;
+import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.entity.VetAppointment;
 import com.pettrail.pettrailbackend.entity.VetClinic;
+import com.pettrail.pettrailbackend.mapper.PetMapper;
+import com.pettrail.pettrailbackend.mapper.UserMapper;
 import com.pettrail.pettrailbackend.mapper.VetAppointmentMapper;
 import com.pettrail.pettrailbackend.mapper.VetClinicMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,8 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/vet-clinics")
@@ -24,6 +29,8 @@ public class AdminVetClinicController extends BaseAdminController {
 
     private final VetClinicMapper clinicMapper;
     private final VetAppointmentMapper appointmentMapper;
+    private final UserMapper userMapper;
+    private final PetMapper petMapper;
 
     @GetMapping
     @Operation(summary = "分页查询医院列表")
@@ -115,15 +122,50 @@ public class AdminVetClinicController extends BaseAdminController {
 
     @GetMapping("/appointments")
     @Operation(summary = "分页查询预约列表")
-    public Result<Page<VetAppointment>> appointments(
+    public Result<Page<VetAppointmentVO>> appointments(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) Integer status) {
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) Long clinicId,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String keyword) {
         Page<VetAppointment> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<VetAppointment> wrapper = new LambdaQueryWrapper<>();
         if (status != null) wrapper.eq(VetAppointment::getStatus, status);
+        if (clinicId != null) wrapper.eq(VetAppointment::getClinicId, clinicId);
+        if (userId != null) wrapper.eq(VetAppointment::getUserId, userId);
+        if (keyword != null && !keyword.isBlank()) {
+            wrapper.like(VetAppointment::getSymptom, keyword);
+        }
         wrapper.orderByDesc(VetAppointment::getCreatedAt);
-        return Result.success(appointmentMapper.selectPage(pageParam, wrapper));
+        Page<VetAppointment> result = appointmentMapper.selectPage(pageParam, wrapper);
+
+        Map<Long, String> userNameMap = buildUserNameMap(result.getRecords());
+        Map<Long, String> clinicNameMap = buildClinicNameMap(result.getRecords());
+        Map<Long, String> petNameMap = buildPetNameMap(result.getRecords());
+
+        Page<VetAppointmentVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
+        List<VetAppointmentVO> voList = result.getRecords().stream().map(a -> {
+            VetAppointmentVO vo = new VetAppointmentVO();
+            vo.setId(a.getId());
+            vo.setUserId(a.getUserId());
+            vo.setClinicId(a.getClinicId());
+            vo.setPetId(a.getPetId());
+            vo.setAppointmentDate(a.getAppointmentDate());
+            vo.setAppointmentTime(a.getAppointmentTime());
+            vo.setSymptom(a.getSymptom());
+            vo.setStatus(a.getStatus());
+            vo.setCancelReason(a.getCancelReason());
+            vo.setCreatedAt(a.getCreatedAt());
+            vo.setUpdatedAt(a.getUpdatedAt());
+            vo.setUserName(a.getUserId() != null ? userNameMap.getOrDefault(a.getUserId(), "未知用户") : null);
+            vo.setClinicName(a.getClinicId() != null ? clinicNameMap.getOrDefault(a.getClinicId(), "未知医院") : null);
+            vo.setPetName(a.getPetId() != null ? petNameMap.getOrDefault(a.getPetId(), "未知宠物") : null);
+            return vo;
+        }).collect(Collectors.toList());
+        voPage.setRecords(voList);
+
+        return Result.success(voPage);
     }
 
     @PutMapping("/appointments/{id}/status")
@@ -135,5 +177,32 @@ public class AdminVetClinicController extends BaseAdminController {
         appointment.setUpdatedAt(LocalDateTime.now());
         appointmentMapper.updateById(appointment);
         return Result.success("状态更新成功");
+    }
+
+    private Map<Long, String> buildUserNameMap(List<VetAppointment> appointments) {
+        Set<Long> ids = appointments.stream().map(VetAppointment::getUserId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, String> map = new HashMap<>();
+        if (!ids.isEmpty()) {
+            userMapper.selectBatchIds(ids).forEach(u -> map.put(u.getId(), u.getNickname()));
+        }
+        return map;
+    }
+
+    private Map<Long, String> buildClinicNameMap(List<VetAppointment> appointments) {
+        Set<Long> ids = appointments.stream().map(VetAppointment::getClinicId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, String> map = new HashMap<>();
+        if (!ids.isEmpty()) {
+            clinicMapper.selectBatchIds(ids).forEach(c -> map.put(c.getId(), c.getName()));
+        }
+        return map;
+    }
+
+    private Map<Long, String> buildPetNameMap(List<VetAppointment> appointments) {
+        Set<Long> ids = appointments.stream().map(VetAppointment::getPetId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, String> map = new HashMap<>();
+        if (!ids.isEmpty()) {
+            petMapper.selectBatchIds(ids).forEach(p -> map.put(p.getId(), p.getName()));
+        }
+        return map;
     }
 }

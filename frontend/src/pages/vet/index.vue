@@ -72,6 +72,26 @@
         <text class="popup-clinic">{{ bookingClinic.name }}</text>
 
         <view class="form-group">
+          <text class="form-label">选择宠物</text>
+          <view class="pet-selector" v-if="myPets.length > 0">
+            <view
+              v-for="pet in myPets"
+              :key="pet.id"
+              class="pet-item"
+              :class="{ active: selectedPetId === pet.id }"
+              @tap="selectedPetId = pet.id"
+            >
+              <image v-if="pet.avatar" :src="pet.avatar" class="pet-avatar" mode="aspectFill" />
+              <view v-else class="pet-avatar-placeholder">🐾</view>
+              <text class="pet-name">{{ pet.name }}</text>
+            </view>
+          </view>
+          <view v-else class="no-pet-tip">
+            <text class="no-pet-text">暂无宠物，请先添加宠物</text>
+          </view>
+        </view>
+
+        <view class="form-group">
           <text class="form-label">选择日期</text>
           <picker mode="date" :value="appointmentDate" :start="todayStr" @change="onDateChange">
             <view class="picker-value">{{ appointmentDate || '请选择日期' }}</view>
@@ -85,8 +105,8 @@
               v-for="slot in timeSlots"
               :key="slot"
               class="time-slot"
-              :class="{ active: appointmentTime === slot }"
-              @tap="appointmentTime = slot"
+              :class="{ active: appointmentTime === slot, disabled: isSlotPast(slot) }"
+              @tap="onSelectSlot(slot)"
             >
               <text class="slot-text">{{ slot }}</text>
             </view>
@@ -118,6 +138,7 @@
 
 <script>
 import * as vetApi from '@/api/vet'
+import { getPetList } from '@/api/pet'
 
 export default {
   data() {
@@ -131,6 +152,8 @@ export default {
       hasMore: true,
       showBookPopup: false,
       bookingClinic: {},
+      myPets: [],
+      selectedPetId: null,
       appointmentDate: '',
       appointmentTime: '',
       symptom: '',
@@ -187,15 +210,39 @@ export default {
     },
     onBook(clinic) {
       this.bookingClinic = clinic
+      this.selectedPetId = null
       this.appointmentDate = ''
       this.appointmentTime = ''
       this.symptom = ''
       this.showBookPopup = true
+      this.loadMyPets()
     },
     onDateChange(e) {
       this.appointmentDate = e.detail.value
+      this.appointmentTime = ''
+    },
+    isSlotPast(slot) {
+      if (!this.appointmentDate) return false
+      const today = this.todayStr
+      if (this.appointmentDate > today) return false
+      if (this.appointmentDate < today) return true
+      const now = new Date()
+      const slotEnd = slot.split('-')[1] || slot
+      const [h, m] = slotEnd.split(':').map(Number)
+      return now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m)
+    },
+    onSelectSlot(slot) {
+      if (this.isSlotPast(slot)) {
+        uni.showToast({ title: '该时段已过', icon: 'none' })
+        return
+      }
+      this.appointmentTime = slot
     },
     async submitBooking() {
+      if (!this.selectedPetId) {
+        uni.showToast({ title: '请选择宠物', icon: 'none' })
+        return
+      }
       if (!this.appointmentDate) {
         uni.showToast({ title: '请选择日期', icon: 'none' })
         return
@@ -207,6 +254,7 @@ export default {
       try {
         const res = await vetApi.createAppointment({
           clinicId: this.bookingClinic.id,
+          petId: this.selectedPetId,
           appointmentDate: this.appointmentDate,
           appointmentTime: this.appointmentTime,
           symptom: this.symptom || undefined
@@ -221,6 +269,19 @@ export default {
     },
     closeBookPopup() {
       this.showBookPopup = false
+    },
+    async loadMyPets() {
+      try {
+        const res = await getPetList()
+        if (res.success) {
+          this.myPets = res.data || []
+          if (this.myPets.length > 0 && !this.selectedPetId) {
+            this.selectedPetId = this.myPets[0].id
+          }
+        }
+      } catch (e) {
+        console.error('加载宠物列表失败:', e)
+      }
     },
     goClinicDetail(item) {
       uni.navigateTo({ url: `/pages/vet/detail?id=${item.id}` })
@@ -469,6 +530,13 @@ export default {
 .time-slot.active .slot-text {
   color: #fff;
 }
+.time-slot.disabled {
+  background: #f0f0f0;
+  opacity: 0.5;
+}
+.time-slot.disabled .slot-text {
+  color: #bbb;
+}
 .slot-text {
   font-size: 13px;
   color: #333;
@@ -509,5 +577,53 @@ export default {
   font-size: 16px;
   color: #fff;
   font-weight: 500;
+}
+.pet-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.pet-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-radius: 12px;
+  min-width: 70px;
+}
+.pet-item.active {
+  background: linear-gradient(135deg, #ff6a3d, #ff8f6b);
+}
+.pet-item.active .pet-name {
+  color: #fff;
+}
+.pet-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  margin-bottom: 4px;
+}
+.pet-avatar-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e8e8e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  font-size: 18px;
+}
+.pet-name {
+  font-size: 12px;
+  color: #333;
+}
+.no-pet-tip {
+  padding: 10px 0;
+}
+.no-pet-text {
+  font-size: 14px;
+  color: #999;
 }
 </style>

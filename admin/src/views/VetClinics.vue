@@ -20,7 +20,7 @@
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
             <el-button type="success" @click="openCreate">新增医院</el-button>
-            <el-button @click="showAppointments = true">查看预约</el-button>
+            <el-button @click="openAppointments">查看预约</el-button>
           </div>
         </div>
       </template>
@@ -97,20 +97,25 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="showAppointments" title="预约管理" width="950px" destroy-on-close>
-      <div style="margin-bottom: 12px">
-        <el-select v-model="appointmentStatusFilter" placeholder="预约状态" clearable style="width: 140px" @change="loadAppointments">
+    <el-dialog v-model="showAppointments" title="预约管理" width="1050px" destroy-on-close>
+      <div style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap">
+        <el-select v-model="appointmentStatusFilter" placeholder="预约状态" clearable style="width: 130px" @change="loadAppointments">
           <el-option label="待确认" :value="0" /><el-option label="已确认" :value="1" />
           <el-option label="已完成" :value="2" /><el-option label="已取消" :value="3" />
         </el-select>
+        <el-select v-model="appointmentClinicFilter" placeholder="医院" clearable filterable style="width: 180px" @change="loadAppointments">
+          <el-option v-for="c in allClinics" :key="c.id" :label="c.name" :value="c.id" />
+        </el-select>
+        <el-input v-model="appointmentKeyword" placeholder="搜索症状" clearable style="width: 160px" @clear="loadAppointments" @keyup.enter="loadAppointments" />
+        <el-button type="primary" @click="loadAppointments">查询</el-button>
       </div>
       <el-table :data="appointmentList" v-loading="appointmentLoading" stripe>
         <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column prop="userId" label="用户ID" width="90" />
-        <el-table-column prop="clinicId" label="医院ID" width="90" />
-        <el-table-column prop="petId" label="宠物ID" width="90" />
+        <el-table-column prop="userName" label="用户" width="100" show-overflow-tooltip />
+        <el-table-column prop="clinicName" label="医院" width="140" show-overflow-tooltip />
+        <el-table-column prop="petName" label="宠物" width="100" show-overflow-tooltip />
         <el-table-column prop="appointmentDate" label="预约日期" width="120" />
-        <el-table-column prop="appointmentTime" label="预约时间" width="100" />
+        <el-table-column prop="appointmentTime" label="预约时间" width="110" />
         <el-table-column prop="symptom" label="症状" min-width="140" show-overflow-tooltip />
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
@@ -119,6 +124,7 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="createdAt" label="创建时间" width="170" />
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
             <el-button v-if="row.status === 0" type="success" size="small" text @click="changeAppointmentStatus(row.id, 1)">确认</el-button>
@@ -164,6 +170,9 @@ const appointmentPage = ref(1)
 const appointmentSize = ref(20)
 const appointmentTotal = ref(0)
 const appointmentStatusFilter = ref(null)
+const appointmentClinicFilter = ref(null)
+const appointmentKeyword = ref('')
+const allClinics = ref([])
 
 async function loadData() {
   loading.value = true
@@ -185,6 +194,8 @@ async function loadAppointments() {
   try {
     const params = { page: appointmentPage.value, size: appointmentSize.value }
     if (appointmentStatusFilter.value != null) params.status = appointmentStatusFilter.value
+    if (appointmentClinicFilter.value != null) params.clinicId = appointmentClinicFilter.value
+    if (appointmentKeyword.value) params.keyword = appointmentKeyword.value
     const res = await getAppointmentList(params)
     if (res.data) { appointmentList.value = res.data.records || []; appointmentTotal.value = res.data.total || 0 }
   } catch (e) { console.error(e) } finally { appointmentLoading.value = false }
@@ -230,6 +241,21 @@ async function handleDelete(row) {
 
 async function changeAppointmentStatus(id, status) {
   try { await updateAppointmentStatus(id, status); ElMessage.success('预约状态更新成功'); loadAppointments(); loadStats() } catch (e) { console.error(e); ElMessage.error('操作失败') }
+}
+
+async function openAppointments() {
+  showAppointments.value = true
+  appointmentStatusFilter.value = null
+  appointmentClinicFilter.value = null
+  appointmentKeyword.value = ''
+  appointmentPage.value = 1
+  if (allClinics.value.length === 0) {
+    try {
+      const res = await getClinicList({ page: 1, size: 200 })
+      if (res.data) allClinics.value = res.data.records || []
+    } catch (e) { console.error(e) }
+  }
+  loadAppointments()
 }
 
 onMounted(() => { loadData(); loadStats() })
