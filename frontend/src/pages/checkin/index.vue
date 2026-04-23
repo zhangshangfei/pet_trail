@@ -198,6 +198,7 @@ export default {
       visibleItems: [],
       allRecords: [],
       recentRecords: [],
+      recordGroups: [],
       showSuccessAnimation: false,
       animationTimer: null,
     }
@@ -219,45 +220,6 @@ export default {
     },
     todayCompleted() {
       return this.visibleItems.filter((item) => item.checked).length
-    },
-    recordGroups() {
-      if (!this.recentRecords.length) return []
-      const now = new Date()
-      const dayOfWeek = now.getDay() || 7
-      const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1)
-      const weekEnd = new Date(weekStart.getTime() + 6 * 86400000)
-      const weekStartKey = this.getDateKey(weekStart)
-      const weekEndKey = this.getDateKey(weekEnd)
-
-      const thisWeek = []
-      const earlier = []
-      for (const record of this.recentRecords) {
-        const d = this.normalizeDate(record.date)
-        if (!d) { earlier.push(record); continue }
-        const key = this.getDateKey(d)
-        if (key >= weekStartKey && key <= weekEndKey) {
-          thisWeek.push(record)
-        } else {
-          earlier.push(record)
-        }
-      }
-
-      const groups = []
-      if (thisWeek.length) {
-        const dates = thisWeek.map(r => this.normalizeDate(r.date)).filter(Boolean).sort((a, b) => a - b)
-        const from = dates[0]
-        const to = dates[dates.length - 1]
-        const range = this.formatDateRange(from, to)
-        groups.push({ label: '本周', dateRange: range, records: thisWeek })
-      }
-      if (earlier.length) {
-        const dates = earlier.map(r => this.normalizeDate(r.date)).filter(Boolean).sort((a, b) => a - b)
-        const from = dates[0]
-        const to = dates[dates.length - 1]
-        const range = this.formatDateRange(from, to)
-        groups.push({ label: '更早', dateRange: range, records: earlier })
-      }
-      return groups
     }
   },
   onLoad(options) {
@@ -454,6 +416,7 @@ export default {
           })
 
         this.streakDays = this.calculateStreak(Object.keys(groupedRecords))
+        this.buildRecordGroups()
       } catch (error) {
         console.error('syncPageState failed:', error)
         uni.showToast({ title: '数据处理失败', icon: 'none' })
@@ -628,9 +591,38 @@ export default {
       const toStr = `${to.getMonth() + 1}月${to.getDate()}日`
       return fromStr === toStr ? fromStr : `${fromStr} - ${toStr}`
     },
-    getDateKey(date) {
-      if (!date) return ''
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    buildRecordGroups() {
+      if (!this.recentRecords.length) { this.recordGroups = []; return }
+      const now = new Date()
+      const dayOfWeek = now.getDay() || 7
+      const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1)
+      const weekEnd = new Date(weekStart.getTime() + 6 * 86400000)
+      const weekStartKey = this.getDateKey(weekStart)
+      const weekEndKey = this.getDateKey(weekEnd)
+
+      const thisWeek = []
+      const earlier = []
+      for (const record of this.recentRecords) {
+        const key = record.date
+        if (key >= weekStartKey && key <= weekEndKey) {
+          thisWeek.push(record)
+        } else {
+          earlier.push(record)
+        }
+      }
+
+      const groups = []
+      if (thisWeek.length) {
+        const sorted = thisWeek.slice().sort((a, b) => (a.date > b.date ? -1 : 1))
+        const range = this.formatDateRange(this.normalizeDate(sorted[0].date), this.normalizeDate(sorted[sorted.length - 1].date))
+        groups.push({ label: '本周', dateRange: range, records: thisWeek })
+      }
+      if (earlier.length) {
+        const sorted = earlier.slice().sort((a, b) => (a.date > b.date ? -1 : 1))
+        const range = this.formatDateRange(this.normalizeDate(sorted[0].date), this.normalizeDate(sorted[sorted.length - 1].date))
+        groups.push({ label: '更早', dateRange: range, records: earlier })
+      }
+      this.recordGroups = groups
     },
     normalizeDate(input) {
       if (!input) return null
