@@ -25,78 +25,88 @@
         </view>
 
         <template v-else-if="report">
-          <view class="summary-card">
-            <view class="summary-header">
-              <text class="summary-title">{{ period === 'week' ? '本周' : '本月' }}概览</text>
-              <text class="summary-date">{{ report.startDate }} ~ {{ report.endDate }}</text>
+          <view class="date-range-card">
+            <view class="date-range-icon">📅</view>
+            <view class="date-range-info">
+              <text class="date-range-label">{{ period === 'week' ? '本周' : '本月' }}统计</text>
+              <text class="date-range-value">{{ report.startDate }} — {{ report.endDate }}</text>
             </view>
-            <view class="summary-grid">
-              <view class="summary-item">
-                <text class="summary-value">{{ report.checkinDays }}</text>
-                <text class="summary-label">打卡天数</text>
+          </view>
+
+          <view class="summary-card">
+            <view class="summary-ring-wrap">
+              <view class="summary-ring">
+                <text class="summary-ring-value">{{ report.completionRate }}</text>
+                <text class="summary-ring-unit">%</text>
               </view>
-              <view class="summary-divider"></view>
-              <view class="summary-item">
-                <text class="summary-value">{{ report.totalDays }}</text>
-                <text class="summary-label">总天数</text>
+              <text class="summary-ring-label">完成率</text>
+            </view>
+            <view class="summary-divider-v"></view>
+            <view class="summary-stats">
+              <view class="summary-stat">
+                <text class="stat-value primary">{{ report.checkinDays }}</text>
+                <text class="stat-label">打卡天数</text>
               </view>
-              <view class="summary-divider"></view>
-              <view class="summary-item">
-                <text class="summary-value highlight">{{ report.completionRate }}%</text>
-                <text class="summary-label">完成率</text>
+              <view class="summary-stat">
+                <text class="stat-value">{{ report.totalDays }}</text>
+                <text class="stat-label">总天数</text>
+              </view>
+              <view class="summary-stat">
+                <text class="stat-value highlight">{{ report.totalCheckins }}</text>
+                <text class="stat-label">累计打卡</text>
               </view>
             </view>
           </view>
 
           <view class="streak-card">
-            <view class="streak-row">
-              <view class="streak-item">
+            <view class="streak-item">
+              <view class="streak-icon-wrap fire">
                 <text class="streak-icon">🔥</text>
-                <view class="streak-info">
-                  <text class="streak-value">{{ report.currentStreak }}天</text>
-                  <text class="streak-label">当前连续</text>
-                </view>
               </view>
-              <view class="streak-divider"></view>
-              <view class="streak-item">
+              <view class="streak-info">
+                <text class="streak-value">{{ report.currentStreak }}<text class="streak-unit">天</text></text>
+                <text class="streak-label">当前连续</text>
+              </view>
+            </view>
+            <view class="streak-divider"></view>
+            <view class="streak-item">
+              <view class="streak-icon-wrap trophy">
                 <text class="streak-icon">🏆</text>
-                <view class="streak-info">
-                  <text class="streak-value">{{ report.maxStreak }}天</text>
-                  <text class="streak-label">最长连续</text>
-                </view>
+              </view>
+              <view class="streak-info">
+                <text class="streak-value">{{ report.maxStreak }}<text class="streak-unit">天</text></text>
+                <text class="streak-label">最长连续</text>
               </view>
             </view>
           </view>
 
-          <view class="progress-card">
-            <text class="card-title">完成率</text>
-            <view class="progress-bar-wrap">
+          <view class="progress-section">
+            <text class="section-title">完成率趋势</text>
+            <view class="progress-visual">
               <view class="progress-bar-bg">
                 <view class="progress-bar-fill" :style="{ width: report.completionRate + '%' }"></view>
               </view>
               <text class="progress-percent">{{ report.completionRate }}%</text>
             </view>
-          </view>
-
-          <view v-if="report.itemStats && report.itemStats.length" class="items-card">
-            <text class="card-title">各打卡项统计</text>
-            <view class="item-list">
-              <view v-for="item in report.itemStats" :key="item.itemId" class="item-row">
-                <text class="item-icon">{{ item.itemIcon || '📋' }}</text>
-                <text class="item-name">{{ item.itemName }}</text>
-                <view class="item-bar-wrap">
-                  <view class="item-bar-bg">
-                    <view class="item-bar-fill" :style="{ width: getItemPercent(item.totalCount) + '%' }"></view>
-                  </view>
-                </view>
-                <text class="item-count">{{ item.totalCount }}次</text>
-              </view>
+            <view class="progress-marks">
+              <text class="progress-mark">0%</text>
+              <text class="progress-mark">50%</text>
+              <text class="progress-mark">100%</text>
             </view>
           </view>
 
-          <view class="total-card">
-            <text class="total-label">累计打卡总数</text>
-            <text class="total-value">{{ report.totalCheckins }}</text>
+          <view v-if="report.itemStats && report.itemStats.length" class="items-section">
+            <text class="section-title">各打卡项统计</text>
+            <view class="items-grid">
+              <view v-for="item in report.itemStats" :key="item.itemId" class="item-card">
+                <text class="item-icon">{{ item.itemIcon || '📋' }}</text>
+                <text class="item-name">{{ item.itemName }}</text>
+                <text class="item-count">{{ item.totalCount }}<text class="item-count-unit">次</text></text>
+                <view class="item-bar-bg">
+                  <view class="item-bar-fill" :style="{ width: getItemPercent(item.totalCount) + '%' }"></view>
+                </view>
+              </view>
+            </view>
           </view>
         </template>
 
@@ -167,6 +177,7 @@ export default {
 <style lang="scss" scoped>
 $primary: #ff6a3d;
 $primary-light: #fff0ea;
+$primary-gradient: linear-gradient(135deg, #ff6a3d, #ff8f6b);
 $green: #52c41a;
 $green-light: #f0fff0;
 $bg: #f5f5f5;
@@ -197,75 +208,103 @@ $radius: 24rpx;
 
 .period-tabs {
   display: flex; background: $card-bg; border-radius: $radius;
-  padding: 6rpx; margin-bottom: 24rpx;
+  padding: 6rpx; margin-bottom: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 .period-tab {
   flex: 1; display: flex; align-items: center; justify-content: center;
   padding: 16rpx 0; border-radius: 20rpx; transition: all 0.3s;
 }
-.period-tab.active { background: $primary; }
+.period-tab.active { background: $primary-gradient; box-shadow: 0 4rpx 12rpx rgba(255,106,61,0.3); }
 .period-tab-text { font-size: 28rpx; font-weight: 600; color: $text-secondary; }
 .period-tab.active .period-tab-text { color: #fff; }
 
+.date-range-card {
+  display: flex; align-items: center; gap: 20rpx;
+  background: $primary-gradient; border-radius: $radius;
+  padding: 28rpx 32rpx; margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(255,106,61,0.25);
+}
+.date-range-icon { font-size: 48rpx; }
+.date-range-info { display: flex; flex-direction: column; }
+.date-range-label { font-size: 24rpx; color: rgba(255,255,255,0.8); margin-bottom: 4rpx; }
+.date-range-value { font-size: 32rpx; font-weight: 700; color: #fff; letter-spacing: 1rpx; }
+
 .summary-card {
+  display: flex; align-items: center;
   background: $card-bg; border-radius: $radius;
-  padding: 28rpx; margin-bottom: 24rpx;
+  padding: 32rpx; margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
-.summary-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 24rpx;
+.summary-ring-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  min-width: 160rpx;
 }
-.summary-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
-.summary-date { font-size: 24rpx; color: $text-light; }
-.summary-grid { display: flex; align-items: center; }
-.summary-item { flex: 1; display: flex; flex-direction: column; align-items: center; }
-.summary-value { font-size: 40rpx; font-weight: 700; color: $text-primary; margin-bottom: 4rpx; }
-.summary-value.highlight { color: $primary; }
-.summary-label { font-size: 22rpx; color: $text-secondary; }
-.summary-divider { width: 1rpx; height: 48rpx; background: #e5e7eb; }
+.summary-ring {
+  width: 120rpx; height: 120rpx; border-radius: 50%;
+  border: 8rpx solid $primary-light; display: flex;
+  align-items: baseline; justify-content: center;
+  background: $primary-light;
+}
+.summary-ring-value { font-size: 44rpx; font-weight: 800; color: $primary; }
+.summary-ring-unit { font-size: 22rpx; font-weight: 600; color: $primary; margin-left: 2rpx; }
+.summary-ring-label { font-size: 22rpx; color: $text-light; margin-top: 8rpx; }
+.summary-divider-v { width: 1rpx; height: 120rpx; background: #e5e7eb; margin: 0 28rpx; }
+.summary-stats { flex: 1; display: flex; justify-content: space-around; }
+.summary-stat { display: flex; flex-direction: column; align-items: center; }
+.stat-value { font-size: 40rpx; font-weight: 700; color: $text-primary; margin-bottom: 4rpx; }
+.stat-value.primary { color: $primary; }
+.stat-value.highlight { color: $primary; }
+.stat-label { font-size: 22rpx; color: $text-light; }
 
 .streak-card {
+  display: flex; align-items: center;
   background: $card-bg; border-radius: $radius;
   padding: 28rpx; margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
-.streak-row { display: flex; align-items: center; }
 .streak-item { flex: 1; display: flex; align-items: center; gap: 16rpx; justify-content: center; }
-.streak-icon { font-size: 48rpx; }
+.streak-icon-wrap {
+  width: 72rpx; height: 72rpx; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.streak-icon-wrap.fire { background: #fff5f0; }
+.streak-icon-wrap.trophy { background: #fffbe6; }
+.streak-icon { font-size: 36rpx; }
 .streak-info { display: flex; flex-direction: column; }
 .streak-value { font-size: 32rpx; font-weight: 700; color: $text-primary; }
-.streak-label { font-size: 22rpx; color: $text-secondary; }
-.streak-divider { width: 1rpx; height: 48rpx; background: #e5e7eb; }
+.streak-unit { font-size: 22rpx; font-weight: 400; color: $text-light; margin-left: 2rpx; }
+.streak-label { font-size: 22rpx; color: $text-light; }
+.streak-divider { width: 1rpx; height: 72rpx; background: #e5e7eb; }
 
-.progress-card {
+.progress-section {
   background: $card-bg; border-radius: $radius;
   padding: 28rpx; margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
-.card-title { font-size: 28rpx; font-weight: 700; color: $text-primary; margin-bottom: 20rpx; display: block; }
-.progress-bar-wrap { display: flex; align-items: center; gap: 16rpx; }
-.progress-bar-bg { flex: 1; height: 20rpx; background: #f0f0f0; border-radius: 10rpx; overflow: hidden; }
-.progress-bar-fill { height: 100%; background: linear-gradient(90deg, $primary, #ff8a5c); border-radius: 10rpx; transition: width 0.5s ease; }
-.progress-percent { font-size: 28rpx; font-weight: 700; color: $primary; min-width: 80rpx; text-align: right; }
+.section-title { font-size: 28rpx; font-weight: 700; color: $text-primary; margin-bottom: 24rpx; display: block; }
+.progress-visual { display: flex; align-items: center; gap: 20rpx; }
+.progress-bar-bg { flex: 1; height: 24rpx; background: #f0f0f0; border-radius: 12rpx; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: $primary-gradient; border-radius: 12rpx; transition: width 0.5s ease; }
+.progress-percent { font-size: 30rpx; font-weight: 700; color: $primary; min-width: 90rpx; text-align: right; }
+.progress-marks { display: flex; justify-content: space-between; margin-top: 8rpx; padding: 0 4rpx; }
+.progress-mark { font-size: 20rpx; color: $text-light; }
 
-.items-card {
+.items-section {
   background: $card-bg; border-radius: $radius;
   padding: 28rpx; margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
-.item-list { display: flex; flex-direction: column; gap: 20rpx; }
-.item-row { display: flex; align-items: center; gap: 16rpx; }
-.item-icon { font-size: 32rpx; }
-.item-name { font-size: 26rpx; color: $text-secondary; min-width: 100rpx; }
-.item-bar-wrap { flex: 1; }
-.item-bar-bg { height: 12rpx; background: #f0f0f0; border-radius: 6rpx; overflow: hidden; }
-.item-bar-fill { height: 100%; background: $primary; border-radius: 6rpx; transition: width 0.3s ease; }
-.item-count { font-size: 24rpx; color: $text-light; min-width: 80rpx; text-align: right; }
-
-.total-card {
-  background: $card-bg; border-radius: $radius;
-  padding: 28rpx; margin-bottom: 24rpx;
-  display: flex; justify-content: space-between; align-items: center;
+.items-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.item-card {
+  width: calc(50% - 8rpx); background: #fafafa; border-radius: 16rpx;
+  padding: 20rpx; display: flex; flex-direction: column; align-items: center; gap: 8rpx;
 }
-.total-label { font-size: 28rpx; color: $text-secondary; }
-.total-value { font-size: 40rpx; font-weight: 700; color: $primary; }
+.item-icon { font-size: 36rpx; }
+.item-name { font-size: 24rpx; color: $text-secondary; }
+.item-count { font-size: 36rpx; font-weight: 700; color: $text-primary; }
+.item-count-unit { font-size: 22rpx; font-weight: 400; color: $text-light; margin-left: 2rpx; }
+.item-bar-bg { width: 100%; height: 8rpx; background: #e8e8e8; border-radius: 4rpx; overflow: hidden; }
+.item-bar-fill { height: 100%; background: $primary-gradient; border-radius: 4rpx; transition: width 0.3s ease; }
 
 .loading-state { display: flex; justify-content: center; padding: 100rpx 0; }
 .loading-text { font-size: 28rpx; color: $text-light; }

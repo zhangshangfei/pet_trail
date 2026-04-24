@@ -13,7 +13,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -39,10 +42,22 @@ public class CheckinExtController extends BaseController {
         report.setMaxStreak(stats.get("maxStreak") != null ? Integer.parseInt(stats.get("maxStreak").toString()) : 0);
 
         if ("week".equals(period)) {
+            LocalDate today = LocalDate.now();
+            LocalDate weekStart = today.with(DayOfWeek.MONDAY);
+            LocalDate weekEnd = weekStart.plusDays(6);
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("M月d日");
+            report.setStartDate(weekStart.format(fmt));
+            report.setEndDate(weekEnd.format(fmt));
             report.setTotalDays(7);
             report.setCheckinDays(stats.get("weekDays") != null ? Integer.parseInt(stats.get("weekDays").toString()) : 0);
         } else {
-            report.setTotalDays(30);
+            LocalDate today = LocalDate.now();
+            LocalDate monthStart = today.withDayOfMonth(1);
+            LocalDate monthEnd = today;
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("M月d日");
+            report.setStartDate(monthStart.format(fmt));
+            report.setEndDate(monthEnd.format(fmt));
+            report.setTotalDays(monthEnd.getDayOfMonth());
             report.setCheckinDays(stats.get("monthDays") != null ? Integer.parseInt(stats.get("monthDays").toString()) : 0);
         }
 
