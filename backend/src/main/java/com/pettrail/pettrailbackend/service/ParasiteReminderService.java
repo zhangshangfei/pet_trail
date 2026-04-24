@@ -19,6 +19,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper, ParasiteReminder> {
 
+    private final HealthAnalysisCacheService healthAnalysisCacheService;
+
     public List<ParasiteReminder> listByPetId(Long petId) {
         LambdaQueryWrapper<ParasiteReminder> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ParasiteReminder::getPetId, petId);
@@ -36,11 +38,12 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public ParasiteReminder createReminder(Long petId, Long userId, Integer type, LocalDate nextDate, String note) {
+    public ParasiteReminder createReminder(Long petId, Long userId, Integer type, LocalDate nextDate, String productName, String note) {
         ParasiteReminder reminder = new ParasiteReminder();
         reminder.setPetId(petId);
         reminder.setUserId(userId);
         reminder.setType(type);
+        reminder.setProductName(productName);
         reminder.setNextDate(nextDate);
         reminder.setNote(note);
         reminder.setStatus(0);
@@ -48,7 +51,7 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
         reminder.setUpdatedAt(LocalDateTime.now());
 
         this.save(reminder);
-        log.info("创建寄生虫提醒成功: id={}, petId={}, userId={}, type={}, note={}", reminder.getId(), petId, userId, type, note);
+        log.info("创建寄生虫提醒成功: id={}, petId={}, userId={}, type={}, productName={}, note={}", reminder.getId(), petId, userId, type, productName, note);
         return reminder;
     }
 
@@ -87,10 +90,16 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
         if (reminder == null) {
             throw new BusinessException(404, "提醒不存在");
         }
+        Integer oldStatus = reminder.getStatus();
         reminder.setStatus(status);
         reminder.setUpdatedAt(LocalDateTime.now());
         this.updateById(reminder);
         log.info("更新提醒状态成功: reminderId={}, status={}", reminderId, status);
+
+        if (status == 1 && oldStatus != null && oldStatus != 1) {
+            healthAnalysisCacheService.invalidateByPetId(reminder.getPetId());
+            log.info("驱虫确认完成，清除宠物AI健康分析缓存: petId={}", reminder.getPetId());
+        }
         return reminder;
     }
 

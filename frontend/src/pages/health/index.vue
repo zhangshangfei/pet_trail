@@ -359,8 +359,8 @@ export default {
     },
     submitButtonText() {
       if (this.currentTab === 0) return "保存体重记录 🐾";
-      if (this.currentTab === 1) return "保存疫苗记录 🐾";
-      return "保存驱虫记录 🐾";
+      if (this.currentTab === 1) return "保存驱虫记录 🐾";
+      return "保存疫苗记录 🐾";
     }
   },
   onShow() {
@@ -549,8 +549,8 @@ export default {
     },
     onSubmitCurrent() {
       if (this.currentTab === 0) return this.submitWeight();
-      if (this.currentTab === 1) return this.submitVaccine();
-      return this.submitDeworm();
+      if (this.currentTab === 1) return this.submitDeworm();
+      return this.submitVaccine();
     },
     async submitWeight() {
       if (!this.currentPet || !this.currentPet.id) {
@@ -630,6 +630,7 @@ export default {
         const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/parasite-reminders`, {
           type,
           nextDate: this.dewormForm.date,
+          productName: this.dewormForm.medicine || null,
           note: this.dewormForm.remark || null
         });
         if (res && res.success) {

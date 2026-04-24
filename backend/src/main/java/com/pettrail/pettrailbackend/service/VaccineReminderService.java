@@ -19,6 +19,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VaccineReminderService extends ServiceImpl<VaccineReminderMapper, VaccineReminder> {
 
+    private final HealthAnalysisCacheService healthAnalysisCacheService;
+
     public List<VaccineReminder> listByPetId(Long petId) {
         LambdaQueryWrapper<VaccineReminder> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(VaccineReminder::getPetId, petId);
@@ -87,10 +89,16 @@ public class VaccineReminderService extends ServiceImpl<VaccineReminderMapper, V
         if (reminder == null) {
             throw new BusinessException(404, "提醒不存在");
         }
+        Integer oldStatus = reminder.getStatus();
         reminder.setStatus(status);
         reminder.setUpdatedAt(LocalDateTime.now());
         this.updateById(reminder);
         log.info("更新提醒状态成功: reminderId={}, status={}", reminderId, status);
+
+        if (status == 1 && oldStatus != null && oldStatus != 1) {
+            healthAnalysisCacheService.invalidateByPetId(reminder.getPetId());
+            log.info("疫苗确认完成，清除宠物AI健康分析缓存: petId={}", reminder.getPetId());
+        }
         return reminder;
     }
 
