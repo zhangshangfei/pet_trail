@@ -17,6 +17,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -293,7 +294,7 @@ public class CheckinService {
         result.put("currentStreak", currentStreak);
         result.put("maxStreak", maxStreak);
 
-        LocalDate weekStart = today.minusDays(6);
+        LocalDate weekStart = today.with(DayOfWeek.MONDAY);
         List<CheckinRecord> weekRecords = checkinRecordMapper.selectByUserIdAndDateRange(userId, weekStart, today);
         long weekDays = weekRecords.stream()
                 .filter(r -> r.getStatus() != null && r.getStatus() == 1)
@@ -302,7 +303,7 @@ public class CheckinService {
                 .count();
         result.put("weekDays", weekDays);
 
-        LocalDate monthStart = today.minusDays(29);
+        LocalDate monthStart = today.withDayOfMonth(1);
         List<CheckinRecord> monthRecords = checkinRecordMapper.selectByUserIdAndDateRange(userId, monthStart, today);
         long monthDays = monthRecords.stream()
                 .filter(r -> r.getStatus() != null && r.getStatus() == 1)

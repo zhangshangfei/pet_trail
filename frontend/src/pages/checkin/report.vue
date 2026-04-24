@@ -131,12 +131,32 @@ export default {
         const res = await checkinApi.getCheckinReport(this.period)
         if (res && res.success && res.data) {
           this.report = res.data
+          if (!this.report.startDate || !this.report.endDate) {
+            this.fillDateRange()
+          }
         }
       } catch (e) {
         console.error('加载报表失败:', e)
       } finally {
         this.loading = false
       }
+    },
+    fillDateRange() {
+      const now = new Date()
+      if (this.period === 'week') {
+        const dayOfWeek = now.getDay() || 7
+        const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1)
+        const weekEnd = new Date(weekStart.getTime() + 6 * 86400000)
+        this.report.startDate = this.formatMD(weekStart)
+        this.report.endDate = this.formatMD(weekEnd)
+      } else {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+        this.report.startDate = this.formatMD(monthStart)
+        this.report.endDate = this.formatMD(now)
+      }
+    },
+    formatMD(date) {
+      return `${date.getMonth() + 1}月${date.getDate()}日`
     },
     switchPeriod(p) {
       if (this.period === p) return
