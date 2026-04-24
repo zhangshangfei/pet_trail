@@ -25,85 +25,65 @@
         </view>
 
         <template v-else-if="report">
-          <view class="date-range-card">
-            <view class="date-range-icon">📅</view>
-            <view class="date-range-info">
-              <text class="date-range-label">{{ period === 'week' ? '本周' : '本月' }}统计</text>
-              <text class="date-range-value">{{ report.startDate }} — {{ report.endDate }}</text>
-            </view>
+          <!-- 日期范围 -->
+          <view class="date-range-bar">
+            <text class="date-range-text">{{ period === 'week' ? '本周' : '本月' }}：{{ report.startDate }} ~ {{ report.endDate }}</text>
           </view>
 
-          <view class="summary-card">
-            <view class="summary-ring-wrap">
-              <view class="summary-ring">
-                <text class="summary-ring-value">{{ report.completionRate }}</text>
-                <text class="summary-ring-unit">%</text>
-              </view>
-              <text class="summary-ring-label">完成率</text>
-            </view>
-            <view class="summary-divider-v"></view>
-            <view class="summary-stats">
-              <view class="summary-stat">
-                <text class="stat-value primary">{{ report.checkinDays }}</text>
-                <text class="stat-label">打卡天数</text>
-              </view>
-              <view class="summary-stat">
-                <text class="stat-value">{{ report.totalDays }}</text>
-                <text class="stat-label">总天数</text>
-              </view>
-              <view class="summary-stat">
-                <text class="stat-value highlight">{{ report.totalCheckins }}</text>
-                <text class="stat-label">累计打卡</text>
+          <!-- 完成率大圆环 -->
+          <view class="rate-card">
+            <view class="rate-circle" :style="{ background: getCircleStyle(report.completionRate) }">
+              <view class="rate-circle-inner">
+                <text class="rate-value">{{ report.completionRate }}%</text>
+                <text class="rate-label">完成率</text>
               </view>
             </view>
           </view>
 
-          <view class="streak-card">
-            <view class="streak-item">
-              <view class="streak-icon-wrap fire">
-                <text class="streak-icon">🔥</text>
-              </view>
-              <view class="streak-info">
-                <text class="streak-value">{{ report.currentStreak }}<text class="streak-unit">天</text></text>
-                <text class="streak-label">当前连续</text>
-              </view>
+          <!-- 核心数据 -->
+          <view class="stats-row">
+            <view class="stat-box">
+              <text class="stat-box-value" style="color: #ff6a3d;">{{ report.checkinDays }}</text>
+              <text class="stat-box-label">打卡天数</text>
             </view>
-            <view class="streak-divider"></view>
-            <view class="streak-item">
-              <view class="streak-icon-wrap trophy">
-                <text class="streak-icon">🏆</text>
-              </view>
-              <view class="streak-info">
-                <text class="streak-value">{{ report.maxStreak }}<text class="streak-unit">天</text></text>
-                <text class="streak-label">最长连续</text>
-              </view>
+            <view class="stat-box">
+              <text class="stat-box-value">{{ report.totalDays }}</text>
+              <text class="stat-box-label">总天数</text>
+            </view>
+            <view class="stat-box">
+              <text class="stat-box-value" style="color: #ff6a3d;">{{ report.totalCheckins }}</text>
+              <text class="stat-box-label">累计打卡</text>
             </view>
           </view>
 
-          <view class="progress-section">
-            <text class="section-title">完成率趋势</text>
-            <view class="progress-visual">
-              <view class="progress-bar-bg">
-                <view class="progress-bar-fill" :style="{ width: report.completionRate + '%' }"></view>
-              </view>
-              <text class="progress-percent">{{ report.completionRate }}%</text>
+          <!-- 连续打卡 -->
+          <view class="streak-row">
+            <view class="streak-box">
+              <text class="streak-box-icon">🔥</text>
+              <text class="streak-box-value">{{ report.currentStreak }}天</text>
+              <text class="streak-box-label">当前连续</text>
             </view>
-            <view class="progress-marks">
-              <text class="progress-mark">0%</text>
-              <text class="progress-mark">50%</text>
-              <text class="progress-mark">100%</text>
+            <view class="streak-box">
+              <text class="streak-box-icon">🏆</text>
+              <text class="streak-box-value">{{ report.maxStreak }}天</text>
+              <text class="streak-box-label">最长连续</text>
             </view>
           </view>
 
+          <!-- 打卡项统计 -->
           <view v-if="report.itemStats && report.itemStats.length" class="items-section">
-            <text class="section-title">各打卡项统计</text>
-            <view class="items-grid">
-              <view v-for="item in report.itemStats" :key="item.itemId" class="item-card">
-                <text class="item-icon">{{ item.itemIcon || '📋' }}</text>
-                <text class="item-name">{{ item.itemName }}</text>
-                <text class="item-count">{{ item.totalCount }}<text class="item-count-unit">次</text></text>
-                <view class="item-bar-bg">
-                  <view class="item-bar-fill" :style="{ width: getItemPercent(item.totalCount) + '%' }"></view>
+            <text class="items-section-title">各打卡项统计</text>
+            <view class="items-list">
+              <view v-for="item in report.itemStats" :key="item.itemId" class="item-row">
+                <view class="item-row-left">
+                  <text class="item-row-icon">{{ item.itemIcon || '📋' }}</text>
+                  <text class="item-row-name">{{ item.itemName }}</text>
+                </view>
+                <view class="item-row-right">
+                  <text class="item-row-count">{{ item.totalCount }}次</text>
+                  <view class="item-row-bar-bg">
+                    <view class="item-row-bar-fill" :style="{ width: getItemPercent(item.totalCount) + '%' }"></view>
+                  </view>
                 </view>
               </view>
             </view>
@@ -167,6 +147,10 @@ export default {
       if (!this.report || !this.report.totalDays) return 0
       return Math.min(100, Math.round((count / this.report.totalDays) * 100))
     },
+    getCircleStyle(rate) {
+      const deg = Math.round(rate * 3.6)
+      return `conic-gradient(#ff6a3d 0deg, #ff8f6b ${deg}deg, #f0f0f0 ${deg}deg, #f0f0f0 360deg)`
+    },
     goBack() {
       uni.navigateBack()
     }
@@ -174,147 +158,135 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
-$primary: #ff6a3d;
-$primary-light: #fff0ea;
-$primary-gradient: linear-gradient(135deg, #ff6a3d, #ff8f6b);
-$green: #52c41a;
-$green-light: #f0fff0;
-$bg: #f5f5f5;
-$card-bg: #ffffff;
-$text-primary: #1a1a1a;
-$text-secondary: #666666;
-$text-light: #999999;
-$radius: 24rpx;
+<style scoped>
+.report-page { min-height: 100vh; background: #f5f5f5; }
 
-.report-page { min-height: 100vh; background: $bg; }
-
-.status-bar { width: 100%; background: $card-bg; }
+.status-bar { width: 100%; background: #fff; }
 .nav-bar {
   height: 88rpx; display: flex; align-items: center;
   justify-content: space-between; padding: 0 28rpx;
-  background: $card-bg; border-bottom: 1rpx solid #f0f0f0;
+  background: #fff; border-bottom: 1rpx solid #f0f0f0;
 }
 .nav-back { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; }
 .nav-back-arrow {
-  width: 20rpx; height: 20rpx; border-left: 4rpx solid $text-primary;
-  border-bottom: 4rpx solid $text-primary; transform: rotate(45deg);
+  width: 20rpx; height: 20rpx; border-left: 4rpx solid #1a1a1a;
+  border-bottom: 4rpx solid #1a1a1a; transform: rotate(45deg);
 }
-.nav-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
+.nav-title { font-size: 32rpx; font-weight: 700; color: #1a1a1a; }
 .nav-placeholder { width: 60rpx; }
 
 .report-scroll { position: fixed; left: 0; right: 0; bottom: 0; }
 .report-content { padding: 24rpx; }
 
 .period-tabs {
-  display: flex; background: $card-bg; border-radius: $radius;
-  padding: 6rpx; margin-bottom: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  display: flex; background: #fff; border-radius: 24rpx;
+  padding: 6rpx; margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 .period-tab {
   flex: 1; display: flex; align-items: center; justify-content: center;
   padding: 16rpx 0; border-radius: 20rpx; transition: all 0.3s;
 }
-.period-tab.active { background: $primary-gradient; box-shadow: 0 4rpx 12rpx rgba(255,106,61,0.3); }
-.period-tab-text { font-size: 28rpx; font-weight: 600; color: $text-secondary; }
+.period-tab.active {
+  background: linear-gradient(135deg, #ff6a3d, #ff8f6b);
+  box-shadow: 0 4rpx 12rpx rgba(255,106,61,0.3);
+}
+.period-tab-text { font-size: 28rpx; font-weight: 600; color: #666; }
 .period-tab.active .period-tab-text { color: #fff; }
 
-.date-range-card {
-  display: flex; align-items: center; gap: 20rpx;
-  background: $primary-gradient; border-radius: $radius;
-  padding: 28rpx 32rpx; margin-bottom: 24rpx;
+.date-range-bar {
+  background: linear-gradient(135deg, #ff6a3d, #ff8f6b);
+  border-radius: 24rpx;
+  padding: 24rpx 32rpx;
+  margin-bottom: 24rpx;
+  text-align: center;
   box-shadow: 0 4rpx 16rpx rgba(255,106,61,0.25);
 }
-.date-range-icon { font-size: 48rpx; }
-.date-range-info { display: flex; flex-direction: column; }
-.date-range-label { font-size: 24rpx; color: rgba(255,255,255,0.8); margin-bottom: 4rpx; }
-.date-range-value { font-size: 32rpx; font-weight: 700; color: #fff; letter-spacing: 1rpx; }
+.date-range-text { font-size: 30rpx; font-weight: 700; color: #fff; letter-spacing: 1rpx; }
 
-.summary-card {
-  display: flex; align-items: center;
-  background: $card-bg; border-radius: $radius;
-  padding: 32rpx; margin-bottom: 24rpx;
+.rate-card {
+  display: flex; justify-content: center;
+  background: #fff; border-radius: 24rpx;
+  padding: 40rpx 0;
+  margin-bottom: 24rpx;
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
-.summary-ring-wrap {
-  display: flex; flex-direction: column; align-items: center;
-  min-width: 160rpx;
-}
-.summary-ring {
-  width: 120rpx; height: 120rpx; border-radius: 50%;
-  border: 8rpx solid $primary-light; display: flex;
-  align-items: baseline; justify-content: center;
-  background: $primary-light;
-}
-.summary-ring-value { font-size: 44rpx; font-weight: 800; color: $primary; }
-.summary-ring-unit { font-size: 22rpx; font-weight: 600; color: $primary; margin-left: 2rpx; }
-.summary-ring-label { font-size: 22rpx; color: $text-light; margin-top: 8rpx; }
-.summary-divider-v { width: 1rpx; height: 120rpx; background: #e5e7eb; margin: 0 28rpx; }
-.summary-stats { flex: 1; display: flex; justify-content: space-around; }
-.summary-stat { display: flex; flex-direction: column; align-items: center; }
-.stat-value { font-size: 40rpx; font-weight: 700; color: $text-primary; margin-bottom: 4rpx; }
-.stat-value.primary { color: $primary; }
-.stat-value.highlight { color: $primary; }
-.stat-label { font-size: 22rpx; color: $text-light; }
-
-.streak-card {
-  display: flex; align-items: center;
-  background: $card-bg; border-radius: $radius;
-  padding: 28rpx; margin-bottom: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
-}
-.streak-item { flex: 1; display: flex; align-items: center; gap: 16rpx; justify-content: center; }
-.streak-icon-wrap {
-  width: 72rpx; height: 72rpx; border-radius: 50%;
+.rate-circle {
+  width: 240rpx; height: 240rpx; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
+  padding: 16rpx;
 }
-.streak-icon-wrap.fire { background: #fff5f0; }
-.streak-icon-wrap.trophy { background: #fffbe6; }
-.streak-icon { font-size: 36rpx; }
-.streak-info { display: flex; flex-direction: column; }
-.streak-value { font-size: 32rpx; font-weight: 700; color: $text-primary; }
-.streak-unit { font-size: 22rpx; font-weight: 400; color: $text-light; margin-left: 2rpx; }
-.streak-label { font-size: 22rpx; color: $text-light; }
-.streak-divider { width: 1rpx; height: 72rpx; background: #e5e7eb; }
+.rate-circle-inner {
+  width: 208rpx; height: 208rpx; border-radius: 50%;
+  background: #fff;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.rate-value { font-size: 56rpx; font-weight: 800; color: #ff6a3d; }
+.rate-label { font-size: 24rpx; color: #999; margin-top: 4rpx; }
 
-.progress-section {
-  background: $card-bg; border-radius: $radius;
-  padding: 28rpx; margin-bottom: 24rpx;
+.stats-row {
+  display: flex; gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+.stat-box {
+  flex: 1;
+  background: #fff; border-radius: 24rpx;
+  padding: 28rpx 0;
+  display: flex; flex-direction: column;
+  align-items: center;
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
-.section-title { font-size: 28rpx; font-weight: 700; color: $text-primary; margin-bottom: 24rpx; display: block; }
-.progress-visual { display: flex; align-items: center; gap: 20rpx; }
-.progress-bar-bg { flex: 1; height: 24rpx; background: #f0f0f0; border-radius: 12rpx; overflow: hidden; }
-.progress-bar-fill { height: 100%; background: $primary-gradient; border-radius: 12rpx; transition: width 0.5s ease; }
-.progress-percent { font-size: 30rpx; font-weight: 700; color: $primary; min-width: 90rpx; text-align: right; }
-.progress-marks { display: flex; justify-content: space-between; margin-top: 8rpx; padding: 0 4rpx; }
-.progress-mark { font-size: 20rpx; color: $text-light; }
+.stat-box-value { font-size: 44rpx; font-weight: 700; color: #1a1a1a; margin-bottom: 8rpx; }
+.stat-box-label { font-size: 24rpx; color: #999; }
+
+.streak-row {
+  display: flex; gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+.streak-box {
+  flex: 1;
+  background: #fff; border-radius: 24rpx;
+  padding: 28rpx 0;
+  display: flex; flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.streak-box-icon { font-size: 48rpx; margin-bottom: 8rpx; }
+.streak-box-value { font-size: 36rpx; font-weight: 700; color: #1a1a1a; margin-bottom: 4rpx; }
+.streak-box-label { font-size: 24rpx; color: #999; }
 
 .items-section {
-  background: $card-bg; border-radius: $radius;
-  padding: 28rpx; margin-bottom: 24rpx;
+  background: #fff; border-radius: 24rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
-.items-grid { display: flex; flex-wrap: wrap; gap: 16rpx; }
-.item-card {
-  width: calc(50% - 8rpx); background: #fafafa; border-radius: 16rpx;
-  padding: 20rpx; display: flex; flex-direction: column; align-items: center; gap: 8rpx;
+.items-section-title { font-size: 30rpx; font-weight: 700; color: #1a1a1a; margin-bottom: 24rpx; display: block; }
+.items-list { display: flex; flex-direction: column; gap: 20rpx; }
+.item-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
 }
-.item-icon { font-size: 36rpx; }
-.item-name { font-size: 24rpx; color: $text-secondary; }
-.item-count { font-size: 36rpx; font-weight: 700; color: $text-primary; }
-.item-count-unit { font-size: 22rpx; font-weight: 400; color: $text-light; margin-left: 2rpx; }
-.item-bar-bg { width: 100%; height: 8rpx; background: #e8e8e8; border-radius: 4rpx; overflow: hidden; }
-.item-bar-fill { height: 100%; background: $primary-gradient; border-radius: 4rpx; transition: width 0.3s ease; }
+.item-row:last-child { border-bottom: none; }
+.item-row-left { display: flex; align-items: center; gap: 16rpx; }
+.item-row-icon { font-size: 40rpx; }
+.item-row-name { font-size: 28rpx; color: #333; }
+.item-row-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8rpx; }
+.item-row-count { font-size: 28rpx; font-weight: 600; color: #ff6a3d; }
+.item-row-bar-bg { width: 160rpx; height: 10rpx; background: #f0f0f0; border-radius: 5rpx; overflow: hidden; }
+.item-row-bar-fill { height: 100%; background: linear-gradient(90deg, #ff6a3d, #ff8f6b); border-radius: 5rpx; transition: width 0.3s ease; }
 
 .loading-state { display: flex; justify-content: center; padding: 100rpx 0; }
-.loading-text { font-size: 28rpx; color: $text-light; }
+.loading-text { font-size: 28rpx; color: #999; }
 
 .empty-state {
   display: flex; flex-direction: column; align-items: center;
   padding: 100rpx 0;
 }
 .empty-emoji { font-size: 80rpx; margin-bottom: 20rpx; }
-.empty-text { font-size: 28rpx; color: $text-light; }
+.empty-text { font-size: 28rpx; color: #999; }
 
 .page-bottom-safe { height: calc(24rpx + env(safe-area-inset-bottom)); }
 </style>
