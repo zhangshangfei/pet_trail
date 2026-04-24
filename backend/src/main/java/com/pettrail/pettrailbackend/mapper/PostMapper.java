@@ -61,12 +61,12 @@ public interface PostMapper extends BaseMapper<Post> {
 
     List<Post> selectCandidatePosts(@Param("limit") int limit);
 
-    @Update("UPDATE post SET like_count = GREATEST(0, like_count + #{delta}) WHERE id = #{postId}")
+    @Update("UPDATE posts SET like_count = GREATEST(0, like_count + #{delta}) WHERE id = #{postId}")
     int updateLikeCountAtomic(@Param("postId") Long postId, @Param("delta") int delta);
 
-    @Update("UPDATE post SET ee_count = GREATEST(0, ee_count + #{delta}) WHERE id = #{postId}")
+    @Update("UPDATE posts SET ee_count = GREATEST(0, ee_count + #{delta}) WHERE id = #{postId}")
     int updateEeCountAtomic(@Param("postId") Long postId, @Param("delta") int delta);
 
-    @Update("UPDATE post SET comment_count = GREATEST(0, comment_count + #{delta}) WHERE id = #{postId}")
+    @Update("UPDATE posts SET comment_count = GREATEST(0, comment_count + #{delta}) WHERE id = #{postId}")
     int updateCommentCountAtomic(@Param("postId") Long postId, @Param("delta") int delta);
 }
