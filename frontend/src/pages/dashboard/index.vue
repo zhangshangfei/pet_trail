@@ -139,7 +139,7 @@
             </view>
           </view>
 
-          <view v-if="parasiteCards.length" class="vaccine-list">
+          <view v-if="parasiteCardsLimited.length" class="vaccine-list">
             <view
               v-for="item in parasiteCardsLimited"
               :key="item.id"
@@ -193,7 +193,7 @@
             </view>
           </view>
 
-          <view v-if="vaccineCards.length" class="vaccine-list">
+          <view v-if="vaccineCardsLimited.length" class="vaccine-list">
             <view
               v-for="item in vaccineCardsLimited"
               :key="item.id"

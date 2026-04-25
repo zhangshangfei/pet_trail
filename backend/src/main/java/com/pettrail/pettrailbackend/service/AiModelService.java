@@ -278,12 +278,40 @@ public class AiModelService {
         dashboard.setAvailableModels(listAllModels());
 
         Map<String, Object> globalStats = statsMapper.selectGlobalAggregatedStats();
+        long dbTotalCalls = 0;
+        long dbSuccessCalls = 0;
+        long dbFailedCalls = 0;
+        long dbTotalResponseTime = 0;
         if (globalStats != null) {
-            dashboard.setTotalCalls(toLong(globalStats.get("total_calls")));
-            dashboard.setSuccessCalls(toLong(globalStats.get("success_calls")));
-            dashboard.setFailedCalls(toLong(globalStats.get("failed_calls")));
-            dashboard.setAvgResponseTime(toDouble(globalStats.get("avg_response_time")));
+            dbTotalCalls = toLong(globalStats.get("total_calls"));
+            dbSuccessCalls = toLong(globalStats.get("success_calls"));
+            dbFailedCalls = toLong(globalStats.get("failed_calls"));
+            dbTotalResponseTime = toLong(globalStats.get("total_response_time"));
         }
+
+        long pendingTotalCalls = 0;
+        long pendingSuccessCalls = 0;
+        long pendingFailedCalls = 0;
+        long pendingTotalResponseTime = 0;
+        for (Map.Entry<Long, InMemoryStats> entry : pendingStatsMap.entrySet()) {
+            InMemoryStats stats = entry.getValue();
+            if (stats != null && stats.callCount > 0) {
+                pendingTotalCalls += stats.callCount;
+                pendingSuccessCalls += stats.successCount;
+                pendingFailedCalls += stats.failCount;
+                pendingTotalResponseTime += stats.totalResponseTime;
+            }
+        }
+
+        long totalCalls = dbTotalCalls + pendingTotalCalls;
+        long successCalls = dbSuccessCalls + pendingSuccessCalls;
+        long failedCalls = dbFailedCalls + pendingFailedCalls;
+        long totalResponseTime = dbTotalResponseTime + pendingTotalResponseTime;
+
+        dashboard.setTotalCalls(totalCalls);
+        dashboard.setSuccessCalls(successCalls);
+        dashboard.setFailedCalls(failedCalls);
+        dashboard.setAvgResponseTime(totalCalls > 0 ? Math.round(totalResponseTime * 1.0 / totalCalls) : 0.0);
 
         dashboard.setRecentSwitches(getSwitchLogs(10));
 
