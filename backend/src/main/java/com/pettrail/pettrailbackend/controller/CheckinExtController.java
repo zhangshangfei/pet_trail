@@ -53,7 +53,7 @@ public class CheckinExtController extends BaseController {
         } else {
             LocalDate today = LocalDate.now();
             LocalDate monthStart = today.withDayOfMonth(1);
-            LocalDate monthEnd = today;
+            LocalDate monthEnd = monthStart.plusMonths(1).minusDays(1);
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("M月d日");
             report.setStartDate(monthStart.format(fmt));
             report.setEndDate(monthEnd.format(fmt));

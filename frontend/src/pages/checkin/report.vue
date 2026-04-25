@@ -151,8 +151,9 @@ export default {
         this.report.endDate = this.formatMD(weekEnd)
       } else {
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
         this.report.startDate = this.formatMD(monthStart)
-        this.report.endDate = this.formatMD(now)
+        this.report.endDate = this.formatMD(monthEnd)
       }
     },
     formatMD(date) {
