@@ -270,7 +270,7 @@
 </template>
 
 <script>
-import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
+import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL, loadWxSubscribeTemplates, requestWxSubscribe } from '@/utils/index'
 import UserTopBar from '@/components/UserTopBar.vue'
 
 function todayStr() {
@@ -393,6 +393,7 @@ export default {
     this.resetFormDates();
     this.loadPets();
     this.loadUserInfo();
+    loadWxSubscribeTemplates();
   },
   methods: {
     formatDateYMD(d) {
@@ -602,6 +603,7 @@ export default {
         });
         if (res && res.success) {
           uni.showToast({ title: "保存成功", icon: "success" });
+          requestWxSubscribe(['vaccine']);
           this.vaccineForm.typeIndex = 0;
           this.vaccineForm.hospital = "";
           this.vaccineForm.remark = "";
@@ -635,6 +637,7 @@ export default {
         });
         if (res && res.success) {
           uni.showToast({ title: "保存成功", icon: "success" });
+          requestWxSubscribe(['parasite']);
           this.dewormForm.typeIndex = 0;
           this.dewormForm.medicine = "";
           this.dewormForm.remark = "";

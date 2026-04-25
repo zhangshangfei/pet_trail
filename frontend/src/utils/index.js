@@ -198,8 +198,10 @@ export const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
-const loadWxSubscribeTemplates = async () => {
+export const loadWxSubscribeTemplates = async () => {
   try {
+    const token = uni.getStorageSync('token')
+    if (!token) return
     const res = await uni.$request.get('/api/wx-subscribe/templates')
     if (res && res.success && res.data) {
       const templates = res.data
@@ -211,6 +213,29 @@ const loadWxSubscribeTemplates = async () => {
     }
   } catch (e) {
     console.warn('获取订阅消息模板ID失败:', e)
+  }
+}
+
+export const requestWxSubscribe = (types) => {
+  if (!types || !types.length) return
+  const tmplIds = []
+  for (const t of types) {
+    const id = uni.getStorageSync('wxSubscribeTemplate_' + t)
+    if (id) tmplIds.push(id)
+  }
+  if (!tmplIds.length) return
+  try {
+    wx.requestSubscribeMessage({
+      tmplIds,
+      success: (res) => {
+        console.log('订阅消息授权结果:', res)
+      },
+      fail: (err) => {
+        console.warn('订阅消息授权失败:', err)
+      }
+    })
+  } catch (e) {
+    console.warn('requestSubscribeMessage不可用:', e)
   }
 }
 

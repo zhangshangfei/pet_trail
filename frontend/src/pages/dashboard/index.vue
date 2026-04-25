@@ -268,7 +268,7 @@
 </template>
 
 <script>
-import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
+import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL, loadWxSubscribeTemplates, requestWxSubscribe } from '@/utils/index'
 import UserTopBar from '@/components/UserTopBar.vue'
 import AvatarView from '@/components/AvatarView.vue'
 
@@ -434,9 +434,11 @@ export default {
     }
     this.loadPets();
     this.loadUserInfo();
+    loadWxSubscribeTemplates();
 
     uni.$on('loginSuccess', () => {
       this.loadUserInfo()
+      loadWxSubscribeTemplates()
     })
   },
   onHide() {
@@ -649,6 +651,7 @@ export default {
               );
               if (result.success) {
                 uni.showToast({ title: "已标记完成", icon: "success" });
+                requestWxSubscribe(['vaccine', 'parasite']);
                 this.loadDashboardData();
               }
             } catch (e) {
@@ -679,6 +682,7 @@ export default {
               );
               if (result.success) {
                 uni.showToast({ title: "已标记完成", icon: "success" });
+                requestWxSubscribe(['vaccine', 'parasite']);
                 this.loadDashboardData();
               }
             } catch (e) {

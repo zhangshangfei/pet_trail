@@ -128,6 +128,7 @@
 
 <script>
 import * as checkinApi from '@/api/checkin'
+import { loadWxSubscribeTemplates, requestWxSubscribe } from '@/utils/index'
 
 export default {
   data() {
@@ -160,6 +161,7 @@ export default {
     }
     this.loadReminders()
     this.loadCheckinItems()
+    loadWxSubscribeTemplates()
   },
   methods: {
     openAddModal() {
@@ -241,28 +243,11 @@ export default {
           this.showAddModal = false
           this.selectedItemId = null
           this.loadReminders()
-          this.requestSubscribeMessage()
+          requestWxSubscribe(['checkin'])
         }
       } catch (e) {
         console.error('添加提醒失败:', e)
         uni.showToast({ title: '添加失败', icon: 'none' })
-      }
-    },
-    requestSubscribeMessage() {
-      const templateId = uni.getStorageSync('wxSubscribeTemplate_checkin')
-      if (!templateId) return
-      try {
-        wx.requestSubscribeMessage({
-          tmplIds: [templateId],
-          success: (res) => {
-            console.log('订阅消息授权结果:', res)
-          },
-          fail: (err) => {
-            console.warn('订阅消息授权失败:', err)
-          }
-        })
-      } catch (e) {
-        console.warn('requestSubscribeMessage不可用:', e)
       }
     },
     formatTime(timeStr) {
