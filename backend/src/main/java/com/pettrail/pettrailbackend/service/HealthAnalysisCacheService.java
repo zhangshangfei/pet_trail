@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
@@ -21,6 +22,11 @@ public class HealthAnalysisCacheService {
     private static final String CACHE_PREFIX = "health:analysis:";
     private static final String AI_CACHE_PREFIX = "health:analysis:ai:";
     private static final long CACHE_TTL_HOURS = 6;
+
+    private final AtomicLong hitCount = new AtomicLong(0);
+    private final AtomicLong missCount = new AtomicLong(0);
+    private final AtomicLong putCount = new AtomicLong(0);
+    private final AtomicLong evictCount = new AtomicLong(0);
 
     public String buildCacheKey(Long userId, Long petId) {
         return CACHE_PREFIX + userId + ":" + petId;
@@ -34,19 +40,24 @@ public class HealthAnalysisCacheService {
         try {
             Object cached = redisTemplate.opsForValue().get(cacheKey);
             if (cached == null) {
+                missCount.incrementAndGet();
                 return null;
             }
             if (cached instanceof HealthAnalysisVO) {
+                hitCount.incrementAndGet();
                 log.debug("健康分析缓存命中: key={}", cacheKey);
                 return (HealthAnalysisVO) cached;
             }
             if (cached instanceof Map) {
+                hitCount.incrementAndGet();
                 log.debug("健康分析缓存命中(反序列化为Map，尝试转换): key={}", cacheKey);
                 return convertMapToVO((Map<String, Object>) cached);
             }
             log.warn("健康分析缓存类型异常: key={}, type={}", cacheKey, cached.getClass().getName());
+            missCount.incrementAndGet();
         } catch (Exception e) {
             log.warn("健康分析缓存读取异常: key={}, error={}", cacheKey, e.getMessage());
+            missCount.incrementAndGet();
         }
         return null;
     }
@@ -69,6 +80,7 @@ public class HealthAnalysisCacheService {
         }
         try {
             redisTemplate.opsForValue().set(cacheKey, vo, CACHE_TTL_HOURS, TimeUnit.HOURS);
+            putCount.incrementAndGet();
             log.info("健康分析缓存写入: key={}, ttl={}h", cacheKey, CACHE_TTL_HOURS);
         } catch (Exception e) {
             log.warn("健康分析缓存写入异常: key={}, error={}", cacheKey, e.getMessage());
@@ -79,6 +91,7 @@ public class HealthAnalysisCacheService {
         try {
             redisTemplate.delete(buildCacheKey(userId, petId));
             redisTemplate.delete(buildAiCacheKey(petId));
+            evictCount.incrementAndGet();
             log.info("健康分析缓存清除: userId={}, petId={}", userId, petId);
         } catch (Exception e) {
             log.warn("健康分析缓存清除异常: userId={}, petId={}, error={}", userId, petId, e.getMessage());
@@ -88,12 +101,15 @@ public class HealthAnalysisCacheService {
     public void invalidateByPetId(Long petId) {
         try {
             Set<String> keys = redisTemplate.keys(CACHE_PREFIX + "*:" + petId);
+            int count = 0;
             if (keys != null && !keys.isEmpty()) {
+                count = keys.size();
                 redisTemplate.delete(keys);
             }
             String aiKey = buildAiCacheKey(petId);
             redisTemplate.delete(aiKey);
-            log.info("健康分析缓存按petId清除: petId={}, clearedKeys={}", petId, keys != null ? keys.size() : 0);
+            evictCount.addAndGet(count + 1);
+            log.info("健康分析缓存按petId清除: petId={}, clearedKeys={}", petId, count + 1);
         } catch (Exception e) {
             log.warn("健康分析缓存按petId清除异常: petId={}, error={}", petId, e.getMessage());
         }
@@ -102,10 +118,18 @@ public class HealthAnalysisCacheService {
     public void invalidateAll() {
         try {
             Set<String> keys = redisTemplate.keys(CACHE_PREFIX + "*");
+            int count = 0;
             if (keys != null && !keys.isEmpty()) {
+                count = keys.size();
                 redisTemplate.delete(keys);
             }
-            log.info("健康分析缓存全量清除: count={}", keys != null ? keys.size() : 0);
+            Set<String> aiKeys = redisTemplate.keys(AI_CACHE_PREFIX + "*");
+            if (aiKeys != null && !aiKeys.isEmpty()) {
+                count += aiKeys.size();
+                redisTemplate.delete(aiKeys);
+            }
+            evictCount.addAndGet(count);
+            log.info("健康分析缓存全量清除: count={}", count);
         } catch (Exception e) {
             log.warn("健康分析缓存全量清除异常: error={}", e.getMessage());
         }
@@ -119,14 +143,24 @@ public class HealthAnalysisCacheService {
             int voCount = voKeys != null ? voKeys.size() : 0;
             int aiCount = aiKeys != null ? aiKeys.size() : 0;
             int totalCount = voCount + aiCount;
+
+            long hits = hitCount.get();
+            long misses = missCount.get();
+            long puts = putCount.get();
+            long evicts = evictCount.get();
+            long totalAccess = hits + misses;
+            double hitRate = totalAccess > 0 ? Math.round(hits * 1000.0 / totalAccess) / 10.0 : 0.0;
+
             stats.put("activeEntries", totalCount);
             stats.put("voCacheCount", voCount);
             stats.put("aiCacheCount", aiCount);
             stats.put("cacheCount", totalCount);
-            stats.put("hitRate", totalCount > 0 ? "N/A" : "0%");
-            stats.put("hitCount", 0);
-            stats.put("missCount", 0);
-            stats.put("evictCount", 0);
+            stats.put("hitRate", hitRate + "%");
+            stats.put("hitCount", hits);
+            stats.put("missCount", misses);
+            stats.put("putCount", puts);
+            stats.put("evictCount", evicts);
+            stats.put("totalAccess", totalAccess);
             stats.put("ttlMinutes", CACHE_TTL_HOURS * 60);
             stats.put("ttlHours", CACHE_TTL_HOURS);
             stats.put("cachePrefix", CACHE_PREFIX);
@@ -147,14 +181,17 @@ public class HealthAnalysisCacheService {
             String aiKey = buildAiCacheKey(petId);
             Object cached = redisTemplate.opsForValue().get(aiKey);
             if (cached instanceof String) {
+                hitCount.incrementAndGet();
                 log.debug("AI分析缓存命中: petId={}", petId);
                 return (String) cached;
             }
             if (cached != null) {
                 log.warn("AI分析缓存类型异常: petId={}, type={}", petId, cached.getClass().getName());
             }
+            missCount.incrementAndGet();
         } catch (Exception e) {
             log.warn("AI分析缓存读取异常: petId={}, error={}", petId, e.getMessage());
+            missCount.incrementAndGet();
         }
         return null;
     }
@@ -166,6 +203,7 @@ public class HealthAnalysisCacheService {
         try {
             String aiKey = buildAiCacheKey(petId);
             redisTemplate.opsForValue().set(aiKey, analysis, CACHE_TTL_HOURS, TimeUnit.HOURS);
+            putCount.incrementAndGet();
             log.info("AI分析缓存写入: petId={}, ttl={}h, contentLength={}", petId, CACHE_TTL_HOURS, analysis.length());
         } catch (Exception e) {
             log.warn("AI分析缓存写入异常: petId={}, error={}", petId, e.getMessage());
