@@ -42,7 +42,7 @@ public class AiAnalysisService {
             return null;
         }
 
-        String cachedAnalysis = cacheService.getCachedAnalysis(pet.getId());
+        String cachedAnalysis = cacheService.getCachedAnalysis(pet.getId(), false);
         if (cachedAnalysis != null) {
             log.info("[AI调用] 使用缓存结果: petId={}", pet.getId());
             return cachedAnalysis;
@@ -127,7 +127,7 @@ public class AiAnalysisService {
                             aiModelService.recordModelCall(modelId, elapsed, true);
                         }
                         consecutiveFailures.set(0);
-                        cacheService.cacheAnalysis(pet.getId(), content);
+                        cacheService.cacheAnalysis(pet.getId(), content, false);
                         return content;
                     }
                 }

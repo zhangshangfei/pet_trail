@@ -177,33 +177,49 @@ public class HealthAnalysisCacheService {
     }
 
     public String getCachedAnalysis(Long petId) {
+        return getCachedAnalysis(petId, true);
+    }
+
+    public String getCachedAnalysis(Long petId, boolean trackStats) {
         try {
             String aiKey = buildAiCacheKey(petId);
             Object cached = redisTemplate.opsForValue().get(aiKey);
             if (cached instanceof String) {
-                hitCount.incrementAndGet();
+                if (trackStats) {
+                    hitCount.incrementAndGet();
+                }
                 log.debug("AI分析缓存命中: petId={}", petId);
                 return (String) cached;
             }
             if (cached != null) {
                 log.warn("AI分析缓存类型异常: petId={}, type={}", petId, cached.getClass().getName());
             }
-            missCount.incrementAndGet();
+            if (trackStats) {
+                missCount.incrementAndGet();
+            }
         } catch (Exception e) {
             log.warn("AI分析缓存读取异常: petId={}, error={}", petId, e.getMessage());
-            missCount.incrementAndGet();
+            if (trackStats) {
+                missCount.incrementAndGet();
+            }
         }
         return null;
     }
 
     public void cacheAnalysis(Long petId, String analysis) {
+        cacheAnalysis(petId, analysis, true);
+    }
+
+    public void cacheAnalysis(Long petId, String analysis, boolean trackStats) {
         if (analysis == null || analysis.isEmpty()) {
             return;
         }
         try {
             String aiKey = buildAiCacheKey(petId);
             redisTemplate.opsForValue().set(aiKey, analysis, CACHE_TTL_HOURS, TimeUnit.HOURS);
-            putCount.incrementAndGet();
+            if (trackStats) {
+                putCount.incrementAndGet();
+            }
             log.info("AI分析缓存写入: petId={}, ttl={}h, contentLength={}", petId, CACHE_TTL_HOURS, analysis.length());
         } catch (Exception e) {
             log.warn("AI分析缓存写入异常: petId={}, error={}", petId, e.getMessage());
