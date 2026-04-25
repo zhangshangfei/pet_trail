@@ -43,23 +43,34 @@ public class HealthAnalysisCacheService {
                 missCount.incrementAndGet();
                 return null;
             }
+            hitCount.incrementAndGet();
             if (cached instanceof HealthAnalysisVO) {
-                hitCount.incrementAndGet();
                 log.debug("健康分析缓存命中: key={}", cacheKey);
                 return (HealthAnalysisVO) cached;
             }
             if (cached instanceof Map) {
-                hitCount.incrementAndGet();
                 log.debug("健康分析缓存命中(反序列化为Map，尝试转换): key={}", cacheKey);
-                return convertMapToVO((Map<String, Object>) cached);
+                HealthAnalysisVO vo = convertMapToVO((Map<String, Object>) cached);
+                if (vo != null) {
+                    return vo;
+                }
             }
-            log.warn("健康分析缓存类型异常: key={}, type={}", cacheKey, cached.getClass().getName());
-            missCount.incrementAndGet();
+            log.warn("健康分析缓存类型异常，尝试JSON转换: key={}, actualType={}", cacheKey, cached.getClass().getName());
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+                String json = mapper.writeValueAsString(cached);
+                return mapper.readValue(json, HealthAnalysisVO.class);
+            } catch (Exception e2) {
+                log.error("健康分析缓存JSON转换也失败，删除无效缓存: key={}", cacheKey, e2);
+                redisTemplate.delete(cacheKey);
+                return null;
+            }
         } catch (Exception e) {
             log.warn("健康分析缓存读取异常: key={}, error={}", cacheKey, e.getMessage());
             missCount.incrementAndGet();
+            return null;
         }
-        return null;
     }
 
     @SuppressWarnings("unchecked")
