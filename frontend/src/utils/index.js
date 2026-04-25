@@ -198,6 +198,22 @@ export const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
+const loadWxSubscribeTemplates = async () => {
+  try {
+    const res = await uni.$request.get('/api/wx-subscribe/templates')
+    if (res && res.success && res.data) {
+      const templates = res.data
+      for (const [key, value] of Object.entries(templates)) {
+        if (value) {
+          uni.setStorageSync('wxSubscribeTemplate_' + key, value)
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('获取订阅消息模板ID失败:', e)
+  }
+}
+
 export const wechatLogin = () => {
   return new Promise((resolve) => {
     uni.showLoading({ title: '登录中...', mask: true })
@@ -213,6 +229,7 @@ export const wechatLogin = () => {
               uni.setStorageSync('userInfo', loginRes.data.user)
               uni.showToast({ title: '登录成功', icon: 'success' })
               uni.$emit('loginSuccess')
+              loadWxSubscribeTemplates()
               resolve(true)
             } else {
               uni.showToast({ title: loginRes.message || '登录失败', icon: 'none' })
