@@ -125,10 +125,14 @@ public class ReminderMessageConsumer {
         }
 
         String itemName = "全部打卡项";
+        String itemDesc = "记得按时打卡哦";
         if (reminder.getItemId() != null) {
             CheckinItem item = checkinItemMapper.selectById(reminder.getItemId());
             if (item != null) {
                 itemName = item.getName();
+                if (item.getDescription() != null && !item.getDescription().isEmpty()) {
+                    itemDesc = item.getDescription();
+                }
             }
         }
 
@@ -137,7 +141,7 @@ public class ReminderMessageConsumer {
             reminder.getUserId(), 0L, "system", null, content);
         log.info("发送打卡提醒(站内信): userId={}", reminder.getUserId());
 
-        sendWxCheckinReminder(reminder, itemName);
+        sendWxCheckinReminder(reminder, itemName, itemDesc);
     }
 
     private void sendWxFeedingReminder(FeedingReminder reminder, String mealName) {
@@ -155,7 +159,7 @@ public class ReminderMessageConsumer {
         }
     }
 
-    private void sendWxCheckinReminder(CheckinReminder reminder, String itemName) {
+    private void sendWxCheckinReminder(CheckinReminder reminder, String itemName, String theme) {
         try {
             User user = userMapper.selectById(reminder.getUserId());
             if (user == null || user.getOpenid() == null || user.getOpenid().isEmpty()) return;
@@ -163,8 +167,10 @@ public class ReminderMessageConsumer {
             String today = LocalDate.now().format(DATE_FMT);
             String timeStr = reminder.getRemindTime().format(TIME_FMT);
             String remindTimeStr = today + " " + timeStr;
+            String checkinTimeRange = timeStr + "~" + reminder.getRemindTime().plusHours(1).format(TIME_FMT);
             wxSubscribeMessageService.sendCheckinReminder(
-                reminder.getUserId(), user.getOpenid(), itemName, remindTimeStr, "pages/checkin/index");
+                reminder.getUserId(), user.getOpenid(), itemName, user.getNickname(),
+                remindTimeStr, theme, checkinTimeRange, "pages/checkin/index");
         } catch (Exception e) {
             log.warn("发送打卡微信订阅消息异常: userId={}, error={}", reminder.getUserId(), e.getMessage());
         }

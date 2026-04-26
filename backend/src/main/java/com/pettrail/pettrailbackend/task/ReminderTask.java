@@ -1,8 +1,10 @@
 package com.pettrail.pettrailbackend.task;
 
 import com.pettrail.pettrailbackend.entity.ParasiteReminder;
+import com.pettrail.pettrailbackend.entity.Pet;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.entity.VaccineReminder;
+import com.pettrail.pettrailbackend.mapper.PetMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
 import com.pettrail.pettrailbackend.service.NotificationService;
 import com.pettrail.pettrailbackend.service.ReminderService;
@@ -25,6 +27,7 @@ public class ReminderTask {
     private final NotificationService notificationService;
     private final WxSubscribeMessageService wxSubscribeMessageService;
     private final UserMapper userMapper;
+    private final PetMapper petMapper;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy年M月d日");
 
@@ -85,10 +88,18 @@ public class ReminderTask {
             User user = userMapper.selectById(reminder.getUserId());
             if (user == null || user.getOpenid() == null || user.getOpenid().isEmpty()) return;
 
-            String vaccineName = reminder.getVaccineName() != null ? reminder.getVaccineName() : "疫苗";
             String nextDate = reminder.getNextDate() != null ? reminder.getNextDate().format(DATE_FMT) : "";
+            String petName = "宠物";
+            if (reminder.getPetId() != null) {
+                Pet pet = petMapper.selectById(reminder.getPetId());
+                if (pet != null && pet.getName() != null) {
+                    petName = pet.getName();
+                }
+            }
+            String vaccineName = reminder.getVaccineName() != null ? reminder.getVaccineName() : "疫苗";
             wxSubscribeMessageService.sendVaccineReminder(
-                reminder.getUserId(), user.getOpenid(), vaccineName, nextDate, "pages/health/index");
+                reminder.getUserId(), user.getOpenid(), petName, vaccineName, nextDate,
+                reminder.getNote(), "pages/health/index");
         } catch (Exception e) {
             log.warn("发送疫苗微信订阅消息异常: userId={}, error={}", reminder.getUserId(), e.getMessage());
         }
@@ -101,8 +112,16 @@ public class ReminderTask {
 
             String typeMap = reminder.getType() == 1 ? "体内驱虫" : reminder.getType() == 2 ? "体外驱虫" : "内外同驱";
             String nextDate = reminder.getNextDate() != null ? reminder.getNextDate().format(DATE_FMT) : "";
+            String petName = "宠物";
+            if (reminder.getPetId() != null) {
+                Pet pet = petMapper.selectById(reminder.getPetId());
+                if (pet != null && pet.getName() != null) {
+                    petName = pet.getName();
+                }
+            }
             wxSubscribeMessageService.sendParasiteReminder(
-                reminder.getUserId(), user.getOpenid(), typeMap, nextDate, "pages/health/index");
+                reminder.getUserId(), user.getOpenid(), petName, typeMap, nextDate,
+                reminder.getNote(), "pages/health/index");
         } catch (Exception e) {
             log.warn("发送驱虫微信订阅消息异常: userId={}, error={}", reminder.getUserId(), e.getMessage());
         }
