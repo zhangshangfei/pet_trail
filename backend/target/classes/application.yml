@@ -7,15 +7,15 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:pet_trail}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${MYSQL_HOST:sh-cynosdbmysql-grp-768g91ci.sql.tencentcdb.com}:${MYSQL_PORT:22746}/${MYSQL_DATABASE:pet_trail}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${MYSQL_USERNAME:root}
-    password: ${MYSQL_PASSWORD:pettrail123}
+    password: ${MYSQL_PASSWORD:CD2wkKmj}
 
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
+      host: ${REDIS_HOST:124.222.51.71}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      password: ${REDIS_PASSWORD:iherhj45135*}
       database: ${REDIS_DATABASE:0}
       timeout: 3000ms
       lettuce:
@@ -87,18 +87,18 @@ jwt:
 # 微信配置
 wechat:
   miniapp:
-    app-id: ${WECHAT_MINIAPP_APP_ID:}
-    app-secret: ${WECHAT_MINIAPP_APP_SECRET:}
+    app-id: ${WECHAT_MINIAPP_APP_ID:wx252292b9bfa1ccc6}
+    app-secret: ${WECHAT_MINIAPP_APP_SECRET:3e17aa26e200c87c0fd22fa855a5348a}
 
 # AI 分析配置
 ai:
   enabled: ${AI_ENABLED:true}
-  api-key: ${AI_API_KEY:}
+  api-key: ${AI_API_KEY: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}
   base-url: ${AI_BASE_URL:https://openrouter.ai/api/v1}
   model: ${AI_MODEL:openrouter/free}
   glm:
     enabled: ${AI_GLM_ENABLED:true}
-    api-key: ${AI_GLM_API_KEY:}
+    api-key: ${AI_GLM_API_KEY:9369496ba97b4fb08b1fdfbf7907b049.LdjmNyZ81m6mQSEp}
     base-url: ${AI_GLM_BASE_URL:https://open.bigmodel.cn/api/paas/v4}
     model: ${AI_GLM_MODEL:glm-4.7-flash}
 
