@@ -16,6 +16,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -35,6 +36,11 @@ public class FallbackReminderTask {
     private final NotificationService notificationService;
     private final WxSubscribeMessageService wxSubscribeMessageService;
     private final UserMapper userMapper;
+
+    @PostConstruct
+    public void init() {
+        log.info("====== FallbackReminderTask 已加载 (RabbitMQ未启用, 使用定时任务兜底) ======");
+    }
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy年M月d日");
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");

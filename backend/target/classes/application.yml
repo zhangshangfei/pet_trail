@@ -5,22 +5,18 @@ spring:
   application:
     name: pet-trail-backend
 
-  # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://sh-cynosdbmysql-grp-768g91ci.sql.tencentcdb.com:22746/pet_trail?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-#    url: jdbc:mysql://localhost:3306/pet_trail?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: root
-    password: ${MYSQL_PASSWORD:CD2wkKmj}
-#    password: ${MYSQL_PASSWORD:root123654}
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:pet_trail}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:pettrail123}
 
-  # Redis 配置
   data:
     redis:
-      host: 124.222.51.71
-      port: 6379
-      password: iherhj45135*
-      database: 0
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
       timeout: 3000ms
       lettuce:
         pool:
@@ -78,10 +74,10 @@ mybatis-plus:
 # 腾讯云 COS 配置 (微信云托管推荐)
 tencent:
   cos:
-#    bucket-name: jinttianchongleme-1419682950
-    bucket-name: 7072-prod-3gyc3tpg28270da6-1419682950
-    # 你的地域，通常是 ap-guangzhou 或 ap-shanghai
-    region: ap-shanghai
+    bucket-name: ${TENCENT_COS_BUCKET_NAME:7072-prod-3gyc3tpg28270da6-1419682950}
+    region: ${TENCENT_COS_REGION:ap-shanghai}
+    secret-id: ${TENCENT_COS_SECRET_ID:}
+    secret-key: ${TENCENT_COS_SECRET_KEY:}
 
 # JWT 配置
 jwt:
@@ -91,18 +87,18 @@ jwt:
 # 微信配置
 wechat:
   miniapp:
-    app-id: ${WECHAT_MINIAPP_APP_ID:wx252292b9bfa1ccc6}
-    app-secret: ${WECHAT_MINIAPP_APP_SECRET:3e17aa26e200c87c0fd22fa855a5348a}
+    app-id: ${WECHAT_MINIAPP_APP_ID:}
+    app-secret: ${WECHAT_MINIAPP_APP_SECRET:}
 
 # AI 分析配置
 ai:
   enabled: ${AI_ENABLED:true}
-  api-key: ${AI_API_KEY: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}
+  api-key: ${AI_API_KEY:}
   base-url: ${AI_BASE_URL:https://openrouter.ai/api/v1}
   model: ${AI_MODEL:openrouter/free}
   glm:
     enabled: ${AI_GLM_ENABLED:true}
-    api-key: ${AI_GLM_API_KEY:9369496ba97b4fb08b1fdfbf7907b049.LdjmNyZ81m6mQSEp}
+    api-key: ${AI_GLM_API_KEY:}
     base-url: ${AI_GLM_BASE_URL:https://open.bigmodel.cn/api/paas/v4}
     model: ${AI_GLM_MODEL:glm-4.7-flash}
 
