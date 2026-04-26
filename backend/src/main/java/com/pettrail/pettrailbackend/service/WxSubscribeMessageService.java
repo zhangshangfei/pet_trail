@@ -121,7 +121,7 @@ public class WxSubscribeMessageService {
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("thing1", Map.of("value", truncate(blankToDefault(itemName, "全部打卡项"), 20)));
+        data.put("thing1", Map.of("value", truncate(blankToDefault(itemName, "打卡"), 20)));
         data.put("name3", Map.of("value", truncate(blankToDefault(userName, "宠友"), 10)));
         data.put("time2", Map.of("value", blankToDefault(remindTime, "")));
         data.put("thing4", Map.of("value", truncate(blankToDefault(theme, "记得按时打卡哦"), 20)));
@@ -143,7 +143,7 @@ public class WxSubscribeMessageService {
         data.put("thing1", Map.of("value", truncate(blankToDefault(petName, "宠物"), 20)));
         data.put("time2", Map.of("value", blankToDefault(nextDate, "")));
         data.put("thing3", Map.of("value", truncate(blankToDefault(vaccineName, "疫苗"), 20)));
-        data.put("thing4", Map.of("value", truncate(blankToDefault(note, "宠物一般一年打一次疫苗哦"), 20)));
+        data.put("thing4", Map.of("value", truncate(blankToDefault(note, "定期疫苗保障宠物健康哟"), 20)));
 
         log.info("发送疫苗订阅消息: templateId={}, data={}", templateId, data);
         return sendSubscribeMessage(userId, "vaccine", openid, templateId, data, page);

@@ -92,7 +92,7 @@ public class FallbackReminderTask {
 
         for (CheckinReminder reminder : reminders) {
             try {
-                String itemName = "全部打卡项";
+                String itemName = "打卡";
                 String itemDesc = "记得按时打卡哦";
                 if (reminder.getItemId() != null) {
                     var item = checkinItemMapper.selectById(reminder.getItemId());
