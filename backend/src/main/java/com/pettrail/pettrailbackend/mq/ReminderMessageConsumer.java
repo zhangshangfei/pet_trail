@@ -22,6 +22,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -43,6 +44,11 @@ public class ReminderMessageConsumer {
     private final NotificationService notificationService;
     private final WxSubscribeMessageService wxSubscribeMessageService;
     private final ReminderMessageProducer reminderMessageProducer;
+
+    @PostConstruct
+    public void init() {
+        log.info("====== ReminderMessageConsumer 已加载, 开始监听队列: {}, {} ======", RabbitMQConfig.FEEDING_QUEUE, RabbitMQConfig.CHECKIN_QUEUE);
+    }
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy年M月d日");
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
