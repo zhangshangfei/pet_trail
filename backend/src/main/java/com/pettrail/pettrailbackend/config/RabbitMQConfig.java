@@ -3,10 +3,12 @@ package com.pettrail.pettrailbackend.config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +29,23 @@ public class RabbitMQConfig {
     public static final String DLX_EXCHANGE_NAME = "reminder.dlx.exchange";
     public static final String FEEDING_DLQ_NAME = "reminder.feeding.dlq";
     public static final String CHECKIN_DLQ_NAME = "reminder.checkin.dlq";
+
+    @Bean
+    public ConnectionFactory rabbitConnectionFactory(
+            @Value("${RABBITMQ_HOST:localhost}") String host,
+            @Value("${RABBITMQ_PORT:5672}") int port,
+            @Value("${RABBITMQ_USERNAME:guest}") String username,
+            @Value("${RABBITMQ_PASSWORD:guest}") String password,
+            @Value("${RABBITMQ_VHOST:/}") String vhost) {
+        CachingConnectionFactory factory = new CachingConnectionFactory();
+        factory.setHost(host);
+        factory.setPort(port);
+        factory.setUsername(username);
+        factory.setPassword(password);
+        factory.setVirtualHost(vhost);
+        log.info("RabbitMQ ConnectionFactory 创建: host={}:{}", host, port);
+        return factory;
+    }
 
     @Bean
     public CustomExchange reminderDelayedExchange() {
