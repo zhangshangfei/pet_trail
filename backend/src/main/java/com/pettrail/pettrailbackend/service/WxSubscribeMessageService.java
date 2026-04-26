@@ -162,11 +162,11 @@ public class WxSubscribeMessageService {
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("thing1", Map.of("value", truncate(blankToDefault(itemName, "打卡"), 20)));
-        data.put("name3", Map.of("value", truncate(blankToDefault(userName, "宠友"), 10)));
-        data.put("time2", Map.of("value", blankToDefault(remindTime, "")));
-        data.put("thing4", Map.of("value", truncate(blankToDefault(theme, "记得按时打卡哦"), 20)));
-        data.put("time5", Map.of("value", blankToDefault(checkinTimeRange, "")));
+        data.put("thing4", Map.of("value", truncate(blankToDefault(itemName, "打卡"), 20)));
+        data.put("thing7", Map.of("value", truncate(blankToDefault(userName, "宠友"), 20)));
+        data.put("time13", Map.of("value", blankToDefault(remindTime, "")));
+        data.put("thing5", Map.of("value", truncate(blankToDefault(theme, "记得按时打卡哦"), 20)));
+        data.put("time2", Map.of("value", blankToDefault(checkinTimeRange, "")));
 
         log.info("发送打卡订阅消息: templateId={}, data={}", templateId, data);
         return sendSubscribeMessage(userId, "checkin", openid, templateId, data, page);
