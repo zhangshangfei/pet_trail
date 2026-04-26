@@ -55,11 +55,14 @@ spring:
 
   # RabbitMQ 配置
   rabbitmq:
-    host: ${RABBITMQ_HOST:http://124.222.51.71/}
+    enabled: ${RABBITMQ_ENABLED:true}
+    host: ${RABBITMQ_HOST:124.222.51.71}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:admin}
     password: ${RABBITMQ_PASSWORD:admin123654}
     virtual-host: ${RABBITMQ_VHOST:/}
+    publisher-confirm-type: correlated
+    publisher-returns: true
     listener:
       simple:
         acknowledge-mode: manual

@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -32,6 +33,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "spring.rabbitmq.enabled", havingValue = "true", matchIfMissing = false)
 public class ReminderMessageConsumer {
 
     private final FeedingReminderMapper feedingReminderMapper;
@@ -49,7 +51,7 @@ public class ReminderMessageConsumer {
         "breakfast", "早餐", "lunch", "午餐", "dinner", "晚餐", "snack", "加餐"
     );
 
-    @RabbitListener(queues = RabbitMQConfig.FEEDING_QUEUE)
+    @RabbitListener(queues = RabbitMQConfig.FEEDING_QUEUE_NAME)
     public void onFeedingReminder(ReminderMessage msg, Message message, Channel channel) throws IOException {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
         try {
@@ -63,7 +65,7 @@ public class ReminderMessageConsumer {
         }
     }
 
-    @RabbitListener(queues = RabbitMQConfig.CHECKIN_QUEUE)
+    @RabbitListener(queues = RabbitMQConfig.CHECKIN_QUEUE_NAME)
     public void onCheckinReminder(ReminderMessage msg, Message message, Channel channel) throws IOException {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
         try {
