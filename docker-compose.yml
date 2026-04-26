@@ -4,61 +4,97 @@ services:
   mysql:
     image: mysql:8.0
     container_name: pet-trail-mysql
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-pet_trail}
-      MYSQL_USER: ${MYSQL_USER:-pettrail}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-pettrail123}
+      MYSQL_USER: ${MYSQL_USERNAME:-root}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
+      TZ: Asia/Shanghai
     ports:
-      - "3306:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       - ./backend/src/main/resources/init.sql:/docker-entrypoint-initdb.d/init.sql
-    command: --default-authentication-plugin=mysql_native_password
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - pet-trail-network
 
   redis:
     image: redis:7-alpine
     container_name: pet-trail-redis
+    restart: always
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
+    command: redis-server --requirepass ${REDIS_PASSWORD:-REPLACE_ME} --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-REPLACE_ME}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - pet-trail-network
 
   backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: pet-trail-backend
+    restart: always
     environment:
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
-      MYSQL_DATABASE: pet_trail
-      MYSQL_USERNAME: ${MYSQL_USER:-pettrail}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-pettrail123}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-pet_trail}
+      MYSQL_USERNAME: ${MYSQL_USERNAME:-root}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      TENCENT_COS_SECRET_ID: ${TENCENT_COS_SECRET_ID}
-      TENCENT_COS_SECRET_KEY: ${TENCENT_COS_SECRET_KEY}
-      TENCENT_COS_BUCKET_NAME: ${TENCENT_COS_BUCKET_NAME}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-REPLACE_ME}
+      REDIS_DATABASE: ${REDIS_DATABASE:-0}
+      TENCENT_COS_SECRET_ID: ${TENCENT_COS_SECRET_ID:-}
+      TENCENT_COS_SECRET_KEY: ${TENCENT_COS_SECRET_KEY:-}
+      TENCENT_COS_BUCKET_NAME: ${TENCENT_COS_BUCKET_NAME:-7072-prod-3gyc3tpg28270da6-1419682950}
       TENCENT_COS_REGION: ${TENCENT_COS_REGION:-ap-shanghai}
-      JWT_SECRET: ${JWT_SECRET}
-      WECHAT_MINIAPP_APP_ID: ${WECHAT_MINIAPP_APP_ID}
-      WECHAT_MINIAPP_APP_SECRET: ${WECHAT_MINIAPP_APP_SECRET}
+      JWT_SECRET: ${JWT_SECRET:-}
+      WECHAT_MINIAPP_APP_ID: ${WECHAT_MINIAPP_APP_ID:-}
+      WECHAT_MINIAPP_APP_SECRET: ${WECHAT_MINIAPP_APP_SECRET:-}
+      AI_ENABLED: ${AI_ENABLED:-true}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-https://openrouter.ai/api/v1}
+      AI_MODEL: ${AI_MODEL:-openrouter/free}
+      AI_GLM_ENABLED: ${AI_GLM_ENABLED:-true}
+      AI_GLM_API_KEY: ${AI_GLM_API_KEY:-}
+      AI_GLM_BASE_URL: ${AI_GLM_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
+      AI_GLM_MODEL: ${AI_GLM_MODEL:-glm-4.7-flash}
+      RABBITMQ_ENABLED: ${RABBITMQ_ENABLED:-false}
+      TZ: Asia/Shanghai
     ports:
-      - "8080:8080"
+      - "${SERVER_PORT:-8080}:8080"
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - pet-trail-network
 
   nginx:
     image: nginx:alpine
     container_name: pet-trail-nginx
+    restart: always
     ports:
       - "80:80"
       - "443:443"
@@ -66,7 +102,8 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/ssl:/etc/nginx/ssl
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - pet-trail-network
 
