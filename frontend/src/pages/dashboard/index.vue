@@ -630,6 +630,10 @@ export default {
       } catch (e) {
         console.error("加载看板数据失败:", e);
       }
+
+      if (this.vaccineCardsLimited.length > 0 || this.parasiteCardsLimited.length > 0) {
+        requestWxSubscribe(['vaccine', 'parasite']);
+      }
     },
     async onMarkVaccineDone(item) {
       if (!item || item.isCompleted || !this.selectedPet) return;
@@ -644,7 +648,6 @@ export default {
         cancelText: "取消",
         success: async (res) => {
           if (res.confirm) {
-            requestWxSubscribe(['vaccine', 'parasite']);
             try {
               const result = await uni.$request.put(
                 `/api/pets/${this.selectedPet.id}/vaccine-reminders/${item.id}/status`,
@@ -675,7 +678,6 @@ export default {
         cancelText: "取消",
         success: async (res) => {
           if (res.confirm) {
-            requestWxSubscribe(['vaccine', 'parasite']);
             try {
               const result = await uni.$request.put(
                 `/api/pets/${this.selectedPet.id}/parasite-reminders/${item.id}/status`,

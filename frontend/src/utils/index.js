@@ -228,13 +228,17 @@ export const loadWxSubscribeTemplates = async () => {
 export const requestWxSubscribe = async (types) => {
   if (!types || !types.length) return
   const tmplIds = []
+  const typeToTmplId = {}
   for (const t of types) {
     let id = uni.getStorageSync('wxSubscribeTemplate_' + t)
     if (!id || !id.trim()) {
       await loadWxSubscribeTemplates()
       id = uni.getStorageSync('wxSubscribeTemplate_' + t)
     }
-    if (id && id.trim()) tmplIds.push(id.trim())
+    if (id && id.trim()) {
+      tmplIds.push(id.trim())
+      typeToTmplId[id.trim()] = t
+    }
   }
   if (!tmplIds.length) {
     console.warn('订阅消息模板ID未配置，跳过授权请求。types=', types)
@@ -245,11 +249,30 @@ export const requestWxSubscribe = async (types) => {
     tmplIds,
     success: (res) => {
       console.log('订阅消息授权结果:', res)
+      for (const [tmplId, result] of Object.entries(res)) {
+        if (result === 'accept') {
+          const templateType = typeToTmplId[tmplId]
+          if (templateType) {
+            reportAuthorization(templateType, 1)
+          }
+        }
+      }
     },
     fail: (err) => {
       console.warn('订阅消息授权失败:', err)
     }
   })
+}
+
+const reportAuthorization = async (templateType, count) => {
+  try {
+    const token = uni.getStorageSync('token')
+    if (!token) return
+    await uni.$request.post('/api/wx-subscribe/authorize', { templateType, count })
+    console.log('授权积分上报成功:', templateType, '+', count)
+  } catch (e) {
+    console.warn('授权积分上报失败:', e)
+  }
 }
 
 export const wechatLogin = () => {

@@ -26,6 +26,7 @@ public class SchemaMigrationConfig {
             migrateAiModelTable();
             migrateAiModelSwitchLogTable();
             migrateAiModelStatsTable();
+            migrateWxSubscribeAuthorizationTable();
         };
     }
 
@@ -204,6 +205,21 @@ public class SchemaMigrationConfig {
                 "KEY `idx_stats_date` (`stats_date`), " +
                 "KEY `idx_model_id` (`model_id`)",
                 "AI模型性能统计表");
+    }
+
+    private void migrateWxSubscribeAuthorizationTable() {
+        createTableIfNotExists("wx_subscribe_authorization",
+                "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
+                "`user_id` bigint(20) NOT NULL COMMENT '用户ID', " +
+                "`template_type` varchar(50) NOT NULL COMMENT '模板类型: checkin/vaccine/parasite/feeding', " +
+                "`credits` int(11) NOT NULL DEFAULT 0 COMMENT '剩余可用授权次数', " +
+                "`used_credits` int(11) NOT NULL DEFAULT 0 COMMENT '已使用授权次数', " +
+                "`created_at` datetime DEFAULT CURRENT_TIMESTAMP, " +
+                "`updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+                "PRIMARY KEY (`id`), " +
+                "UNIQUE KEY `uk_user_template` (`user_id`, `template_type`), " +
+                "KEY `idx_user_id` (`user_id`)",
+                "微信订阅消息授权积分表");
     }
 
     private void seedAiModelData() {

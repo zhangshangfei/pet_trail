@@ -23,14 +23,17 @@ public class WxSubscribeMessageService {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final SysConfigService sysConfigService;
+    private final WxSubscribeAuthorizationService authorizationService;
 
     private static final String ACCESS_TOKEN_KEY = "wechat:access_token:subscribe";
     private static final long ACCESS_TOKEN_TTL_MINUTES = 110;
 
     public WxSubscribeMessageService(RedisTemplate<String, Object> redisTemplate,
-                                     SysConfigService sysConfigService) {
+                                     SysConfigService sysConfigService,
+                                     WxSubscribeAuthorizationService authorizationService) {
         this.redisTemplate = redisTemplate;
         this.sysConfigService = sysConfigService;
+        this.authorizationService = authorizationService;
     }
 
     public String getAccessToken() {
@@ -61,11 +64,13 @@ public class WxSubscribeMessageService {
         return null;
     }
 
-    public boolean sendSubscribeMessage(String openid, String templateId, Map<String, Object> data) {
-        return sendSubscribeMessage(openid, templateId, data, null);
-    }
+    public boolean sendSubscribeMessage(Long userId, String templateType, String openid,
+                                        String templateId, Map<String, Object> data, String page) {
+        if (!authorizationService.consumeCredit(userId, templateType)) {
+            log.warn("订阅消息授权积分不足，跳过发送: userId={}, templateType={}", userId, templateType);
+            return false;
+        }
 
-    public boolean sendSubscribeMessage(String openid, String templateId, Map<String, Object> data, String page) {
         String accessToken = getAccessToken();
         if (accessToken == null) {
             log.error("发送订阅消息失败: access_token为空");
@@ -91,7 +96,7 @@ public class WxSubscribeMessageService {
             JSONObject json = JSONObject.parseObject(response);
             int errcode = json.getIntValue("errcode");
             if (errcode == 0) {
-                log.info("发送订阅消息成功: openid={}, templateId={}", openid, templateId);
+                log.info("发送订阅消息成功: userId={}, openid={}, templateType={}", userId, openid, templateType);
                 return true;
             }
             if (errcode == 43101) {
@@ -107,7 +112,7 @@ public class WxSubscribeMessageService {
         }
     }
 
-    public boolean sendCheckinReminder(String openid, String itemName, String remindTime, String page) {
+    public boolean sendCheckinReminder(Long userId, String openid, String itemName, String remindTime, String page) {
         String templateId = getConfigValue("wx.subscribe.template.checkin");
         if (templateId == null || templateId.isEmpty()) {
             log.warn("打卡提醒模板ID未配置，跳过微信订阅消息");
@@ -118,10 +123,10 @@ public class WxSubscribeMessageService {
         data.put("thing1", Map.of("value", truncate(itemName, 20)));
         data.put("time2", Map.of("value", remindTime));
 
-        return sendSubscribeMessage(openid, templateId, data, page);
+        return sendSubscribeMessage(userId, "checkin", openid, templateId, data, page);
     }
 
-    public boolean sendVaccineReminder(String openid, String vaccineName, String nextDate, String page) {
+    public boolean sendVaccineReminder(Long userId, String openid, String vaccineName, String nextDate, String page) {
         String templateId = getConfigValue("wx.subscribe.template.vaccine");
         if (templateId == null || templateId.isEmpty()) {
             log.warn("疫苗提醒模板ID未配置，跳过微信订阅消息");
@@ -133,10 +138,10 @@ public class WxSubscribeMessageService {
         data.put("time2", Map.of("value", nextDate));
         data.put("thing3", Map.of("value", "请及时为宠物接种疫苗"));
 
-        return sendSubscribeMessage(openid, templateId, data, page);
+        return sendSubscribeMessage(userId, "vaccine", openid, templateId, data, page);
     }
 
-    public boolean sendParasiteReminder(String openid, String parasiteType, String nextDate, String page) {
+    public boolean sendParasiteReminder(Long userId, String openid, String parasiteType, String nextDate, String page) {
         String templateId = getConfigValue("wx.subscribe.template.parasite");
         if (templateId == null || templateId.isEmpty()) {
             log.warn("驱虫提醒模板ID未配置，跳过微信订阅消息");
@@ -148,7 +153,22 @@ public class WxSubscribeMessageService {
         data.put("time2", Map.of("value", nextDate));
         data.put("thing3", Map.of("value", "请及时为宠物进行驱虫"));
 
-        return sendSubscribeMessage(openid, templateId, data, page);
+        return sendSubscribeMessage(userId, "parasite", openid, templateId, data, page);
+    }
+
+    public boolean sendFeedingReminder(Long userId, String openid, String mealName, String feedTime, String note, String page) {
+        String templateId = getConfigValue("wx.subscribe.template.feeding");
+        if (templateId == null || templateId.isEmpty()) {
+            log.warn("喂食提醒模板ID未配置，跳过微信订阅消息");
+            return false;
+        }
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("thing1", Map.of("value", truncate(mealName, 20)));
+        data.put("time2", Map.of("value", feedTime));
+        data.put("thing3", Map.of("value", truncate(note != null ? note : "该给宠物喂食啦", 20)));
+
+        return sendSubscribeMessage(userId, "feeding", openid, templateId, data, page);
     }
 
     private String getConfigValue(String key) {

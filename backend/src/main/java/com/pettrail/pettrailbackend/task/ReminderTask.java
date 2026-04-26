@@ -4,7 +4,6 @@ import com.pettrail.pettrailbackend.entity.ParasiteReminder;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.entity.VaccineReminder;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
-import com.pettrail.pettrailbackend.service.CheckinReminderService;
 import com.pettrail.pettrailbackend.service.NotificationService;
 import com.pettrail.pettrailbackend.service.ReminderService;
 import com.pettrail.pettrailbackend.service.WxSubscribeMessageService;
@@ -24,7 +23,6 @@ public class ReminderTask {
 
     private final ReminderService reminderService;
     private final NotificationService notificationService;
-    private final CheckinReminderService checkinReminderService;
     private final WxSubscribeMessageService wxSubscribeMessageService;
     private final UserMapper userMapper;
 
@@ -32,7 +30,7 @@ public class ReminderTask {
 
     @Scheduled(cron = "0 0 9 * * ?")
     public void checkDueReminders() {
-        log.info("开始检查即将到期的提醒");
+        log.info("开始检查即将到期的疫苗/驱虫提醒");
 
         LocalDate today = LocalDate.now();
         LocalDate nextWeek = today.plusDays(7);
@@ -79,7 +77,7 @@ public class ReminderTask {
             }
         }
 
-        log.info("提醒检查完成");
+        log.info("疫苗/驱虫提醒检查完成");
     }
 
     private void sendWxVaccineReminder(VaccineReminder reminder) {
@@ -89,7 +87,8 @@ public class ReminderTask {
 
             String vaccineName = reminder.getVaccineName() != null ? reminder.getVaccineName() : "疫苗";
             String nextDate = reminder.getNextDate() != null ? reminder.getNextDate().format(DATE_FMT) : "";
-            wxSubscribeMessageService.sendVaccineReminder(user.getOpenid(), vaccineName, nextDate, "pages/health/index");
+            wxSubscribeMessageService.sendVaccineReminder(
+                reminder.getUserId(), user.getOpenid(), vaccineName, nextDate, "pages/health/index");
         } catch (Exception e) {
             log.warn("发送疫苗微信订阅消息异常: userId={}, error={}", reminder.getUserId(), e.getMessage());
         }
@@ -102,7 +101,8 @@ public class ReminderTask {
 
             String typeMap = reminder.getType() == 1 ? "体内驱虫" : reminder.getType() == 2 ? "体外驱虫" : "内外同驱";
             String nextDate = reminder.getNextDate() != null ? reminder.getNextDate().format(DATE_FMT) : "";
-            wxSubscribeMessageService.sendParasiteReminder(user.getOpenid(), typeMap, nextDate, "pages/health/index");
+            wxSubscribeMessageService.sendParasiteReminder(
+                reminder.getUserId(), user.getOpenid(), typeMap, nextDate, "pages/health/index");
         } catch (Exception e) {
             log.warn("发送驱虫微信订阅消息异常: userId={}, error={}", reminder.getUserId(), e.getMessage());
         }
@@ -113,14 +113,5 @@ public class ReminderTask {
         log.info("开始清理过期提醒");
         LocalDate expiredDate = LocalDate.now().minusDays(30);
         reminderService.cleanExpiredReminders(expiredDate);
-    }
-
-    @Scheduled(cron = "0 */1 * * * ?")
-    public void sendCheckinReminders() {
-        try {
-            checkinReminderService.sendCheckinReminders();
-        } catch (Exception e) {
-            log.warn("发送打卡提醒失败: {}", e.getMessage());
-        }
     }
 }
