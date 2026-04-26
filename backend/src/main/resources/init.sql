@@ -713,3 +713,140 @@ INSERT IGNORE INTO `ai_model` (`model_name`, `display_name`, `provider`, `base_u
 ('glm-4-flash', '智谱GLM快速分析', 'zhipu', 'https://open.bigmodel.cn/api/paas/v4', '', 'v4', '{"temperature": 0.6, "max_tokens": 250}', 1, 0, 2, '基于智谱GLM-4-Flash的快速健康分析，响应速度快', '⚡'),
 ('openrouter/free', '通用免费模型', 'openrouter', 'https://openrouter.ai/api/v1', '', 'free', '{"temperature": 0.7, "max_tokens": 200}', 1, 0, 3, '免费通用模型，适合基础健康分析需求', '🎁');
 
+-- V2__add_achievements_and_membership.sql
+-- 成就系统扩展：新增成长类成就和更多条件类型
+
+INSERT IGNORE INTO `achievements` (`name`, `description`, `icon`, `type`, `condition_type`, `condition_value`, `sort_order`) VALUES
+('打卡王者', '累计打卡 100 天', '👑', 1, 'checkin_count', 100, 7),
+('打卡传奇', '累计打卡 365 天', '🏆', 1, 'checkin_count', 365, 8),
+('铁人精神', '连续打卡 30 天', '💪', 1, 'checkin_streak', 30, 9),
+('百日坚持', '连续打卡 100 天', '🎯', 1, 'checkin_streak', 100, 10),
+('健康先锋', '记录 10 次健康数据', '📝', 2, 'health_record_count', 10, 11),
+('健康专家', '记录 100 次健康数据', '🩺', 2, 'health_record_count', 100, 12),
+('初出茅庐', '发布第 1 条动态', '✨', 3, 'post_count', 1, 13),
+('动态达人', '发布 50 条动态', '📢', 3, 'post_count', 50, 14),
+('小有名气', '获得 10 个赞', '👍', 3, 'like_received', 10, 15),
+('万众瞩目', '获得 500 个赞', '🌟', 3, 'like_received', 500, 16),
+('萌宠之家', '添加第 1 只宠物', '🐾', 4, 'pet_count', 1, 17),
+('多宠家庭', '添加 3 只宠物', '🏠', 4, 'pet_count', 3, 18),
+('宠物达人', '添加 5 只宠物', '🏡', 4, 'pet_count', 5, 19),
+('互动新手', '发表第 1 条评论', '💬', 4, 'comment_count', 1, 20),
+('互动达人', '发表 50 条评论', '🗣️', 4, 'comment_count', 50, 21),
+('受人关注', '获得 10 个粉丝', '👥', 4, 'follower_count', 10, 22),
+('人气之星', '获得 100 个粉丝', '⭐', 4, 'follower_count', 100, 23);
+
+-- 微信支付配置表
+CREATE TABLE IF NOT EXISTS `sys_pay_config` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `config_key` varchar(100) NOT NULL COMMENT '配置键',
+  `config_value` varchar(500) DEFAULT NULL COMMENT '配置值',
+  `description` varchar(200) DEFAULT NULL COMMENT '描述',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_config_key` (`config_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='支付配置表';
+
+-- 挑战赛表
+CREATE TABLE IF NOT EXISTS `challenges` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `title` varchar(100) NOT NULL COMMENT '挑战标题',
+  `description` varchar(500) DEFAULT NULL COMMENT '挑战描述',
+  `cover_image` varchar(500) DEFAULT NULL COMMENT '封面图',
+  `type` tinyint(4) DEFAULT 1 COMMENT '类型：1-打卡 2-社交 3-健康',
+  `start_date` datetime NOT NULL COMMENT '开始时间',
+  `end_date` datetime NOT NULL COMMENT '结束时间',
+  `condition_type` varchar(50) DEFAULT NULL COMMENT '条件类型',
+  `condition_value` int(11) DEFAULT NULL COMMENT '条件值',
+  `reward_description` varchar(200) DEFAULT NULL COMMENT '奖励描述',
+  `status` tinyint(4) DEFAULT 1 COMMENT '状态：0-下线 1-进行中 2-已结束',
+  `participant_count` int(11) DEFAULT 0 COMMENT '参与人数',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_dates` (`start_date`, `end_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='挑战赛表';
+
+-- 挑战赛参与记录表
+CREATE TABLE IF NOT EXISTS `challenge_participants` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `challenge_id` bigint(20) NOT NULL,
+  `user_id` bigint(20) NOT NULL,
+  `progress` int(11) DEFAULT 0 COMMENT '当前进度',
+  `completed` tinyint(1) DEFAULT 0 COMMENT '是否完成',
+  `completed_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_challenge_user` (`challenge_id`, `user_id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='挑战赛参与记录表';
+
+-- V3__add_commerce_features.sql
+-- 商业化功能：宠物商城、医院预约
+
+CREATE TABLE IF NOT EXISTS `products` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `name` varchar(200) NOT NULL COMMENT '商品名称',
+  `description` text COMMENT '商品描述',
+  `cover_image` varchar(500) DEFAULT NULL COMMENT '封面图',
+  `images` text COMMENT '商品图片JSON数组',
+  `category` varchar(50) DEFAULT NULL COMMENT '分类：food/toy/health/supplies',
+  `brand` varchar(100) DEFAULT NULL COMMENT '品牌',
+  `price` decimal(10,2) NOT NULL COMMENT '价格',
+  `original_price` decimal(10,2) DEFAULT NULL COMMENT '原价',
+  `commission_rate` decimal(5,4) DEFAULT 0.0000 COMMENT '佣金比例',
+  `source_url` varchar(500) DEFAULT NULL COMMENT '来源链接',
+  `source_platform` varchar(50) DEFAULT NULL COMMENT '来源平台：jd/tb/pdd',
+  `sales_count` int(11) DEFAULT 0 COMMENT '销量',
+  `rating` decimal(3,2) DEFAULT 5.00 COMMENT '评分',
+  `pet_type` tinyint(4) DEFAULT 0 COMMENT '适用宠物类型：0-通用 1-猫 2-狗',
+  `status` tinyint(4) DEFAULT 1 COMMENT '状态：0-下架 1-上架',
+  `sort_order` int(11) DEFAULT 0,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_category` (`category`),
+  KEY `idx_status` (`status`),
+  KEY `idx_pet_type` (`pet_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品表';
+
+CREATE TABLE IF NOT EXISTS `vet_clinics` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `name` varchar(200) NOT NULL COMMENT '医院名称',
+  `description` text COMMENT '医院描述',
+  `cover_image` varchar(500) DEFAULT NULL COMMENT '封面图',
+  `address` varchar(500) DEFAULT NULL COMMENT '地址',
+  `latitude` decimal(10,7) DEFAULT NULL COMMENT '纬度',
+  `longitude` decimal(10,7) DEFAULT NULL COMMENT '经度',
+  `phone` varchar(50) DEFAULT NULL COMMENT '电话',
+  `business_hours` varchar(200) DEFAULT NULL COMMENT '营业时间',
+  `rating` decimal(3,2) DEFAULT 5.00 COMMENT '评分',
+  `specialties` varchar(500) DEFAULT NULL COMMENT '专科：逗号分隔',
+  `is_partner` tinyint(1) DEFAULT 0 COMMENT '是否合作医院',
+  `status` tinyint(4) DEFAULT 1 COMMENT '状态：0-关闭 1-营业',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_location` (`latitude`, `longitude`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='宠物医院表';
+
+CREATE TABLE IF NOT EXISTS `vet_appointments` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL,
+  `clinic_id` bigint(20) NOT NULL,
+  `pet_id` bigint(20) DEFAULT NULL,
+  `appointment_date` date NOT NULL COMMENT '预约日期',
+  `appointment_time` varchar(20) NOT NULL COMMENT '预约时段',
+  `symptom` varchar(500) DEFAULT NULL COMMENT '症状描述',
+  `status` tinyint(4) DEFAULT 0 COMMENT '状态：0-待确认 1-已确认 2-已完成 3-已取消',
+  `cancel_reason` varchar(200) DEFAULT NULL COMMENT '取消原因',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_clinic_id` (`clinic_id`),
+  KEY `idx_date` (`appointment_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院预约表';
+
