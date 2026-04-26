@@ -592,6 +592,7 @@ export default {
         uni.showToast({ title: "请先选择宠物", icon: "none" });
         return;
       }
+      requestWxSubscribe(['vaccine']);
       const loggedIn = await checkLogin('请先登录后再保存记录')
       if (!loggedIn) return
       const vaccineName = this.vaccineTypes[this.vaccineForm.typeIndex];
@@ -603,7 +604,6 @@ export default {
         });
         if (res && res.success) {
           uni.showToast({ title: "保存成功", icon: "success" });
-          requestWxSubscribe(['vaccine']);
           this.vaccineForm.typeIndex = 0;
           this.vaccineForm.hospital = "";
           this.vaccineForm.remark = "";
@@ -625,6 +625,7 @@ export default {
         uni.showToast({ title: "请先选择宠物", icon: "none" });
         return;
       }
+      requestWxSubscribe(['parasite']);
       const loggedIn = await checkLogin('请先登录后再保存记录')
       if (!loggedIn) return
       const type = this.dewormTypeToApiType(this.dewormForm.typeIndex);
@@ -637,7 +638,6 @@ export default {
         });
         if (res && res.success) {
           uni.showToast({ title: "保存成功", icon: "success" });
-          requestWxSubscribe(['parasite']);
           this.dewormForm.typeIndex = 0;
           this.dewormForm.medicine = "";
           this.dewormForm.remark = "";

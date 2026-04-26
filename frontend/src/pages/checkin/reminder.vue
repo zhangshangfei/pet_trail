@@ -232,6 +232,7 @@ export default {
       }
     },
     async onAddReminder() {
+      requestWxSubscribe(['checkin'])
       try {
         const params = { remindTime: this.newRemindTime }
         if (this.selectedItemId !== null) {
@@ -243,7 +244,6 @@ export default {
           this.showAddModal = false
           this.selectedItemId = null
           this.loadReminders()
-          requestWxSubscribe(['checkin'])
         }
       } catch (e) {
         console.error('添加提醒失败:', e)

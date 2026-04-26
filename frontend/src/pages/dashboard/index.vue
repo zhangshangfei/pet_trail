@@ -644,6 +644,7 @@ export default {
         cancelText: "取消",
         success: async (res) => {
           if (res.confirm) {
+            requestWxSubscribe(['vaccine', 'parasite']);
             try {
               const result = await uni.$request.put(
                 `/api/pets/${this.selectedPet.id}/vaccine-reminders/${item.id}/status`,
@@ -651,7 +652,6 @@ export default {
               );
               if (result.success) {
                 uni.showToast({ title: "已标记完成", icon: "success" });
-                requestWxSubscribe(['vaccine', 'parasite']);
                 this.loadDashboardData();
               }
             } catch (e) {
@@ -675,6 +675,7 @@ export default {
         cancelText: "取消",
         success: async (res) => {
           if (res.confirm) {
+            requestWxSubscribe(['vaccine', 'parasite']);
             try {
               const result = await uni.$request.put(
                 `/api/pets/${this.selectedPet.id}/parasite-reminders/${item.id}/status`,
@@ -682,7 +683,6 @@ export default {
               );
               if (result.success) {
                 uni.showToast({ title: "已标记完成", icon: "success" });
-                requestWxSubscribe(['vaccine', 'parasite']);
                 this.loadDashboardData();
               }
             } catch (e) {
