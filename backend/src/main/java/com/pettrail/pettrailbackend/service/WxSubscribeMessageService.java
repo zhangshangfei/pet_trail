@@ -66,12 +66,18 @@ public class WxSubscribeMessageService {
 
     public boolean sendSubscribeMessage(Long userId, String templateType, String openid,
                                         String templateId, Map<String, Object> data, String page) {
-        if (!authorizationService.consumeCredit(userId, templateType)) {
+        log.info("====== sendSubscribeMessage 开始: userId={}, templateType={}, templateId={}, openid={} ======",
+                userId, templateType, templateId, openid);
+
+        boolean hasCredit = authorizationService.consumeCredit(userId, templateType);
+        log.info("授权积分检查结果: userId={}, templateType={}, hasCredit={}", userId, templateType, hasCredit);
+        if (!hasCredit) {
             log.warn("订阅消息授权积分不足，跳过发送: userId={}, templateType={}", userId, templateType);
             return false;
         }
 
         String accessToken = getAccessToken();
+        log.info("access_token获取结果: {}", accessToken != null ? "成功" : "失败");
         if (accessToken == null) {
             log.error("发送订阅消息失败: access_token为空");
             return false;
@@ -91,8 +97,11 @@ public class WxSubscribeMessageService {
             body.put("page", page);
         }
 
+        log.info("请求微信订阅消息API: url={}, body={}", url.substring(0, url.indexOf("access_token=") + "access_token=".length() + 10) + "...", body);
+
         try {
             String response = HttpUtil.doPost(url, JSONObject.toJSONString(body), "application/json");
+            log.info("微信订阅消息API响应: {}", response);
             JSONObject json = JSONObject.parseObject(response);
             int errcode = json.getIntValue("errcode");
             if (errcode == 0) {
@@ -107,7 +116,7 @@ public class WxSubscribeMessageService {
             }
             return false;
         } catch (Exception e) {
-            log.error("发送订阅消息异常: openid={}, error={}", openid, e.getMessage());
+            log.error("发送订阅消息异常: openid={}, error={}", openid, e.getMessage(), e);
             return false;
         }
     }
