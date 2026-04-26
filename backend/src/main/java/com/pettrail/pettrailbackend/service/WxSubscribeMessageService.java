@@ -121,11 +121,11 @@ public class WxSubscribeMessageService {
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("thing1", Map.of("value", truncate(itemName, 20)));
-        data.put("name3", Map.of("value", truncate(userName != null ? userName : "宠友", 10)));
-        data.put("time2", Map.of("value", remindTime));
-        data.put("thing4", Map.of("value", truncate(theme != null ? theme : "记得按时打卡哦", 20)));
-        data.put("time5", Map.of("value", checkinTimeRange));
+        data.put("thing1", Map.of("value", truncate(blankToDefault(itemName, "全部打卡项"), 20)));
+        data.put("name3", Map.of("value", truncate(blankToDefault(userName, "宠友"), 10)));
+        data.put("time2", Map.of("value", blankToDefault(remindTime, "")));
+        data.put("thing4", Map.of("value", truncate(blankToDefault(theme, "记得按时打卡哦"), 20)));
+        data.put("time5", Map.of("value", blankToDefault(checkinTimeRange, "")));
 
         log.info("发送打卡订阅消息: templateId={}, data={}", templateId, data);
         return sendSubscribeMessage(userId, "checkin", openid, templateId, data, page);
@@ -140,10 +140,10 @@ public class WxSubscribeMessageService {
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("thing1", Map.of("value", truncate(petName != null ? petName : "宠物", 20)));
-        data.put("time2", Map.of("value", nextDate));
-        data.put("thing3", Map.of("value", truncate(vaccineName != null ? vaccineName : "疫苗", 20)));
-        data.put("thing4", Map.of("value", truncate(note != null ? note : "宠物一般一年打一次疫苗哦", 20)));
+        data.put("thing1", Map.of("value", truncate(blankToDefault(petName, "宠物"), 20)));
+        data.put("time2", Map.of("value", blankToDefault(nextDate, "")));
+        data.put("thing3", Map.of("value", truncate(blankToDefault(vaccineName, "疫苗"), 20)));
+        data.put("thing4", Map.of("value", truncate(blankToDefault(note, "宠物一般一年打一次疫苗哦"), 20)));
 
         log.info("发送疫苗订阅消息: templateId={}, data={}", templateId, data);
         return sendSubscribeMessage(userId, "vaccine", openid, templateId, data, page);
@@ -158,10 +158,10 @@ public class WxSubscribeMessageService {
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("thing1", Map.of("value", truncate(petName != null ? petName : "宠物", 20)));
-        data.put("time2", Map.of("value", nextDate));
-        data.put("thing3", Map.of("value", truncate(parasiteType, 20)));
-        data.put("thing4", Map.of("value", truncate(note != null ? note : "定期驱虫保障宠物健康哟~", 20)));
+        data.put("thing1", Map.of("value", truncate(blankToDefault(petName, "宠物"), 20)));
+        data.put("time2", Map.of("value", blankToDefault(nextDate, "")));
+        data.put("thing3", Map.of("value", truncate(blankToDefault(parasiteType, "内外同驱"), 20)));
+        data.put("thing4", Map.of("value", truncate(blankToDefault(note, "定期驱虫保障宠物健康哟~"), 20)));
 
         log.info("发送驱虫订阅消息: templateId={}, data={}", templateId, data);
         return sendSubscribeMessage(userId, "parasite", openid, templateId, data, page);
@@ -175,9 +175,9 @@ public class WxSubscribeMessageService {
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("thing1", Map.of("value", truncate(mealName, 20)));
-        data.put("time2", Map.of("value", feedTime));
-        data.put("thing3", Map.of("value", truncate(note != null ? note : "该给宠物喂食啦", 20)));
+        data.put("thing1", Map.of("value", truncate(blankToDefault(mealName, "喂食"), 20)));
+        data.put("time2", Map.of("value", blankToDefault(feedTime, "")));
+        data.put("thing3", Map.of("value", truncate(blankToDefault(note, "该给宠物喂食啦"), 20)));
 
         return sendSubscribeMessage(userId, "feeding", openid, templateId, data, page);
     }
@@ -191,7 +191,12 @@ public class WxSubscribeMessageService {
     }
 
     private String truncate(String str, int maxLen) {
-        if (str == null) return "";
+        if (str == null || str.isEmpty()) return "";
         return str.length() > maxLen ? str.substring(0, maxLen) + "…" : str;
+    }
+
+    private String blankToDefault(String str, String defaultValue) {
+        if (str == null || str.trim().isEmpty()) return defaultValue;
+        return str;
     }
 }
