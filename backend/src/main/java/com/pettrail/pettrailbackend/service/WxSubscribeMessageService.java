@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.service;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.pettrail.pettrailbackend.util.HttpUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +36,36 @@ public class WxSubscribeMessageService {
         this.redisTemplate = redisTemplate;
         this.sysConfigService = sysConfigService;
         this.authorizationService = authorizationService;
+    }
+
+    @PostConstruct
+    public void logTemplateInfo() {
+        try {
+            String accessToken = getAccessToken();
+            if (accessToken == null) {
+                log.warn("无法获取access_token, 跳过模板信息查询");
+                return;
+            }
+            String url = "https://api.weixin.qq.com/wxaapi/newtmpl/gettemplate?access_token=" + accessToken;
+            String response = HttpUtil.doGet(url);
+            JSONObject json = JSONObject.parseObject(response);
+            if (json.getIntValue("errcode") == 0) {
+                JSONArray templates = json.getJSONArray("data");
+                if (templates != null) {
+                    for (int i = 0; i < templates.size(); i++) {
+                        JSONObject tmpl = templates.getJSONObject(i);
+                        log.info("====== 微信订阅消息模板: id={}, title={}, content={} ======",
+                                tmpl.getString("priTmplId"),
+                                tmpl.getString("title"),
+                                tmpl.getString("content"));
+                    }
+                }
+            } else {
+                log.warn("获取模板列表失败: errcode={}, errmsg={}", json.getIntValue("errcode"), json.getString("errmsg"));
+            }
+        } catch (Exception e) {
+            log.warn("查询微信模板信息异常: {}", e.getMessage());
+        }
     }
 
     public String getAccessToken() {
