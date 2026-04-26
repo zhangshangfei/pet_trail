@@ -16,11 +16,11 @@ public class ReminderMessageProducer {
     private RabbitTemplate rabbitTemplate;
 
     public void sendDelayedFeedingReminder(ReminderMessage message, long delayMillis) {
-        sendDelayedMessage(message, RabbitMQConfig.FEEDING_ROUTING_KEY, delayMillis);
+        sendDelayedMessage(message, "parking.feeding", delayMillis);
     }
 
     public void sendDelayedCheckinReminder(ReminderMessage message, long delayMillis) {
-        sendDelayedMessage(message, RabbitMQConfig.CHECKIN_ROUTING_KEY, delayMillis);
+        sendDelayedMessage(message, "parking.checkin", delayMillis);
     }
 
     public void cancelFeedingReminder(Long reminderId) {
@@ -31,7 +31,7 @@ public class ReminderMessageProducer {
         log.debug("打卡提醒取消（通过下次消费时校验DB状态实现）: reminderId={}", reminderId);
     }
 
-    private void sendDelayedMessage(ReminderMessage message, String routingKey, long delayMillis) {
+    private void sendDelayedMessage(ReminderMessage message, String parkingRoutingKey, long delayMillis) {
         if (rabbitTemplate == null) {
             log.debug("RabbitMQ未启用，跳过延迟消息发送: type={}, reminderId={}",
                 message.getType(), message.getReminderId());
@@ -39,21 +39,21 @@ public class ReminderMessageProducer {
         }
         try {
             MessagePostProcessor processor = msg -> {
-                msg.getMessageProperties().setDelay((int) Math.min(delayMillis, Integer.MAX_VALUE));
+                msg.getMessageProperties().setExpiration(String.valueOf(delayMillis));
                 msg.getMessageProperties().setMessageId(
                     message.getType() + ":" + message.getReminderId() + ":" + System.currentTimeMillis());
                 return msg;
             };
 
             rabbitTemplate.convertAndSend(
-                RabbitMQConfig.DELAYED_EXCHANGE_NAME,
-                routingKey,
+                RabbitMQConfig.BUSINESS_EXCHANGE,
+                parkingRoutingKey,
                 message,
                 processor
             );
 
-            log.info("发送延迟消息: type={}, reminderId={}, delayMs={}, routingKey={}",
-                message.getType(), message.getReminderId(), delayMillis, routingKey);
+            log.info("发送延迟消息(TTL+DLQ): type={}, reminderId={}, delayMs={}, routingKey={}",
+                message.getType(), message.getReminderId(), delayMillis, parkingRoutingKey);
         } catch (Exception e) {
             log.error("发送延迟消息失败: type={}, reminderId={}, error={}",
                 message.getType(), message.getReminderId(), e.getMessage());

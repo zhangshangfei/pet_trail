@@ -13,22 +13,21 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Slf4j
 @Configuration
 @ConditionalOnProperty(name = "spring.rabbitmq.enabled", havingValue = "true", matchIfMissing = false)
 public class RabbitMQConfig {
 
-    public static final String DELAYED_EXCHANGE_NAME = "reminder.delayed.exchange";
-    public static final String FEEDING_QUEUE_NAME = "reminder.feeding.queue";
-    public static final String CHECKIN_QUEUE_NAME = "reminder.checkin.queue";
+    public static final String BUSINESS_EXCHANGE = "reminder.business.exchange";
+    public static final String DLX_EXCHANGE = "reminder.dlx.exchange";
+    public static final String FEEDING_QUEUE = "reminder.feeding.queue";
+    public static final String CHECKIN_QUEUE = "reminder.checkin.queue";
+    public static final String FEEDING_PARKING_QUEUE = "reminder.feeding.parking";
+    public static final String CHECKIN_PARKING_QUEUE = "reminder.checkin.parking";
+    public static final String FEEDING_DLQ = "reminder.feeding.dlq";
+    public static final String CHECKIN_DLQ = "reminder.checkin.dlq";
     public static final String FEEDING_ROUTING_KEY = "reminder.feeding";
     public static final String CHECKIN_ROUTING_KEY = "reminder.checkin";
-    public static final String DLX_EXCHANGE_NAME = "reminder.dlx.exchange";
-    public static final String FEEDING_DLQ_NAME = "reminder.feeding.dlq";
-    public static final String CHECKIN_DLQ_NAME = "reminder.checkin.dlq";
 
     @Bean
     public ConnectionFactory rabbitConnectionFactory(
@@ -48,71 +47,85 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public CustomExchange reminderDelayedExchange() {
-        Map<String, Object> args = new HashMap<>();
-        args.put("x-delayed-type", "direct");
-        return new CustomExchange(DELAYED_EXCHANGE_NAME, "x-delayed-message", true, false, args);
+    public DirectExchange businessExchange() {
+        return new DirectExchange(BUSINESS_EXCHANGE, true, false);
     }
 
     @Bean
-    public DirectExchange deadLetterExchange() {
-        return new DirectExchange(DLX_EXCHANGE_NAME, true, false);
+    public DirectExchange dlxExchange() {
+        return new DirectExchange(DLX_EXCHANGE, true, false);
     }
 
     @Bean
     public Queue feedingQueue() {
-        return QueueBuilder.durable(FEEDING_QUEUE_NAME)
-                .withArgument("x-dead-letter-exchange", DLX_EXCHANGE_NAME)
-                .withArgument("x-dead-letter-routing-key", "reminder.feeding.dlq")
+        return QueueBuilder.durable(FEEDING_QUEUE)
+                .withArgument("x-dead-letter-exchange", DLX_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", "feeding.dlq")
                 .build();
     }
 
     @Bean
     public Queue checkinQueue() {
-        return QueueBuilder.durable(CHECKIN_QUEUE_NAME)
-                .withArgument("x-dead-letter-exchange", DLX_EXCHANGE_NAME)
-                .withArgument("x-dead-letter-routing-key", "reminder.checkin.dlq")
+        return QueueBuilder.durable(CHECKIN_QUEUE)
+                .withArgument("x-dead-letter-exchange", DLX_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", "checkin.dlq")
+                .build();
+    }
+
+    @Bean
+    public Queue feedingParkingQueue() {
+        return QueueBuilder.durable(FEEDING_PARKING_QUEUE)
+                .withArgument("x-dead-letter-exchange", BUSINESS_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", FEEDING_ROUTING_KEY)
+                .build();
+    }
+
+    @Bean
+    public Queue checkinParkingQueue() {
+        return QueueBuilder.durable(CHECKIN_PARKING_QUEUE)
+                .withArgument("x-dead-letter-exchange", BUSINESS_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", CHECKIN_ROUTING_KEY)
                 .build();
     }
 
     @Bean
     public Queue feedingDlq() {
-        return QueueBuilder.durable(FEEDING_DLQ_NAME).build();
+        return QueueBuilder.durable(FEEDING_DLQ).build();
     }
 
     @Bean
     public Queue checkinDlq() {
-        return QueueBuilder.durable(CHECKIN_DLQ_NAME).build();
+        return QueueBuilder.durable(CHECKIN_DLQ).build();
     }
 
     @Bean
     public Binding feedingBinding() {
-        return BindingBuilder.bind(feedingQueue())
-                .to(reminderDelayedExchange())
-                .with(FEEDING_ROUTING_KEY)
-                .noargs();
+        return BindingBuilder.bind(feedingQueue()).to(businessExchange()).with(FEEDING_ROUTING_KEY);
     }
 
     @Bean
     public Binding checkinBinding() {
-        return BindingBuilder.bind(checkinQueue())
-                .to(reminderDelayedExchange())
-                .with(CHECKIN_ROUTING_KEY)
-                .noargs();
+        return BindingBuilder.bind(checkinQueue()).to(businessExchange()).with(CHECKIN_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding feedingParkingBinding() {
+        return BindingBuilder.bind(feedingParkingQueue()).to(businessExchange()).with("parking.feeding");
+    }
+
+    @Bean
+    public Binding checkinParkingBinding() {
+        return BindingBuilder.bind(checkinParkingQueue()).to(businessExchange()).with("parking.checkin");
     }
 
     @Bean
     public Binding feedingDlqBinding() {
-        return BindingBuilder.bind(feedingDlq())
-                .to(deadLetterExchange())
-                .with("reminder.feeding.dlq");
+        return BindingBuilder.bind(feedingDlq()).to(dlxExchange()).with("feeding.dlq");
     }
 
     @Bean
     public Binding checkinDlqBinding() {
-        return BindingBuilder.bind(checkinDlq())
-                .to(deadLetterExchange())
-                .with("reminder.checkin.dlq");
+        return BindingBuilder.bind(checkinDlq()).to(dlxExchange()).with("checkin.dlq");
     }
 
     @Bean

@@ -51,7 +51,7 @@ public class ReminderMessageConsumer {
         "breakfast", "早餐", "lunch", "午餐", "dinner", "晚餐", "snack", "加餐"
     );
 
-    @RabbitListener(queues = RabbitMQConfig.FEEDING_QUEUE_NAME)
+    @RabbitListener(queues = RabbitMQConfig.FEEDING_QUEUE)
     public void onFeedingReminder(ReminderMessage msg, Message message, Channel channel) throws IOException {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
         try {
@@ -65,7 +65,7 @@ public class ReminderMessageConsumer {
         }
     }
 
-    @RabbitListener(queues = RabbitMQConfig.CHECKIN_QUEUE_NAME)
+    @RabbitListener(queues = RabbitMQConfig.CHECKIN_QUEUE)
     public void onCheckinReminder(ReminderMessage msg, Message message, Channel channel) throws IOException {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
         try {
