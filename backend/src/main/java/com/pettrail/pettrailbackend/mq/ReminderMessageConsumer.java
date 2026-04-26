@@ -54,28 +54,34 @@ public class ReminderMessageConsumer {
     @RabbitListener(queues = RabbitMQConfig.FEEDING_QUEUE)
     public void onFeedingReminder(ReminderMessage msg, Message message, Channel channel) throws IOException {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
+        log.info("收到喂食提醒消息: reminderId={}, userId={}, deliveryTag={}", msg.getReminderId(), msg.getUserId(), deliveryTag);
         try {
             processFeedingReminder(msg);
             channel.basicAck(deliveryTag, false);
+            log.info("喂食提醒消息已ACK: reminderId={}", msg.getReminderId());
 
             scheduleNextFeedingReminder(msg);
         } catch (Exception e) {
             log.error("消费喂食提醒消息失败: reminderId={}, error={}", msg.getReminderId(), e.getMessage());
             channel.basicNack(deliveryTag, false, false);
+            log.warn("喂食提醒消息已NACK(进入死信队列): reminderId={}", msg.getReminderId());
         }
     }
 
     @RabbitListener(queues = RabbitMQConfig.CHECKIN_QUEUE)
     public void onCheckinReminder(ReminderMessage msg, Message message, Channel channel) throws IOException {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
+        log.info("收到打卡提醒消息: reminderId={}, userId={}, deliveryTag={}", msg.getReminderId(), msg.getUserId(), deliveryTag);
         try {
             processCheckinReminder(msg);
             channel.basicAck(deliveryTag, false);
+            log.info("打卡提醒消息已ACK: reminderId={}", msg.getReminderId());
 
             scheduleNextCheckinReminder(msg);
         } catch (Exception e) {
             log.error("消费打卡提醒消息失败: reminderId={}, error={}", msg.getReminderId(), e.getMessage());
             channel.basicNack(deliveryTag, false, false);
+            log.warn("打卡提醒消息已NACK(进入死信队列): reminderId={}", msg.getReminderId());
         }
     }
 
