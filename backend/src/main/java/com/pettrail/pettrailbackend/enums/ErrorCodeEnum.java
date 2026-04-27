@@ -34,8 +34,6 @@ public enum ErrorCodeEnum {
     // ==================== 健康记录相关 (3xxx) ====================
     WEIGHT_RECORD_DUPLICATE(3001, "当天已记录体重"),
     WEIGHT_RECORD_NOT_FOUND(3002, "体重记录不存在"),
-    STEP_RECORD_ERROR(3003, "步数记录异常"),
-    WATER_RECORD_ERROR(3004, "饮水记录异常"),
     HEALTH_RECORD_NOT_FOUND(3005, "健康记录不存在"),
 
     // ==================== 社区相关 (4xxx) ====================

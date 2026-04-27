@@ -243,6 +243,29 @@
         "navigationBarTitleText": "宠物医院",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/tag/posts",
+      "style": {
+        "navigationBarTitleText": "标签动态",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
+      }
+    },
+    {
+      "path": "pages/vet/detail",
+      "style": {
+        "navigationBarTitleText": "医院详情",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/vet/appointments",
+      "style": {
+        "navigationBarTitleText": "我的预约",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.VetAppointmentVO;
 import com.pettrail.pettrailbackend.entity.VetAppointment;
 import com.pettrail.pettrailbackend.entity.VetClinic;
 import com.pettrail.pettrailbackend.service.VetClinicService;
@@ -47,7 +48,7 @@ public class VetClinicController extends BaseController {
     }
 
     @GetMapping("/appointments")
-    public Result<List<VetAppointment>> myAppointments() {
+    public Result<List<VetAppointmentVO>> myAppointments() {
         Long userId = requireLogin();
         return Result.success(vetClinicService.getUserAppointments(userId));
     }

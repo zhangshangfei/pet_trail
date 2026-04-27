@@ -211,7 +211,7 @@ CREATE TABLE IF NOT EXISTS `post_ee` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='收藏表';
 
 -- ========================================
--- 健康模块（体重、步数、饮水、统计）
+-- 健康模块（体重）
 -- ========================================
 
 -- 体重记录表
@@ -228,48 +228,6 @@ CREATE TABLE IF NOT EXISTS `weight_records` (
   KEY `idx_pet_id` (`pet_id`),
   KEY `idx_record_date` (`record_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='体重记录表';
-
--- 步数记录表
-CREATE TABLE IF NOT EXISTS `step_records` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` bigint(20) NOT NULL,
-  `pet_id` bigint(20) DEFAULT NULL,
-  `steps` int(11) NOT NULL COMMENT '步数',
-  `distance` decimal(10,2) DEFAULT NULL COMMENT '距离 (km)',
-  `record_date` date NOT NULL,
-  `source` tinyint(4) DEFAULT '1' COMMENT '来源：1-手动 2-设备同步',
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_pet_date` (`user_id`,`pet_id`,`record_date`),
-  KEY `idx_record_date` (`record_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='步数记录表';
-
--- 饮水记录表
-CREATE TABLE IF NOT EXISTS `water_records` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` bigint(20) NOT NULL,
-  `pet_id` bigint(20) DEFAULT NULL,
-  `amount` decimal(10,2) NOT NULL COMMENT '水量 (ml)',
-  `record_date` date NOT NULL,
-  `record_time` time DEFAULT NULL COMMENT '记录时间',
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_user_date` (`user_id`,`record_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='饮水记录表';
-
--- 健康统计表（每日聚合）
-CREATE TABLE IF NOT EXISTS `health_daily_stats` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` bigint(20) NOT NULL,
-  `pet_id` bigint(20) DEFAULT NULL,
-  `stat_date` date NOT NULL,
-  `total_steps` int(11) DEFAULT '0',
-  `total_water` decimal(10,2) DEFAULT '0',
-  `weight` decimal(5,2) DEFAULT NULL,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_pet_date` (`user_id`,`pet_id`,`stat_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='健康统计表';
 
 -- ========================================
 -- 提醒模块（疫苗、驱虫）

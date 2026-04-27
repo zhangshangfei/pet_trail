@@ -22,7 +22,6 @@ com\pettrail\pettrailbackend\service\UserBehaviorService.class
 com\pettrail\pettrailbackend\controller\UploadController.class
 com\pettrail\pettrailbackend\entity\VetAppointment.class
 com\pettrail\pettrailbackend\controller\admin\AdminAiModelController.class
-com\pettrail\pettrailbackend\entity\StepRecord.class
 com\pettrail\pettrailbackend\annotation\OperationLog.class
 com\pettrail\pettrailbackend\dto\NotificationSendDTO.class
 com\pettrail\pettrailbackend\controller\UserMembershipController.class
@@ -175,7 +174,6 @@ com\pettrail\pettrailbackend\controller\UserController$LoginResponse.class
 com\pettrail\pettrailbackend\service\VetClinicService.class
 com\pettrail\pettrailbackend\dto\CheckinItemRequest.class
 com\pettrail\pettrailbackend\dto\MembershipOrderDTO.class
-com\pettrail\pettrailbackend\mapper\StepRecordMapper.class
 com\pettrail\pettrailbackend\dto\UserBehaviorViewDTO.class
 com\pettrail\pettrailbackend\service\VaccineReminderService.class
 com\pettrail\pettrailbackend\config\CacheConfig.class
@@ -183,7 +181,6 @@ com\pettrail\pettrailbackend\config\SpringDocConfig.class
 com\pettrail\pettrailbackend\service\ProductService.class
 com\pettrail\pettrailbackend\entity\Notification.class
 com\pettrail\pettrailbackend\PetTrailBackendApplication.class
-com\pettrail\pettrailbackend\dto\StepRecordDTO.class
 com\pettrail\pettrailbackend\service\AiModelService$InMemoryStats.class
 com\pettrail\pettrailbackend\mapper\PostCommentMapper.class
 com\pettrail\pettrailbackend\config\SentinelConfig.class
@@ -195,10 +192,8 @@ com\pettrail\pettrailbackend\config\WebSocketConfig.class
 com\pettrail\pettrailbackend\mapper\VetClinicMapper.class
 com\pettrail\pettrailbackend\service\HealthRecordService.class
 com\pettrail\pettrailbackend\dto\AchievementVO.class
-com\pettrail\pettrailbackend\dto\WaterRecordDTO.class
 com\pettrail\pettrailbackend\dto\WeightRecordDTO.class
 com\pettrail\pettrailbackend\controller\PetController.class
-com\pettrail\pettrailbackend\mapper\WaterRecordMapper.class
 com\pettrail\pettrailbackend\websocket\NotificationWebSocketHandler.class
 com\pettrail\pettrailbackend\util\JwtUtil.class
 com\pettrail\pettrailbackend\config\CacheEnableConfig.class
@@ -224,7 +219,6 @@ com\pettrail\pettrailbackend\task\FallbackReminderTask.class
 com\pettrail\pettrailbackend\service\NotificationService.class
 com\pettrail\pettrailbackend\util\HttpUtil$1.class
 com\pettrail\pettrailbackend\entity\UserHiddenItem.class
-com\pettrail\pettrailbackend\entity\WaterRecord.class
 com\pettrail\pettrailbackend\service\WxSubscribeMessageService.class
 com\pettrail\pettrailbackend\entity\Tag.class
 com\pettrail\pettrailbackend\mapper\UserBehaviorMapper.class

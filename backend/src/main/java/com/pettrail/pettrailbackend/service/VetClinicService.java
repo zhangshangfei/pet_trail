@@ -1,9 +1,12 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.pettrail.pettrailbackend.dto.VetAppointmentVO;
+import com.pettrail.pettrailbackend.entity.Pet;
 import com.pettrail.pettrailbackend.entity.VetAppointment;
 import com.pettrail.pettrailbackend.entity.VetClinic;
 import com.pettrail.pettrailbackend.exception.BusinessException;
+import com.pettrail.pettrailbackend.mapper.PetMapper;
 import com.pettrail.pettrailbackend.mapper.VetAppointmentMapper;
 import com.pettrail.pettrailbackend.mapper.VetClinicMapper;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -22,6 +28,7 @@ public class VetClinicService {
 
     private final VetClinicMapper clinicMapper;
     private final VetAppointmentMapper appointmentMapper;
+    private final PetMapper petMapper;
 
     public List<VetClinic> listClinics(Double latitude, Double longitude, int page, int size) {
         LambdaQueryWrapper<VetClinic> wrapper = new LambdaQueryWrapper<>();
@@ -81,11 +88,51 @@ public class VetClinicService {
         return appointment;
     }
 
-    public List<VetAppointment> getUserAppointments(Long userId) {
-        return appointmentMapper.selectList(
+    public List<VetAppointmentVO> getUserAppointments(Long userId) {
+        List<VetAppointment> appointments = appointmentMapper.selectList(
                 new LambdaQueryWrapper<VetAppointment>()
                         .eq(VetAppointment::getUserId, userId)
                         .orderByDesc(VetAppointment::getCreatedAt));
+        if (appointments.isEmpty()) {
+            return List.of();
+        }
+        List<Long> clinicIds = appointments.stream()
+                .map(VetAppointment::getClinicId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        List<Long> petIds = appointments.stream()
+                .map(VetAppointment::getPetId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, String> clinicNameMap = clinicIds.isEmpty() ? Map.of()
+                : clinicMapper.selectBatchIds(clinicIds).stream()
+                        .collect(Collectors.toMap(VetClinic::getId, VetClinic::getName, (a, b) -> a));
+        Map<Long, String> petNameMap = petIds.isEmpty() ? Map.of()
+                : petMapper.selectBatchIds(petIds).stream()
+                        .collect(Collectors.toMap(Pet::getId, Pet::getName, (a, b) -> a));
+        return appointments.stream().map(a -> {
+            VetAppointmentVO vo = new VetAppointmentVO();
+            vo.setId(a.getId());
+            vo.setUserId(a.getUserId());
+            vo.setClinicId(a.getClinicId());
+            vo.setPetId(a.getPetId());
+            vo.setAppointmentDate(a.getAppointmentDate());
+            vo.setAppointmentTime(a.getAppointmentTime());
+            vo.setSymptom(a.getSymptom());
+            vo.setStatus(a.getStatus());
+            vo.setCancelReason(a.getCancelReason());
+            vo.setCreatedAt(a.getCreatedAt());
+            vo.setUpdatedAt(a.getUpdatedAt());
+            if (a.getClinicId() != null) {
+                vo.setClinicName(clinicNameMap.get(a.getClinicId()));
+            }
+            if (a.getPetId() != null) {
+                vo.setPetName(petNameMap.get(a.getPetId()));
+            }
+            return vo;
+        }).collect(Collectors.toList());
     }
 
     @Transactional(rollbackFor = Exception.class)
