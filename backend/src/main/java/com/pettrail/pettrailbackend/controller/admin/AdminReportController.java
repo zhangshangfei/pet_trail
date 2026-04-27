@@ -1,11 +1,10 @@
 package com.pettrail.pettrailbackend.controller.admin;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.dto.ReportHandleDTO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Report;
-import com.pettrail.pettrailbackend.mapper.ReportMapper;
+import com.pettrail.pettrailbackend.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Admin-举报管理", description = "后台举报处理")
 public class AdminReportController extends BaseAdminController {
 
-    private final ReportMapper reportMapper;
+    private final ReportService reportService;
 
     @GetMapping
     @Operation(summary = "分页查询举报列表")
@@ -26,31 +25,14 @@ public class AdminReportController extends BaseAdminController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) String targetType) {
-        Page<Report> pageParam = new Page<>(page, size);
-        LambdaQueryWrapper<Report> wrapper = new LambdaQueryWrapper<>();
-        if (status != null) {
-            wrapper.eq(Report::getStatus, status);
-        }
-        if (targetType != null && !targetType.isEmpty()) {
-            wrapper.eq(Report::getTargetType, targetType);
-        }
-        wrapper.orderByDesc(Report::getCreatedAt);
-        return Result.success(reportMapper.selectPage(pageParam, wrapper));
+        return Result.success(reportService.adminListReports(page, size, status, targetType));
     }
 
     @PutMapping("/{id}/handle")
     @com.pettrail.pettrailbackend.annotation.OperationLog(module = "report", action = "handle", detail = "处理举报")
     @Operation(summary = "处理举报")
     public Result<Void> handle(@PathVariable Long id, @RequestBody ReportHandleDTO dto) {
-        Report report = reportMapper.selectById(id);
-        if (report == null) {
-            return Result.error(404, "举报不存在");
-        }
-        report.setStatus(dto.getStatus());
-        if (dto.getResult() != null) {
-            report.setResult(dto.getResult());
-        }
-        reportMapper.updateById(report);
+        reportService.adminHandleReport(id, dto.getStatus(), dto.getResult());
         return Result.success(null);
     }
 }

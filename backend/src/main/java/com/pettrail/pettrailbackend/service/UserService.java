@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.exception.BusinessException;
@@ -12,7 +13,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -172,5 +176,47 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         } catch (Exception e) {
             log.warn("用户注销缓存清除异常: {}", e.getMessage());
         }
+    }
+
+    public Map<Long, String> getNicknameMap(Set<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) return Map.of();
+        return this.listByIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId,
+                        u -> u.getNickname() != null ? u.getNickname() : "用户" + u.getId(),
+                        (a, b) -> a));
+    }
+
+    public Page<User> adminListUsers(int page, int size, String keyword, Integer status) {
+        Page<User> pageParam = new Page<>(page, size);
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        if (keyword != null && !keyword.isEmpty()) {
+            wrapper.and(w -> w.like(User::getNickname, keyword).or().like(User::getOpenid, keyword));
+        }
+        if (status != null) {
+            wrapper.eq(User::getStatus, status);
+        }
+        wrapper.orderByDesc(User::getCreatedAt);
+        return this.page(pageParam, wrapper);
+    }
+
+    public User adminGetUserDetail(Long id) {
+        User user = this.getById(id);
+        if (user == null) {
+            throw new BusinessException(404, "用户不存在");
+        }
+        return user;
+    }
+
+    public void adminUpdateUserStatus(Long id, Integer status) {
+        User user = this.getById(id);
+        if (user == null) {
+            throw new BusinessException(404, "用户不存在");
+        }
+        user.setStatus(status);
+        this.updateById(user);
+    }
+
+    public Map<String, Object> adminGetUserStats(Long id) {
+        throw new BusinessException("Use AdminDashboardService.adminGetUserStats instead");
     }
 }

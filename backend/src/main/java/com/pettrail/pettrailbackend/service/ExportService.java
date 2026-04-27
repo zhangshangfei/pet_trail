@@ -23,6 +23,9 @@ public class ExportService {
     private final PostMapper postMapper;
     private final ReportMapper reportMapper;
     private final AdminOperationLogMapper logMapper;
+    private final PetMapper petMapper;
+    private final ChallengeMapper challengeMapper;
+    private final ProductMapper productMapper;
 
     private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -195,6 +198,137 @@ public class ExportService {
             }
 
             writeResponse(response, wb, "logs");
+        }
+    }
+
+    public void exportPets(HttpServletResponse response, Integer category) throws IOException {
+        LambdaQueryWrapper<Pet> wrapper = new LambdaQueryWrapper<>();
+        if (category != null) {
+            wrapper.eq(Pet::getCategory, category);
+        }
+        wrapper.orderByDesc(Pet::getCreatedAt);
+        List<Pet> pets = petMapper.selectList(wrapper);
+
+        try (Workbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("宠物数据");
+            Row header = sheet.createRow(0);
+            String[] headers = {"ID", "用户ID", "名称", "品种", "类别", "性别", "体重(kg)", "绝育", "创建时间"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = header.createCell(i);
+                cell.setCellValue(headers[i]);
+                CellStyle style = wb.createCellStyle();
+                Font font = wb.createFont();
+                font.setBold(true);
+                style.setFont(font);
+                cell.setCellStyle(style);
+            }
+
+            int rowIdx = 1;
+            for (Pet p : pets) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(p.getId());
+                row.createCell(1).setCellValue(p.getUserId() != null ? p.getUserId() : 0);
+                row.createCell(2).setCellValue(p.getName() != null ? p.getName() : "");
+                row.createCell(3).setCellValue(p.getBreed() != null ? p.getBreed() : "");
+                row.createCell(4).setCellValue(p.getCategory() != null ? (p.getCategory() == 1 ? "猫" : p.getCategory() == 2 ? "狗" : "其他") : "未知");
+                row.createCell(5).setCellValue(p.getGender() != null ? (p.getGender() == 1 ? "公" : p.getGender() == 2 ? "母" : "未知") : "未知");
+                row.createCell(6).setCellValue(p.getWeight() != null ? p.getWeight().doubleValue() : 0);
+                row.createCell(7).setCellValue(p.getSterilized() != null ? (p.getSterilized() == 1 ? "已绝育" : "未绝育") : "未知");
+                row.createCell(8).setCellValue(p.getCreatedAt() != null ? p.getCreatedAt().format(DTF) : "");
+            }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            writeResponse(response, wb, "pets");
+        }
+    }
+
+    public void exportChallenges(HttpServletResponse response, Integer status) throws IOException {
+        LambdaQueryWrapper<Challenge> wrapper = new LambdaQueryWrapper<>();
+        if (status != null) {
+            wrapper.eq(Challenge::getStatus, status);
+        }
+        wrapper.orderByDesc(Challenge::getCreatedAt);
+        List<Challenge> challenges = challengeMapper.selectList(wrapper);
+
+        try (Workbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("挑战数据");
+            Row header = sheet.createRow(0);
+            String[] headers = {"ID", "标题", "描述", "状态", "开始时间", "结束时间", "创建时间"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = header.createCell(i);
+                cell.setCellValue(headers[i]);
+                CellStyle style = wb.createCellStyle();
+                Font font = wb.createFont();
+                font.setBold(true);
+                style.setFont(font);
+                cell.setCellStyle(style);
+            }
+
+            int rowIdx = 1;
+            for (Challenge c : challenges) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(c.getId());
+                row.createCell(1).setCellValue(c.getTitle() != null ? c.getTitle() : "");
+                row.createCell(2).setCellValue(c.getDescription() != null ? c.getDescription() : "");
+                row.createCell(3).setCellValue(c.getStatus() != null ? (c.getStatus() == 1 ? "进行中" : c.getStatus() == 2 ? "已结束" : "未开始") : "未知");
+                row.createCell(4).setCellValue(c.getStartDate() != null ? c.getStartDate().format(DTF) : "");
+                row.createCell(5).setCellValue(c.getEndDate() != null ? c.getEndDate().format(DTF) : "");
+                row.createCell(6).setCellValue(c.getCreatedAt() != null ? c.getCreatedAt().format(DTF) : "");
+            }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            writeResponse(response, wb, "challenges");
+        }
+    }
+
+    public void exportProducts(HttpServletResponse response, Integer status) throws IOException {
+        LambdaQueryWrapper<Product> wrapper = new LambdaQueryWrapper<>();
+        if (status != null) {
+            wrapper.eq(Product::getStatus, status);
+        }
+        wrapper.orderByDesc(Product::getCreatedAt);
+        List<Product> products = productMapper.selectList(wrapper);
+
+        try (Workbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("商品数据");
+            Row header = sheet.createRow(0);
+            String[] headers = {"ID", "名称", "分类", "品牌", "价格", "原价", "销量", "评分", "状态", "创建时间"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = header.createCell(i);
+                cell.setCellValue(headers[i]);
+                CellStyle style = wb.createCellStyle();
+                Font font = wb.createFont();
+                font.setBold(true);
+                style.setFont(font);
+                cell.setCellStyle(style);
+            }
+
+            int rowIdx = 1;
+            for (Product p : products) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(p.getId());
+                row.createCell(1).setCellValue(p.getName() != null ? p.getName() : "");
+                row.createCell(2).setCellValue(p.getCategory() != null ? p.getCategory() : "");
+                row.createCell(3).setCellValue(p.getBrand() != null ? p.getBrand() : "");
+                row.createCell(4).setCellValue(p.getPrice() != null ? p.getPrice().doubleValue() : 0);
+                row.createCell(5).setCellValue(p.getOriginalPrice() != null ? p.getOriginalPrice().doubleValue() : 0);
+                row.createCell(6).setCellValue(p.getSalesCount() != null ? p.getSalesCount() : 0);
+                row.createCell(7).setCellValue(p.getRating() != null ? p.getRating().doubleValue() : 0);
+                row.createCell(8).setCellValue(p.getStatus() != null ? (p.getStatus() == 1 ? "上架" : "下架") : "未知");
+                row.createCell(9).setCellValue(p.getCreatedAt() != null ? p.getCreatedAt().format(DTF) : "");
+            }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            writeResponse(response, wb, "products");
         }
     }
 

@@ -160,7 +160,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useAdminStore } from '@/store/admin'
-import { getClinicList, createClinic, updateClinic, deleteClinic, updateClinicStatus, setClinicPartner, getClinicStats, getAppointmentList, updateAppointmentStatus } from '@/api/admin'
+import { getClinicList, getClinicDetail, createClinic, updateClinic, deleteClinic, updateClinicStatus, setClinicPartner, getClinicStats, getAppointmentList, updateAppointmentStatus } from '@/api/admin'
 
 const adminStore = useAdminStore()
 const isSuperAdmin = ref(adminStore.isSuperAdmin)
@@ -226,10 +226,16 @@ function openCreate() {
   showDialog.value = true
 }
 
-function openEdit(row) {
-  isEdit.value = true; editId.value = row.id
-  form.value = { ...row }
-  showDialog.value = true
+async function openEdit(row) {
+  try {
+    const res = await getClinicDetail(row.id)
+    const detail = res.data || row
+    isEdit.value = true; editId.value = detail.id
+    form.value = { ...detail }
+    showDialog.value = true
+  } catch (e) {
+    console.error(e); ElMessage.error('获取详情失败')
+  }
 }
 
 async function submitForm() {

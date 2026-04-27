@@ -1,10 +1,13 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pettrail.pettrailbackend.entity.Pet;
+import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.mapper.PetMapper;
+import com.pettrail.pettrailbackend.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -15,7 +18,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -23,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 public class PetService extends ServiceImpl<PetMapper, Pet> {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final UserMapper userMapper;
 
     private static final String PET_DETAIL_PREFIX = "pet:detail:";
     private static final String PET_LIST_PREFIX = "pet:list:";
@@ -203,6 +210,75 @@ public class PetService extends ServiceImpl<PetMapper, Pet> {
             redisTemplate.delete(PET_LIST_PREFIX + userId);
         } catch (Exception e) {
             log.warn("宠物列表缓存清除异常: {}", e.getMessage());
+        }
+    }
+
+    public Page<Pet> adminListPets(int page, int size, String keyword, Integer category, Long userId) {
+        Page<Pet> pageParam = new Page<>(page, size);
+        LambdaQueryWrapper<Pet> wrapper = new LambdaQueryWrapper<>();
+        if (keyword != null && !keyword.isEmpty()) {
+            wrapper.like(Pet::getName, keyword);
+        }
+        if (category != null) {
+            wrapper.eq(Pet::getCategory, category);
+        }
+        if (userId != null) {
+            wrapper.eq(Pet::getUserId, userId);
+        }
+        wrapper.orderByDesc(Pet::getCreatedAt);
+        Page<Pet> result = this.page(pageParam, wrapper);
+        fillPetUserNickname(result);
+        return result;
+    }
+
+    public Pet adminGetPetDetail(Long id) {
+        Pet pet = this.getById(id);
+        if (pet == null) {
+            throw new BusinessException(404, "宠物不存在");
+        }
+        if (pet.getUserId() != null) {
+            User user = userMapper.selectById(pet.getUserId());
+            if (user != null) {
+                pet.setUserNickname(user.getNickname());
+            }
+        }
+        return pet;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void adminDeletePet(Long id) {
+        Pet pet = this.getById(id);
+        if (pet == null) {
+            throw new BusinessException(404, "宠物不存在");
+        }
+        this.removeById(id);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Pet adminUpdatePet(Long id, Pet pet) {
+        Pet existing = this.getById(id);
+        if (existing == null) {
+            throw new BusinessException(404, "宠物不存在");
+        }
+        pet.setId(id);
+        this.updateById(pet);
+        return pet;
+    }
+
+    private void fillPetUserNickname(Page<Pet> result) {
+        Set<Long> userIds = result.getRecords().stream()
+                .map(Pet::getUserId)
+                .filter(uid -> uid != null)
+                .collect(Collectors.toSet());
+        if (userIds.isEmpty()) return;
+        Map<Long, String> nicknameMap = userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId,
+                        u -> u.getNickname() != null ? u.getNickname() : "用户" + u.getId(),
+                        (a, b) -> a));
+        for (Pet pet : result.getRecords()) {
+            if (pet.getUserId() != null) {
+                pet.setUserNickname(nicknameMap.getOrDefault(pet.getUserId(), "未知用户"));
+            }
         }
     }
 }

@@ -113,12 +113,13 @@ const renderTrendChart = (data) => {
   }
   trendChart.setOption({
     tooltip: { trigger: 'axis' },
-    legend: { data: ['新增用户', '新增动态'], top: 0 },
+    legend: { data: ['新增用户', '活跃用户', '新增动态'], top: 0 },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     xAxis: { type: 'category', data: data.dates || [], axisLabel: { fontSize: 11 } },
     yAxis: { type: 'value', minInterval: 1 },
     series: [
       { name: '新增用户', type: 'line', smooth: true, data: data.newUsers || [], itemStyle: { color: '#409eff' }, areaStyle: { color: 'rgba(64,158,255,0.1)' } },
+      { name: '活跃用户', type: 'line', smooth: true, data: data.activeUsers || [], itemStyle: { color: '#67c23a' }, areaStyle: { color: 'rgba(103,194,58,0.1)' } },
       { name: '新增动态', type: 'line', smooth: true, data: data.newPosts || [], itemStyle: { color: '#e6a23c' }, areaStyle: { color: 'rgba(230,162,60,0.1)' } }
     ]
   })

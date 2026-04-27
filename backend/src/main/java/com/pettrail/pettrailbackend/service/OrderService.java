@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.dto.OrderVO;
 import com.pettrail.pettrailbackend.entity.Order;
 import com.pettrail.pettrailbackend.entity.UserMembership;
@@ -177,5 +178,21 @@ public class OrderService {
         vo.setCreatedAt(order.getCreatedAt());
         vo.setPaidAt(order.getPaidAt());
         return vo;
+    }
+
+    public Page<Order> adminListOrders(int page, int size, Integer status) {
+        Page<Order> pageParam = new Page<>(page, size);
+        LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
+        if (status != null) wrapper.eq(Order::getStatus, status);
+        wrapper.orderByDesc(Order::getCreatedAt);
+        return orderMapper.selectPage(pageParam, wrapper);
+    }
+
+    public long adminCountOrders() {
+        return orderMapper.selectCount(null);
+    }
+
+    public long adminCountPaidOrders() {
+        return orderMapper.selectCount(new LambdaQueryWrapper<Order>().eq(Order::getStatus, 1));
     }
 }

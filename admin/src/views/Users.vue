@@ -86,6 +86,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getUserList, getUserStats, updateUserStatus, exportUsers } from '../api/admin'
+import { useAdminStore } from '@/store/admin'
 
 const tableData = ref([])
 const loading = ref(false)
@@ -98,8 +99,8 @@ const showDetail = ref(false)
 const detailUser = ref(null)
 const userStats = ref(null)
 
-const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}')
-const isSuperAdmin = computed(() => adminInfo.role === 'SUPER_ADMIN')
+const adminStore = useAdminStore()
+const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
 
 const userStatCards = computed(() => [
   { key: 'pets', label: '宠物数', value: userStats.value?.petCount || 0 },
