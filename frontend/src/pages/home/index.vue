@@ -849,7 +849,7 @@ export default {
     },
 
     onTagTap(tag) {
-      uni.showToast({ title: '#' + tag, icon: 'none', duration: 1500 })
+      uni.navigateTo({ url: `/pages/tag/posts?name=${encodeURIComponent(tag)}` })
     }
   }
 };

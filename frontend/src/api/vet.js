@@ -17,5 +17,6 @@ export const getMyAppointments = () => {
 }
 
 export const cancelAppointment = (id, reason) => {
-  return request.delete(`/api/vet/appointments/${id}`, { reason })
+  const url = reason ? `/api/vet/appointments/${id}?reason=${encodeURIComponent(reason)}` : `/api/vet/appointments/${id}`
+  return request.delete(url)
 }
