@@ -1,38 +1,100 @@
 <template>
   <div class="sys-menus-page">
-    <el-card shadow="hover">
-      <template #header>
-        <div class="page-header">
-          <span class="card-title">菜单管理</span>
-          <el-button type="success" @click="openCreate(0)">新增顶级菜单</el-button>
-        </div>
-      </template>
+    <div class="page-header-bar">
+      <div class="header-left">
+        <h2 class="page-title">菜单管理</h2>
+        <span class="page-subtitle">管理系统导航菜单结构、权限码及按钮权限配置，支持拖拽排序</span>
+      </div>
+      <el-button type="primary" :icon="Plus" @click="openCreate(0)">新增顶级菜单</el-button>
+    </div>
 
-      <el-table :data="flatList" v-loading="loading" row-key="id" :tree-props="{ children: 'children' }" default-expand-all stripe>
-        <el-table-column prop="name" label="菜单名称" min-width="180" />
-        <el-table-column prop="path" label="路由路径" width="160" />
-        <el-table-column prop="icon" label="图标" width="120" />
-        <el-table-column prop="permission" label="权限码" width="140" />
-        <el-table-column label="按钮权限" min-width="200">
-          <template #default="{ row }">
-            <el-tag v-for="b in parseButtons(row.buttons)" :key="b" size="small" type="info" style="margin: 2px;">{{ b }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="sortOrder" label="排序" width="70" />
-        <el-table-column prop="status" label="状态" width="80">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">{{ row.status === 1 ? '启用' : '禁用' }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
-          <template #default="{ row }">
-            <el-button v-if="!row.path" size="small" text @click="openCreate(row.id)">添加子菜单</el-button>
-            <el-button size="small" text @click="openEdit(row)">编辑</el-button>
-            <el-button type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
+    <div class="menu-tree-wrapper">
+      <el-tree
+        ref="treeRef"
+        :data="treeList"
+        node-key="id"
+        default-expand-all
+        :expand-on-click-node="false"
+        :allow-drop="allowDrop"
+        draggable
+        class="menu-tree"
+        @node-drop="onNodeDrop"
+      >
+        <template #default="{ node, data }">
+          <div class="menu-tree-node" :class="{ 'is-group': !data.path, 'is-page': data.path }">
+            <div class="node-main">
+              <div class="node-icon" :class="{ 'is-group': !data.path }">
+                <el-icon v-if="data.icon" :size="16">
+                  <component :is="data.icon" />
+                </el-icon>
+                <el-icon v-else :size="16">
+                  <Folder v-if="!data.path" />
+                  <Document v-else />
+                </el-icon>
+              </div>
+              <div class="node-content">
+                <div class="node-title-row">
+                  <span class="node-name">{{ data.name }}</span>
+                  <el-tag v-if="!data.path" size="small" type="warning" effect="light" class="type-tag">目录</el-tag>
+                  <el-tag v-else size="small" type="success" effect="light" class="type-tag">页面</el-tag>
+                  <el-tag
+                    :type="data.status === 1 ? 'success' : 'danger'"
+                    size="small"
+                    effect="light"
+                    class="status-tag"
+                  >{{ data.status === 1 ? '启用' : '禁用' }}</el-tag>
+                </div>
+                <div class="node-meta-row">
+                  <span v-if="data.path" class="meta-item">
+                    <el-icon><Link /></el-icon>
+                    <span class="meta-text">{{ data.path }}</span>
+                  </span>
+                  <span v-if="data.permission" class="meta-item">
+                    <el-icon><Lock /></el-icon>
+                    <span class="meta-text">{{ data.permission }}</span>
+                  </span>
+                  <span v-if="parseButtons(data.buttons).length" class="meta-item">
+                    <el-icon><Mouse /></el-icon>
+                    <div class="btn-tag-list">
+                      <el-tag
+                        v-for="b in parseButtons(data.buttons)"
+                        :key="b"
+                        size="small"
+                        type="info"
+                        effect="plain"
+                      >{{ b }}</el-tag>
+                    </div>
+                  </span>
+                  <span class="meta-item">
+                    <el-icon><Sort /></el-icon>
+                    <span class="meta-text">排序 {{ data.sortOrder }}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="node-actions">
+              <el-tooltip v-if="!data.path" content="添加子菜单" placement="top">
+                <el-button circle size="small" @click="openCreate(data.id)">
+                  <el-icon><Plus /></el-icon>
+                </el-button>
+              </el-tooltip>
+              <el-tooltip content="编辑" placement="top">
+                <el-button circle size="small" type="primary" plain @click="openEdit(data)">
+                  <el-icon><Edit /></el-icon>
+                </el-button>
+              </el-tooltip>
+              <el-tooltip content="删除" placement="top">
+                <el-button circle size="small" type="danger" plain @click="handleDelete(data)">
+                  <el-icon><Delete /></el-icon>
+                </el-button>
+              </el-tooltip>
+            </div>
+          </div>
+        </template>
+      </el-tree>
+    </div>
+
+    <el-empty v-if="!loading && !treeList.length" description="暂无菜单数据" />
 
     <el-dialog v-model="showDialog" :title="isEdit ? '编辑菜单' : '新增菜单'" width="550px" destroy-on-close>
       <el-form :model="form" label-width="100px">
@@ -65,10 +127,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getMenuTree, createMenu, updateMenu, deleteMenu } from '@/api/admin'
+import { Plus, Edit, Delete, Folder, Document, Link, Lock, Mouse, Sort } from '@element-plus/icons-vue'
+import { getMenuTree, createMenu, updateMenu, deleteMenu, batchSortMenus } from '@/api/admin'
 
 const loading = ref(false)
-const flatList = ref([])
+const treeList = ref([])
+const treeRef = ref(null)
 const showDialog = ref(false)
 const isEdit = ref(false)
 const editId = ref(null)
@@ -76,30 +140,45 @@ const form = ref({})
 
 function parseButtons(btns) {
   if (!btns) return []
-  return btns.split(',').map(b => b.trim()).filter(Boolean)
+  if (Array.isArray(btns)) return btns
+  return String(btns).split(',').map(b => b.trim()).filter(Boolean)
 }
 
-function flattenTree(tree) {
-  const result = []
-  for (const node of tree) {
-    const item = { ...node }
-    const children = item.children
-    delete item.children
-    if (children && children.length > 0) {
-      result.push(item)
-      result.push(...flattenTree(children))
-    } else {
-      result.push(item)
-    }
+function allowDrop(draggingNode, dropNode, type) {
+  if (type === 'inner') {
+    return !dropNode.data.path
   }
+  return true
+}
+
+function collectSortData(nodes, parentId) {
+  const result = []
+  if (!nodes) return result
+  nodes.forEach((node, index) => {
+    result.push({ id: node.id, sortOrder: index, parentId })
+    if (node.children && node.children.length > 0) {
+      result.push(...collectSortData(node.children, node.id))
+    }
+  })
   return result
+}
+
+async function onNodeDrop() {
+  try {
+    const sortData = collectSortData(treeList.value, 0)
+    await batchSortMenus(sortData)
+    ElMessage.success('排序已保存')
+  } catch (e) {
+    ElMessage.error('排序保存失败')
+    loadData()
+  }
 }
 
 async function loadData() {
   loading.value = true
   try {
     const res = await getMenuTree()
-    flatList.value = res.data || []
+    treeList.value = res.data || []
   } catch (e) {}
   loading.value = false
 }
@@ -145,8 +224,184 @@ onMounted(() => loadData())
 </script>
 
 <style scoped>
-.page-header { display: flex; justify-content: space-between; align-items: center; }
-.card-title { font-size: 16px; font-weight: 600; }
+.sys-menus-page {
+  padding: 20px;
+}
+
+.page-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: #909399;
+}
+
+.menu-tree-wrapper {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
+  padding: 16px;
+}
+
+.menu-tree :deep(.el-tree-node__content) {
+  height: auto;
+  padding: 8px 0;
+}
+
+.menu-tree :deep(.el-tree-node__expand-icon) {
+  font-size: 16px;
+  color: #909399;
+}
+
+.menu-tree :deep(.is-dragging) {
+  opacity: 0.5;
+}
+
+.menu-tree :deep(.el-tree-node.is-drop-inner > .el-tree-node__content) {
+  background-color: #ecf5ff;
+}
+
+.menu-tree-node {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.menu-tree-node:hover {
+  background: #f5f7fa;
+  border-color: #e4e7ed;
+}
+
+.menu-tree-node.is-group {
+  background: #fafbfc;
+}
+
+.menu-tree-node.is-group:hover {
+  background: #f0f2f5;
+  border-color: #dcdfe6;
+}
+
+.node-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.node-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #409eff 0%, #1677ff 100%);
+  border-radius: 8px;
+  color: #fff;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.node-icon.is-group {
+  background: linear-gradient(135deg, #e6a23c 0%, #f56c6c 100%);
+}
+
+.node-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.node-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.node-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.type-tag {
+  font-size: 11px;
+  height: 20px;
+  padding: 0 6px;
+}
+
+.status-tag {
+  font-size: 11px;
+  height: 20px;
+  padding: 0 6px;
+}
+
+.node-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #606266;
+  font-size: 13px;
+}
+
+.meta-item .el-icon {
+  color: #909399;
+  font-size: 14px;
+}
+
+.meta-text {
+  font-family: 'Courier New', monospace;
+  color: #606266;
+}
+
+.btn-tag-list {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.node-actions {
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  padding-left: 16px;
+}
+
+.menu-tree-node:hover .node-actions {
+  opacity: 1;
+}
+
 .btn-config { width: 100%; }
 .btn-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 </style>

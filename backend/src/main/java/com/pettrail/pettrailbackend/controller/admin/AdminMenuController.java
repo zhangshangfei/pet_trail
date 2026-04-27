@@ -56,4 +56,11 @@ public class AdminMenuController extends BaseAdminController {
         sysMenuService.updateMenuStatus(id, body.get("status"));
         return Map.of("success", true);
     }
+
+    @PutMapping("/batch-sort")
+    @Operation(summary = "批量更新菜单排序")
+    public Map<String, Object> batchSort(@RequestBody List<Map<String, Object>> sortList) {
+        sysMenuService.batchSort(sortList);
+        return Map.of("success", true);
+    }
 }

@@ -151,8 +151,9 @@ async function openPermission(row) {
     for (const rm of roleMenus) {
       checkedIds.push(rm.menuId)
       if (rm.buttons) {
-        for (const b of rm.buttons.split(',')) {
-          const trimmed = b.trim()
+        const btnArr = Array.isArray(rm.buttons) ? rm.buttons : String(rm.buttons).split(',')
+        for (const b of btnArr) {
+          const trimmed = String(b).trim()
           if (trimmed) buttonState.value[rm.menuId + '_' + trimmed] = true
         }
       }
