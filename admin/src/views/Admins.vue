@@ -20,10 +20,10 @@
         <el-table-column label="所属商户" width="140" show-overflow-tooltip>
           <template #default="{ row }">{{ row.merchantName || '-' }}</template>
         </el-table-column>
-        <el-table-column label="权限" min-width="200">
+        <el-table-column label="菜单权限" min-width="200">
           <template #default="{ row }">
             <div class="perm-tags">
-              <el-tag v-for="p in parsePermissions(row.permissions).slice(0, 5)" :key="p" size="small" type="info" style="margin: 2px;">{{ permLabelMap[p] || p }}</el-tag>
+              <el-tag v-for="p in parsePermissions(row.permissions).slice(0, 5)" :key="p" size="small" type="info" style="margin: 2px;">{{ p }}</el-tag>
               <el-tag v-if="parsePermissions(row.permissions).length > 5" size="small" style="margin: 2px;">+{{ parsePermissions(row.permissions).length - 5 }}</el-tag>
             </div>
           </template>
@@ -66,18 +66,21 @@
             <el-option v-for="m in merchantList" :key="m.id" :label="m.name" :value="m.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="权限配置">
-          <div class="perm-config">
-            <el-button size="small" @click="selectAllPerms">全选</el-button>
-            <el-button size="small" @click="deselectAllPerms">清空</el-button>
-            <div class="perm-groups">
-              <div v-for="group in permGroups" :key="group.label" class="perm-group">
-                <div class="perm-group-label">{{ group.label }}</div>
-                <el-checkbox-group v-model="form.permList">
-                  <el-checkbox v-for="p in group.items" :key="p.code" :label="p.code">{{ p.label }}</el-checkbox>
-                </el-checkbox-group>
-              </div>
+        <el-form-item v-if="form.role !== 'SUPER_ADMIN'" label="菜单权限">
+          <div class="menu-tree-wrap">
+            <div style="margin-bottom: 8px;">
+              <el-button size="small" @click="selectAllMenus">全选</el-button>
+              <el-button size="small" @click="deselectAllMenus">清空</el-button>
             </div>
+            <el-tree
+              ref="menuTreeRef"
+              :data="menuTree"
+              show-checkbox
+              node-key="id"
+              :default-checked-keys="form.checkedMenuIds"
+              :props="{ label: 'name', children: 'children' }"
+              @check="onMenuCheck"
+            />
           </div>
         </el-form-item>
       </el-form>
@@ -90,34 +93,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getAdminList, createAdmin, updateAdmin, updateAdminStatus, resetAdminPassword, getMerchantList, getAllPermissions } from '@/api/admin'
+import { getAdminList, createAdmin, updateAdmin, updateAdminStatus, resetAdminPassword, getMerchantList, getMenuTree } from '@/api/admin'
 
 const roleLabelMap = { SUPER_ADMIN: '超级管理员', ADMIN: '平台管理员', MERCHANT_ADMIN: '商户管理员', MERCHANT_STAFF: '商户员工' }
 const roleTagMap = { SUPER_ADMIN: 'danger', ADMIN: '', MERCHANT_ADMIN: 'warning', MERCHANT_STAFF: 'info' }
-
-const permLabelMap = {
-  'dashboard': '仪表盘', 'user:view': '用户查看', 'pet:view': '宠物查看', 'pet:manage': '宠物管理',
-  'post:view': '动态查看', 'post:manage': '动态管理', 'comment:view': '评论查看', 'comment:manage': '评论管理',
-  'report:view': '举报查看', 'report:handle': '举报处理', 'notification:view': '通知查看', 'notification:send': '通知发送',
-  'feedback:view': '反馈查看', 'feedback:reply': '反馈回复', 'admin:manage': '管理员管理', 'log:view': '操作日志',
-  'setting:manage': '系统设置', 'config:manage': '系统配置', 'ai-model:view': 'AI模型查看', 'ai-model:manage': 'AI模型管理',
-  'challenge:view': '挑战赛查看', 'challenge:manage': '挑战赛管理', 'product:view': '商品查看', 'product:manage': '商品管理',
-  'vet-clinic:view': '医院查看', 'vet-clinic:manage': '医院管理', 'merchant:manage': '商户管理', 'export': '数据导出'
-}
-
-const permGroups = [
-  { label: '基础', items: [{ code: 'dashboard', label: '仪表盘' }, { code: 'export', label: '数据导出' }] },
-  { label: '用户与宠物', items: [{ code: 'user:view', label: '用户查看' }, { code: 'pet:view', label: '宠物查看' }, { code: 'pet:manage', label: '宠物管理' }] },
-  { label: '内容管理', items: [{ code: 'post:view', label: '动态查看' }, { code: 'post:manage', label: '动态管理' }, { code: 'comment:view', label: '评论查看' }, { code: 'comment:manage', label: '评论管理' }] },
-  { label: '举报与反馈', items: [{ code: 'report:view', label: '举报查看' }, { code: 'report:handle', label: '举报处理' }, { code: 'feedback:view', label: '反馈查看' }, { code: 'feedback:reply', label: '反馈回复' }] },
-  { label: '通知', items: [{ code: 'notification:view', label: '通知查看' }, { code: 'notification:send', label: '通知发送' }] },
-  { label: '商城与医院', items: [{ code: 'product:view', label: '商品查看' }, { code: 'product:manage', label: '商品管理' }, { code: 'vet-clinic:view', label: '医院查看' }, { code: 'vet-clinic:manage', label: '医院管理' }] },
-  { label: '活动', items: [{ code: 'challenge:view', label: '挑战赛查看' }, { code: 'challenge:manage', label: '挑战赛管理' }] },
-  { label: 'AI模型', items: [{ code: 'ai-model:view', label: 'AI模型查看' }, { code: 'ai-model:manage', label: 'AI模型管理' }] },
-  { label: '系统管理', items: [{ code: 'admin:manage', label: '管理员管理' }, { code: 'log:view', label: '操作日志' }, { code: 'setting:manage', label: '系统设置' }, { code: 'config:manage', label: '系统配置' }, { code: 'merchant:manage', label: '商户管理' }] }
-]
 
 const loading = ref(false)
 const list = ref([])
@@ -129,6 +110,8 @@ const isEdit = ref(false)
 const editId = ref(null)
 const form = ref({})
 const merchantList = ref([])
+const menuTree = ref([])
+const menuTreeRef = ref(null)
 
 const isMerchantRole = computed(() => form.value.role === 'MERCHANT_ADMIN' || form.value.role === 'MERCHANT_STAFF')
 
@@ -137,22 +120,80 @@ function parsePermissions(perms) {
   return perms.split(',').map(p => p.trim()).filter(Boolean)
 }
 
-function handleRoleChange(role) {
-  const defaults = {
-    SUPER_ADMIN: permGroups.flatMap(g => g.items.map(i => i.code)),
-    ADMIN: permGroups.flatMap(g => g.items.map(i => i.code)).filter(c => !['admin:manage', 'setting:manage', 'config:manage', 'merchant:manage'].includes(c)),
-    MERCHANT_ADMIN: ['dashboard', 'vet-clinic:view', 'vet-clinic:manage', 'product:view', 'product:manage', 'feedback:view', 'feedback:reply'],
-    MERCHANT_STAFF: ['dashboard', 'vet-clinic:view', 'product:view']
+function collectAllIds(nodes) {
+  let ids = []
+  for (const node of nodes) {
+    if (node.permission) ids.push(node.id)
+    if (node.children) ids = ids.concat(collectAllIds(node.children))
   }
-  form.value.permList = [...(defaults[role] || ['dashboard'])]
+  return ids
 }
 
-function selectAllPerms() {
-  form.value.permList = permGroups.flatMap(g => g.items.map(i => i.code))
+function collectIdsByPerms(nodes, permSet) {
+  let ids = []
+  for (const node of nodes) {
+    if (node.permission && permSet.has(node.permission)) ids.push(node.id)
+    if (node.children) ids = ids.concat(collectIdsByPerms(node.children, permSet))
+  }
+  return ids
 }
 
-function deselectAllPerms() {
-  form.value.permList = []
+function permsToMenuIds(perms) {
+  const permSet = new Set(parsePermissions(perms))
+  return collectIdsByPerms(menuTree.value, permSet)
+}
+
+const rolePermDefaults = {
+  SUPER_ADMIN: null,
+  ADMIN: 'dashboard,user:view,user:manage,pet:view,pet:manage,post:view,post:manage,comment:view,comment:manage,report:view,report:handle,notification:view,notification:send,feedback:view,feedback:reply,log:view,ai-model:view,ai-model:manage,challenge:view,challenge:manage,product:view,product:manage,vet-clinic:view,vet-clinic:manage,export',
+  MERCHANT_ADMIN: 'dashboard,vet-clinic:view,vet-clinic:manage,product:view,product:manage,feedback:view,feedback:reply',
+  MERCHANT_STAFF: 'dashboard,vet-clinic:view,product:view'
+}
+
+function handleRoleChange(role) {
+  if (role === 'SUPER_ADMIN') {
+    form.value.checkedMenuIds = collectAllIds(menuTree.value)
+  } else {
+    form.value.checkedMenuIds = permsToMenuIds(rolePermDefaults[role])
+  }
+  nextTick(() => {
+    if (menuTreeRef.value) {
+      menuTreeRef.value.setCheckedKeys(form.value.checkedMenuIds || [])
+    }
+  })
+}
+
+function selectAllMenus() {
+  if (menuTreeRef.value) {
+    menuTreeRef.value.setCheckedKeys(collectAllIds(menuTree.value))
+  }
+}
+
+function deselectAllMenus() {
+  if (menuTreeRef.value) {
+    menuTreeRef.value.setCheckedKeys([])
+  }
+}
+
+function onMenuCheck() {
+}
+
+function getCheckedPermissions() {
+  if (!menuTreeRef.value) return ''
+  const checkedNodes = menuTreeRef.value.getCheckedNodes(false, true)
+  const perms = []
+  for (const node of checkedNodes) {
+    if (node.permission) perms.push(node.permission)
+  }
+  return [...new Set(perms)].join(',')
+}
+
+async function loadMenuTree() {
+  if (menuTree.value.length > 0) return
+  try {
+    const res = await getMenuTree()
+    menuTree.value = res.data || []
+  } catch (e) {}
 }
 
 async function loadData() {
@@ -173,26 +214,38 @@ async function loadMerchants() {
   } catch (e) {}
 }
 
-function openCreate() {
+async function openCreate() {
   isEdit.value = false
   editId.value = null
-  form.value = { username: '', password: '', nickname: '', role: 'ADMIN', merchantId: null, permList: [] }
+  form.value = { username: '', password: '', nickname: '', role: 'ADMIN', merchantId: null, checkedMenuIds: [] }
+  await loadMenuTree()
+  await loadMerchants()
   handleRoleChange('ADMIN')
-  loadMerchants()
   showDialog.value = true
 }
 
-function openEdit(row) {
+async function openEdit(row) {
   isEdit.value = true
   editId.value = row.id
   form.value = {
     nickname: row.nickname,
     role: row.role,
     merchantId: row.merchantId,
-    permList: parsePermissions(row.permissions)
+    checkedMenuIds: []
   }
-  loadMerchants()
+  await loadMenuTree()
+  await loadMerchants()
+  if (row.role === 'SUPER_ADMIN') {
+    form.value.checkedMenuIds = collectAllIds(menuTree.value)
+  } else {
+    form.value.checkedMenuIds = permsToMenuIds(row.permissions)
+  }
   showDialog.value = true
+  nextTick(() => {
+    if (menuTreeRef.value) {
+      menuTreeRef.value.setCheckedKeys(form.value.checkedMenuIds || [])
+    }
+  })
 }
 
 async function submitForm() {
@@ -205,11 +258,17 @@ async function submitForm() {
     return
   }
   try {
+    const permissions = form.value.role === 'SUPER_ADMIN' ? '' : getCheckedPermissions()
     const data = {
-      ...form.value,
-      permissions: form.value.permList.join(',')
+      nickname: form.value.nickname,
+      role: form.value.role,
+      merchantId: form.value.merchantId,
+      permissions
     }
-    delete data.permList
+    if (!isEdit.value) {
+      data.username = form.value.username
+      data.password = form.value.password
+    }
     if (isEdit.value) {
       await updateAdmin(editId.value, data)
       ElMessage.success('更新成功')
@@ -252,8 +311,5 @@ onMounted(() => loadData())
 .card-title { font-size: 16px; font-weight: 600; }
 .pagination-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
 .perm-tags { display: flex; flex-wrap: wrap; }
-.perm-config { width: 100%; }
-.perm-groups { margin-top: 12px; display: flex; flex-direction: column; gap: 12px; }
-.perm-group { border: 1px solid #ebeef5; border-radius: 4px; padding: 10px 12px; }
-.perm-group-label { font-size: 13px; font-weight: 600; color: #606266; margin-bottom: 8px; }
+.menu-tree-wrap { width: 100%; border: 1px solid #ebeef5; border-radius: 4px; padding: 12px; max-height: 400px; overflow-y: auto; }
 </style>

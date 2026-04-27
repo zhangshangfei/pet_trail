@@ -46,7 +46,7 @@ const handleLogin = async () => {
   try {
     const res = await login(form)
     if (res.success && res.data) {
-      adminStore.setLoginInfo(res.data.token, res.data.admin)
+      adminStore.setLoginInfo(res.data.token, res.data.admin, res.data.menus)
       ElMessage.success('登录成功')
       router.push('/dashboard')
     }

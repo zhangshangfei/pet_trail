@@ -13,109 +13,22 @@
         text-color="#bfcbd9"
         active-text-color="#ff6a3d"
       >
-        <el-menu-item v-if="hasPermission('dashboard')" index="/dashboard">
-          <el-icon><DataAnalysis /></el-icon>
-          <template #title>仪表盘</template>
-        </el-menu-item>
-
-        <el-sub-menu v-if="hasAnyPermission(['user:view','pet:view'])" index="group-user">
-          <template #title>
-            <el-icon><User /></el-icon>
-            <span>用户与宠物</span>
-          </template>
-          <el-menu-item v-if="hasPermission('user:view')" index="/users">
-            <el-icon><User /></el-icon>
-            <template #title>用户管理</template>
+        <template v-for="menu in menuList" :key="menu.id">
+          <el-menu-item v-if="!menu.children || menu.children.length === 0" :index="menu.path">
+            <el-icon><component :is="menu.icon" /></el-icon>
+            <template #title>{{ menu.name }}</template>
           </el-menu-item>
-          <el-menu-item v-if="hasPermission('pet:view')" index="/pets">
-            <el-icon><Guide /></el-icon>
-            <template #title>宠物管理</template>
-          </el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu v-if="hasAnyPermission(['post:view','comment:view'])" index="group-content">
-          <template #title>
-            <el-icon><Document /></el-icon>
-            <span>内容管理</span>
-          </template>
-          <el-menu-item v-if="hasPermission('post:view')" index="/posts">
-            <el-icon><Document /></el-icon>
-            <template #title>动态管理</template>
-          </el-menu-item>
-          <el-menu-item v-if="hasPermission('comment:view')" index="/comments">
-            <el-icon><ChatDotRound /></el-icon>
-            <template #title>评论管理</template>
-          </el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu v-if="hasAnyPermission(['report:view','notification:view','feedback:view','challenge:view'])" index="group-operation">
-          <template #title>
-            <el-icon><Bell /></el-icon>
-            <span>运营与互动</span>
-          </template>
-          <el-menu-item v-if="hasPermission('report:view')" index="/reports">
-            <el-icon><Warning /></el-icon>
-            <template #title>举报管理</template>
-          </el-menu-item>
-          <el-menu-item v-if="hasPermission('notification:view')" index="/notifications">
-            <el-icon><Bell /></el-icon>
-            <template #title>通知管理</template>
-          </el-menu-item>
-          <el-menu-item v-if="hasPermission('feedback:view')" index="/feedbacks">
-            <el-icon><ChatLineSquare /></el-icon>
-            <template #title>反馈管理</template>
-          </el-menu-item>
-          <el-menu-item v-if="hasPermission('challenge:view')" index="/challenges">
-            <el-icon><Trophy /></el-icon>
-            <template #title>挑战赛配置</template>
-          </el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu v-if="hasAnyPermission(['product:view','vet-clinic:view','merchant:manage'])" index="group-business">
-          <template #title>
-            <el-icon><ShoppingCart /></el-icon>
-            <span>商业服务</span>
-          </template>
-          <el-menu-item v-if="hasPermission('vet-clinic:view')" index="/vet-clinics">
-            <el-icon><FirstAidKit /></el-icon>
-            <template #title>医院管理</template>
-          </el-menu-item>
-          <el-menu-item v-if="hasPermission('product:view')" index="/products">
-            <el-icon><ShoppingCart /></el-icon>
-            <template #title>商品管理</template>
-          </el-menu-item>
-          <el-menu-item v-if="hasPermission('merchant:manage')" index="/merchants">
-            <el-icon><OfficeBuilding /></el-icon>
-            <template #title>商户管理</template>
-          </el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu v-if="hasAnyPermission(['admin:manage','log:view','setting:manage','config:manage','ai-model:view'])" index="group-system">
-          <template #title>
-            <el-icon><Setting /></el-icon>
-            <span>系统管理</span>
-          </template>
-          <el-menu-item v-if="hasPermission('admin:manage')" index="/admins">
-            <el-icon><UserFilled /></el-icon>
-            <template #title>管理员管理</template>
-          </el-menu-item>
-          <el-menu-item v-if="hasPermission('log:view')" index="/logs">
-            <el-icon><List /></el-icon>
-            <template #title>操作日志</template>
-          </el-menu-item>
-          <el-menu-item v-if="hasPermission('setting:manage')" index="/settings">
-            <el-icon><Setting /></el-icon>
-            <template #title>系统设置</template>
-          </el-menu-item>
-          <el-menu-item v-if="hasPermission('config:manage')" index="/config">
-            <el-icon><Tools /></el-icon>
-            <template #title>系统配置</template>
-          </el-menu-item>
-          <el-menu-item v-if="hasPermission('ai-model:view')" index="/ai-models">
-            <el-icon><Cpu /></el-icon>
-            <template #title>AI模型管理</template>
-          </el-menu-item>
-        </el-sub-menu>
+          <el-sub-menu v-else :index="'menu-' + menu.id">
+            <template #title>
+              <el-icon><component :is="menu.icon" /></el-icon>
+              <span>{{ menu.name }}</span>
+            </template>
+            <el-menu-item v-for="child in menu.children" :key="child.id" :index="child.path">
+              <el-icon><component :is="child.icon" /></el-icon>
+              <template #title>{{ child.name }}</template>
+            </el-menu-item>
+          </el-sub-menu>
+        </template>
       </el-menu>
     </el-aside>
     <el-container>
@@ -188,6 +101,7 @@ const showChangePwd = ref(false)
 const pwdForm = ref({ oldPassword: '', newPassword: '', confirmPassword: '' })
 
 const activeMenu = computed(() => route.path)
+const menuList = computed(() => adminStore.menus || [])
 
 const roleLabel = computed(() => {
   const map = { SUPER_ADMIN: '超管', ADMIN: '管理员', MERCHANT_ADMIN: '商户管理', MERCHANT_STAFF: '商户员工' }
@@ -198,14 +112,6 @@ const roleTagType = computed(() => {
   const map = { SUPER_ADMIN: 'danger', ADMIN: '', MERCHANT_ADMIN: 'warning', MERCHANT_STAFF: 'info' }
   return map[adminRole.value] || ''
 })
-
-function hasPermission(code) {
-  return adminStore.hasPermission(code)
-}
-
-function hasAnyPermission(codes) {
-  return adminStore.hasAnyPermission(codes)
-}
 
 const handleCommand = (command) => {
   if (command === 'logout') {
@@ -251,10 +157,15 @@ onMounted(async () => {
   try {
     const res = await getProfile()
     if (res.data) {
-      adminName.value = res.data.nickname || res.data.username || '管理员'
-      adminRole.value = res.data.role || ''
-      adminStore.adminInfo = res.data
-      localStorage.setItem('admin_info', JSON.stringify(res.data))
+      const admin = res.data.admin || res.data
+      adminName.value = admin.nickname || admin.username || '管理员'
+      adminRole.value = admin.role || ''
+      adminStore.adminInfo = admin
+      localStorage.setItem('admin_info', JSON.stringify(admin))
+      if (res.data.menus) {
+        adminStore.menus = res.data.menus
+        localStorage.setItem('admin_menus', JSON.stringify(res.data.menus))
+      }
     }
   } catch (e) {}
 })

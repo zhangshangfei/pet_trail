@@ -15,6 +15,7 @@ G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\converter\PostConverter.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\task\PostAuditScheduledTask.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\mapper\NotificationMapper.java
+G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\controller\admin\AdminMenuController.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\controller\VetClinicController.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\dto\FeedingReminderDTO.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\dto\FeedbackCreateDTO.java
@@ -127,6 +128,7 @@ G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\dto\OrderCreateDTO.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\entity\PostTag.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\entity\AdminOperationLog.java
+G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\entity\SysMenu.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\mapper\WxSubscribeAuthorizationMapper.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\dto\PetAlbumDTO.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\dto\AchievementVO.java
@@ -173,6 +175,7 @@ G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\dto\MembershipOrderDTO.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\entity\Report.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\controller\admin\AdminSysConfigController.java
+G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\mapper\SysMenuMapper.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\controller\admin\AdminReportController.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\entity\VetAppointment.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\entity\SystemSetting.java
@@ -225,6 +228,7 @@ G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\entity\PostEe.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\config\GlobalExceptionHandler.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\mq\ReminderMessageProducer.java
+G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\service\SysMenuService.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\entity\Achievement.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\controller\admin\AdminFeedbackController.java
 G:\openclaw_project\pet-trail\backend\src\main\java\com\pettrail\pettrailbackend\dto\AiModelCreateDTO.java
