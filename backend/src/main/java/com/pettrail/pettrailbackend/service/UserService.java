@@ -3,6 +3,7 @@ package com.pettrail.pettrailbackend.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pettrail.pettrailbackend.entity.User;
+import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
 import com.pettrail.pettrailbackend.util.NicknameUtil;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +51,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 
         User existingUser = this.getOne(queryWrapper);
         if (existingUser != null) {
-            throw new RuntimeException("用户已存在");
+            throw new BusinessException(409, "用户已存在");
         }
 
         User user = new User();
@@ -77,7 +78,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 
         User user = this.getById(userId);
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException(404, "用户不存在");
         }
 
         try {
@@ -97,7 +98,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
             Integer gender) {
         User user = this.getById(userId);
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException(404, "用户不存在");
         }
 
         if (nickname != null) {
@@ -159,7 +160,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     public void deactivateUser(Long userId) {
         User user = this.getById(userId);
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException(404, "用户不存在");
         }
 
         user.setStatus(0);

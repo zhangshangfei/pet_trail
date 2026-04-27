@@ -1078,10 +1078,13 @@ export default {
   margin-bottom: 16rpx;
   border-radius: 16rpx;
   overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
 }
 
 .post-image {
-  border-radius: 16rpx;
+  border-radius: 12rpx;
   background: #f3f4f6;
 }
 
@@ -1091,17 +1094,18 @@ export default {
 }
 
 .post-image--2 {
-  width: calc(50% - 6rpx);
+  width: calc(50% - 4rpx);
   height: 280rpx;
-  margin-right: 12rpx;
-  margin-bottom: 12rpx;
 }
 
 .post-image--3 {
-  width: calc(33.333% - 8rpx);
+  width: calc(33.333% - 6rpx);
+  height: 220rpx;
+}
+
+.post-image--grid {
+  width: calc(33.333% - 6rpx);
   height: 200rpx;
-  margin-right: 12rpx;
-  margin-bottom: 12rpx;
 }
 
 .post-video-wrap {

@@ -76,6 +76,22 @@
               <view class="feature-icon-wrap feature-icon-purple"><text class="feature-emoji">🏆</text></view>
               <text class="feature-text">成就墙</text>
             </view>
+            <view class="feature-item" @tap="goToChallenge">
+              <view class="feature-icon-wrap feature-icon-orange"><text class="feature-emoji">🎯</text></view>
+              <text class="feature-text">挑战赛</text>
+            </view>
+            <view class="feature-item" @tap="goToShop">
+              <view class="feature-icon-wrap feature-icon-red"><text class="feature-emoji">🛒</text></view>
+              <text class="feature-text">宠物商城</text>
+            </view>
+            <view class="feature-item" @tap="goToVet">
+              <view class="feature-icon-wrap feature-icon-green"><text class="feature-emoji">🏥</text></view>
+              <text class="feature-text">宠物医院</text>
+            </view>
+            <view class="feature-item" @tap="goToMembership">
+              <view class="feature-icon-wrap feature-icon-blue"><text class="feature-emoji">👑</text></view>
+              <text class="feature-text">宠迹Pro</text>
+            </view>
           </view>
         </view>
 
@@ -158,6 +174,7 @@ export default {
 
     uni.$on('loginSuccess', () => {
       this.loadUserInfo()
+      this.loadPets()
     })
   },
   onHide() {
@@ -298,6 +315,18 @@ export default {
     },
     goToAchievement() {
       uni.navigateTo({ url: '/pages/me/achievement' });
+    },
+    goToChallenge() {
+      uni.navigateTo({ url: '/pages/challenge/index' });
+    },
+    goToShop() {
+      uni.navigateTo({ url: '/pages/shop/index' });
+    },
+    goToVet() {
+      uni.navigateTo({ url: '/pages/vet/index' });
+    },
+    goToMembership() {
+      uni.navigateTo({ url: '/pages/me/membership' });
     },
     onDiscoverTap() {
       uni.navigateTo({ url: '/pages/discover/index' });

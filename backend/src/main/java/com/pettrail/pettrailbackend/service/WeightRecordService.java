@@ -145,7 +145,7 @@ public class WeightRecordService extends ServiceImpl<WeightRecordMapper, WeightR
     public void deleteRecord(Long recordId) {
         WeightRecord record = this.getById(recordId);
         if (record == null) {
-            throw new RuntimeException("记录不存在");
+            throw new BusinessException(404, "记录不存在");
         }
         this.removeById(recordId);
         log.info("删除体重记录成功: recordId={}", recordId);

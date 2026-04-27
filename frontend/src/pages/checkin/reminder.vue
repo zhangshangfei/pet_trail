@@ -13,7 +13,7 @@
       <view class="reminder-content">
         <view class="section-header">
           <text class="section-title">提醒列表</text>
-          <view class="add-btn" @click="showAddModal = true">
+          <view class="add-btn" @click="openAddModal">
             <text class="add-btn-text">+ 添加提醒</text>
           </view>
         </view>
@@ -32,7 +32,7 @@
           <view v-for="item in reminders" :key="item.id" class="reminder-card">
             <view class="reminder-info">
               <text class="reminder-time">{{ formatTime(item.remindTime) }}</text>
-              <text class="reminder-target">{{ item.itemId ? '指定打卡项' : '全部打卡项' }}</text>
+              <text class="reminder-target">{{ getItemDisplayName(item) }}</text>
             </view>
             <view class="reminder-actions">
               <switch
@@ -72,6 +72,50 @@
               </view>
             </picker>
           </view>
+          <view class="form-item">
+            <text class="form-label">打卡项</text>
+            <view class="item-selector">
+              <view
+                class="item-option"
+                :class="{ active: selectedItemId === null }"
+                @click="selectedItemId = null"
+              >
+                <text class="item-option-icon">🐾</text>
+                <text class="item-option-name">全部打卡项</text>
+                <view v-if="selectedItemId === null" class="item-check">✓</view>
+              </view>
+
+              <view v-if="defaultItems.length > 0" class="item-group">
+                <text class="item-group-label">默认打卡项</text>
+                <view
+                  v-for="item in defaultItems"
+                  :key="'d-' + item.id"
+                  class="item-option"
+                  :class="{ active: selectedItemId === item.id }"
+                  @click="selectedItemId = item.id"
+                >
+                  <text class="item-option-icon">{{ item.icon || '📋' }}</text>
+                  <text class="item-option-name">{{ item.name }}</text>
+                  <view v-if="selectedItemId === item.id" class="item-check">✓</view>
+                </view>
+              </view>
+
+              <view v-if="customItems.length > 0" class="item-group">
+                <text class="item-group-label">自定义打卡项</text>
+                <view
+                  v-for="item in customItems"
+                  :key="'c-' + item.id"
+                  class="item-option"
+                  :class="{ active: selectedItemId === item.id }"
+                  @click="selectedItemId = item.id"
+                >
+                  <text class="item-option-icon">{{ item.icon || '⭐' }}</text>
+                  <text class="item-option-name">{{ item.name }}</text>
+                  <view v-if="selectedItemId === item.id" class="item-check">✓</view>
+                </view>
+              </view>
+            </view>
+          </view>
         </view>
         <view class="modal-footer">
           <text class="modal-cancel" @click="showAddModal = false">取消</text>
@@ -84,6 +128,7 @@
 
 <script>
 import * as checkinApi from '@/api/checkin'
+import { loadWxSubscribeTemplates, requestWxSubscribe } from '@/utils/index'
 
 export default {
   data() {
@@ -93,7 +138,17 @@ export default {
       reminders: [],
       loading: false,
       showAddModal: false,
-      newRemindTime: '09:00'
+      newRemindTime: '09:00',
+      checkinItems: [],
+      selectedItemId: null
+    }
+  },
+  computed: {
+    defaultItems() {
+      return this.checkinItems.filter(item => item.isDefault === 1)
+    },
+    customItems() {
+      return this.checkinItems.filter(item => item.isDefault !== 1)
     }
   },
   onLoad() {
@@ -105,8 +160,23 @@ export default {
       this.navHeight = 64
     }
     this.loadReminders()
+    this.loadCheckinItems()
+    loadWxSubscribeTemplates()
   },
   methods: {
+    openAddModal() {
+      this.selectedItemId = null
+      this.showAddModal = true
+    },
+    getItemDisplayName(reminder) {
+      if (!reminder.itemId) return '全部打卡项'
+      const item = this.checkinItems.find(i => i.id === reminder.itemId)
+      if (item) {
+        const tag = item.isDefault === 1 ? '' : ' [自定义]'
+        return (item.icon || '📋') + ' ' + item.name + tag
+      }
+      return '未知打卡项'
+    },
     async loadReminders() {
       this.loading = true
       try {
@@ -151,14 +221,28 @@ export default {
     onTimeChange(event) {
       this.newRemindTime = event.detail.value
     },
-    async onAddReminder() {
+    async loadCheckinItems() {
       try {
-        const res = await checkinApi.createCheckinReminder({
-          remindTime: this.newRemindTime
-        })
+        const res = await checkinApi.getCheckinItems()
+        if (res && res.success && Array.isArray(res.data)) {
+          this.checkinItems = res.data.filter(item => item.isEnabled !== 0 && !item.hidden)
+        }
+      } catch (e) {
+        console.error('加载打卡项失败:', e)
+      }
+    },
+    async onAddReminder() {
+      requestWxSubscribe(['checkin'])
+      try {
+        const params = { remindTime: this.newRemindTime }
+        if (this.selectedItemId !== null) {
+          params.itemId = this.selectedItemId
+        }
+        const res = await checkinApi.createCheckinReminder(params)
         if (res && res.success) {
           uni.showToast({ title: '添加成功', icon: 'success' })
           this.showAddModal = false
+          this.selectedItemId = null
           this.loadReminders()
         }
       } catch (e) {
@@ -168,7 +252,12 @@ export default {
     },
     formatTime(timeStr) {
       if (!timeStr) return ''
-      return timeStr.substring(0, 5)
+      if (typeof timeStr === 'object' && timeStr.hour !== undefined) {
+        const h = String(timeStr.hour).padStart(2, '0')
+        const m = String(timeStr.minute !== undefined ? timeStr.minute : 0).padStart(2, '0')
+        return h + ':' + m
+      }
+      return String(timeStr).substring(0, 5)
     },
     goBack() {
       uni.navigateBack()
@@ -249,16 +338,16 @@ $radius: 24rpx;
   display: flex; align-items: center; justify-content: center;
 }
 .modal-card {
-  width: 600rpx; background: $card-bg; border-radius: $radius;
-  overflow: hidden;
+  width: 640rpx; background: $card-bg; border-radius: $radius;
+  overflow: hidden; max-height: 80vh; display: flex; flex-direction: column;
 }
 .modal-header {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 28rpx; border-bottom: 1rpx solid #f0f0f0;
+  padding: 28rpx; border-bottom: 1rpx solid #f0f0f0; flex-shrink: 0;
 }
 .modal-title { font-size: 30rpx; font-weight: 700; color: $text-primary; }
 .modal-close { font-size: 32rpx; color: $text-light; padding: 8rpx; }
-.modal-body { padding: 28rpx; }
+.modal-body { padding: 28rpx; overflow-y: auto; flex: 1; }
 .form-item { margin-bottom: 20rpx; }
 .form-label { font-size: 26rpx; color: $text-secondary; display: block; margin-bottom: 12rpx; }
 .time-picker {
@@ -267,8 +356,34 @@ $radius: 24rpx;
 }
 .time-picker-text { font-size: 32rpx; font-weight: 600; color: $text-primary; }
 .time-picker-arrow { font-size: 28rpx; color: $text-light; }
+
+.item-selector {
+  background: #f9fafb; border-radius: 16rpx; overflow: hidden;
+}
+.item-option {
+  display: flex; align-items: center; padding: 20rpx 24rpx;
+  border-bottom: 1rpx solid #f0f0f0; position: relative;
+}
+.item-option:last-child { border-bottom: none; }
+.item-option.active {
+  background: $primary-light;
+}
+.item-option-icon { font-size: 30rpx; margin-right: 12rpx; }
+.item-option-name { font-size: 28rpx; color: $text-primary; flex: 1; }
+.item-check {
+  font-size: 28rpx; color: $primary; font-weight: 700;
+  width: 40rpx; text-align: center;
+}
+.item-group {
+  border-top: 1rpx solid #e5e7eb;
+}
+.item-group-label {
+  display: block; font-size: 22rpx; color: $text-light;
+  padding: 12rpx 24rpx 4rpx; font-weight: 600;
+}
+
 .modal-footer {
-  display: flex; border-top: 1rpx solid #f0f0f0;
+  display: flex; border-top: 1rpx solid #f0f0f0; flex-shrink: 0;
 }
 .modal-cancel, .modal-confirm {
   flex: 1; text-align: center; padding: 24rpx 0; font-size: 28rpx; font-weight: 600;

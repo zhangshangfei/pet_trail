@@ -123,25 +123,31 @@
           </view>
 
           <view v-if="recentRecords.length" class="records-list">
-            <view v-for="record in recentRecords" :key="record.date" class="record-card">
-              <view class="record-header">
-                <text class="record-date">{{ record.displayDate }}</text>
-                <view class="record-progress">
-                  <view class="progress-bar">
-                    <view class="progress-fill" :style="{ width: record.progress + '%' }"></view>
-                  </view>
-                  <text class="progress-text">{{ record.completedCount }}/{{ record.totalCount }}</text>
-                </view>
+            <view v-for="group in recordGroups" :key="group.label" class="record-group">
+              <view class="record-group-header">
+                <text class="record-group-label">{{ group.label }}</text>
+                <text class="record-group-range">{{ group.dateRange }}</text>
               </view>
-              <view class="record-items">
-                <view
-                  v-for="recordItem in record.items"
-                  :key="record.date + '-' + recordItem.id"
-                  class="record-item"
-                  :class="{ done: recordItem.checked }"
-                >
-                  <text class="record-item-icon">{{ recordItem.emoji || '📋' }}</text>
-                  <text class="record-item-name">{{ recordItem.label }}</text>
+              <view v-for="record in group.records" :key="record.date" class="record-card">
+                <view class="record-header">
+                  <text class="record-date">{{ record.displayDate }}</text>
+                  <view class="record-progress">
+                    <view class="progress-bar">
+                      <view class="progress-fill" :style="{ width: record.progress + '%' }"></view>
+                    </view>
+                    <text class="progress-text">{{ record.completedCount }}/{{ record.totalCount }}</text>
+                  </view>
+                </view>
+                <view class="record-items">
+                  <view
+                    v-for="recordItem in record.items"
+                    :key="record.date + '-' + recordItem.id"
+                    class="record-item"
+                    :class="{ done: recordItem.checked }"
+                  >
+                    <text class="record-item-icon">{{ recordItem.emoji || '📋' }}</text>
+                    <text class="record-item-name">{{ recordItem.label }}</text>
+                  </view>
                 </view>
               </view>
             </view>
@@ -192,6 +198,7 @@ export default {
       visibleItems: [],
       allRecords: [],
       recentRecords: [],
+      recordGroups: [],
       showSuccessAnimation: false,
       animationTimer: null,
     }
@@ -229,12 +236,20 @@ export default {
     await this.loadPets()
     await this.loadCheckinItems()
     await this.refreshPageData()
+
+    uni.$on('loginSuccess', () => {
+      this.loadUserProfile()
+      this.loadPets()
+      this.loadCheckinItems()
+      this.refreshPageData()
+    })
   },
   onUnload() {
     if (this.animationTimer) {
       clearTimeout(this.animationTimer)
       this.animationTimer = null
     }
+    uni.$off('loginSuccess')
   },
   methods: {
     async initPage() {
@@ -316,18 +331,20 @@ export default {
     },
     async loadCalendarRecords() {
       const requests = this.getMonthRequests(3)
-      const result = []
-      for (const item of requests) {
-        try {
-          const res = await uni.$request.get('/api/checkin/calendar', item)
+      try {
+        const responses = await Promise.all(
+          requests.map(item => uni.$request.get('/api/checkin/calendar', item).catch(() => null))
+        )
+        const result = []
+        for (const res of responses) {
           if (res && res.success && Array.isArray(res.data)) {
             result.push(...res.data)
           }
-        } catch (error) {
-          console.error('加载打卡记录失败:', error)
         }
+        this.allRecords = this.filterPetRecords(result)
+      } catch (error) {
+        console.error('加载打卡记录失败:', error)
       }
-      this.allRecords = this.filterPetRecords(result)
     },
     getMonthRequests(count) {
       const requests = []
@@ -399,6 +416,7 @@ export default {
           })
 
         this.streakDays = this.calculateStreak(Object.keys(groupedRecords))
+        this.buildRecordGroups()
       } catch (error) {
         console.error('syncPageState failed:', error)
         uni.showToast({ title: '数据处理失败', icon: 'none' })
@@ -567,6 +585,45 @@ export default {
       if (key === yesterdayKey) return '昨天'
       return `${date.getMonth() + 1}月${date.getDate()}日`
     },
+    formatDateRange(from, to) {
+      if (!from || !to) return ''
+      const fromStr = `${from.getMonth() + 1}月${from.getDate()}日`
+      const toStr = `${to.getMonth() + 1}月${to.getDate()}日`
+      return fromStr === toStr ? fromStr : `${fromStr} - ${toStr}`
+    },
+    buildRecordGroups() {
+      if (!this.recentRecords.length) { this.recordGroups = []; return }
+      const now = new Date()
+      const dayOfWeek = now.getDay() || 7
+      const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1)
+      const weekEnd = new Date(weekStart.getTime() + 6 * 86400000)
+      const weekStartKey = this.getDateKey(weekStart)
+      const weekEndKey = this.getDateKey(weekEnd)
+
+      const thisWeek = []
+      const earlier = []
+      for (const record of this.recentRecords) {
+        const key = record.date
+        if (key >= weekStartKey && key <= weekEndKey) {
+          thisWeek.push(record)
+        } else {
+          earlier.push(record)
+        }
+      }
+
+      const groups = []
+      if (thisWeek.length) {
+        const sorted = thisWeek.slice().sort((a, b) => (a.date > b.date ? -1 : 1))
+        const range = this.formatDateRange(this.normalizeDate(sorted[0].date), this.normalizeDate(sorted[sorted.length - 1].date))
+        groups.push({ label: '本周', dateRange: range, records: thisWeek })
+      }
+      if (earlier.length) {
+        const sorted = earlier.slice().sort((a, b) => (a.date > b.date ? -1 : 1))
+        const range = this.formatDateRange(this.normalizeDate(sorted[0].date), this.normalizeDate(sorted[sorted.length - 1].date))
+        groups.push({ label: '更早', dateRange: range, records: earlier })
+      }
+      this.recordGroups = groups
+    },
     normalizeDate(input) {
       if (!input) return null
       if (input instanceof Date) return input
@@ -716,6 +773,10 @@ $radius: 24rpx;
 .empty-checkin-text { font-size: 28rpx; color: $text-light; }
 
 .records-list { display: flex; flex-direction: column; gap: 16rpx; }
+.record-group { margin-bottom: 8rpx; }
+.record-group-header { display: flex; align-items: baseline; gap: 12rpx; margin-bottom: 12rpx; padding-left: 4rpx; }
+.record-group-label { font-size: 28rpx; font-weight: 700; color: $text-primary; }
+.record-group-range { font-size: 22rpx; color: $text-light; }
 .record-card {
   background: $card-bg; border-radius: $radius; padding: 24rpx;
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);

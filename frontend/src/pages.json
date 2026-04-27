@@ -222,6 +222,27 @@
         "navigationBarTitleText": "AI健康分析",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/challenge/index",
+      "style": {
+        "navigationBarTitleText": "挑战赛",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/shop/index",
+      "style": {
+        "navigationBarTitleText": "宠物商城",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/vet/index",
+      "style": {
+        "navigationBarTitleText": "宠物医院",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

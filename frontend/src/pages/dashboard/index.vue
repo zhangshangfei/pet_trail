@@ -139,7 +139,7 @@
             </view>
           </view>
 
-          <view v-if="parasiteCards.length" class="vaccine-list">
+          <view v-if="parasiteCardsLimited.length" class="vaccine-list">
             <view
               v-for="item in parasiteCardsLimited"
               :key="item.id"
@@ -177,7 +177,9 @@
             </view>
           </view>
           <view v-else class="dash-card vaccine-empty">
+            <text class="vaccine-empty-icon">💊</text>
             <text class="vaccine-empty-text">暂无驱虫提醒</text>
+            <text class="vaccine-empty-hint">点击右下角 + 添加驱虫记录</text>
           </view>
         </view>
 
@@ -191,7 +193,7 @@
             </view>
           </view>
 
-          <view v-if="vaccineCards.length" class="vaccine-list">
+          <view v-if="vaccineCardsLimited.length" class="vaccine-list">
             <view
               v-for="item in vaccineCardsLimited"
               :key="item.id"
@@ -229,7 +231,9 @@
             </view>
           </view>
           <view v-else class="dash-card vaccine-empty">
+            <text class="vaccine-empty-icon">💉</text>
             <text class="vaccine-empty-text">暂无疫苗提醒</text>
+            <text class="vaccine-empty-hint">点击右下角 + 添加疫苗记录</text>
           </view>
         </view>
       </view>
@@ -264,7 +268,7 @@
 </template>
 
 <script>
-import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
+import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL, loadWxSubscribeTemplates, requestWxSubscribe } from '@/utils/index'
 import UserTopBar from '@/components/UserTopBar.vue'
 import AvatarView from '@/components/AvatarView.vue'
 
@@ -430,9 +434,11 @@ export default {
     }
     this.loadPets();
     this.loadUserInfo();
+    loadWxSubscribeTemplates();
 
     uni.$on('loginSuccess', () => {
       this.loadUserInfo()
+      loadWxSubscribeTemplates()
     })
   },
   onHide() {
@@ -623,6 +629,10 @@ export default {
         }
       } catch (e) {
         console.error("加载看板数据失败:", e);
+      }
+
+      if (this.vaccineCardsLimited.length > 0 || this.parasiteCardsLimited.length > 0) {
+        requestWxSubscribe(['vaccine', 'parasite']);
       }
     },
     async onMarkVaccineDone(item) {
@@ -1238,10 +1248,25 @@ export default {
 .vaccine-empty {
   padding: 48rpx 24rpx;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.vaccine-empty-icon {
+  font-size: 56rpx;
+  margin-bottom: 8rpx;
 }
 
 .vaccine-empty-text {
-  font-size: 26rpx;
+  font-size: 28rpx;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.vaccine-empty-hint {
+  font-size: 22rpx;
   color: #9ca3af;
 }
 
