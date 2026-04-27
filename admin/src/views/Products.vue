@@ -156,7 +156,7 @@ import { useAdminStore } from '@/store/admin'
 import { getProductList, getProductDetail, createProduct, updateProduct, deleteProduct, updateProductStatus, getProductStats, getOrderList, exportProducts } from '@/api/admin'
 
 const adminStore = useAdminStore()
-const canManage = computed(() => adminStore.hasPermission('product:manage'))
+const canManage = computed(() => adminStore.hasButton('product:manage'))
 
 const uploadUrl = (import.meta.env.VITE_API_BASE_URL || '') + '/api/upload'
 const uploadHeaders = { Authorization: 'Bearer ' + (localStorage.getItem('admin_token') || '') }

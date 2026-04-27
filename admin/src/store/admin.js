@@ -7,33 +7,27 @@ export const useAdminStore = defineStore('admin', () => {
   const token = ref(localStorage.getItem('admin_token') || '')
   const menus = ref(JSON.parse(localStorage.getItem('admin_menus') || '[]'))
 
-  const isSuperAdmin = computed(() => adminInfo.value?.role === 'SUPER_ADMIN')
   const isLoggedIn = computed(() => !!token.value)
-  const permissions = computed(() => {
-    const perms = adminInfo.value?.permissions || ''
-    if (!perms) return []
-    return perms.split(',').map(p => p.trim()).filter(Boolean)
-  })
-  const role = computed(() => adminInfo.value?.role || '')
+  const roleId = computed(() => adminInfo.value?.roleId || null)
+  const roleCode = computed(() => adminInfo.value?.roleCode || '')
+  const roleName = computed(() => adminInfo.value?.roleName || '')
   const merchantId = computed(() => adminInfo.value?.merchantId || null)
-  const isMerchant = computed(() => role.value === 'MERCHANT_ADMIN' || role.value === 'MERCHANT_STAFF')
+  const isSuperAdmin = computed(() => roleCode.value === 'SUPER_ADMIN')
+  const isMerchant = computed(() => roleCode.value === 'MERCHANT_ADMIN' || roleCode.value === 'MERCHANT_STAFF')
+  const buttons = computed(() => adminInfo.value?.buttons || [])
 
-  function hasPermission(code) {
+  function hasButton(code) {
     if (isSuperAdmin.value) return true
-    return permissions.value.includes(code)
-  }
-
-  function hasAnyPermission(codes) {
-    if (isSuperAdmin.value) return true
-    return codes.some(code => permissions.value.includes(code))
+    return buttons.value.includes(code)
   }
 
   async function fetchProfile() {
     try {
       const res = await getProfile()
       if (res.data) {
-        adminInfo.value = res.data.admin || res.data
-        localStorage.setItem('admin_info', JSON.stringify(res.data.admin || res.data))
+        const admin = res.data.admin || res.data
+        adminInfo.value = admin
+        localStorage.setItem('admin_info', JSON.stringify(admin))
         if (res.data.menus) {
           menus.value = res.data.menus
           localStorage.setItem('admin_menus', JSON.stringify(res.data.menus))
@@ -68,14 +62,15 @@ export const useAdminStore = defineStore('admin', () => {
     adminInfo,
     token,
     menus,
-    isSuperAdmin,
     isLoggedIn,
-    permissions,
-    role,
+    roleId,
+    roleCode,
+    roleName,
     merchantId,
+    isSuperAdmin,
     isMerchant,
-    hasPermission,
-    hasAnyPermission,
+    buttons,
+    hasButton,
     fetchProfile,
     setLoginInfo,
     logout

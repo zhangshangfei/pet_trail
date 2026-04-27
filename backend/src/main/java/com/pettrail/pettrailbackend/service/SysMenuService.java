@@ -2,14 +2,14 @@ package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.pettrail.pettrailbackend.entity.SysMenu;
+import com.pettrail.pettrailbackend.entity.SysRoleMenu;
 import com.pettrail.pettrailbackend.mapper.SysMenuMapper;
+import com.pettrail.pettrailbackend.mapper.SysRoleMenuMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 public class SysMenuService {
 
     private final SysMenuMapper sysMenuMapper;
+    private final SysRoleMenuMapper sysRoleMenuMapper;
 
     public List<SysMenu> getAllMenus() {
         return sysMenuMapper.selectList(
@@ -32,54 +33,94 @@ public class SysMenuService {
         return buildTree(all, 0L);
     }
 
-    public List<Map<String, Object>> getUserMenuTree(String permissions) {
-        List<SysMenu> all = getAllMenus();
-        List<String> permList = permissions != null && !permissions.isEmpty()
-                ? List.of(permissions.split(",")) : List.of();
+    public List<Map<String, Object>> getUserMenuTree(Long roleId) {
+        if (roleId == null) return List.of();
 
-        List<SysMenu> filtered = all.stream()
-                .filter(m -> m.getPermission() == null || m.getPermission().isEmpty() || permList.contains(m.getPermission()))
-                .collect(Collectors.toList());
-
-        List<SysMenu> visible = new ArrayList<>();
-        for (SysMenu menu : filtered) {
-            visible.add(menu);
-            addParents(all, menu.getParentId(), visible);
+        SysRoleMenu check = sysRoleMenuMapper.selectOne(
+                new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, roleId).last("LIMIT 1"));
+        boolean isSuperAdmin = false;
+        if (roleId != null) {
+            List<SysRoleMenu> allRoleMenus = sysRoleMenuMapper.selectList(
+                    new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, roleId));
+            Set<Long> menuIds = allRoleMenus.stream().map(SysRoleMenu::getMenuId).collect(Collectors.toSet());
+            List<SysMenu> all = getAllMenus();
+            isSuperAdmin = all.stream().allMatch(m -> menuIds.contains(m.getId()));
         }
 
-        List<SysMenu> deduped = visible.stream()
-                .distinct()
-                .collect(Collectors.toList());
+        List<SysMenu> all = getAllMenus();
+        if (isSuperAdmin) {
+            return buildTreeWithButtons(all, 0L, Collections.emptyMap());
+        }
 
-        return buildTree(deduped, 0L);
+        List<SysRoleMenu> roleMenus = sysRoleMenuMapper.selectList(
+                new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, roleId));
+        Map<Long, String> menuButtonMap = new HashMap<>();
+        Set<Long> menuIds = new HashSet<>();
+        for (SysRoleMenu rm : roleMenus) {
+            menuIds.add(rm.getMenuId());
+            menuButtonMap.put(rm.getMenuId(), rm.getButtons() != null ? rm.getButtons() : "");
+        }
+
+        List<SysMenu> visible = new ArrayList<>();
+        for (SysMenu menu : all) {
+            if (menuIds.contains(menu.getId())) {
+                visible.add(menu);
+            }
+            addParents(all, menu.getParentId(), visible, menuIds);
+        }
+
+        List<SysMenu> deduped = visible.stream().distinct().collect(Collectors.toList());
+        return buildTreeWithButtons(deduped, 0L, menuButtonMap);
     }
 
-    private void addParents(List<SysMenu> all, Long parentId, List<SysMenu> visible) {
+    private void addParents(List<SysMenu> all, Long parentId, List<SysMenu> visible, Set<Long> menuIds) {
         if (parentId == null || parentId == 0) return;
         for (SysMenu m : all) {
             if (m.getId().equals(parentId)) {
                 if (!visible.contains(m)) {
                     visible.add(m);
                 }
-                addParents(all, m.getParentId(), visible);
+                addParents(all, m.getParentId(), visible, menuIds);
                 break;
             }
         }
     }
 
     private List<Map<String, Object>> buildTree(List<SysMenu> menus, Long parentId) {
+        return buildTreeWithButtons(menus, parentId, Collections.emptyMap());
+    }
+
+    private List<Map<String, Object>> buildTreeWithButtons(List<SysMenu> menus, Long parentId, Map<Long, String> menuButtonMap) {
         List<Map<String, Object>> tree = new ArrayList<>();
         for (SysMenu menu : menus) {
             if (parentId.equals(menu.getParentId())) {
-                Map<String, Object> node = Map.of(
-                        "id", menu.getId(),
-                        "name", menu.getName() != null ? menu.getName() : "",
-                        "path", menu.getPath() != null ? menu.getPath() : "",
-                        "icon", menu.getIcon() != null ? menu.getIcon() : "",
-                        "permission", menu.getPermission() != null ? menu.getPermission() : "",
-                        "sortOrder", menu.getSortOrder() != null ? menu.getSortOrder() : 0,
-                        "children", buildTree(menus, menu.getId())
-                );
+                List<String> btnList = new ArrayList<>();
+                if (menu.getButtons() != null && !menu.getButtons().isEmpty()) {
+                    btnList = Arrays.stream(menu.getButtons().split(","))
+                            .map(String::trim).filter(s -> !s.isEmpty())
+                            .collect(Collectors.toList());
+                }
+
+                String roleButtons = menuButtonMap.getOrDefault(menu.getId(), null);
+                List<String> activeButtons = new ArrayList<>();
+                if (roleButtons != null && !roleButtons.isEmpty()) {
+                    activeButtons = Arrays.stream(roleButtons.split(","))
+                            .map(String::trim).filter(s -> !s.isEmpty())
+                            .collect(Collectors.toList());
+                } else if (menuButtonMap.isEmpty()) {
+                    activeButtons = btnList;
+                }
+
+                Map<String, Object> node = new LinkedHashMap<>();
+                node.put("id", menu.getId());
+                node.put("name", menu.getName() != null ? menu.getName() : "");
+                node.put("path", menu.getPath() != null ? menu.getPath() : "");
+                node.put("icon", menu.getIcon() != null ? menu.getIcon() : "");
+                node.put("permission", menu.getPermission() != null ? menu.getPermission() : "");
+                node.put("buttons", btnList);
+                node.put("activeButtons", activeButtons);
+                node.put("sortOrder", menu.getSortOrder() != null ? menu.getSortOrder() : 0);
+                node.put("children", buildTreeWithButtons(menus, menu.getId(), menuButtonMap));
                 tree.add(node);
             }
         }

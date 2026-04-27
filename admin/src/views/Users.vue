@@ -100,7 +100,7 @@ const detailUser = ref(null)
 const userStats = ref(null)
 
 const adminStore = useAdminStore()
-const canManage = computed(() => adminStore.hasPermission('user:manage'))
+const canManage = computed(() => adminStore.hasButton('user:manage'))
 
 const userStatCards = computed(() => [
   { key: 'pets', label: '宠物数', value: userStats.value?.petCount || 0 },

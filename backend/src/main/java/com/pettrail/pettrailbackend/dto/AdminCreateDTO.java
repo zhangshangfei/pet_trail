@@ -7,7 +7,6 @@ public class AdminCreateDTO {
     private String username;
     private String password;
     private String nickname;
-    private String role;
-    private String permissions;
+    private Long roleId;
     private Long merchantId;
 }

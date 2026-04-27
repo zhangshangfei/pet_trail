@@ -163,7 +163,7 @@ import { useAdminStore } from '@/store/admin'
 import { getClinicList, getClinicDetail, createClinic, updateClinic, deleteClinic, updateClinicStatus, setClinicPartner, getClinicStats, getAppointmentList, updateAppointmentStatus } from '@/api/admin'
 
 const adminStore = useAdminStore()
-const canManage = computed(() => adminStore.hasPermission('vet-clinic:manage'))
+const canManage = computed(() => adminStore.hasButton('vet-clinic:manage'))
 
 const uploadUrl = (import.meta.env.VITE_API_BASE_URL || '') + '/api/upload'
 const uploadHeaders = { Authorization: 'Bearer ' + (localStorage.getItem('admin_token') || '') }

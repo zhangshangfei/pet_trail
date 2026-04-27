@@ -78,7 +78,7 @@ const showDetail = ref(false)
 const detail = ref(null)
 
 const adminStore = useAdminStore()
-const canManage = computed(() => adminStore.hasPermission('comment:manage'))
+const canManage = computed(() => adminStore.hasButton('comment:manage'))
 
 const loadData = async () => {
   loading.value = true

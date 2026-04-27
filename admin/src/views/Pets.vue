@@ -117,7 +117,7 @@ const showEdit = ref(false)
 const editForm = ref({})
 
 const adminStore = useAdminStore()
-const canManage = computed(() => adminStore.hasPermission('pet:manage'))
+const canManage = computed(() => adminStore.hasButton('pet:manage'))
 
 const loadData = async () => {
   loading.value = true
