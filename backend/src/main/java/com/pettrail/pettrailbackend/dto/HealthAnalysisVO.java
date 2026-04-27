@@ -22,6 +22,9 @@ public class HealthAnalysisVO {
         private String message;
         private String severity;
 
+        public WarningItem() {
+        }
+
         public WarningItem(String type, String message, String severity) {
             this.type = type;
             this.message = message;

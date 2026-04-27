@@ -52,8 +52,8 @@ public class RecommendService {
     private static final double PW_HOT = 0.25;
     private static final double PW_SOCIAL = 0.20;
     private static final double PW_INTERACT = 0.15;
-    private static final double PW_FRESH = 0.10;
-    private static final double PW_BEHAVIOR = 0.10;
+    private static final double PW_FRESH = 0.05;
+    private static final double PW_BEHAVIOR = 0.05;
     private static final int CANDIDATE_LIMIT = 500;
 
     public List<Map<String, Object>> recommendUsers(Long currentUserId, int page, int size) {
@@ -170,17 +170,35 @@ public class RecommendService {
             return Collections.emptyList();
         }
 
-        Map<Long, Double> scoreMap = new ConcurrentHashMap<>();
+        List<Long> candidateIds = candidates.stream()
+            .map(User::getId).collect(Collectors.toList());
+
+        Map<Long, List<Pet>> candidatePetsMap = new HashMap<>();
+        List<Pet> allCandidatePets = petMapper.selectList(
+            new LambdaQueryWrapper<Pet>().in(Pet::getUserId, candidateIds));
+        for (Pet pet : allCandidatePets) {
+            candidatePetsMap.computeIfAbsent(pet.getUserId(), k -> new ArrayList<>()).add(pet);
+        }
+
+        Map<Long, Integer> followerCountMap = new HashMap<>();
+        Map<Long, Integer> postCountMap = new HashMap<>();
+        for (Long cid : candidateIds) {
+            followerCountMap.put(cid, followService.getFollowerCount(cid));
+            postCountMap.put(cid, postService.getUserPostCount(cid));
+        }
+
+        Map<Long, Double> scoreMap = new HashMap<>();
         LocalDateTime now = LocalDateTime.now();
 
         for (User candidate : candidates) {
             double score = 0.0;
             Long cid = candidate.getId();
 
-            double breedScore = computeBreedScore(cid, myBreeds, myCategory);
+            List<Pet> theirPets = candidatePetsMap.getOrDefault(cid, Collections.emptyList());
+            double breedScore = computeBreedScoreFromPets(theirPets, myBreeds, myCategory);
             score += W_BREED * breedScore;
 
-            double activityScore = computeActivityScore(cid);
+            double activityScore = computeActivityScoreFromCache(cid, followerCountMap, postCountMap);
             score += W_ACTIVITY * activityScore;
 
             double socialScore = twoHopIds.contains(cid) ? 1.0 : 0.0;
@@ -214,28 +232,26 @@ public class RecommendService {
             item.put("nickname", user.getNickname());
             item.put("avatar", user.getAvatar());
             item.put("gender", user.getGender());
-            item.put("followerCount", followService.getFollowerCount(user.getId()));
-            item.put("postCount", postService.getUserPostCount(user.getId()));
+            item.put("followerCount", followerCountMap.getOrDefault(user.getId(), 0));
+            item.put("postCount", postCountMap.getOrDefault(user.getId(), 0));
             item.put("isFollowing", currentFolloweeIds.contains(user.getId()));
             item.put("recommendScore", Math.round(scoreMap.get(uid) * 1000.0) / 1000.0);
-            item.put("recommendReason", determineReason(uid, myBreeds, myCategory, twoHopIds, interactUserIds));
+            item.put("recommendReason", determineReasonFromPets(
+                candidatePetsMap.getOrDefault(uid, Collections.emptyList()),
+                myBreeds, myCategory, twoHopIds, interactUserIds, uid));
             result.add(item);
         }
 
         return result;
     }
 
-    private double computeBreedScore(Long userId, Set<String> myBreeds, int myCategory) {
+    private double computeBreedScoreFromPets(List<Pet> theirPets, Set<String> myBreeds, int myCategory) {
         if (myBreeds.isEmpty() && myCategory == 0) return 0.3;
-
-        List<Pet> theirPets = petMapper.selectList(
-            new LambdaQueryWrapper<Pet>().eq(Pet::getUserId, userId));
         if (theirPets.isEmpty()) return 0.1;
 
         double maxScore = 0.0;
         for (Pet theirPet : theirPets) {
-            double petScore = 0.0;
-
+            double petScore;
             if (theirPet.getBreed() != null && myBreeds.contains(theirPet.getBreed())) {
                 petScore = 1.0;
             } else if (theirPet.getCategory() != null && theirPet.getCategory() == myCategory && myCategory > 0) {
@@ -243,15 +259,14 @@ public class RecommendService {
             } else {
                 petScore = 0.1;
             }
-
             maxScore = Math.max(maxScore, petScore);
         }
         return maxScore;
     }
 
-    private double computeActivityScore(Long userId) {
-        int followerCount = followService.getFollowerCount(userId);
-        int postCount = postService.getUserPostCount(userId);
+    private double computeActivityScoreFromCache(Long userId, Map<Long, Integer> followerCountMap, Map<Long, Integer> postCountMap) {
+        int followerCount = followerCountMap.getOrDefault(userId, 0);
+        int postCount = postCountMap.getOrDefault(userId, 0);
 
         double followerScore = Math.min(1.0, followerCount / 50.0);
         double postScore = Math.min(1.0, postCount / 20.0);
@@ -259,23 +274,11 @@ public class RecommendService {
         return 0.6 * followerScore + 0.4 * postScore;
     }
 
-    private double computeNewUserScore(LocalDateTime createdAt, LocalDateTime now) {
-        if (createdAt == null) return 0.0;
-        long daysSince = ChronoUnit.DAYS.between(createdAt, now);
-        if (daysSince <= 3) return 1.0;
-        if (daysSince <= 7) return 0.8;
-        if (daysSince <= 14) return 0.5;
-        if (daysSince <= 30) return 0.3;
-        return 0.0;
-    }
-
-    private String determineReason(Long userId, Set<String> myBreeds, int myCategory,
-                                    Set<Long> twoHopIds, Set<Long> interactUserIds) {
+    private String determineReasonFromPets(List<Pet> theirPets, Set<String> myBreeds, int myCategory,
+                                            Set<Long> twoHopIds, Set<Long> interactUserIds, Long userId) {
         if (interactUserIds.contains(userId)) return "interact";
         if (twoHopIds.contains(userId)) return "social";
 
-        List<Pet> theirPets = petMapper.selectList(
-            new LambdaQueryWrapper<Pet>().eq(Pet::getUserId, userId));
         for (Pet pet : theirPets) {
             if (pet.getBreed() != null && myBreeds.contains(pet.getBreed())) {
                 return "same_breed";
@@ -286,6 +289,16 @@ public class RecommendService {
         }
 
         return "activity";
+    }
+
+    private double computeNewUserScore(LocalDateTime createdAt, LocalDateTime now) {
+        if (createdAt == null) return 0.0;
+        long daysSince = ChronoUnit.DAYS.between(createdAt, now);
+        if (daysSince <= 3) return 1.0;
+        if (daysSince <= 7) return 0.8;
+        if (daysSince <= 14) return 0.5;
+        if (daysSince <= 30) return 0.3;
+        return 0.0;
     }
 
     public List<Post> recommendPosts(Long userId, int page, int size) {
@@ -303,10 +316,8 @@ public class RecommendService {
                 int end = Math.min(start + size, cachedIds.size());
                 if (start < cachedIds.size()) {
                     List<Long> pageIds = cachedIds.subList(start, end);
-                    return pageIds.stream()
-                        .map(id -> postMapper.selectById(id))
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
+                    return postMapper.selectBatchIds(pageIds)
+                        .stream().filter(Objects::nonNull).collect(Collectors.toList());
                 }
                 return Collections.emptyList();
             }
@@ -326,10 +337,8 @@ public class RecommendService {
         int end = Math.min(start + size, sortedIds.size());
         if (start < sortedIds.size()) {
             List<Long> pageIds = sortedIds.subList(start, end);
-            return pageIds.stream()
-                .map(id -> postMapper.selectById(id))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+            return postMapper.selectBatchIds(pageIds)
+                .stream().filter(Objects::nonNull).collect(Collectors.toList());
         }
         return Collections.emptyList();
     }
@@ -380,6 +389,19 @@ public class RecommendService {
         Map<Long, Set<String>> authorBreedCache = new HashMap<>();
         Map<Long, Integer> authorCategoryCache = new HashMap<>();
 
+        List<Long> authorIds = candidates.stream()
+            .map(Post::getUserId).distinct().collect(Collectors.toList());
+        List<Pet> authorPets = petMapper.selectList(
+            new LambdaQueryWrapper<Pet>().in(Pet::getUserId, authorIds));
+        for (Pet pet : authorPets) {
+            Long aid = pet.getUserId();
+            if (pet.getBreed() != null && !pet.getBreed().trim().isEmpty()) {
+                authorBreedCache.computeIfAbsent(aid, k -> new HashSet<>()).add(pet.getBreed());
+            }
+            int cat = pet.getCategory() != null ? pet.getCategory() : 0;
+            authorCategoryCache.merge(aid, cat, Math::max);
+        }
+
         LocalDateTime now = LocalDateTime.now();
         Map<Long, Double> scoreMap = new HashMap<>();
 
@@ -425,22 +447,8 @@ public class RecommendService {
                                              Map<Long, Integer> categoryCache) {
         if (myBreeds.isEmpty() && myCategory == 0) return 0.3;
 
-        Set<String> authorBreeds = breedCache.computeIfAbsent(authorId, id -> {
-            List<Pet> pets = petMapper.selectList(
-                new LambdaQueryWrapper<Pet>().eq(Pet::getUserId, id));
-            return pets.stream()
-                .map(Pet::getBreed)
-                .filter(b -> b != null && !b.trim().isEmpty())
-                .collect(Collectors.toSet());
-        });
-
-        int authorCategory = categoryCache.computeIfAbsent(authorId, id -> {
-            List<Pet> pets = petMapper.selectList(
-                new LambdaQueryWrapper<Pet>().eq(Pet::getUserId, id));
-            return pets.stream()
-                .mapToInt(p -> p.getCategory() != null ? p.getCategory() : 0)
-                .max().orElse(0);
-        });
+        Set<String> authorBreeds = breedCache.getOrDefault(authorId, Collections.emptySet());
+        int authorCategory = categoryCache.getOrDefault(authorId, 0);
 
         if (authorBreeds.isEmpty() && authorCategory == 0) return 0.1;
 

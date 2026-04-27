@@ -97,6 +97,9 @@ public class AdminFeedbackController extends BaseAdminController {
             return Result.error(400, "状态不能为空");
         }
         feedback.setStatus(newStatus);
+        if (dto.getReply() != null && !dto.getReply().trim().isEmpty()) {
+            feedback.setReply(dto.getReply().trim());
+        }
         feedback.setUpdatedAt(LocalDateTime.now());
         feedbackMapper.updateById(feedback);
         return Result.success(null);

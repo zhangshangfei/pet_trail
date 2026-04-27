@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pettrail.pettrailbackend.dto.*;
 import com.pettrail.pettrailbackend.entity.AiModel;
+import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.entity.AiModelStats;
 import com.pettrail.pettrailbackend.entity.AiModelSwitchLog;
 import com.pettrail.pettrailbackend.mapper.AiModelMapper;
@@ -82,10 +83,10 @@ public class AiModelService {
         AiModel toModel = aiModelMapper.selectById(targetModelId);
 
         if (toModel == null) {
-            throw new RuntimeException("目标模型不存在");
+            throw new BusinessException(404, "目标模型不存在");
         }
         if (toModel.getStatus() != 1) {
-            throw new RuntimeException("目标模型未启用");
+            throw new BusinessException("目标模型未启用");
         }
 
         AiModelSwitchLog switchLog = new AiModelSwitchLog();
@@ -129,7 +130,7 @@ public class AiModelService {
             switchLogMapper.insert(switchLog);
 
             log.error("[模型切换] 切换失败: {}", e.getMessage());
-            throw new RuntimeException("模型切换失败: " + e.getMessage());
+            throw new BusinessException("模型切换失败: " + e.getMessage());
         }
     }
 
@@ -188,7 +189,7 @@ public class AiModelService {
     public AiModelVO updateModel(Long id, AiModelUpdateDTO dto) {
         AiModel model = aiModelMapper.selectById(id);
         if (model == null) {
-            throw new RuntimeException("模型不存在");
+            throw new BusinessException(404, "模型不存在");
         }
 
         if (dto.getDisplayName() != null) model.setDisplayName(dto.getDisplayName());
@@ -217,10 +218,12 @@ public class AiModelService {
     @Transactional
     public boolean deleteModel(Long id) {
         AiModel model = aiModelMapper.selectById(id);
-        if (model == null) return false;
+        if (model == null) {
+            throw new BusinessException(404, "模型不存在");
+        }
 
         if (model.getIsDefault() == 1) {
-            throw new RuntimeException("无法删除默认模型，请先切换到其他模型");
+            throw new BusinessException("无法删除默认模型，请先切换到其他模型");
         }
 
         aiModelMapper.deleteById(id);
@@ -233,11 +236,11 @@ public class AiModelService {
     public AiModelVO setModelStatus(Long id, Integer status) {
         AiModel model = aiModelMapper.selectById(id);
         if (model == null) {
-            throw new RuntimeException("模型不存在");
+            throw new BusinessException(404, "模型不存在");
         }
 
         if (status == 0 && model.getIsDefault() == 1) {
-            throw new RuntimeException("无法禁用默认模型，请先切换到其他模型");
+            throw new BusinessException("无法禁用默认模型，请先切换到其他模型");
         }
 
         model.setStatus(status);
@@ -275,12 +278,40 @@ public class AiModelService {
         dashboard.setAvailableModels(listAllModels());
 
         Map<String, Object> globalStats = statsMapper.selectGlobalAggregatedStats();
+        long dbTotalCalls = 0;
+        long dbSuccessCalls = 0;
+        long dbFailedCalls = 0;
+        long dbTotalResponseTime = 0;
         if (globalStats != null) {
-            dashboard.setTotalCalls(toLong(globalStats.get("total_calls")));
-            dashboard.setSuccessCalls(toLong(globalStats.get("success_calls")));
-            dashboard.setFailedCalls(toLong(globalStats.get("failed_calls")));
-            dashboard.setAvgResponseTime(toDouble(globalStats.get("avg_response_time")));
+            dbTotalCalls = toLong(globalStats.get("total_calls"));
+            dbSuccessCalls = toLong(globalStats.get("success_calls"));
+            dbFailedCalls = toLong(globalStats.get("failed_calls"));
+            dbTotalResponseTime = toLong(globalStats.get("total_response_time"));
         }
+
+        long pendingTotalCalls = 0;
+        long pendingSuccessCalls = 0;
+        long pendingFailedCalls = 0;
+        long pendingTotalResponseTime = 0;
+        for (Map.Entry<Long, InMemoryStats> entry : pendingStatsMap.entrySet()) {
+            InMemoryStats stats = entry.getValue();
+            if (stats != null && stats.callCount > 0) {
+                pendingTotalCalls += stats.callCount;
+                pendingSuccessCalls += stats.successCount;
+                pendingFailedCalls += stats.failCount;
+                pendingTotalResponseTime += stats.totalResponseTime;
+            }
+        }
+
+        long totalCalls = dbTotalCalls + pendingTotalCalls;
+        long successCalls = dbSuccessCalls + pendingSuccessCalls;
+        long failedCalls = dbFailedCalls + pendingFailedCalls;
+        long totalResponseTime = dbTotalResponseTime + pendingTotalResponseTime;
+
+        dashboard.setTotalCalls(totalCalls);
+        dashboard.setSuccessCalls(successCalls);
+        dashboard.setFailedCalls(failedCalls);
+        dashboard.setAvgResponseTime(totalCalls > 0 ? Math.round(totalResponseTime * 1.0 / totalCalls) : 0.0);
 
         dashboard.setRecentSwitches(getSwitchLogs(10));
 
@@ -419,7 +450,7 @@ public class AiModelService {
     public void updateModelParameters(Long modelId, Map<String, Object> parameters) {
         AiModel model = aiModelMapper.selectById(modelId);
         if (model == null) {
-            throw new RuntimeException("模型不存在");
+            throw new BusinessException(404, "模型不存在");
         }
         try {
             model.setParameters(objectMapper.writeValueAsString(parameters));
@@ -427,7 +458,7 @@ public class AiModelService {
             aiModelMapper.updateById(model);
             log.info("[模型管理] 更新模型参数: id={}", modelId);
         } catch (Exception e) {
-            throw new RuntimeException("参数序列化失败: " + e.getMessage());
+            throw new BusinessException("参数序列化失败: " + e.getMessage());
         }
     }
 

@@ -13,6 +13,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
@@ -22,11 +23,29 @@ public class AiAnalysisService {
     private final RestTemplate restTemplate;
     private final SysConfigService sysConfigService;
     private final AiModelService aiModelService;
+    private final HealthAnalysisCacheService cacheService;
+
+    private static final long MAX_CALL_DURATION_MS = 25000;
+    private final AtomicLong lastFailTime = new AtomicLong(0);
+    private static final long CIRCUIT_BREAKER_RESET_MS = 60000;
+    private static final int MAX_CONSECUTIVE_FAILURES = 3;
+    private final AtomicLong consecutiveFailures = new AtomicLong(0);
 
     public String generateAnalysis(Pet pet, HealthAnalysisVO analysis) {
         if (!isAiEnabled()) {
             log.info("[AI调用] AI分析未启用，跳过大模型调用");
             return null;
+        }
+
+        if (isCircuitBreakerOpen()) {
+            log.warn("[AI调用] 熔断器开启，跳过本次调用");
+            return null;
+        }
+
+        String cachedAnalysis = cacheService.getCachedAnalysis(pet.getId(), false);
+        if (cachedAnalysis != null) {
+            log.info("[AI调用] 使用缓存结果: petId={}", pet.getId());
+            return cachedAnalysis;
         }
 
         AiModel currentModel = aiModelService.getCurrentModel();
@@ -54,9 +73,8 @@ public class AiAnalysisService {
 
         String url = effectiveBaseUrl + (effectiveBaseUrl.endsWith("/") ? "" : "/") + "chat/completions";
 
-        log.info("[AI调用] 开始调用 === 宠物: {}, 模型: {}, URL: {}, apiKey前缀: {}",
-                pet.getName(), effectiveModel, url,
-                effectiveApiKey.length() > 8 ? effectiveApiKey.substring(0, 8) + "..." : "***");
+        log.info("[AI调用] 开始调用 === 宠物: {}, 模型: {}, URL: {}",
+                pet.getName(), effectiveModel, url);
 
         long startTime = System.currentTimeMillis();
         Long modelId = currentModel != null ? currentModel.getId() : null;
@@ -108,6 +126,8 @@ public class AiAnalysisService {
                         if (modelId != null) {
                             aiModelService.recordModelCall(modelId, elapsed, true);
                         }
+                        consecutiveFailures.set(0);
+                        cacheService.cacheAnalysis(pet.getId(), content, false);
                         return content;
                     }
                 }
@@ -124,16 +144,19 @@ public class AiAnalysisService {
             long elapsed = System.currentTimeMillis() - startTime;
             log.error("[AI调用] 认证/权限错误 === 耗时: {}ms, 状态码: {}, 响应体: {}", elapsed, e.getStatusCode(), e.getResponseBodyAsString());
             if (modelId != null) aiModelService.recordModelCall(modelId, elapsed, false);
+            recordFailure();
             return null;
         } catch (HttpServerErrorException e) {
             long elapsed = System.currentTimeMillis() - startTime;
             log.error("[AI调用] 服务端错误 === 耗时: {}ms, 状态码: {}, 响应体: {}", elapsed, e.getStatusCode(), e.getResponseBodyAsString());
             if (modelId != null) aiModelService.recordModelCall(modelId, elapsed, false);
+            recordFailure();
             return null;
         } catch (Exception e) {
             long elapsed = System.currentTimeMillis() - startTime;
             log.error("[AI调用] 调用异常 === 耗时: {}ms, 异常类型: {}, 信息: {}", elapsed, e.getClass().getSimpleName(), e.getMessage());
             if (modelId != null) aiModelService.recordModelCall(modelId, elapsed, false);
+            recordFailure();
             return null;
         }
     }
@@ -235,5 +258,27 @@ public class AiAnalysisService {
 
         sb.append("\n请给出专业的健康分析和建议。");
         return sb.toString();
+    }
+
+    private boolean isCircuitBreakerOpen() {
+        long failures = consecutiveFailures.get();
+        if (failures >= MAX_CONSECUTIVE_FAILURES) {
+            long lastFail = lastFailTime.get();
+            long elapsed = System.currentTimeMillis() - lastFail;
+            if (elapsed < CIRCUIT_BREAKER_RESET_MS) {
+                return true;
+            }
+            consecutiveFailures.set(0);
+            return false;
+        }
+        return false;
+    }
+
+    private void recordFailure() {
+        long count = consecutiveFailures.incrementAndGet();
+        lastFailTime.set(System.currentTimeMillis());
+        if (count >= MAX_CONSECUTIVE_FAILURES) {
+            log.warn("[AI调用] 熔断器触发，连续失败{}次，将在{}秒后重试", count, CIRCUIT_BREAKER_RESET_MS / 1000);
+        }
     }
 }

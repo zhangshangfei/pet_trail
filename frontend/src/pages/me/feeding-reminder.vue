@@ -154,7 +154,7 @@
 </template>
 
 <script>
-import { DEFAULT_PET_AVATAR_URL } from '@/utils/index'
+import { DEFAULT_PET_AVATAR_URL, requestWxSubscribe } from '@/utils/index'
 
 const MEAL_OPTIONS = [
   { value: 'breakfast', label: '早餐', emoji: '🌅' },
@@ -317,6 +317,8 @@ export default {
       }
       if (this.saving) return
       this.saving = true
+
+      requestWxSubscribe(['feeding'])
 
       try {
         let res

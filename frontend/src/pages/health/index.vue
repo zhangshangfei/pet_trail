@@ -270,7 +270,7 @@
 </template>
 
 <script>
-import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
+import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL, loadWxSubscribeTemplates, requestWxSubscribe } from '@/utils/index'
 import UserTopBar from '@/components/UserTopBar.vue'
 
 function todayStr() {
@@ -359,8 +359,8 @@ export default {
     },
     submitButtonText() {
       if (this.currentTab === 0) return "保存体重记录 🐾";
-      if (this.currentTab === 1) return "保存疫苗记录 🐾";
-      return "保存驱虫记录 🐾";
+      if (this.currentTab === 1) return "保存驱虫记录 🐾";
+      return "保存疫苗记录 🐾";
     }
   },
   onShow() {
@@ -371,6 +371,7 @@ export default {
 
     uni.$on('loginSuccess', () => {
       this.loadUserInfo()
+      this.loadPets()
     })
   },
   onHide() {
@@ -392,6 +393,7 @@ export default {
     this.resetFormDates();
     this.loadPets();
     this.loadUserInfo();
+    loadWxSubscribeTemplates();
   },
   methods: {
     formatDateYMD(d) {
@@ -548,8 +550,8 @@ export default {
     },
     onSubmitCurrent() {
       if (this.currentTab === 0) return this.submitWeight();
-      if (this.currentTab === 1) return this.submitVaccine();
-      return this.submitDeworm();
+      if (this.currentTab === 1) return this.submitDeworm();
+      return this.submitVaccine();
     },
     async submitWeight() {
       if (!this.currentPet || !this.currentPet.id) {
@@ -590,6 +592,7 @@ export default {
         uni.showToast({ title: "请先选择宠物", icon: "none" });
         return;
       }
+      requestWxSubscribe(['vaccine']);
       const loggedIn = await checkLogin('请先登录后再保存记录')
       if (!loggedIn) return
       const vaccineName = this.vaccineTypes[this.vaccineForm.typeIndex];
@@ -622,6 +625,7 @@ export default {
         uni.showToast({ title: "请先选择宠物", icon: "none" });
         return;
       }
+      requestWxSubscribe(['parasite']);
       const loggedIn = await checkLogin('请先登录后再保存记录')
       if (!loggedIn) return
       const type = this.dewormTypeToApiType(this.dewormForm.typeIndex);
@@ -629,6 +633,7 @@ export default {
         const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/parasite-reminders`, {
           type,
           nextDate: this.dewormForm.date,
+          productName: this.dewormForm.medicine || null,
           note: this.dewormForm.remark || null
         });
         if (res && res.success) {

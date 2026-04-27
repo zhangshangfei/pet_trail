@@ -17,6 +17,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -139,20 +140,17 @@ public class CheckinService {
         String todayStr = today.format(DateTimeFormatter.ISO_DATE);
         log.info("开始打卡: userId={}, petId={}, itemId={}, date={}", userId, petId, itemId, todayStr);
 
-        // // 1. Redis 防重（原子操作）
-        // String redisKey = String.format("checkin:%s:user:%d", todayStr, userId);
-        // String fieldKey = String.valueOf(itemId);
-        //
-        // Boolean isNew = redisTemplate.opsForHash()
-        //     .putIfAbsent(redisKey, fieldKey, todayStr);
-        //
-        // if (Boolean.FALSE.equals(isNew)) {
-        //     throw new BusinessException("今日已完成该打卡项");
-        // }
-        // redisTemplate.expire(redisKey, 2, TimeUnit.DAYS);
+        String redisKey = String.format("checkin:%s:user:%d", todayStr, userId);
+        String fieldKey = String.valueOf(itemId);
 
-        // 2. 检查是否已打卡
-        log.info("检查是否已打卡: userId={}, petId={}, itemId={}, date={}", userId, petId, itemId, todayStr);
+        Boolean isNew = redisTemplate.opsForHash()
+            .putIfAbsent(redisKey, fieldKey, todayStr);
+
+        if (Boolean.FALSE.equals(isNew)) {
+            throw new BusinessException("今日已完成该打卡项");
+        }
+        redisTemplate.expire(redisKey, 2, TimeUnit.DAYS);
+
         CheckinRecord existing = checkinRecordMapper.selectByUserIdItemIdAndDate(userId, petId, itemId, today);
         if (existing != null) {
             log.warn("重复打卡: userId={}, petId={}, itemId={}, date={}, existingId={}", userId, petId, itemId, todayStr, existing.getId());
@@ -296,7 +294,7 @@ public class CheckinService {
         result.put("currentStreak", currentStreak);
         result.put("maxStreak", maxStreak);
 
-        LocalDate weekStart = today.minusDays(6);
+        LocalDate weekStart = today.with(DayOfWeek.MONDAY);
         List<CheckinRecord> weekRecords = checkinRecordMapper.selectByUserIdAndDateRange(userId, weekStart, today);
         long weekDays = weekRecords.stream()
                 .filter(r -> r.getStatus() != null && r.getStatus() == 1)
@@ -305,7 +303,7 @@ public class CheckinService {
                 .count();
         result.put("weekDays", weekDays);
 
-        LocalDate monthStart = today.minusDays(29);
+        LocalDate monthStart = today.withDayOfMonth(1);
         List<CheckinRecord> monthRecords = checkinRecordMapper.selectByUserIdAndDateRange(userId, monthStart, today);
         long monthDays = monthRecords.stream()
                 .filter(r -> r.getStatus() != null && r.getStatus() == 1)

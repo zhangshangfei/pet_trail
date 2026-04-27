@@ -20,7 +20,8 @@ public class AchievementCheckTask {
 
     private static final List<String> CONDITION_TYPES = List.of(
             "checkin_count", "checkin_streak", "health_record_count",
-            "post_count", "like_received"
+            "post_count", "like_received", "follower_count",
+            "pet_count", "comment_count"
     );
 
     @Scheduled(cron = "0 0 2 * * ?")

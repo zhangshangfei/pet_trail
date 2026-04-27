@@ -65,6 +65,18 @@
           <el-icon><Cpu /></el-icon>
           <template #title>AI模型管理</template>
         </el-menu-item>
+        <el-menu-item index="/challenges">
+          <el-icon><Trophy /></el-icon>
+          <template #title>挑战赛配置</template>
+        </el-menu-item>
+        <el-menu-item index="/products">
+          <el-icon><ShoppingCart /></el-icon>
+          <template #title>商城管理</template>
+        </el-menu-item>
+        <el-menu-item index="/vet-clinics">
+          <el-icon><FirstAidKit /></el-icon>
+          <template #title>医院信息管理</template>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

@@ -2,7 +2,7 @@
   <view class="user-topbar">
     <view class="user-topbar-statusbar" :style="{ height: statusBarHeight + 'px' }"></view>
     <view class="user-topbar-inner">
-      <view v-if="!isLoggedIn" class="user-topbar-login-wrap" @tap="$emit('loginTap')">
+      <view v-if="!isLoggedIn" class="user-topbar-login-wrap" @tap="onLoginTap">
         <view class="user-topbar-avatar-wrap">
           <avatar-view src="" name="宠" :size="72" />
         </view>
@@ -40,6 +40,7 @@
 
 <script>
 import AvatarView from './AvatarView.vue'
+import { wechatLogin } from '@/utils/index'
 
 export default {
   name: 'UserTopBar',
@@ -101,6 +102,13 @@ export default {
   methods: {
     checkLogin() {
       this.isLoggedIn = !!uni.getStorageSync('token')
+    },
+    async onLoginTap() {
+      this.$emit('loginTap')
+      const result = await wechatLogin()
+      if (result) {
+        this.checkLogin()
+      }
     },
     calcRightMargin() {
       try {

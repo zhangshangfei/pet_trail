@@ -3,6 +3,7 @@ package com.pettrail.pettrailbackend.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pettrail.pettrailbackend.entity.Pet;
+import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.mapper.PetMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,7 +94,7 @@ public class PetService extends ServiceImpl<PetMapper, Pet> {
 
         Pet pet = this.getById(petId);
         if (pet == null) {
-            throw new RuntimeException("宠物不存在");
+            throw new BusinessException(404, "宠物不存在");
         }
 
         try {
@@ -115,7 +116,7 @@ public class PetService extends ServiceImpl<PetMapper, Pet> {
                          LocalDate birthday, String avatar, BigDecimal weight, String color) {
         Pet pet = this.getById(petId);
         if (pet == null) {
-            throw new RuntimeException("宠物不存在");
+            throw new BusinessException(404, "宠物不存在");
         }
 
         if (name != null) {
@@ -164,7 +165,7 @@ public class PetService extends ServiceImpl<PetMapper, Pet> {
     public void deletePet(Long petId) {
         Pet pet = this.getById(petId);
         if (pet == null) {
-            throw new RuntimeException("宠物不存在");
+            throw new BusinessException(404, "宠物不存在");
         }
         this.removeById(petId);
         log.info("删除宠物成功: petId={}", petId);
@@ -181,7 +182,7 @@ public class PetService extends ServiceImpl<PetMapper, Pet> {
     public Pet updatePetWeight(Long petId, BigDecimal weight) {
         Pet pet = this.getById(petId);
         if (pet == null) {
-            throw new RuntimeException("宠物不存在");
+            throw new BusinessException(404, "宠物不存在");
         }
         pet.setWeight(weight);
         pet.setUpdatedAt(LocalDateTime.now());

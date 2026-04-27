@@ -5,6 +5,7 @@ import com.pettrail.pettrailbackend.dto.FeedbackCreateDTO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Feedback;
 import com.pettrail.pettrailbackend.mapper.FeedbackMapper;
+import com.alibaba.fastjson.JSON;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -36,8 +37,8 @@ public class FeedbackController extends BaseController {
         feedback.setType(type);
         feedback.setContent(content.trim());
         feedback.setContact(contact);
-        if (dto.getImages() != null) {
-            feedback.setImages(dto.getImages());
+        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
+            feedback.setImages(JSON.toJSONString(dto.getImages()));
         }
         feedback.setStatus(0);
         feedback.setCreatedAt(LocalDateTime.now());

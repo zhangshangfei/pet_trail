@@ -1,171 +1,239 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.pettrail.pettrailbackend.dto.HealthAnalysisVO;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class HealthAnalysisCacheService {
 
-    private static final long CACHE_TTL_MINUTES = 720;
-    private static final long CLEANUP_INTERVAL_MINUTES = 60;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    private final ConcurrentHashMap<String, CacheEntry> cache = new ConcurrentHashMap<>();
+    private static final String CACHE_PREFIX = "health:analysis:";
+    private static final String AI_CACHE_PREFIX = "health:analysis:ai:";
+    private static final long CACHE_TTL_HOURS = 6;
+
     private final AtomicLong hitCount = new AtomicLong(0);
     private final AtomicLong missCount = new AtomicLong(0);
+    private final AtomicLong putCount = new AtomicLong(0);
     private final AtomicLong evictCount = new AtomicLong(0);
 
-    private final ScheduledExecutorService cleanupScheduler;
-
-    public HealthAnalysisCacheService() {
-        cleanupScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "health-cache-cleanup");
-            t.setDaemon(true);
-            return t;
-        });
-        cleanupScheduler.scheduleAtFixedRate(
-                this::cleanupExpiredEntries,
-                CLEANUP_INTERVAL_MINUTES,
-                CLEANUP_INTERVAL_MINUTES,
-                TimeUnit.MINUTES
-        );
-        log.info("[健康分析缓存] 初始化完成, TTL={}分钟, 清理间隔={}分钟", CACHE_TTL_MINUTES, CLEANUP_INTERVAL_MINUTES);
+    public String buildCacheKey(Long userId, Long petId) {
+        return CACHE_PREFIX + userId + ":" + petId;
     }
 
-    public String buildCacheKey(Long userId, Long petId) {
-        LocalDate today = LocalDate.now();
-        return String.format("health:%d:pet:%d:date:%s", userId, petId, today);
+    public String buildAiCacheKey(Long petId) {
+        return AI_CACHE_PREFIX + petId;
     }
 
     public HealthAnalysisVO get(String cacheKey) {
-        CacheEntry entry = cache.get(cacheKey);
-        if (entry == null) {
+        try {
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached == null) {
+                missCount.incrementAndGet();
+                return null;
+            }
+            hitCount.incrementAndGet();
+            if (cached instanceof HealthAnalysisVO) {
+                log.debug("健康分析缓存命中: key={}", cacheKey);
+                return (HealthAnalysisVO) cached;
+            }
+            if (cached instanceof Map) {
+                log.debug("健康分析缓存命中(反序列化为Map，尝试转换): key={}", cacheKey);
+                HealthAnalysisVO vo = convertMapToVO((Map<String, Object>) cached);
+                if (vo != null) {
+                    return vo;
+                }
+            }
+            log.warn("健康分析缓存类型异常，尝试JSON转换: key={}, actualType={}", cacheKey, cached.getClass().getName());
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+                String json = mapper.writeValueAsString(cached);
+                return mapper.readValue(json, HealthAnalysisVO.class);
+            } catch (Exception e2) {
+                log.error("健康分析缓存JSON转换也失败，删除无效缓存: key={}", cacheKey, e2);
+                redisTemplate.delete(cacheKey);
+                return null;
+            }
+        } catch (Exception e) {
+            log.warn("健康分析缓存读取异常: key={}, error={}", cacheKey, e.getMessage());
             missCount.incrementAndGet();
-            log.debug("[健康分析缓存] 缓存未命中: key={}", cacheKey);
             return null;
         }
-
-        if (entry.isExpired()) {
-            cache.remove(cacheKey);
-            evictCount.incrementAndGet();
-            missCount.incrementAndGet();
-            log.debug("[健康分析缓存] 缓存已过期: key={}, 存活时间={}ms", cacheKey, entry.getAge());
-            return null;
-        }
-
-        hitCount.incrementAndGet();
-        log.info("[健康分析缓存] 缓存命中: key={}, 剩余有效期={}秒", cacheKey, entry.getRemainingTTLSeconds());
-        return entry.getValue();
     }
 
-    public void put(String cacheKey, HealthAnalysisVO value) {
-        CacheEntry entry = new CacheEntry(value, CACHE_TTL_MINUTES);
-        cache.put(cacheKey, entry);
-        log.info("[健康分析缓存] 缓存更新: key={}, TTL={}分钟", cacheKey, CACHE_TTL_MINUTES);
+    @SuppressWarnings("unchecked")
+    private HealthAnalysisVO convertMapToVO(Map<String, Object> map) {
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+            return mapper.convertValue(map, HealthAnalysisVO.class);
+        } catch (Exception e) {
+            log.warn("Map转HealthAnalysisVO失败: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    public void put(String cacheKey, HealthAnalysisVO vo) {
+        if (vo == null) {
+            return;
+        }
+        try {
+            redisTemplate.opsForValue().set(cacheKey, vo, CACHE_TTL_HOURS, TimeUnit.HOURS);
+            putCount.incrementAndGet();
+            log.info("健康分析缓存写入: key={}, ttl={}h", cacheKey, CACHE_TTL_HOURS);
+        } catch (Exception e) {
+            log.warn("健康分析缓存写入异常: key={}, error={}", cacheKey, e.getMessage());
+        }
     }
 
     public void invalidate(Long userId, Long petId) {
-        String prefix = String.format("health:%d:pet:%d:", userId, petId);
-        int removed = 0;
-        for (String key : new ArrayList<>(cache.keySet())) {
-            if (key.startsWith(prefix)) {
-                cache.remove(key);
-                removed++;
-            }
+        try {
+            redisTemplate.delete(buildCacheKey(userId, petId));
+            redisTemplate.delete(buildAiCacheKey(petId));
+            evictCount.incrementAndGet();
+            log.info("健康分析缓存清除: userId={}, petId={}", userId, petId);
+        } catch (Exception e) {
+            log.warn("健康分析缓存清除异常: userId={}, petId={}, error={}", userId, petId, e.getMessage());
         }
-        if (removed > 0) {
-            log.info("[健康分析缓存] 手动失效: userId={}, petId={}, 清除条目数={}", userId, petId, removed);
+    }
+
+    public void invalidateByPetId(Long petId) {
+        try {
+            Set<String> keys = redisTemplate.keys(CACHE_PREFIX + "*:" + petId);
+            int count = 0;
+            if (keys != null && !keys.isEmpty()) {
+                count = keys.size();
+                redisTemplate.delete(keys);
+            }
+            String aiKey = buildAiCacheKey(petId);
+            redisTemplate.delete(aiKey);
+            evictCount.addAndGet(count + 1);
+            log.info("健康分析缓存按petId清除: petId={}, clearedKeys={}", petId, count + 1);
+        } catch (Exception e) {
+            log.warn("健康分析缓存按petId清除异常: petId={}, error={}", petId, e.getMessage());
         }
     }
 
     public void invalidateAll() {
-        int size = cache.size();
-        cache.clear();
-        log.info("[健康分析缓存] 全量清除: 清除条目数={}", size);
-    }
-
-    public void invalidateByPetId(Long petId) {
-        String suffix = String.format(":pet:%d:", petId);
-        int removed = 0;
-        for (String key : new ArrayList<>(cache.keySet())) {
-            if (key.contains(suffix)) {
-                cache.remove(key);
-                removed++;
+        try {
+            Set<String> keys = redisTemplate.keys(CACHE_PREFIX + "*");
+            int count = 0;
+            if (keys != null && !keys.isEmpty()) {
+                count = keys.size();
+                redisTemplate.delete(keys);
             }
-        }
-        if (removed > 0) {
-            log.info("[健康分析缓存] 按宠物失效: petId={}, 清除条目数={}", petId, removed);
+            Set<String> aiKeys = redisTemplate.keys(AI_CACHE_PREFIX + "*");
+            if (aiKeys != null && !aiKeys.isEmpty()) {
+                count += aiKeys.size();
+                redisTemplate.delete(aiKeys);
+            }
+            evictCount.addAndGet(count);
+            log.info("健康分析缓存全量清除: count={}", count);
+        } catch (Exception e) {
+            log.warn("健康分析缓存全量清除异常: error={}", e.getMessage());
         }
     }
 
     public Map<String, Object> getCacheStats() {
-        Map<String, Object> stats = new LinkedHashMap<>();
-        stats.put("totalEntries", cache.size());
-        stats.put("hitCount", hitCount.get());
-        stats.put("missCount", missCount.get());
-        stats.put("evictCount", evictCount.get());
-        long total = hitCount.get() + missCount.get();
-        stats.put("hitRate", total > 0 ? String.format("%.1f%%", (hitCount.get() * 100.0 / total)) : "0%");
-        stats.put("ttlMinutes", CACHE_TTL_MINUTES);
-        stats.put("cleanupIntervalMinutes", CLEANUP_INTERVAL_MINUTES);
+        Map<String, Object> stats = new HashMap<>();
+        try {
+            Set<String> voKeys = redisTemplate.keys(CACHE_PREFIX + "*");
+            Set<String> aiKeys = redisTemplate.keys(AI_CACHE_PREFIX + "*");
+            int voCount = voKeys != null ? voKeys.size() : 0;
+            int aiCount = aiKeys != null ? aiKeys.size() : 0;
+            int totalCount = voCount + aiCount;
 
-        long activeEntries = cache.values().stream().filter(e -> !e.isExpired()).count();
-        long expiredEntries = cache.size() - activeEntries;
-        stats.put("activeEntries", activeEntries);
-        stats.put("expiredEntries", expiredEntries);
+            long hits = hitCount.get();
+            long misses = missCount.get();
+            long puts = putCount.get();
+            long evicts = evictCount.get();
+            long totalAccess = hits + misses;
+            double hitRate = totalAccess > 0 ? Math.round(hits * 1000.0 / totalAccess) / 10.0 : 0.0;
 
+            stats.put("activeEntries", totalCount);
+            stats.put("voCacheCount", voCount);
+            stats.put("aiCacheCount", aiCount);
+            stats.put("cacheCount", totalCount);
+            stats.put("hitRate", hitRate + "%");
+            stats.put("hitCount", hits);
+            stats.put("missCount", misses);
+            stats.put("putCount", puts);
+            stats.put("evictCount", evicts);
+            stats.put("totalAccess", totalAccess);
+            stats.put("ttlMinutes", CACHE_TTL_HOURS * 60);
+            stats.put("ttlHours", CACHE_TTL_HOURS);
+            stats.put("cachePrefix", CACHE_PREFIX);
+            stats.put("aiCachePrefix", AI_CACHE_PREFIX);
+            if (voKeys != null && !voKeys.isEmpty()) {
+                stats.put("sampleKeys", voKeys.stream().limit(5).toList());
+            }
+        } catch (Exception e) {
+            stats.put("activeEntries", -1);
+            stats.put("cacheCount", -1);
+            stats.put("error", e.getMessage());
+        }
         return stats;
     }
 
-    private void cleanupExpiredEntries() {
-        int removed = 0;
-        for (Map.Entry<String, CacheEntry> entry : cache.entrySet()) {
-            if (entry.getValue().isExpired()) {
-                cache.remove(entry.getKey());
-                removed++;
-            }
-        }
-        if (removed > 0) {
-            evictCount.addAndGet(removed);
-            log.info("[健康分析缓存] 定时清理: 清除过期条目数={}, 剩余条目数={}", removed, cache.size());
-        }
+    public String getCachedAnalysis(Long petId) {
+        return getCachedAnalysis(petId, true);
     }
 
-    private static class CacheEntry {
-        private final HealthAnalysisVO value;
-        private final long createdAt;
-        private final long expireAt;
-
-        CacheEntry(HealthAnalysisVO value, long ttlMinutes) {
-            this.value = value;
-            this.createdAt = System.currentTimeMillis();
-            this.expireAt = this.createdAt + TimeUnit.MINUTES.toMillis(ttlMinutes);
+    public String getCachedAnalysis(Long petId, boolean trackStats) {
+        try {
+            String aiKey = buildAiCacheKey(petId);
+            Object cached = redisTemplate.opsForValue().get(aiKey);
+            if (cached instanceof String) {
+                if (trackStats) {
+                    hitCount.incrementAndGet();
+                }
+                log.debug("AI分析缓存命中: petId={}", petId);
+                return (String) cached;
+            }
+            if (cached != null) {
+                log.warn("AI分析缓存类型异常: petId={}, type={}", petId, cached.getClass().getName());
+            }
+            if (trackStats) {
+                missCount.incrementAndGet();
+            }
+        } catch (Exception e) {
+            log.warn("AI分析缓存读取异常: petId={}, error={}", petId, e.getMessage());
+            if (trackStats) {
+                missCount.incrementAndGet();
+            }
         }
+        return null;
+    }
 
-        boolean isExpired() {
-            return System.currentTimeMillis() > expireAt;
+    public void cacheAnalysis(Long petId, String analysis) {
+        cacheAnalysis(petId, analysis, true);
+    }
+
+    public void cacheAnalysis(Long petId, String analysis, boolean trackStats) {
+        if (analysis == null || analysis.isEmpty()) {
+            return;
         }
-
-        long getAge() {
-            return System.currentTimeMillis() - createdAt;
-        }
-
-        long getRemainingTTLSeconds() {
-            long remaining = expireAt - System.currentTimeMillis();
-            return remaining > 0 ? TimeUnit.MILLISECONDS.toSeconds(remaining) : 0;
-        }
-
-        HealthAnalysisVO getValue() {
-            return value;
+        try {
+            String aiKey = buildAiCacheKey(petId);
+            redisTemplate.opsForValue().set(aiKey, analysis, CACHE_TTL_HOURS, TimeUnit.HOURS);
+            if (trackStats) {
+                putCount.incrementAndGet();
+            }
+            log.info("AI分析缓存写入: petId={}, ttl={}h, contentLength={}", petId, CACHE_TTL_HOURS, analysis.length());
+        } catch (Exception e) {
+            log.warn("AI分析缓存写入异常: petId={}, error={}", petId, e.getMessage());
         }
     }
 }

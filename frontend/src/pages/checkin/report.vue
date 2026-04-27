@@ -25,78 +25,68 @@
         </view>
 
         <template v-else-if="report">
-          <view class="summary-card">
-            <view class="summary-header">
-              <text class="summary-title">{{ period === 'week' ? '本周' : '本月' }}概览</text>
-              <text class="summary-date">{{ report.startDate }} ~ {{ report.endDate }}</text>
-            </view>
-            <view class="summary-grid">
-              <view class="summary-item">
-                <text class="summary-value">{{ report.checkinDays }}</text>
-                <text class="summary-label">打卡天数</text>
-              </view>
-              <view class="summary-divider"></view>
-              <view class="summary-item">
-                <text class="summary-value">{{ report.totalDays }}</text>
-                <text class="summary-label">总天数</text>
-              </view>
-              <view class="summary-divider"></view>
-              <view class="summary-item">
-                <text class="summary-value highlight">{{ report.completionRate }}%</text>
-                <text class="summary-label">完成率</text>
+          <!-- 日期范围 -->
+          <view class="date-range-bar">
+            <text class="date-range-text">{{ period === 'week' ? '本周' : '本月' }}：{{ report.startDate }} ~ {{ report.endDate }}</text>
+          </view>
+
+          <!-- 完成率大圆环 -->
+          <view class="rate-card">
+            <view class="rate-circle" :style="{ background: getCircleStyle(report.completionRate) }">
+              <view class="rate-circle-inner">
+                <text class="rate-value">{{ report.completionRate }}%</text>
+                <text class="rate-label">完成率</text>
               </view>
             </view>
           </view>
 
-          <view class="streak-card">
-            <view class="streak-row">
-              <view class="streak-item">
-                <text class="streak-icon">🔥</text>
-                <view class="streak-info">
-                  <text class="streak-value">{{ report.currentStreak }}天</text>
-                  <text class="streak-label">当前连续</text>
-                </view>
-              </view>
-              <view class="streak-divider"></view>
-              <view class="streak-item">
-                <text class="streak-icon">🏆</text>
-                <view class="streak-info">
-                  <text class="streak-value">{{ report.maxStreak }}天</text>
-                  <text class="streak-label">最长连续</text>
-                </view>
-              </view>
+          <!-- 核心数据 -->
+          <view class="stats-row">
+            <view class="stat-box">
+              <text class="stat-box-value" style="color: #ff6a3d;">{{ report.checkinDays }}</text>
+              <text class="stat-box-label">打卡天数</text>
+            </view>
+            <view class="stat-box">
+              <text class="stat-box-value">{{ report.totalDays }}</text>
+              <text class="stat-box-label">总天数</text>
+            </view>
+            <view class="stat-box">
+              <text class="stat-box-value" style="color: #ff6a3d;">{{ report.totalCheckins }}</text>
+              <text class="stat-box-label">累计打卡</text>
             </view>
           </view>
 
-          <view class="progress-card">
-            <text class="card-title">完成率</text>
-            <view class="progress-bar-wrap">
-              <view class="progress-bar-bg">
-                <view class="progress-bar-fill" :style="{ width: report.completionRate + '%' }"></view>
-              </view>
-              <text class="progress-percent">{{ report.completionRate }}%</text>
+          <!-- 连续打卡 -->
+          <view class="streak-row">
+            <view class="streak-box">
+              <text class="streak-box-icon">🔥</text>
+              <text class="streak-box-value">{{ report.currentStreak }}天</text>
+              <text class="streak-box-label">当前连续</text>
+            </view>
+            <view class="streak-box">
+              <text class="streak-box-icon">🏆</text>
+              <text class="streak-box-value">{{ report.maxStreak }}天</text>
+              <text class="streak-box-label">最长连续</text>
             </view>
           </view>
 
-          <view v-if="report.itemStats && report.itemStats.length" class="items-card">
-            <text class="card-title">各打卡项统计</text>
-            <view class="item-list">
+          <!-- 打卡项统计 -->
+          <view v-if="report.itemStats && report.itemStats.length" class="items-section">
+            <text class="items-section-title">各打卡项统计</text>
+            <view class="items-list">
               <view v-for="item in report.itemStats" :key="item.itemId" class="item-row">
-                <text class="item-icon">{{ item.itemIcon || '📋' }}</text>
-                <text class="item-name">{{ item.itemName }}</text>
-                <view class="item-bar-wrap">
-                  <view class="item-bar-bg">
-                    <view class="item-bar-fill" :style="{ width: getItemPercent(item.totalCount) + '%' }"></view>
+                <view class="item-row-left">
+                  <text class="item-row-icon">{{ item.itemIcon || '📋' }}</text>
+                  <text class="item-row-name">{{ item.itemName }}</text>
+                </view>
+                <view class="item-row-right">
+                  <text class="item-row-count">{{ item.totalCount }}次</text>
+                  <view class="item-row-bar-bg">
+                    <view class="item-row-bar-fill" :style="{ width: getItemPercent(item.totalCount) + '%' }"></view>
                   </view>
                 </view>
-                <text class="item-count">{{ item.totalCount }}次</text>
               </view>
             </view>
-          </view>
-
-          <view class="total-card">
-            <text class="total-label">累计打卡总数</text>
-            <text class="total-value">{{ report.totalCheckins }}</text>
           </view>
         </template>
 
@@ -141,12 +131,33 @@ export default {
         const res = await checkinApi.getCheckinReport(this.period)
         if (res && res.success && res.data) {
           this.report = res.data
+          if (!this.report.startDate || !this.report.endDate) {
+            this.fillDateRange()
+          }
         }
       } catch (e) {
         console.error('加载报表失败:', e)
       } finally {
         this.loading = false
       }
+    },
+    fillDateRange() {
+      const now = new Date()
+      if (this.period === 'week') {
+        const dayOfWeek = now.getDay() || 7
+        const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1)
+        const weekEnd = new Date(weekStart.getTime() + 6 * 86400000)
+        this.report.startDate = this.formatMD(weekStart)
+        this.report.endDate = this.formatMD(weekEnd)
+      } else {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        this.report.startDate = this.formatMD(monthStart)
+        this.report.endDate = this.formatMD(monthEnd)
+      }
+    },
+    formatMD(date) {
+      return `${date.getMonth() + 1}月${date.getDate()}日`
     },
     switchPeriod(p) {
       if (this.period === p) return
@@ -157,6 +168,10 @@ export default {
       if (!this.report || !this.report.totalDays) return 0
       return Math.min(100, Math.round((count / this.report.totalDays) * 100))
     },
+    getCircleStyle(rate) {
+      const deg = Math.round(rate * 3.6)
+      return `conic-gradient(#ff6a3d 0deg, #ff8f6b ${deg}deg, #f0f0f0 ${deg}deg, #f0f0f0 360deg)`
+    },
     goBack() {
       uni.navigateBack()
     }
@@ -164,118 +179,135 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
-$primary: #ff6a3d;
-$primary-light: #fff0ea;
-$green: #52c41a;
-$green-light: #f0fff0;
-$bg: #f5f5f5;
-$card-bg: #ffffff;
-$text-primary: #1a1a1a;
-$text-secondary: #666666;
-$text-light: #999999;
-$radius: 24rpx;
+<style scoped>
+.report-page { min-height: 100vh; background: #f5f5f5; }
 
-.report-page { min-height: 100vh; background: $bg; }
-
-.status-bar { width: 100%; background: $card-bg; }
+.status-bar { width: 100%; background: #fff; }
 .nav-bar {
   height: 88rpx; display: flex; align-items: center;
   justify-content: space-between; padding: 0 28rpx;
-  background: $card-bg; border-bottom: 1rpx solid #f0f0f0;
+  background: #fff; border-bottom: 1rpx solid #f0f0f0;
 }
 .nav-back { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; }
 .nav-back-arrow {
-  width: 20rpx; height: 20rpx; border-left: 4rpx solid $text-primary;
-  border-bottom: 4rpx solid $text-primary; transform: rotate(45deg);
+  width: 20rpx; height: 20rpx; border-left: 4rpx solid #1a1a1a;
+  border-bottom: 4rpx solid #1a1a1a; transform: rotate(45deg);
 }
-.nav-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
+.nav-title { font-size: 32rpx; font-weight: 700; color: #1a1a1a; }
 .nav-placeholder { width: 60rpx; }
 
 .report-scroll { position: fixed; left: 0; right: 0; bottom: 0; }
 .report-content { padding: 24rpx; }
 
 .period-tabs {
-  display: flex; background: $card-bg; border-radius: $radius;
+  display: flex; background: #fff; border-radius: 24rpx;
   padding: 6rpx; margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 .period-tab {
   flex: 1; display: flex; align-items: center; justify-content: center;
   padding: 16rpx 0; border-radius: 20rpx; transition: all 0.3s;
 }
-.period-tab.active { background: $primary; }
-.period-tab-text { font-size: 28rpx; font-weight: 600; color: $text-secondary; }
+.period-tab.active {
+  background: linear-gradient(135deg, #ff6a3d, #ff8f6b);
+  box-shadow: 0 4rpx 12rpx rgba(255,106,61,0.3);
+}
+.period-tab-text { font-size: 28rpx; font-weight: 600; color: #666; }
 .period-tab.active .period-tab-text { color: #fff; }
 
-.summary-card {
-  background: $card-bg; border-radius: $radius;
-  padding: 28rpx; margin-bottom: 24rpx;
+.date-range-bar {
+  background: linear-gradient(135deg, #ff6a3d, #ff8f6b);
+  border-radius: 24rpx;
+  padding: 24rpx 32rpx;
+  margin-bottom: 24rpx;
+  text-align: center;
+  box-shadow: 0 4rpx 16rpx rgba(255,106,61,0.25);
 }
-.summary-header {
-  display: flex; justify-content: space-between; align-items: center;
+.date-range-text { font-size: 30rpx; font-weight: 700; color: #fff; letter-spacing: 1rpx; }
+
+.rate-card {
+  display: flex; justify-content: center;
+  background: #fff; border-radius: 24rpx;
+  padding: 40rpx 0;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.rate-circle {
+  width: 240rpx; height: 240rpx; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16rpx;
+}
+.rate-circle-inner {
+  width: 208rpx; height: 208rpx; border-radius: 50%;
+  background: #fff;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.rate-value { font-size: 56rpx; font-weight: 800; color: #ff6a3d; }
+.rate-label { font-size: 24rpx; color: #999; margin-top: 4rpx; }
+
+.stats-row {
+  display: flex; gap: 16rpx;
   margin-bottom: 24rpx;
 }
-.summary-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
-.summary-date { font-size: 24rpx; color: $text-light; }
-.summary-grid { display: flex; align-items: center; }
-.summary-item { flex: 1; display: flex; flex-direction: column; align-items: center; }
-.summary-value { font-size: 40rpx; font-weight: 700; color: $text-primary; margin-bottom: 4rpx; }
-.summary-value.highlight { color: $primary; }
-.summary-label { font-size: 22rpx; color: $text-secondary; }
-.summary-divider { width: 1rpx; height: 48rpx; background: #e5e7eb; }
-
-.streak-card {
-  background: $card-bg; border-radius: $radius;
-  padding: 28rpx; margin-bottom: 24rpx;
+.stat-box {
+  flex: 1;
+  background: #fff; border-radius: 24rpx;
+  padding: 28rpx 0;
+  display: flex; flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
-.streak-row { display: flex; align-items: center; }
-.streak-item { flex: 1; display: flex; align-items: center; gap: 16rpx; justify-content: center; }
-.streak-icon { font-size: 48rpx; }
-.streak-info { display: flex; flex-direction: column; }
-.streak-value { font-size: 32rpx; font-weight: 700; color: $text-primary; }
-.streak-label { font-size: 22rpx; color: $text-secondary; }
-.streak-divider { width: 1rpx; height: 48rpx; background: #e5e7eb; }
+.stat-box-value { font-size: 44rpx; font-weight: 700; color: #1a1a1a; margin-bottom: 8rpx; }
+.stat-box-label { font-size: 24rpx; color: #999; }
 
-.progress-card {
-  background: $card-bg; border-radius: $radius;
-  padding: 28rpx; margin-bottom: 24rpx;
+.streak-row {
+  display: flex; gap: 16rpx;
+  margin-bottom: 24rpx;
 }
-.card-title { font-size: 28rpx; font-weight: 700; color: $text-primary; margin-bottom: 20rpx; display: block; }
-.progress-bar-wrap { display: flex; align-items: center; gap: 16rpx; }
-.progress-bar-bg { flex: 1; height: 20rpx; background: #f0f0f0; border-radius: 10rpx; overflow: hidden; }
-.progress-bar-fill { height: 100%; background: linear-gradient(90deg, $primary, #ff8a5c); border-radius: 10rpx; transition: width 0.5s ease; }
-.progress-percent { font-size: 28rpx; font-weight: 700; color: $primary; min-width: 80rpx; text-align: right; }
+.streak-box {
+  flex: 1;
+  background: #fff; border-radius: 24rpx;
+  padding: 28rpx 0;
+  display: flex; flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.streak-box-icon { font-size: 48rpx; margin-bottom: 8rpx; }
+.streak-box-value { font-size: 36rpx; font-weight: 700; color: #1a1a1a; margin-bottom: 4rpx; }
+.streak-box-label { font-size: 24rpx; color: #999; }
 
-.items-card {
-  background: $card-bg; border-radius: $radius;
-  padding: 28rpx; margin-bottom: 24rpx;
+.items-section {
+  background: #fff; border-radius: 24rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
-.item-list { display: flex; flex-direction: column; gap: 20rpx; }
-.item-row { display: flex; align-items: center; gap: 16rpx; }
-.item-icon { font-size: 32rpx; }
-.item-name { font-size: 26rpx; color: $text-secondary; min-width: 100rpx; }
-.item-bar-wrap { flex: 1; }
-.item-bar-bg { height: 12rpx; background: #f0f0f0; border-radius: 6rpx; overflow: hidden; }
-.item-bar-fill { height: 100%; background: $primary; border-radius: 6rpx; transition: width 0.3s ease; }
-.item-count { font-size: 24rpx; color: $text-light; min-width: 80rpx; text-align: right; }
-
-.total-card {
-  background: $card-bg; border-radius: $radius;
-  padding: 28rpx; margin-bottom: 24rpx;
-  display: flex; justify-content: space-between; align-items: center;
+.items-section-title { font-size: 30rpx; font-weight: 700; color: #1a1a1a; margin-bottom: 24rpx; display: block; }
+.items-list { display: flex; flex-direction: column; gap: 20rpx; }
+.item-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
 }
-.total-label { font-size: 28rpx; color: $text-secondary; }
-.total-value { font-size: 40rpx; font-weight: 700; color: $primary; }
+.item-row:last-child { border-bottom: none; }
+.item-row-left { display: flex; align-items: center; gap: 16rpx; }
+.item-row-icon { font-size: 40rpx; }
+.item-row-name { font-size: 28rpx; color: #333; }
+.item-row-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8rpx; }
+.item-row-count { font-size: 28rpx; font-weight: 600; color: #ff6a3d; }
+.item-row-bar-bg { width: 160rpx; height: 10rpx; background: #f0f0f0; border-radius: 5rpx; overflow: hidden; }
+.item-row-bar-fill { height: 100%; background: linear-gradient(90deg, #ff6a3d, #ff8f6b); border-radius: 5rpx; transition: width 0.3s ease; }
 
 .loading-state { display: flex; justify-content: center; padding: 100rpx 0; }
-.loading-text { font-size: 28rpx; color: $text-light; }
+.loading-text { font-size: 28rpx; color: #999; }
 
 .empty-state {
   display: flex; flex-direction: column; align-items: center;
   padding: 100rpx 0;
 }
 .empty-emoji { font-size: 80rpx; margin-bottom: 20rpx; }
-.empty-text { font-size: 28rpx; color: $text-light; }
+.empty-text { font-size: 28rpx; color: #999; }
 
 .page-bottom-safe { height: calc(24rpx + env(safe-area-inset-bottom)); }
 </style>

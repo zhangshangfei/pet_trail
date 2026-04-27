@@ -198,6 +198,83 @@ export const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
+export const loadWxSubscribeTemplates = async () => {
+  try {
+    const token = uni.getStorageSync('token')
+    if (!token) {
+      console.warn('loadWxSubscribeTemplates: 未登录，跳过')
+      return
+    }
+    const res = await uni.$request.get('/api/wx-subscribe/templates')
+    console.log('订阅消息模板接口返回:', JSON.stringify(res))
+    if (res && res.success && res.data) {
+      const templates = res.data
+      for (const [key, value] of Object.entries(templates)) {
+        if (value && value.trim()) {
+          uni.setStorageSync('wxSubscribeTemplate_' + key, value.trim())
+          console.log('缓存模板ID: wxSubscribeTemplate_' + key + ' = ' + value.trim())
+        } else {
+          console.warn('模板ID为空，跳过: ' + key)
+        }
+      }
+    } else {
+      console.warn('获取模板ID接口返回异常:', res)
+    }
+  } catch (e) {
+    console.warn('获取订阅消息模板ID失败:', e)
+  }
+}
+
+export const requestWxSubscribe = async (types) => {
+  if (!types || !types.length) return
+  const tmplIds = []
+  const typeToTmplId = {}
+  for (const t of types) {
+    let id = uni.getStorageSync('wxSubscribeTemplate_' + t)
+    if (!id || !id.trim()) {
+      await loadWxSubscribeTemplates()
+      id = uni.getStorageSync('wxSubscribeTemplate_' + t)
+    }
+    if (id && id.trim()) {
+      tmplIds.push(id.trim())
+      typeToTmplId[id.trim()] = t
+    }
+  }
+  if (!tmplIds.length) {
+    console.warn('订阅消息模板ID未配置，跳过授权请求。types=', types)
+    return
+  }
+  console.log('请求订阅消息授权, tmplIds=', tmplIds)
+  uni.requestSubscribeMessage({
+    tmplIds,
+    success: (res) => {
+      console.log('订阅消息授权结果:', res)
+      for (const [tmplId, result] of Object.entries(res)) {
+        if (result === 'accept') {
+          const templateType = typeToTmplId[tmplId]
+          if (templateType) {
+            reportAuthorization(templateType, 1)
+          }
+        }
+      }
+    },
+    fail: (err) => {
+      console.warn('订阅消息授权失败:', err)
+    }
+  })
+}
+
+const reportAuthorization = async (templateType, count) => {
+  try {
+    const token = uni.getStorageSync('token')
+    if (!token) return
+    await uni.$request.post('/api/wx-subscribe/authorize', { templateType, count })
+    console.log('授权积分上报成功:', templateType, '+', count)
+  } catch (e) {
+    console.warn('授权积分上报失败:', e)
+  }
+}
+
 export const wechatLogin = () => {
   return new Promise((resolve) => {
     uni.showLoading({ title: '登录中...', mask: true })
@@ -213,6 +290,7 @@ export const wechatLogin = () => {
               uni.setStorageSync('userInfo', loginRes.data.user)
               uni.showToast({ title: '登录成功', icon: 'success' })
               uni.$emit('loginSuccess')
+              loadWxSubscribeTemplates()
               resolve(true)
             } else {
               uni.showToast({ title: loginRes.message || '登录失败', icon: 'none' })

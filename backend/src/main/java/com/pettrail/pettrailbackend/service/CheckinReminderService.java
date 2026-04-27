@@ -1,14 +1,18 @@
 package com.pettrail.pettrailbackend.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.alibaba.fastjson.JSONObject;
+import com.pettrail.pettrailbackend.dto.ReminderMessage;
 import com.pettrail.pettrailbackend.entity.CheckinReminder;
 import com.pettrail.pettrailbackend.mapper.CheckinReminderMapper;
+import com.pettrail.pettrailbackend.mq.ReminderMessageProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Slf4j
@@ -17,10 +21,13 @@ import java.util.List;
 public class CheckinReminderService {
 
     private final CheckinReminderMapper checkinReminderMapper;
-    private final NotificationService notificationService;
+    private final ReminderMessageProducer reminderMessageProducer;
+
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
     public List<CheckinReminder> getUserReminders(Long userId) {
-        LambdaQueryWrapper<CheckinReminder> wrapper = new LambdaQueryWrapper<>();
+        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<CheckinReminder> wrapper =
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
         wrapper.eq(CheckinReminder::getUserId, userId);
         wrapper.orderByAsc(CheckinReminder::getRemindTime);
         return checkinReminderMapper.selectList(wrapper);
@@ -34,6 +41,8 @@ public class CheckinReminderService {
         reminder.setRemindTime(remindTime);
         reminder.setIsEnabled(true);
         checkinReminderMapper.insert(reminder);
+
+        scheduleCheckinReminder(reminder);
         return reminder;
     }
 
@@ -47,6 +56,12 @@ public class CheckinReminderService {
         if (remindTime != null) reminder.setRemindTime(remindTime);
         if (isEnabled != null) reminder.setIsEnabled(isEnabled);
         checkinReminderMapper.updateById(reminder);
+
+        if (reminder.getIsEnabled()) {
+            scheduleCheckinReminder(reminder);
+        } else {
+            reminderMessageProducer.cancelCheckinReminder(id);
+        }
         return reminder;
     }
 
@@ -55,28 +70,35 @@ public class CheckinReminderService {
         CheckinReminder reminder = checkinReminderMapper.selectById(id);
         if (reminder != null && reminder.getUserId().equals(userId)) {
             checkinReminderMapper.deleteById(id);
+            reminderMessageProducer.cancelCheckinReminder(id);
         }
     }
 
-    public void sendCheckinReminders() {
-        LocalTime now = LocalTime.now().withSecond(0).withNano(0);
-        List<CheckinReminder> reminders = checkinReminderMapper.selectEnabledByUserId(null);
-        LambdaQueryWrapper<CheckinReminder> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(CheckinReminder::getIsEnabled, true);
-        wrapper.eq(CheckinReminder::getRemindTime, now);
-        reminders = checkinReminderMapper.selectList(wrapper);
+    private void scheduleCheckinReminder(CheckinReminder reminder) {
+        try {
+            long delay = calculateNextDelay(reminder.getRemindTime());
+            if (delay > 0) {
+                JSONObject payload = new JSONObject();
+                payload.put("itemId", reminder.getItemId());
+                payload.put("remindTime", reminder.getRemindTime().format(TIME_FMT));
 
-        for (CheckinReminder reminder : reminders) {
-            try {
-                String content = reminder.getItemId() != null
-                    ? "该给你的宠物打卡啦！别忘了今天的打卡任务 🐾"
-                    : "该给你的宠物打卡啦！别忘了今天的打卡任务 🐾";
-                notificationService.createNotification(
-                    reminder.getUserId(), 0L, "system", null, content);
-                log.info("发送打卡提醒: userId={}", reminder.getUserId());
-            } catch (Exception e) {
-                log.warn("发送打卡提醒失败: userId={}, error={}", reminder.getUserId(), e.getMessage());
+                ReminderMessage msg = ReminderMessage.checkin(
+                    reminder.getId(), reminder.getUserId(), 0L, payload.toJSONString());
+                reminderMessageProducer.sendDelayedCheckinReminder(msg, delay);
             }
+        } catch (Exception e) {
+            log.warn("调度打卡提醒失败: reminderId={}, error={}", reminder.getId(), e.getMessage());
         }
+    }
+
+    private long calculateNextDelay(LocalTime remindTime) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime nextTarget = now.toLocalDate().atTime(remindTime);
+
+        if (!nextTarget.isAfter(now)) {
+            nextTarget = nextTarget.plusDays(1);
+        }
+
+        return java.time.Duration.between(now, nextTarget).toMillis();
     }
 }

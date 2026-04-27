@@ -20,9 +20,13 @@
           <!-- 顶部评分区域 -->
           <view class="score-card">
             <view class="score-left">
-              <view class="score-ring" :class="scoreClass">
-                <text class="score-number">{{ analysis.score }}</text>
-                <text class="score-label">健康评分</text>
+              <view class="score-ring-wrap">
+                <view class="score-ring-bg"></view>
+                <view class="score-ring-progress" :style="getRingStyle(analysis.score)"></view>
+                <view class="score-ring-inner">
+                  <text class="score-number">{{ formatScore(analysis.score) }}</text>
+                  <text class="score-label">健康评分</text>
+                </view>
               </view>
             </view>
             <view class="score-right">
@@ -48,7 +52,7 @@
                     <view class="detail-bar-fill vaccine" :style="{ width: (analysis.detail.vaccineScore || 0) + '%' }"></view>
                   </view>
                 </view>
-                <text class="detail-score">{{ analysis.detail.vaccineScore || 0 }}</text>
+                <text class="detail-score">{{ formatScore(analysis.detail.vaccineScore || 0) }}</text>
               </view>
               <view class="detail-row">
                 <view class="detail-label">
@@ -60,7 +64,7 @@
                     <view class="detail-bar-fill parasite" :style="{ width: (analysis.detail.parasiteScore || 0) + '%' }"></view>
                   </view>
                 </view>
-                <text class="detail-score">{{ analysis.detail.parasiteScore || 0 }}</text>
+                <text class="detail-score">{{ formatScore(analysis.detail.parasiteScore || 0) }}</text>
               </view>
               <view class="detail-row">
                 <view class="detail-label">
@@ -72,7 +76,7 @@
                     <view class="detail-bar-fill weight" :style="{ width: (analysis.detail.weightScore || 0) + '%' }"></view>
                   </view>
                 </view>
-                <text class="detail-score">{{ analysis.detail.weightScore || 0 }}</text>
+                <text class="detail-score">{{ formatScore(analysis.detail.weightScore || 0) }}</text>
               </view>
               <view class="detail-row">
                 <view class="detail-label">
@@ -84,7 +88,7 @@
                     <view class="detail-bar-fill checkin" :style="{ width: (analysis.detail.checkinScore || 0) + '%' }"></view>
                   </view>
                 </view>
-                <text class="detail-score">{{ analysis.detail.checkinScore || 0 }}</text>
+                <text class="detail-score">{{ formatScore(analysis.detail.checkinScore || 0) }}</text>
               </view>
             </view>
           </view>
@@ -224,13 +228,20 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getHealthAnalysis } from '@/api/health'
 import { getPetList } from '@/api/pet'
 import { useUserStore } from '@/store/user'
 import UserTopBar from '@/components/UserTopBar.vue'
 
 const userStore = useUserStore()
+
+function formatScore(val) {
+  if (val == null) return '0'
+  const num = Number(val)
+  if (Number.isInteger(num)) return String(num)
+  return num.toFixed(1)
+}
 const statusBarHeight = ref(44)
 const loading = ref(false)
 const analysis = ref(null)
@@ -270,6 +281,21 @@ const trendClass = (value) => {
   return 'trend-' + (map[value] || 'stable')
 }
 
+const getRingColor = (score) => {
+  if (score >= 90) return '#34c759'
+  if (score >= 75) return '#4a90d9'
+  if (score >= 60) return '#ff9500'
+  return '#ff3b30'
+}
+
+const getRingStyle = (score) => {
+  const pct = Math.max(0, Math.min(100, score || 0))
+  const color = getRingColor(score)
+  return {
+    background: `conic-gradient(${color} 0deg, ${color} ${pct * 3.6}deg, #e8e8e8 ${pct * 3.6}deg, #e8e8e8 360deg)`
+  }
+}
+
 const goBack = () => {
   uni.navigateBack()
 }
@@ -298,6 +324,10 @@ onMounted(async () => {
   const sysInfo = uni.getSystemInfoSync()
   statusBarHeight.value = sysInfo.statusBarHeight || 44
 
+  if (userStore.isLoggedIn && !userStore.userInfo) {
+    await userStore.loadUserInfo()
+  }
+
   const petId = uni.getStorageSync('currentPetId')
   if (petId) {
     currentPetId.value = petId
@@ -314,6 +344,26 @@ onMounted(async () => {
   if (currentPetId.value) {
     await runAnalysis()
   }
+
+  uni.$on('loginSuccess', async () => {
+    await userStore.loadUserInfo()
+    if (!currentPetId.value) {
+      try {
+        const res = await getPetList()
+        if (res.code === 200 && res.data && res.data.length > 0) {
+          currentPetId.value = res.data[0].id
+          uni.setStorageSync('currentPetId', res.data[0].id)
+        }
+      } catch (e) {}
+    }
+    if (currentPetId.value) {
+      await runAnalysis()
+    }
+  })
+})
+
+onUnmounted(() => {
+  uni.$off('loginSuccess')
 })
 </script>
 
@@ -342,16 +392,10 @@ $red: #ff3b30;
 /* ===== 顶部评分卡片 ===== */
 .score-card { background: $card-bg; border-radius: 24rpx; padding: 32rpx; margin-bottom: 20rpx; display: flex; align-items: center; gap: 28rpx; box-shadow: 0 2rpx 16rpx rgba(0,0,0,0.04); }
 .score-left { flex-shrink: 0; }
-.score-ring { width: 180rpx; height: 180rpx; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 10rpx solid #e8e8e8; position: relative; }
-.score-ring::before { content: ''; position: absolute; top: -10rpx; left: -10rpx; right: -10rpx; bottom: -10rpx; border-radius: 50%; border: 10rpx solid transparent; border-top-color: currentColor; transform: rotate(-45deg); }
-.score-excellent { color: $green; border-color: #e0f0e0; }
-.score-excellent::before { border-top-color: $green; }
-.score-good { color: $blue; border-color: #e0eaf5; }
-.score-good::before { border-top-color: $blue; }
-.score-fair { color: $orange; border-color: #f5f0e0; }
-.score-fair::before { border-top-color: $orange; }
-.score-poor { color: $red; border-color: #f5e0e0; }
-.score-poor::before { border-top-color: $red; }
+.score-ring-wrap { width: 180rpx; height: 180rpx; border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; }
+.score-ring-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: #e8e8e8; }
+.score-ring-progress { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; }
+.score-ring-inner { position: relative; z-index: 2; width: 150rpx; height: 150rpx; border-radius: 50%; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .score-number { font-size: 52rpx; font-weight: 800; color: $text-primary; line-height: 1; }
 .score-label { font-size: 22rpx; color: $text-secondary; margin-top: 6rpx; }
 .score-right { flex: 1; display: flex; flex-direction: column; gap: 12rpx; }

@@ -7,7 +7,9 @@ import com.pettrail.pettrailbackend.entity.CheckinStats;
 import com.pettrail.pettrailbackend.entity.UserAchievement;
 import com.pettrail.pettrailbackend.mapper.AchievementMapper;
 import com.pettrail.pettrailbackend.mapper.CheckinStatsMapper;
+import com.pettrail.pettrailbackend.mapper.FollowMapper;
 import com.pettrail.pettrailbackend.mapper.PetMapper;
+import com.pettrail.pettrailbackend.mapper.PostCommentMapper;
 import com.pettrail.pettrailbackend.mapper.PostLikeMapper;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.mapper.UserAchievementMapper;
@@ -36,6 +38,8 @@ public class AchievementService {
     private final PostMapper postMapper;
     private final PostLikeMapper postLikeMapper;
     private final WeightRecordMapper weightRecordMapper;
+    private final FollowMapper followMapper;
+    private final PostCommentMapper postCommentMapper;
     private final NotificationService notificationService;
 
     private static final Map<Integer, String> TYPE_NAMES = Map.of(
@@ -158,6 +162,9 @@ public class AchievementService {
             case "health_record_count" -> getHealthRecordCount(userId);
             case "post_count" -> getPostCount(userId);
             case "like_received" -> getLikeReceivedCount(userId);
+            case "follower_count" -> getFollowerCount(userId);
+            case "pet_count" -> getPetCount(userId);
+            case "comment_count" -> getCommentCount(userId);
             default -> 0;
         };
     }
@@ -206,6 +213,28 @@ public class AchievementService {
         return posts.stream()
                 .mapToInt(p -> p.getLikeCount() != null ? p.getLikeCount() : 0)
                 .sum();
+    }
+
+    private int getFollowerCount(Long userId) {
+        Long count = followMapper.selectCount(
+                new LambdaQueryWrapper<com.pettrail.pettrailbackend.entity.Follow>()
+                        .eq(com.pettrail.pettrailbackend.entity.Follow::getFolloweeId, userId));
+        return count != null ? count.intValue() : 0;
+    }
+
+    private int getPetCount(Long userId) {
+        Long count = petMapper.selectCount(
+                new LambdaQueryWrapper<com.pettrail.pettrailbackend.entity.Pet>()
+                        .eq(com.pettrail.pettrailbackend.entity.Pet::getUserId, userId));
+        return count != null ? count.intValue() : 0;
+    }
+
+    private int getCommentCount(Long userId) {
+        Long count = postCommentMapper.selectCount(
+                new LambdaQueryWrapper<com.pettrail.pettrailbackend.entity.PostComment>()
+                        .eq(com.pettrail.pettrailbackend.entity.PostComment::getUserId, userId)
+                        .eq(com.pettrail.pettrailbackend.entity.PostComment::getStatus, 1));
+        return count != null ? count.intValue() : 0;
     }
 
     private AchievementVO convertToVO(Achievement a, Long userId, Set<Long> unlockedIds,

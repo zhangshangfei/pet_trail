@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -20,6 +21,18 @@ public class JwtUtil {
 
     @Value("${jwt.expiration:604800}")
     private Long expiration;
+
+    @PostConstruct
+    public void validateSecret() {
+        if (secret == null || secret.trim().isEmpty()) {
+            throw new IllegalStateException("JWT密钥未配置，请设置jwt.secret环境变量");
+        }
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("JWT密钥长度不足，至少需要256位(32字节)，当前: " + (keyBytes.length * 8) + "位");
+        }
+        log.info("JWT密钥验证通过，长度: {}位", keyBytes.length * 8);
+    }
 
     /**
      * 生成Token

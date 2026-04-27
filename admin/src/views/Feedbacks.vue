@@ -6,7 +6,7 @@
         <el-select v-model="statusFilter" placeholder="状态筛选" clearable style="width: 120px" @change="loadData">
           <el-option label="待处理" :value="0" />
           <el-option label="处理中" :value="1" />
-          <el-option label="已回复" :value="2" />
+          <el-option label="已发布" :value="2" />
         </el-select>
         <el-select v-model="typeFilter" placeholder="类型筛选" clearable style="width: 120px" @change="loadData">
           <el-option label="Bug反馈" value="bug" />
@@ -32,26 +32,17 @@
           <el-tag :type="statusTagMap[row.status]" size="small">{{ statusLabelMap[row.status] || '未知' }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="reply" label="回复" min-width="150" show-overflow-tooltip>
+      <el-table-column prop="reply" label="备注" min-width="150" show-overflow-tooltip>
         <template #default="{ row }">
           <span v-if="row.reply">{{ row.reply }}</span>
-          <span v-else style="color: #c0c4cc">暂无回复</span>
+          <span v-else style="color: #c0c4cc">暂无备注</span>
         </template>
       </el-table-column>
       <el-table-column prop="createdAt" label="提交时间" width="170" />
-      <el-table-column label="操作" width="220" fixed="right">
+      <el-table-column label="操作" width="180" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link size="small" @click="openReplyDialog(row)">回复</el-button>
-          <el-dropdown trigger="click" @command="(cmd) => handleStatusCommand(cmd, row)">
-            <el-button type="warning" link size="small">状态<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="0" :disabled="row.status === 0">待处理</el-dropdown-item>
-                <el-dropdown-item command="1" :disabled="row.status === 1">处理中</el-dropdown-item>
-                <el-dropdown-item command="2" :disabled="row.status === 2">已回复</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+          <el-button type="primary" link size="small" @click="openStatusDialog(row, 1)" :disabled="row.status === 1">处理中</el-button>
+          <el-button type="success" link size="small" @click="openStatusDialog(row, 2)" :disabled="row.status === 2">已发布</el-button>
           <el-button type="info" link size="small" @click="showDetail(row)">详情</el-button>
           <el-button type="danger" link size="small" @click="handleDelete(row)">删除</el-button>
         </template>
@@ -70,18 +61,18 @@
       />
     </div>
 
-    <el-dialog v-model="replyDialogVisible" title="回复反馈" width="500px">
-      <el-form :model="replyForm" label-width="80px">
+    <el-dialog v-model="statusDialogVisible" :title="statusDialogTitle" width="500px">
+      <el-form :model="statusForm" label-width="80px">
         <el-form-item label="反馈内容">
-          <div style="color: #606266; line-height: 1.6;">{{ replyForm.content }}</div>
+          <div style="color: #606266; line-height: 1.6;">{{ statusForm.content }}</div>
         </el-form-item>
-        <el-form-item label="回复内容">
-          <el-input v-model="replyForm.reply" type="textarea" :rows="4" placeholder="请输入回复内容" />
+        <el-form-item label="备注内容">
+          <el-input v-model="statusForm.reply" type="textarea" :rows="4" placeholder="请输入备注内容（可选）" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="replyDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitReply" :loading="submitting">提交回复</el-button>
+        <el-button @click="statusDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitStatus" :loading="submitting">确定</el-button>
       </template>
     </el-dialog>
 
@@ -108,9 +99,9 @@
             />
           </div>
         </el-descriptions-item>
-        <el-descriptions-item label="回复" :span="2">
+        <el-descriptions-item label="备注" :span="2">
           <div v-if="detail.reply" style="white-space: pre-wrap; line-height: 1.6; color: #047857;">{{ detail.reply }}</div>
-          <span v-else style="color: #c0c4cc">暂无回复</span>
+          <span v-else style="color: #c0c4cc">暂无备注</span>
         </el-descriptions-item>
         <el-descriptions-item label="提交时间">{{ detail.createdAt }}</el-descriptions-item>
         <el-descriptions-item label="更新时间">{{ detail.updatedAt || '-' }}</el-descriptions-item>
@@ -121,9 +112,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getFeedbackList, replyFeedback, updateFeedbackStatus, deleteFeedback, getFeedbackDetail } from '../api/admin'
+import { getFeedbackList, updateFeedbackStatus, deleteFeedback, getFeedbackDetail } from '../api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowDown } from '@element-plus/icons-vue'
 
 const loading = ref(false)
 const feedbackList = ref([])
@@ -133,17 +123,19 @@ const total = ref(0)
 const statusFilter = ref(null)
 const typeFilter = ref('')
 
-const replyDialogVisible = ref(false)
+const statusDialogVisible = ref(false)
 const submitting = ref(false)
-const replyForm = ref({ id: null, content: '', reply: '' })
+const statusForm = ref({ id: null, content: '', reply: '', targetStatus: null })
 
 const detailDialogVisible = ref(false)
 const detail = ref({})
 
 const typeLabelMap = { bug: 'Bug反馈', feature: '功能建议', experience: '体验优化', other: '其他' }
 const typeTagMap = { bug: 'danger', feature: '', experience: 'warning', other: 'info' }
-const statusLabelMap = { 0: '待处理', 1: '处理中', 2: '已回复' }
+const statusLabelMap = { 0: '待处理', 1: '处理中', 2: '已发布' }
 const statusTagMap = { 0: 'warning', 1: '', 2: 'success' }
+
+const statusDialogTitle = ref('')
 
 const loadData = async () => {
   loading.value = true
@@ -166,36 +158,31 @@ const loadData = async () => {
   }
 }
 
-const openReplyDialog = (row) => {
-  replyForm.value = { id: row.id, content: row.content, reply: row.reply || '' }
-  replyDialogVisible.value = true
+const openStatusDialog = (row, targetStatus) => {
+  statusForm.value = {
+    id: row.id,
+    content: row.content,
+    reply: row.reply || '',
+    targetStatus
+  }
+  statusDialogTitle.value = targetStatus === 1 ? '标记为处理中' : '标记为已发布'
+  statusDialogVisible.value = true
 }
 
-const submitReply = async () => {
-  if (!replyForm.value.reply.trim()) {
-    ElMessage.warning('请输入回复内容')
-    return
-  }
+const submitStatus = async () => {
   submitting.value = true
   try {
-    await replyFeedback(replyForm.value.id, { reply: replyForm.value.reply })
-    ElMessage.success('回复成功')
-    replyDialogVisible.value = false
-    loadData()
-  } catch (e) {
-    ElMessage.error('回复失败')
-  } finally {
-    submitting.value = false
-  }
-}
-
-const handleStatusCommand = async (cmd, row) => {
-  try {
-    await updateFeedbackStatus(row.id, parseInt(cmd))
+    await updateFeedbackStatus(statusForm.value.id, {
+      status: statusForm.value.targetStatus,
+      reply: statusForm.value.reply || null
+    })
     ElMessage.success('状态更新成功')
+    statusDialogVisible.value = false
     loadData()
   } catch (e) {
     ElMessage.error('状态更新失败')
+  } finally {
+    submitting.value = false
   }
 }
 
