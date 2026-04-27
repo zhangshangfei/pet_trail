@@ -376,8 +376,7 @@ CREATE TABLE IF NOT EXISTS `admins` (
   `password` varchar(255) NOT NULL COMMENT '密码(BCrypt)',
   `nickname` varchar(50) DEFAULT NULL COMMENT '昵称',
   `avatar` varchar(255) DEFAULT NULL COMMENT '头像URL',
-  `role` varchar(50) DEFAULT 'ADMIN' COMMENT '角色: SUPER_ADMIN, ADMIN, MERCHANT_ADMIN, MERCHANT_STAFF',
-  `permissions` text DEFAULT NULL COMMENT '权限码JSON数组',
+  `role_id` bigint(20) DEFAULT NULL COMMENT '角色ID, 关联sys_role表',
   `merchant_id` bigint(20) DEFAULT NULL COMMENT '所属商户ID',
   `status` tinyint(4) DEFAULT 1 COMMENT '状态: 1-正常 0-禁用',
   `last_login_at` datetime DEFAULT NULL COMMENT '最后登录时间',
@@ -385,7 +384,8 @@ CREATE TABLE IF NOT EXISTS `admins` (
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_username` (`username`),
-  KEY `idx_merchant_id` (`merchant_id`)
+  KEY `idx_merchant_id` (`merchant_id`),
+  KEY `idx_role_id` (`role_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='管理员表';
 
 CREATE TABLE IF NOT EXISTS `merchants` (

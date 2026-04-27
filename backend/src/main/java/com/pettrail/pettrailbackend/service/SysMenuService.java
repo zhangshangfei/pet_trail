@@ -153,4 +153,22 @@ public class SysMenuService {
             sysMenuMapper.updateById(menu);
         }
     }
+
+    public void batchSort(List<Map<String, Object>> sortList) {
+        for (Map<String, Object> item : sortList) {
+            Long id = Long.valueOf(item.get("id").toString());
+            Integer sortOrder = Integer.valueOf(item.get("sortOrder").toString());
+            Long parentId = item.containsKey("parentId") && item.get("parentId") != null
+                    ? Long.valueOf(item.get("parentId").toString()) : null;
+            SysMenu menu = sysMenuMapper.selectById(id);
+            if (menu != null) {
+                menu.setSortOrder(sortOrder);
+                if (parentId != null) {
+                    menu.setParentId(parentId);
+                }
+                menu.setUpdatedAt(java.time.LocalDateTime.now());
+                sysMenuMapper.updateById(menu);
+            }
+        }
+    }
 }
