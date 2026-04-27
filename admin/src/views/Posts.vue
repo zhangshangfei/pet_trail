@@ -138,7 +138,7 @@ const deletedList = ref([])
 const deletedLoading = ref(false)
 
 const adminStore = useAdminStore()
-const canManage = computed(() => adminStore.hasPermission('post:manage'))
+const canManage = computed(() => adminStore.hasButton('post:manage'))
 
 const parseFirstImage = (images) => {
   try { const arr = JSON.parse(images); return arr && arr.length > 0 ? arr[0] : '' } catch (e) { return '' }

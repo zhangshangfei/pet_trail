@@ -382,7 +382,7 @@ const editForm = ref({
 })
 
 const adminStore = useAdminStore()
-const canManage = computed(() => adminStore.hasPermission('ai-model:manage'))
+const canManage = computed(() => adminStore.hasButton('ai-model:manage'))
 
 const successRate = computed(() => {
   if (!dashboard.value || !dashboard.value.totalCalls) return 0

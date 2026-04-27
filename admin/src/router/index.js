@@ -29,6 +29,8 @@ const routes = [
       { path: 'products', name: 'Products', component: () => import('../views/Products.vue'), meta: { title: '商城管理', permission: 'product:view' } },
       { path: 'vet-clinics', name: 'VetClinics', component: () => import('../views/VetClinics.vue'), meta: { title: '医院信息管理', permission: 'vet-clinic:view' } },
       { path: 'merchants', name: 'Merchants', component: () => import('../views/Merchants.vue'), meta: { title: '商户管理', permission: 'merchant:manage' } },
+      { path: 'roles', name: 'Roles', component: () => import('../views/Roles.vue'), meta: { title: '角色管理', permission: 'admin:manage' } },
+      { path: 'sys-menus', name: 'SysMenus', component: () => import('../views/SysMenus.vue'), meta: { title: '菜单管理', permission: 'admin:manage' } },
       { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('../views/NotFound.vue'), meta: { title: '页面不存在' } }
     ]
   }
@@ -41,12 +43,17 @@ const router = createRouter({
 
 let profileChecked = false
 
-function checkPermission(role, permissions, requiredPermission) {
+function checkPermission(roleCode, buttons, requiredPermission) {
   if (!requiredPermission) return true
-  if (role === 'SUPER_ADMIN') return true
-  if (!permissions) return false
-  const permList = permissions.split(',').map(p => p.trim()).filter(Boolean)
-  return permList.includes(requiredPermission)
+  if (roleCode === 'SUPER_ADMIN') return true
+  if (!buttons) return false
+  return buttons.includes(requiredPermission)
+}
+
+function extractAdmin(data) {
+  if (data.admin) return data.admin
+  if (data.roleCode) return data
+  return {}
 }
 
 router.beforeEach(async (to, from, next) => {
@@ -66,11 +73,19 @@ router.beforeEach(async (to, from, next) => {
     try {
       const res = await getProfile()
       if (res.data) {
-        localStorage.setItem('admin_info', JSON.stringify(res.data))
+        const admin = extractAdmin(res.data)
+        localStorage.setItem('admin_info', JSON.stringify(admin))
+        if (res.data.menus) {
+          localStorage.setItem('admin_menus', JSON.stringify(res.data.menus))
+        }
         profileChecked = true
 
+        if (to.path === '/dashboard' || to.path === '/') {
+          next()
+          return
+        }
         const requiredPermission = to.meta?.permission
-        if (!checkPermission(res.data.role, res.data.permissions, requiredPermission)) {
+        if (!checkPermission(admin.roleCode, admin.buttons, requiredPermission)) {
           next('/dashboard')
           return
         }
@@ -79,15 +94,21 @@ router.beforeEach(async (to, from, next) => {
     } catch (e) {
       localStorage.removeItem('admin_token')
       localStorage.removeItem('admin_info')
+      localStorage.removeItem('admin_menus')
       profileChecked = false
       next('/login')
     }
     return
   }
 
+  if (to.path === '/dashboard' || to.path === '/') {
+    next()
+    return
+  }
+
   const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}')
   const requiredPermission = to.meta?.permission
-  if (!checkPermission(adminInfo.role, adminInfo.permissions, requiredPermission)) {
+  if (!checkPermission(adminInfo.roleCode, adminInfo.buttons, requiredPermission)) {
     next('/dashboard')
     return
   }

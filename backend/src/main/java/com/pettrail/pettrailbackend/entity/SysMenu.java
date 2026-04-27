@@ -18,6 +18,7 @@ public class SysMenu {
     private String path;
     private String icon;
     private String permission;
+    private String buttons;
     private Integer sortOrder;
     private Integer status;
     private LocalDateTime createdAt;

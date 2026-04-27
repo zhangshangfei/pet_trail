@@ -104,13 +104,12 @@ const activeMenu = computed(() => route.path)
 const menuList = computed(() => adminStore.menus || [])
 
 const roleLabel = computed(() => {
-  const map = { SUPER_ADMIN: '超管', ADMIN: '管理员', MERCHANT_ADMIN: '商户管理', MERCHANT_STAFF: '商户员工' }
-  return map[adminRole.value] || '管理员'
+  return adminStore.roleName || '管理员'
 })
 
 const roleTagType = computed(() => {
   const map = { SUPER_ADMIN: 'danger', ADMIN: '', MERCHANT_ADMIN: 'warning', MERCHANT_STAFF: 'info' }
-  return map[adminRole.value] || ''
+  return map[adminStore.roleCode] || ''
 })
 
 const handleCommand = (command) => {

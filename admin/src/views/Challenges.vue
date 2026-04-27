@@ -124,7 +124,7 @@ import { useAdminStore } from '@/store/admin'
 import { getChallengeList, getChallengeDetail, createChallenge, updateChallenge, deleteChallenge, updateChallengeStatus, getChallengeStats, getChallengeParticipants, exportChallenges } from '@/api/admin'
 
 const adminStore = useAdminStore()
-const canManage = computed(() => adminStore.hasPermission('challenge:manage'))
+const canManage = computed(() => adminStore.hasButton('challenge:manage'))
 
 const loading = ref(false)
 const tableData = ref([])

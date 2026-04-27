@@ -102,7 +102,7 @@ const sendForm = reactive({ userId: '', content: '', title: '' })
 const broadcastForm = reactive({ content: '', title: '' })
 
 const adminStore = useAdminStore()
-const canSend = computed(() => adminStore.hasPermission('notification:send'))
+const canSend = computed(() => adminStore.hasButton('notification:send'))
 
 const loadData = async () => {
   loading.value = true
