@@ -115,6 +115,9 @@ public class VetClinicService {
         Map<Long, String> clinicNameMap = clinicIds.isEmpty() ? Map.of()
                 : clinicMapper.selectBatchIds(clinicIds).stream()
                         .collect(Collectors.toMap(VetClinic::getId, VetClinic::getName, (a, b) -> a));
+        Map<Long, String> clinicPhoneMap = clinicIds.isEmpty() ? Map.of()
+                : clinicMapper.selectBatchIds(clinicIds).stream()
+                        .collect(Collectors.toMap(VetClinic::getId, VetClinic::getPhone, (a, b) -> a));
         Map<Long, String> petNameMap = petIds.isEmpty() ? Map.of()
                 : petMapper.selectBatchIds(petIds).stream()
                         .collect(Collectors.toMap(Pet::getId, Pet::getName, (a, b) -> a));
@@ -133,6 +136,7 @@ public class VetClinicService {
             vo.setUpdatedAt(a.getUpdatedAt());
             if (a.getClinicId() != null) {
                 vo.setClinicName(clinicNameMap.get(a.getClinicId()));
+                vo.setClinicPhone(clinicPhoneMap.get(a.getClinicId()));
             }
             if (a.getPetId() != null) {
                 vo.setPetName(petNameMap.get(a.getPetId()));
@@ -149,6 +153,9 @@ public class VetClinicService {
         }
         if (!appointment.getUserId().equals(userId)) {
             throw new BusinessException("无权取消他人预约");
+        }
+        if (appointment.getStatus() == 1) {
+            throw new BusinessException("已确认的预约需联系医院取消");
         }
         if (appointment.getStatus() >= 2) {
             throw new BusinessException("预约已完成或已取消");

@@ -24,6 +24,21 @@ request.interceptors.request.use(config => {
 
 request.interceptors.response.use(
   response => {
+    if (response.config.responseType === 'blob') {
+      if (response.data && response.data.type && response.data.type.includes('application/json')) {
+        return response.data.text().then(text => {
+          const err = JSON.parse(text)
+          ElMessage.error(err.message || '请求失败')
+          if (err.code === 401) {
+            localStorage.removeItem('admin_token')
+            localStorage.removeItem('admin_info')
+            router.push('/login')
+          }
+          return Promise.reject(new Error(err.message))
+        })
+      }
+      return response
+    }
     const res = response.data
     if (res.success === false) {
       ElMessage.error(res.message || '请求失败')

@@ -8,20 +8,16 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("admins")
-public class Admin {
+@TableName("merchants")
+public class Merchant {
 
     @TableId(type = IdType.AUTO)
     private Long id;
-    private String username;
-    private String password;
-    private String nickname;
-    private String avatar;
-    private String role;
-    private String permissions;
-    private Long merchantId;
+    private String name;
+    private String contactName;
+    private String contactPhone;
+    private String type;
     private Integer status;
-    private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

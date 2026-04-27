@@ -11,6 +11,9 @@ public class AdminVO {
     private String nickname;
     private String avatar;
     private String role;
+    private String permissions;
+    private Long merchantId;
+    private String merchantName;
     private Integer status;
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;

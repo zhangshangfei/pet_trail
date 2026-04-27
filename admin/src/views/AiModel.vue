@@ -4,7 +4,7 @@
       <h2>AI模型管理</h2>
       <div class="header-actions">
         <el-button @click="loadDashboard" :loading="loading">刷新</el-button>
-        <el-button type="primary" @click="openAdd" v-if="isSuperAdmin">新增模型</el-button>
+        <el-button type="primary" @click="openAdd" v-if="canManage">新增模型</el-button>
       </div>
     </div>
 
@@ -44,10 +44,10 @@
       <div class="section-header-inline">
         <h3>分析缓存状态</h3>
         <div style="display: flex; gap: 8px;">
-          <el-button size="small" type="primary" @click="handleRefreshCache" v-if="isSuperAdmin">刷新模型缓存</el-button>
-          <el-button size="small" @click="showClearPetCache = true" v-if="isSuperAdmin">按宠物清除</el-button>
-          <el-button size="small" @click="handleFlushStats" v-if="isSuperAdmin">持久化统计</el-button>
-          <el-button size="small" type="danger" @click="handleClearCache" v-if="isSuperAdmin">清除全部缓存</el-button>
+          <el-button size="small" type="primary" @click="handleRefreshCache" v-if="canManage">刷新模型缓存</el-button>
+          <el-button size="small" @click="showClearPetCache = true" v-if="canManage">按宠物清除</el-button>
+          <el-button size="small" @click="handleFlushStats" v-if="canManage">持久化统计</el-button>
+          <el-button size="small" type="danger" @click="handleClearCache" v-if="canManage">清除全部缓存</el-button>
         </div>
       </div>
       <el-row :gutter="16">
@@ -116,7 +116,7 @@
           <el-switch
             :model-value="row.status === 1"
             @change="(val) => handleToggleStatus(row, val)"
-            :disabled="!isSuperAdmin || (row.isActive && val === false)"
+            :disabled="!canManage || (row.isActive && val === false)"
             active-text="启用"
             inactive-text="禁用"
           />
@@ -141,11 +141,11 @@
       </el-table-column>
       <el-table-column label="操作" width="280" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" type="primary" @click="openEdit(row)" v-if="isSuperAdmin">编辑</el-button>
+          <el-button size="small" type="primary" @click="openEdit(row)" v-if="canManage">编辑</el-button>
           <el-button size="small" @click="openParams(row)">参数</el-button>
           <el-button size="small" @click="openStatsDetail(row)">统计</el-button>
-          <el-button size="small" type="success" @click="handleSwitch(row)" :disabled="row.isActive" v-if="isSuperAdmin">切换</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(row)" :disabled="row.isActive" v-if="isSuperAdmin">删除</el-button>
+          <el-button size="small" type="success" @click="handleSwitch(row)" :disabled="row.isActive" v-if="canManage">切换</el-button>
+          <el-button size="small" type="danger" @click="handleDelete(row)" :disabled="row.isActive" v-if="canManage">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -382,7 +382,7 @@ const editForm = ref({
 })
 
 const adminStore = useAdminStore()
-const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
+const canManage = computed(() => adminStore.hasPermission('ai-model:manage'))
 
 const successRate = computed(() => {
   if (!dashboard.value || !dashboard.value.totalCalls) return 0

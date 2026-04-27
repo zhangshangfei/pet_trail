@@ -6,4 +6,6 @@ import lombok.Data;
 public class AdminUpdateDTO {
     private String nickname;
     private String role;
+    private String permissions;
+    private Long merchantId;
 }

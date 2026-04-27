@@ -17,7 +17,7 @@
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
             <el-button type="success" @click="showSendDialog">发送通知</el-button>
-            <el-button type="warning" @click="showBroadcastDialog" v-if="isSuperAdmin">广播通知</el-button>
+            <el-button type="warning" @click="showBroadcastDialog" v-if="canSend">广播通知</el-button>
           </div>
         </div>
       </template>
@@ -102,7 +102,7 @@ const sendForm = reactive({ userId: '', content: '', title: '' })
 const broadcastForm = reactive({ content: '', title: '' })
 
 const adminStore = useAdminStore()
-const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
+const canSend = computed(() => adminStore.hasPermission('notification:send'))
 
 const loadData = async () => {
   loading.value = true

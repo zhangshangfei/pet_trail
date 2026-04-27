@@ -12,22 +12,23 @@ const routes = [
     component: () => import('../layout/AdminLayout.vue'),
     redirect: '/dashboard',
     children: [
-      { path: 'dashboard', name: 'Dashboard', component: () => import('../views/Dashboard.vue'), meta: { title: '仪表盘', roles: ['ADMIN', 'SUPER_ADMIN'] } },
-      { path: 'users', name: 'Users', component: () => import('../views/Users.vue'), meta: { title: '用户管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
-      { path: 'pets', name: 'Pets', component: () => import('../views/Pets.vue'), meta: { title: '宠物管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
-      { path: 'posts', name: 'Posts', component: () => import('../views/Posts.vue'), meta: { title: '动态管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
-      { path: 'comments', name: 'Comments', component: () => import('../views/Comments.vue'), meta: { title: '评论管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
-      { path: 'reports', name: 'Reports', component: () => import('../views/Reports.vue'), meta: { title: '举报管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
-      { path: 'notifications', name: 'Notifications', component: () => import('../views/Notifications.vue'), meta: { title: '通知管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
-      { path: 'feedbacks', name: 'Feedbacks', component: () => import('../views/Feedbacks.vue'), meta: { title: '反馈管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
-      { path: 'admins', name: 'Admins', component: () => import('../views/Admins.vue'), meta: { title: '管理员管理', roles: ['SUPER_ADMIN'] } },
-      { path: 'logs', name: 'Logs', component: () => import('../views/Logs.vue'), meta: { title: '操作日志', roles: ['ADMIN', 'SUPER_ADMIN'] } },
-      { path: 'settings', name: 'Settings', component: () => import('../views/Settings.vue'), meta: { title: '系统设置', roles: ['SUPER_ADMIN'] } },
-      { path: 'config', name: 'Config', component: () => import('../views/Config.vue'), meta: { title: '系统配置管理', roles: ['SUPER_ADMIN'] } },
-      { path: 'ai-models', name: 'AiModels', component: () => import('../views/AiModel.vue'), meta: { title: 'AI模型管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
-      { path: 'challenges', name: 'Challenges', component: () => import('../views/Challenges.vue'), meta: { title: '挑战赛配置', roles: ['ADMIN', 'SUPER_ADMIN'] } },
-      { path: 'products', name: 'Products', component: () => import('../views/Products.vue'), meta: { title: '商城管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
-      { path: 'vet-clinics', name: 'VetClinics', component: () => import('../views/VetClinics.vue'), meta: { title: '医院信息管理', roles: ['ADMIN', 'SUPER_ADMIN'] } },
+      { path: 'dashboard', name: 'Dashboard', component: () => import('../views/Dashboard.vue'), meta: { title: '仪表盘', permission: 'dashboard' } },
+      { path: 'users', name: 'Users', component: () => import('../views/Users.vue'), meta: { title: '用户管理', permission: 'user:view' } },
+      { path: 'pets', name: 'Pets', component: () => import('../views/Pets.vue'), meta: { title: '宠物管理', permission: 'pet:view' } },
+      { path: 'posts', name: 'Posts', component: () => import('../views/Posts.vue'), meta: { title: '动态管理', permission: 'post:view' } },
+      { path: 'comments', name: 'Comments', component: () => import('../views/Comments.vue'), meta: { title: '评论管理', permission: 'comment:view' } },
+      { path: 'reports', name: 'Reports', component: () => import('../views/Reports.vue'), meta: { title: '举报管理', permission: 'report:view' } },
+      { path: 'notifications', name: 'Notifications', component: () => import('../views/Notifications.vue'), meta: { title: '通知管理', permission: 'notification:view' } },
+      { path: 'feedbacks', name: 'Feedbacks', component: () => import('../views/Feedbacks.vue'), meta: { title: '反馈管理', permission: 'feedback:view' } },
+      { path: 'admins', name: 'Admins', component: () => import('../views/Admins.vue'), meta: { title: '管理员管理', permission: 'admin:manage' } },
+      { path: 'logs', name: 'Logs', component: () => import('../views/Logs.vue'), meta: { title: '操作日志', permission: 'log:view' } },
+      { path: 'settings', name: 'Settings', component: () => import('../views/Settings.vue'), meta: { title: '系统设置', permission: 'setting:manage' } },
+      { path: 'config', name: 'Config', component: () => import('../views/Config.vue'), meta: { title: '系统配置管理', permission: 'config:manage' } },
+      { path: 'ai-models', name: 'AiModels', component: () => import('../views/AiModel.vue'), meta: { title: 'AI模型管理', permission: 'ai-model:view' } },
+      { path: 'challenges', name: 'Challenges', component: () => import('../views/Challenges.vue'), meta: { title: '挑战赛配置', permission: 'challenge:view' } },
+      { path: 'products', name: 'Products', component: () => import('../views/Products.vue'), meta: { title: '商城管理', permission: 'product:view' } },
+      { path: 'vet-clinics', name: 'VetClinics', component: () => import('../views/VetClinics.vue'), meta: { title: '医院信息管理', permission: 'vet-clinic:view' } },
+      { path: 'merchants', name: 'Merchants', component: () => import('../views/Merchants.vue'), meta: { title: '商户管理', permission: 'merchant:manage' } },
       { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('../views/NotFound.vue'), meta: { title: '页面不存在' } }
     ]
   }
@@ -39,6 +40,14 @@ const router = createRouter({
 })
 
 let profileChecked = false
+
+function checkPermission(role, permissions, requiredPermission) {
+  if (!requiredPermission) return true
+  if (role === 'SUPER_ADMIN') return true
+  if (!permissions) return false
+  const permList = permissions.split(',').map(p => p.trim()).filter(Boolean)
+  return permList.includes(requiredPermission)
+}
 
 router.beforeEach(async (to, from, next) => {
   const token = localStorage.getItem('admin_token')
@@ -60,9 +69,8 @@ router.beforeEach(async (to, from, next) => {
         localStorage.setItem('admin_info', JSON.stringify(res.data))
         profileChecked = true
 
-        const role = res.data.role
-        const requiredRoles = to.meta?.roles
-        if (requiredRoles && !requiredRoles.includes(role)) {
+        const requiredPermission = to.meta?.permission
+        if (!checkPermission(res.data.role, res.data.permissions, requiredPermission)) {
           next('/dashboard')
           return
         }
@@ -78,9 +86,8 @@ router.beforeEach(async (to, from, next) => {
   }
 
   const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}')
-  const role = adminInfo.role
-  const requiredRoles = to.meta?.roles
-  if (requiredRoles && !requiredRoles.includes(role)) {
+  const requiredPermission = to.meta?.permission
+  if (!checkPermission(adminInfo.role, adminInfo.permissions, requiredPermission)) {
     next('/dashboard')
     return
   }

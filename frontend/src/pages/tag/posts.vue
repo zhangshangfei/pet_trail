@@ -92,6 +92,10 @@
                 <text class="action-icon" :class="{ 'action-icon--liked': post.liked }">{{ post.liked ? '❤️' : '🤍' }}</text>
                 <text class="action-count">{{ formatNumber(post.likes) }}</text>
               </view>
+              <view class="action-item" @tap="onEeTap(post)">
+                <text class="action-icon" :class="{ 'action-icon--liked': post.eeLiked }">{{ post.eeLiked ? '⭐' : '☆' }}</text>
+                <text class="action-count">{{ formatNumber(post.eeCount) }}</text>
+              </view>
               <view class="action-item" @tap="goPostDetail(post)">
                 <text class="action-icon">💬</text>
                 <text class="action-count">{{ formatNumber(post.comments) }}</text>
@@ -335,6 +339,22 @@ export default {
         }
       } catch (error) {
         console.error('点赞失败:', error)
+        uni.showToast({ title: '操作失败', icon: 'none' })
+      }
+    },
+
+    async onEeTap(post) {
+      const loggedIn = await checkLogin('请先登录后再收藏')
+      if (!loggedIn) return
+      try {
+        const res = await postApi.toggleEe(post.id)
+        if (res.success && res.data) {
+          const { eeLiked, eeCount } = res.data
+          this.$set(post, 'eeLiked', eeLiked)
+          this.$set(post, 'eeCount', eeCount)
+        }
+      } catch (error) {
+        console.error('收藏失败:', error)
         uni.showToast({ title: '操作失败', icon: 'none' })
       }
     },

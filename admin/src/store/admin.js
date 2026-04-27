@@ -8,6 +8,24 @@ export const useAdminStore = defineStore('admin', () => {
 
   const isSuperAdmin = computed(() => adminInfo.value?.role === 'SUPER_ADMIN')
   const isLoggedIn = computed(() => !!token.value)
+  const permissions = computed(() => {
+    const perms = adminInfo.value?.permissions || ''
+    if (!perms) return []
+    return perms.split(',').map(p => p.trim()).filter(Boolean)
+  })
+  const role = computed(() => adminInfo.value?.role || '')
+  const merchantId = computed(() => adminInfo.value?.merchantId || null)
+  const isMerchant = computed(() => role.value === 'MERCHANT_ADMIN' || role.value === 'MERCHANT_STAFF')
+
+  function hasPermission(code) {
+    if (isSuperAdmin.value) return true
+    return permissions.value.includes(code)
+  }
+
+  function hasAnyPermission(codes) {
+    if (isSuperAdmin.value) return true
+    return codes.some(code => permissions.value.includes(code))
+  }
 
   async function fetchProfile() {
     try {
@@ -40,6 +58,12 @@ export const useAdminStore = defineStore('admin', () => {
     token,
     isSuperAdmin,
     isLoggedIn,
+    permissions,
+    role,
+    merchantId,
+    isMerchant,
+    hasPermission,
+    hasAnyPermission,
     fetchProfile,
     setLoginInfo,
     logout

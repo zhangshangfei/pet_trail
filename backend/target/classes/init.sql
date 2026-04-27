@@ -376,14 +376,29 @@ CREATE TABLE IF NOT EXISTS `admins` (
   `password` varchar(255) NOT NULL COMMENT '密码(BCrypt)',
   `nickname` varchar(50) DEFAULT NULL COMMENT '昵称',
   `avatar` varchar(255) DEFAULT NULL COMMENT '头像URL',
-  `role` varchar(50) DEFAULT 'ADMIN' COMMENT '角色: SUPER_ADMIN, ADMIN',
+  `role` varchar(50) DEFAULT 'ADMIN' COMMENT '角色: SUPER_ADMIN, ADMIN, MERCHANT_ADMIN, MERCHANT_STAFF',
+  `permissions` text DEFAULT NULL COMMENT '权限码JSON数组',
+  `merchant_id` bigint(20) DEFAULT NULL COMMENT '所属商户ID',
   `status` tinyint(4) DEFAULT 1 COMMENT '状态: 1-正常 0-禁用',
   `last_login_at` datetime DEFAULT NULL COMMENT '最后登录时间',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_username` (`username`)
+  UNIQUE KEY `uk_username` (`username`),
+  KEY `idx_merchant_id` (`merchant_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='管理员表';
+
+CREATE TABLE IF NOT EXISTS `merchants` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL COMMENT '商户名称',
+  `contact_name` varchar(50) DEFAULT NULL COMMENT '联系人',
+  `contact_phone` varchar(20) DEFAULT NULL COMMENT '联系电话',
+  `type` varchar(30) DEFAULT 'vet_clinic' COMMENT '商户类型: vet_clinic, pet_shop, other',
+  `status` tinyint(4) DEFAULT 1 COMMENT '状态: 1-正常 0-禁用',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商户表';
 
 -- ========================================
 -- 初始化数据

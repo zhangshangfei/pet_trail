@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -30,5 +31,11 @@ public class AdminAuthController extends BaseAdminController {
     public Result<AdminVO> getProfile() {
         Long adminId = requireLogin();
         return Result.success(adminService.getProfile(adminId));
+    }
+
+    @GetMapping("/permissions")
+    @Operation(summary = "获取所有权限码")
+    public Result<List<String>> getAllPermissions() {
+        return Result.success(AdminService.ALL_PERMISSIONS);
     }
 }

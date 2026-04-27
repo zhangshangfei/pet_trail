@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.dto.AdminVO;
 import com.pettrail.pettrailbackend.entity.Admin;
+import com.pettrail.pettrailbackend.entity.Merchant;
 import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.mapper.AdminMapper;
+import com.pettrail.pettrailbackend.mapper.MerchantMapper;
 import com.pettrail.pettrailbackend.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -23,8 +25,26 @@ import java.util.Map;
 public class AdminService {
 
     private final AdminMapper adminMapper;
+    private final MerchantMapper merchantMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+
+    public static final List<String> ALL_PERMISSIONS = List.of(
+            "dashboard", "user:view", "user:manage", "pet:view", "pet:manage",
+            "post:view", "post:manage", "comment:view", "comment:manage",
+            "report:view", "report:handle", "notification:view", "notification:send",
+            "feedback:view", "feedback:reply", "admin:manage", "log:view",
+            "setting:manage", "config:manage", "ai-model:view", "ai-model:manage",
+            "challenge:view", "challenge:manage", "product:view", "product:manage",
+            "vet-clinic:view", "vet-clinic:manage", "merchant:manage", "export"
+    );
+
+    public static final String PERMISSIONS_SUPER_ADMIN = String.join(",", ALL_PERMISSIONS);
+    public static final String PERMISSIONS_ADMIN = String.join(",", ALL_PERMISSIONS.stream()
+            .filter(p -> !p.equals("admin:manage") && !p.equals("setting:manage") && !p.equals("config:manage") && !p.equals("merchant:manage"))
+            .collect(Collectors.toList()));
+    public static final String PERMISSIONS_MERCHANT_ADMIN = "dashboard,vet-clinic:view,vet-clinic:manage,product:view,product:manage,appointment:view,appointment:manage,feedback:view,feedback:reply";
+    public static final String PERMISSIONS_MERCHANT_STAFF = "dashboard,vet-clinic:view,product:view,appointment:view";
 
     public Map<String, Object> login(String username, String password) {
         Admin admin = adminMapper.selectOne(
@@ -64,6 +84,7 @@ public class AdminService {
             admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setNickname("超级管理员");
             admin.setRole("SUPER_ADMIN");
+            admin.setPermissions(PERMISSIONS_SUPER_ADMIN);
             admin.setStatus(1);
             admin.setCreatedAt(LocalDateTime.now());
             admin.setUpdatedAt(LocalDateTime.now());
@@ -79,10 +100,31 @@ public class AdminService {
         vo.setNickname(admin.getNickname());
         vo.setAvatar(admin.getAvatar());
         vo.setRole(admin.getRole());
+        vo.setPermissions(resolvePermissions(admin));
+        vo.setMerchantId(admin.getMerchantId());
         vo.setStatus(admin.getStatus());
         vo.setLastLoginAt(admin.getLastLoginAt());
         vo.setCreatedAt(admin.getCreatedAt());
+        if (admin.getMerchantId() != null) {
+            Merchant merchant = merchantMapper.selectById(admin.getMerchantId());
+            if (merchant != null) {
+                vo.setMerchantName(merchant.getName());
+            }
+        }
         return vo;
+    }
+
+    private String resolvePermissions(Admin admin) {
+        if (admin.getPermissions() != null && !admin.getPermissions().isEmpty()) {
+            return admin.getPermissions();
+        }
+        return switch (admin.getRole()) {
+            case "SUPER_ADMIN" -> PERMISSIONS_SUPER_ADMIN;
+            case "ADMIN" -> PERMISSIONS_ADMIN;
+            case "MERCHANT_ADMIN" -> PERMISSIONS_MERCHANT_ADMIN;
+            case "MERCHANT_STAFF" -> PERMISSIONS_MERCHANT_STAFF;
+            default -> "dashboard";
+        };
     }
 
     public Page<Admin> adminListAdmins(int page, int size) {
@@ -98,6 +140,9 @@ public class AdminService {
             throw new BusinessException(409, "用户名已存在");
         }
         admin.setPassword(passwordEncoder.encode(admin.getPassword() != null ? admin.getPassword() : "admin123"));
+        if (admin.getPermissions() == null || admin.getPermissions().isEmpty()) {
+            admin.setPermissions(resolvePermissions(admin));
+        }
         admin.setCreatedAt(LocalDateTime.now());
         admin.setUpdatedAt(LocalDateTime.now());
         adminMapper.insert(admin);

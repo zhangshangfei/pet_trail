@@ -47,8 +47,8 @@
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button size="small" text @click="viewDetail(row)">详情</el-button>
-            <el-button v-if="row.status === 1 && isSuperAdmin" type="danger" size="small" text @click="handleStatus(row, 0)">禁用</el-button>
-            <el-button v-if="row.status !== 1 && isSuperAdmin" type="success" size="small" text @click="handleStatus(row, 1)">启用</el-button>
+            <el-button v-if="row.status === 1 && canManage" type="danger" size="small" text @click="handleStatus(row, 0)">禁用</el-button>
+            <el-button v-if="row.status !== 1 && canManage" type="success" size="small" text @click="handleStatus(row, 1)">启用</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -100,7 +100,7 @@ const detailUser = ref(null)
 const userStats = ref(null)
 
 const adminStore = useAdminStore()
-const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
+const canManage = computed(() => adminStore.hasPermission('user:manage'))
 
 const userStatCards = computed(() => [
   { key: 'pets', label: '宠物数', value: userStats.value?.petCount || 0 },
@@ -146,7 +146,7 @@ const handleStatus = async (row, status) => {
 const handleExport = async () => {
   try {
     const res = await exportUsers({ keyword: keyword.value || undefined, status: statusFilter.value ?? undefined })
-    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url

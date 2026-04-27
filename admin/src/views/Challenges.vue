@@ -61,7 +61,7 @@
             <el-button size="small" text @click="openEdit(row)">编辑</el-button>
             <el-button v-if="row.status === 1" type="warning" size="small" text @click="changeStatus(row.id, 0)">下线</el-button>
             <el-button v-if="row.status === 0" type="success" size="small" text @click="changeStatus(row.id, 1)">上线</el-button>
-            <el-button v-if="isSuperAdmin" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
+            <el-button v-if="canManage" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -124,7 +124,7 @@ import { useAdminStore } from '@/store/admin'
 import { getChallengeList, getChallengeDetail, createChallenge, updateChallenge, deleteChallenge, updateChallengeStatus, getChallengeStats, getChallengeParticipants, exportChallenges } from '@/api/admin'
 
 const adminStore = useAdminStore()
-const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
+const canManage = computed(() => adminStore.hasPermission('challenge:manage'))
 
 const loading = ref(false)
 const tableData = ref([])
@@ -231,7 +231,7 @@ async function viewStats(row) {
 async function handleExport() {
   try {
     const res = await exportChallenges({ status: statusFilter.value ?? undefined })
-    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
