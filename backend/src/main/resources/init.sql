@@ -400,6 +400,45 @@ CREATE TABLE IF NOT EXISTS `merchants` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商户表';
 
+CREATE TABLE IF NOT EXISTS `sys_menu` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `parent_id` bigint(20) DEFAULT 0 COMMENT '父菜单ID, 0为顶级',
+  `name` varchar(50) NOT NULL COMMENT '菜单名称',
+  `path` varchar(200) DEFAULT NULL COMMENT '路由路径',
+  `icon` varchar(50) DEFAULT NULL COMMENT '图标',
+  `permission` varchar(100) DEFAULT NULL COMMENT '关联权限码',
+  `sort_order` int(11) DEFAULT 0 COMMENT '排序',
+  `status` tinyint(4) DEFAULT 1 COMMENT '状态: 1-启用 0-禁用',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_parent_id` (`parent_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统菜单表';
+
+INSERT IGNORE INTO `sys_menu` (`id`, `parent_id`, `name`, `path`, `icon`, `permission`, `sort_order`) VALUES
+(1,  0, '仪表盘',     '/dashboard',     'DataAnalysis',  'dashboard',        1),
+(2,  0, '用户与宠物',  NULL,             'User',          NULL,               2),
+(3,  2, '用户管理',    '/users',         'User',          'user:view',        1),
+(4,  2, '宠物管理',    '/pets',          'Guide',         'pet:view',         2),
+(5,  0, '内容管理',    NULL,             'Document',      NULL,               3),
+(6,  5, '动态管理',    '/posts',         'Document',      'post:view',        1),
+(7,  5, '评论管理',    '/comments',      'ChatDotRound',  'comment:view',     2),
+(8,  0, '运营与互动',  NULL,             'Bell',          NULL,               4),
+(9,  8, '举报管理',    '/reports',       'Warning',       'report:view',      1),
+(10, 8, '通知管理',    '/notifications', 'Bell',          'notification:view', 2),
+(11, 8, '反馈管理',    '/feedbacks',     'ChatLineSquare','feedback:view',    3),
+(12, 8, '挑战赛配置',  '/challenges',    'Trophy',        'challenge:view',   4),
+(13, 0, '商业服务',    NULL,             'ShoppingCart',  NULL,               5),
+(14, 13,'医院管理',    '/vet-clinics',   'FirstAidKit',   'vet-clinic:view',  1),
+(15, 13,'商品管理',    '/products',      'ShoppingCart',  'product:view',     2),
+(16, 13,'商户管理',    '/merchants',     'OfficeBuilding','merchant:manage',  3),
+(17, 0, '系统管理',    NULL,             'Setting',       NULL,               6),
+(18, 17,'管理员管理',  '/admins',        'UserFilled',    'admin:manage',     1),
+(19, 17,'操作日志',    '/logs',          'List',          'log:view',         2),
+(20, 17,'系统设置',    '/settings',      'Setting',       'setting:manage',   3),
+(21, 17,'系统配置',    '/config',        'Tools',         'config:manage',    4),
+(22, 17,'AI模型管理',  '/ai-models',     'Cpu',           'ai-model:view',    5);
+
 -- ========================================
 -- 初始化数据
 -- ========================================

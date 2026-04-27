@@ -125,3 +125,10 @@ export const createMerchant = (data) => request.post('/api/admin/merchants', dat
 export const updateMerchant = (id, data) => request.put(`/api/admin/merchants/${id}`, data)
 export const updateMerchantStatus = (id, status) => request.put(`/api/admin/merchants/${id}/status`, { status })
 export const deleteMerchant = (id) => request.delete(`/api/admin/merchants/${id}`)
+
+export const getMenuTree = () => request.get('/api/admin/menus/tree')
+export const getUserMenus = () => request.get('/api/admin/menus/user')
+export const createMenu = (data) => request.post('/api/admin/menus', data)
+export const updateMenu = (id, data) => request.put(`/api/admin/menus/${id}`, data)
+export const deleteMenu = (id) => request.delete(`/api/admin/menus/${id}`)
+export const updateMenuStatus = (id, status) => request.put(`/api/admin/menus/${id}/status`, { status })
