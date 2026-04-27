@@ -38,7 +38,7 @@
         <template #default="{ row }">
           <el-button size="small" text @click="viewDetail(row)">详情</el-button>
           <el-button size="small" text type="primary" @click="openEdit(row)">编辑</el-button>
-          <el-button size="small" text type="danger" @click="handleDelete(row)" v-if="isSuperAdmin">删除</el-button>
+          <el-button size="small" text type="danger" @click="handleDelete(row)" v-if="canManage">删除</el-button>
         </template>
       </el-table-column>
       </el-table>
@@ -98,7 +98,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { getPetList, getPetDetail, deletePet, updatePet } from '../api/admin'
+import { getPetList, getPetDetail, deletePet, updatePet, exportPets } from '../api/admin'
 import { useAdminStore } from '@/store/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -117,7 +117,7 @@ const showEdit = ref(false)
 const editForm = ref({})
 
 const adminStore = useAdminStore()
-const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
+const canManage = computed(() => adminStore.hasPermission('pet:manage'))
 
 const loadData = async () => {
   loading.value = true
@@ -172,8 +172,8 @@ const handleDelete = async (row) => {
 
 const handleExport = async () => {
   try {
-    const { data } = await import('../api/admin').then(m => m.exportPets({ keyword: keyword.value || undefined, category: category.value ?? undefined }))
-    const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const res = await exportPets({ keyword: keyword.value || undefined, category: category.value ?? undefined })
+    const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url

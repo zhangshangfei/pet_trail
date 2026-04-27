@@ -67,7 +67,10 @@
             </view>
 
             <view class="card-footer" v-if="item.status === 0 || item.status === 1">
-              <view class="cancel-btn" @tap="showCancelModal(item)">
+              <view class="contact-btn" v-if="item.status === 1" @tap="contactClinic(item)">
+                <text class="contact-btn-text">联系医院取消</text>
+              </view>
+              <view class="cancel-btn" v-if="item.status === 0" @tap="showCancelModal(item)">
                 <text class="cancel-btn-text">取消预约</text>
               </view>
             </view>
@@ -228,6 +231,13 @@ export default {
     goClinicDetail(item) {
       if (item.clinicId) {
         uni.navigateTo({ url: `/pages/vet/detail?id=${item.clinicId}` })
+      }
+    },
+    contactClinic(item) {
+      if (item.clinicPhone) {
+        uni.makePhoneCall({ phoneNumber: item.clinicPhone, fail: () => {} })
+      } else {
+        uni.showToast({ title: '暂无医院联系电话', icon: 'none' })
       }
     },
     goVetIndex() {
@@ -476,6 +486,21 @@ $text-light: #999999;
 .cancel-btn-text {
   font-size: 24rpx;
   color: #ef4444;
+  font-weight: 500;
+}
+
+.contact-btn {
+  padding: 12rpx 32rpx;
+  border-radius: 999rpx;
+  border: 2rpx solid $primary;
+  background: #fff;
+}
+
+.contact-btn:active { background: #fff5f0; }
+
+.contact-btn-text {
+  font-size: 24rpx;
+  color: $primary;
   font-weight: 500;
 }
 

@@ -28,8 +28,8 @@
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button size="small" text @click="viewDetail(row)">详情</el-button>
-            <el-button v-if="row.status !== 0 && isSuperAdmin" size="small" text type="danger" @click="handleDelete(row)">删除</el-button>
-            <el-button v-if="row.status === 0 && isSuperAdmin" size="small" text type="success" @click="handleRestore(row)">恢复</el-button>
+            <el-button v-if="row.status !== 0 && canManage" size="small" text type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button v-if="row.status === 0 && canManage" size="small" text type="success" @click="handleRestore(row)">恢复</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -78,7 +78,7 @@ const showDetail = ref(false)
 const detail = ref(null)
 
 const adminStore = useAdminStore()
-const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
+const canManage = computed(() => adminStore.hasPermission('comment:manage'))
 
 const loadData = async () => {
   loading.value = true

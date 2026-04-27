@@ -13,7 +13,7 @@
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
             <el-button type="success" @click="handleExport">导出Excel</el-button>
-            <el-button type="warning" @click="loadDeleted" v-if="isSuperAdmin">回收站</el-button>
+            <el-button type="warning" @click="loadDeleted" v-if="canManage">回收站</el-button>
           </div>
         </div>
       </template>
@@ -44,7 +44,7 @@
             <el-button size="small" text @click="viewDetail(row)">详情</el-button>
             <el-button type="success" size="small" text @click="openAudit(row, 1)">通过</el-button>
             <el-button type="danger" size="small" text @click="openAudit(row, 2)">拒绝</el-button>
-            <el-button v-if="isSuperAdmin" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
+            <el-button v-if="canManage" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -138,7 +138,7 @@ const deletedList = ref([])
 const deletedLoading = ref(false)
 
 const adminStore = useAdminStore()
-const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
+const canManage = computed(() => adminStore.hasPermission('post:manage'))
 
 const parseFirstImage = (images) => {
   try { const arr = JSON.parse(images); return arr && arr.length > 0 ? arr[0] : '' } catch (e) { return '' }
@@ -218,7 +218,7 @@ const handleRestore = async (row) => {
 const handleExport = async () => {
   try {
     const res = await exportPosts({ auditStatus: auditFilter.value ?? undefined })
-    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url

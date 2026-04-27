@@ -56,7 +56,7 @@
             <el-button v-if="row.status === 0" type="success" size="small" text @click="changeStatus(row.id, 1)">营业</el-button>
             <el-button v-if="!row.isPartner" type="primary" size="small" text @click="togglePartner(row.id, true)">设为合作</el-button>
             <el-button v-if="row.isPartner" type="info" size="small" text @click="togglePartner(row.id, false)">取消合作</el-button>
-            <el-button v-if="isSuperAdmin" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
+            <el-button v-if="canManage" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -156,14 +156,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useAdminStore } from '@/store/admin'
 import { getClinicList, getClinicDetail, createClinic, updateClinic, deleteClinic, updateClinicStatus, setClinicPartner, getClinicStats, getAppointmentList, updateAppointmentStatus } from '@/api/admin'
 
 const adminStore = useAdminStore()
-const isSuperAdmin = ref(adminStore.isSuperAdmin)
+const canManage = computed(() => adminStore.hasPermission('vet-clinic:manage'))
 
 const uploadUrl = (import.meta.env.VITE_API_BASE_URL || '') + '/api/upload'
 const uploadHeaders = { Authorization: 'Bearer ' + (localStorage.getItem('admin_token') || '') }

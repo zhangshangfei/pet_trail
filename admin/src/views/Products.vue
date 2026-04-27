@@ -63,7 +63,7 @@
             <el-button size="small" text @click="openEdit(row)">编辑</el-button>
             <el-button v-if="row.status === 1" type="warning" size="small" text @click="changeStatus(row.id, 0)">下架</el-button>
             <el-button v-if="row.status === 0" type="success" size="small" text @click="changeStatus(row.id, 1)">上架</el-button>
-            <el-button v-if="isSuperAdmin" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
+            <el-button v-if="canManage" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -77,7 +77,22 @@
       <el-form :model="form" label-width="100px">
         <el-form-item label="商品名称" required><el-input v-model="form.name" /></el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" :rows="3" /></el-form-item>
-        <el-form-item label="封面图"><el-input v-model="form.coverImage" placeholder="图片URL" /></el-form-item>
+        <el-form-item label="封面图">
+          <el-upload
+            class="cover-uploader"
+            :action="uploadUrl"
+            :headers="uploadHeaders"
+            name="file"
+            :show-file-list="false"
+            :on-success="handleCoverSuccess"
+            :before-upload="beforeCoverUpload"
+            accept="image/*"
+          >
+            <el-image v-if="form.coverImage" :src="form.coverImage" fit="cover" class="cover-preview" preview-teleported />
+            <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
+          </el-upload>
+          <el-input v-model="form.coverImage" placeholder="或手动输入图片URL" style="margin-top: 8px" />
+        </el-form-item>
         <el-form-item label="分类" required>
           <el-select v-model="form.category"><el-option label="粮食" value="food" /><el-option label="玩具" value="toy" /><el-option label="保健" value="health" /><el-option label="用品" value="supplies" /></el-select>
         </el-form-item>
@@ -136,11 +151,15 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { useAdminStore } from '@/store/admin'
 import { getProductList, getProductDetail, createProduct, updateProduct, deleteProduct, updateProductStatus, getProductStats, getOrderList, exportProducts } from '@/api/admin'
 
 const adminStore = useAdminStore()
-const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
+const canManage = computed(() => adminStore.hasPermission('product:manage'))
+
+const uploadUrl = (import.meta.env.VITE_API_BASE_URL || '') + '/api/upload'
+const uploadHeaders = { Authorization: 'Bearer ' + (localStorage.getItem('admin_token') || '') }
 
 const loading = ref(false)
 const tableData = ref([])
@@ -199,6 +218,23 @@ function openCreate() {
   showDialog.value = true
 }
 
+function handleCoverSuccess(response) {
+  if (response.success && response.data && response.data.url) {
+    form.value.coverImage = response.data.url
+    ElMessage.success('图片上传成功')
+  } else {
+    ElMessage.error('上传失败')
+  }
+}
+
+function beforeCoverUpload(file) {
+  const isImage = file.type.startsWith('image/')
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isImage) { ElMessage.error('只能上传图片文件'); return false }
+  if (!isLt5M) { ElMessage.error('图片大小不能超过5MB'); return false }
+  return true
+}
+
 async function openEdit(row) {
   try {
     const res = await getProductDetail(row.id)
@@ -236,7 +272,7 @@ async function handleDelete(row) {
 async function handleExport() {
   try {
     const res = await exportProducts({ status: statusFilter.value ?? undefined })
-    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -256,4 +292,8 @@ onMounted(() => { loadData(); loadStats() })
 .header-actions { display: flex; gap: 8px; align-items: center; }
 .pagination-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
 .stats-row .el-card { text-align: center; }
+.cover-uploader :deep(.el-upload) { border: 1px dashed #d9d9d9; border-radius: 6px; cursor: pointer; position: relative; overflow: hidden; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; }
+.cover-uploader :deep(.el-upload:hover) { border-color: #409eff; }
+.cover-preview { width: 120px; height: 120px; }
+.cover-uploader-icon { font-size: 28px; color: #8c939d; }
 </style>
