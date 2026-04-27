@@ -41,7 +41,7 @@
       <el-table-column prop="createdAt" label="提交时间" width="170" />
       <el-table-column label="操作" width="180" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link size="small" @click="openStatusDialog(row, 1)" :disabled="row.status === 1">处理中</el-button>
+          <el-button type="primary" link size="small" @click="openReplyDialog(row)">回复</el-button>
           <el-button type="success" link size="small" @click="openStatusDialog(row, 2)" :disabled="row.status === 2">已发布</el-button>
           <el-button type="info" link size="small" @click="showDetail(row)">详情</el-button>
           <el-button type="danger" link size="small" @click="handleDelete(row)">删除</el-button>
@@ -73,6 +73,21 @@
       <template #footer>
         <el-button @click="statusDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="submitStatus" :loading="submitting">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="replyDialogVisible" title="回复反馈" width="500px">
+      <el-form :model="replyForm" label-width="80px">
+        <el-form-item label="反馈内容">
+          <div style="color: #606266; line-height: 1.6;">{{ replyForm.content }}</div>
+        </el-form-item>
+        <el-form-item label="回复内容" required>
+          <el-input v-model="replyForm.reply" type="textarea" :rows="4" placeholder="请输入回复内容" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="replyDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitReply" :loading="submitting">回复并标记处理中</el-button>
       </template>
     </el-dialog>
 
@@ -112,7 +127,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getFeedbackList, updateFeedbackStatus, deleteFeedback, getFeedbackDetail } from '../api/admin'
+import { getFeedbackList, updateFeedbackStatus, deleteFeedback, getFeedbackDetail, replyFeedback } from '../api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
@@ -136,6 +151,9 @@ const statusLabelMap = { 0: '待处理', 1: '处理中', 2: '已发布' }
 const statusTagMap = { 0: 'warning', 1: '', 2: 'success' }
 
 const statusDialogTitle = ref('')
+
+const replyDialogVisible = ref(false)
+const replyForm = ref({ id: null, content: '', reply: '' })
 
 const loadData = async () => {
   loading.value = true
@@ -181,6 +199,33 @@ const submitStatus = async () => {
     loadData()
   } catch (e) {
     ElMessage.error('状态更新失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+const openReplyDialog = (row) => {
+  replyForm.value = {
+    id: row.id,
+    content: row.content,
+    reply: row.reply || ''
+  }
+  replyDialogVisible.value = true
+}
+
+const submitReply = async () => {
+  if (!replyForm.value.reply || !replyForm.value.reply.trim()) {
+    ElMessage.warning('请输入回复内容')
+    return
+  }
+  submitting.value = true
+  try {
+    await replyFeedback(replyForm.value.id, { reply: replyForm.value.reply.trim() })
+    ElMessage.success('回复成功')
+    replyDialogVisible.value = false
+    loadData()
+  } catch (e) {
+    ElMessage.error('回复失败')
   } finally {
     submitting.value = false
   }

@@ -84,6 +84,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getNotificationList, sendNotification, broadcastNotification } from '../api/admin'
+import { useAdminStore } from '@/store/admin'
 
 const tableData = ref([])
 const loading = ref(false)
@@ -100,8 +101,8 @@ const broadcasting = ref(false)
 const sendForm = reactive({ userId: '', content: '', title: '' })
 const broadcastForm = reactive({ content: '', title: '' })
 
-const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}')
-const isSuperAdmin = computed(() => adminInfo.role === 'SUPER_ADMIN')
+const adminStore = useAdminStore()
+const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
 
 const loadData = async () => {
   loading.value = true

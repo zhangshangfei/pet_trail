@@ -16,6 +16,7 @@ export const updateUserStatus = (id, status) => request.put(`/api/admin/users/${
 
 export const getPetList = (params) => request.get('/api/admin/pets', { params })
 export const getPetDetail = (id) => request.get(`/api/admin/pets/${id}`)
+export const updatePet = (id, data) => request.put(`/api/admin/pets/${id}`, data)
 export const deletePet = (id) => request.delete(`/api/admin/pets/${id}`)
 
 export const getPostList = (params) => request.get('/api/admin/posts', { params })
@@ -58,6 +59,9 @@ export const exportUsers = (params) => request.get('/api/admin/export/users', { 
 export const exportPosts = (params) => request.get('/api/admin/export/posts', { params, responseType: 'blob' })
 export const exportReports = (params) => request.get('/api/admin/export/reports', { params, responseType: 'blob' })
 export const exportLogs = (params) => request.get('/api/admin/export/logs', { params, responseType: 'blob' })
+export const exportPets = (params) => request.get('/api/admin/export/pets', { params, responseType: 'blob' })
+export const exportChallenges = (params) => request.get('/api/admin/export/challenges', { params, responseType: 'blob' })
+export const exportProducts = (params) => request.get('/api/admin/export/products', { params, responseType: 'blob' })
 
 export const getConfigList = (params) => request.get('/api/admin/config', { params })
 export const getConfigCategories = () => request.get('/api/admin/config/categories')

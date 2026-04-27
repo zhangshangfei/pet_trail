@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.dto.AdminVO;
 import com.pettrail.pettrailbackend.entity.Admin;
 import com.pettrail.pettrailbackend.exception.BusinessException;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -81,5 +83,77 @@ public class AdminService {
         vo.setLastLoginAt(admin.getLastLoginAt());
         vo.setCreatedAt(admin.getCreatedAt());
         return vo;
+    }
+
+    public Page<Admin> adminListAdmins(int page, int size) {
+        Page<Admin> pageParam = new Page<>(page, size);
+        return adminMapper.selectPage(pageParam, new LambdaQueryWrapper<Admin>().orderByDesc(Admin::getCreatedAt));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Admin adminCreateAdmin(Admin admin) {
+        Long count = adminMapper.selectCount(
+                new LambdaQueryWrapper<Admin>().eq(Admin::getUsername, admin.getUsername()));
+        if (count > 0) {
+            throw new BusinessException(409, "用户名已存在");
+        }
+        admin.setPassword(passwordEncoder.encode(admin.getPassword() != null ? admin.getPassword() : "admin123"));
+        admin.setCreatedAt(LocalDateTime.now());
+        admin.setUpdatedAt(LocalDateTime.now());
+        adminMapper.insert(admin);
+        return admin;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Admin adminUpdateAdmin(Long id, Admin admin) {
+        Admin existing = adminMapper.selectById(id);
+        if (existing == null) {
+            throw new BusinessException(404, "管理员不存在");
+        }
+        admin.setId(id);
+        if (admin.getPassword() != null && !admin.getPassword().isEmpty()) {
+            admin.setPassword(passwordEncoder.encode(admin.getPassword()));
+        } else {
+            admin.setPassword(existing.getPassword());
+        }
+        admin.setUpdatedAt(LocalDateTime.now());
+        adminMapper.updateById(admin);
+        return admin;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void adminUpdateAdminStatus(Long id, Integer status) {
+        Admin admin = adminMapper.selectById(id);
+        if (admin == null) {
+            throw new BusinessException(404, "管理员不存在");
+        }
+        admin.setStatus(status);
+        admin.setUpdatedAt(LocalDateTime.now());
+        adminMapper.updateById(admin);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void adminResetPassword(Long id, String newPassword) {
+        Admin admin = adminMapper.selectById(id);
+        if (admin == null) {
+            throw new BusinessException(404, "管理员不存在");
+        }
+        admin.setPassword(passwordEncoder.encode(newPassword != null ? newPassword : "admin123"));
+        admin.setUpdatedAt(LocalDateTime.now());
+        adminMapper.updateById(admin);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void adminChangePassword(Long id, String oldPassword, String newPassword) {
+        Admin admin = adminMapper.selectById(id);
+        if (admin == null) {
+            throw new BusinessException(404, "管理员不存在");
+        }
+        if (!passwordEncoder.matches(oldPassword, admin.getPassword())) {
+            throw new BusinessException(400, "原密码错误");
+        }
+        admin.setPassword(passwordEncoder.encode(newPassword));
+        admin.setUpdatedAt(LocalDateTime.now());
+        adminMapper.updateById(admin);
     }
 }

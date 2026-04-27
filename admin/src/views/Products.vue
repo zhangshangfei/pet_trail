@@ -22,6 +22,7 @@
             <el-button type="primary" @click="loadData">查询</el-button>
             <el-button type="success" @click="openCreate">新增商品</el-button>
             <el-button @click="showOrders = true">查看订单</el-button>
+            <el-button @click="handleExport">导出Excel</el-button>
           </div>
         </div>
       </template>
@@ -100,6 +101,14 @@
     </el-dialog>
 
     <el-dialog v-model="showOrders" title="订单列表" width="900px" destroy-on-close>
+      <div style="margin-bottom: 12px; display: flex; gap: 12px;">
+        <el-select v-model="orderStatusFilter" placeholder="订单状态" clearable style="width: 140px" @change="loadOrders">
+          <el-option label="待支付" :value="0" />
+          <el-option label="已支付" :value="1" />
+          <el-option label="已退款" :value="2" />
+          <el-option label="已取消" :value="3" />
+        </el-select>
+      </div>
       <el-table :data="orderList" v-loading="orderLoading" stripe>
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="orderNo" label="订单号" width="180" show-overflow-tooltip />
@@ -128,7 +137,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAdminStore } from '@/store/admin'
-import { getProductList, createProduct, updateProduct, deleteProduct, updateProductStatus, getProductStats, getOrderList } from '@/api/admin'
+import { getProductList, getProductDetail, createProduct, updateProduct, deleteProduct, updateProductStatus, getProductStats, getOrderList, exportProducts } from '@/api/admin'
 
 const adminStore = useAdminStore()
 const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
@@ -157,6 +166,7 @@ const orderLoading = ref(false)
 const orderPage = ref(1)
 const orderSize = ref(20)
 const orderTotal = ref(0)
+const orderStatusFilter = ref(null)
 
 async function loadData() {
   loading.value = true
@@ -176,7 +186,9 @@ async function loadStats() {
 async function loadOrders() {
   orderLoading.value = true
   try {
-    const res = await getOrderList({ page: orderPage.value, size: orderSize.value })
+    const params = { page: orderPage.value, size: orderSize.value }
+    if (orderStatusFilter.value != null) params.status = orderStatusFilter.value
+    const res = await getOrderList(params)
     if (res.data) { orderList.value = res.data.records || []; orderTotal.value = res.data.total || 0 }
   } catch (e) { console.error(e) } finally { orderLoading.value = false }
 }
@@ -187,10 +199,16 @@ function openCreate() {
   showDialog.value = true
 }
 
-function openEdit(row) {
-  isEdit.value = true; editId.value = row.id
-  form.value = { ...row }
-  showDialog.value = true
+async function openEdit(row) {
+  try {
+    const res = await getProductDetail(row.id)
+    const detail = res.data || row
+    isEdit.value = true; editId.value = detail.id
+    form.value = { ...detail }
+    showDialog.value = true
+  } catch (e) {
+    console.error(e); ElMessage.error('获取详情失败')
+  }
 }
 
 async function submitForm() {
@@ -213,6 +231,20 @@ async function handleDelete(row) {
     await ElMessageBox.confirm(`确定删除商品"${row.name}"？`, '提示', { type: 'warning' })
     await deleteProduct(row.id); ElMessage.success('删除成功'); loadData(); loadStats()
   } catch (e) { if (e !== 'cancel') console.error(e) }
+}
+
+async function handleExport() {
+  try {
+    const res = await exportProducts({ status: statusFilter.value ?? undefined })
+    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `商品数据_${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (e) { ElMessage.error('导出失败') }
 }
 
 onMounted(() => { loadData(); loadStats() })

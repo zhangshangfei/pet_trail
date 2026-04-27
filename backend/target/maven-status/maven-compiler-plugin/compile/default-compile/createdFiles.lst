@@ -228,7 +228,6 @@ com\pettrail\pettrailbackend\controller\ChallengeController.class
 com\pettrail\pettrailbackend\entity\SystemSetting.class
 com\pettrail\pettrailbackend\controller\FeedbackController.class
 com\pettrail\pettrailbackend\entity\AiModelStats.class
-com\pettrail\pettrailbackend\service\ExportService.class
 com\pettrail\pettrailbackend\dto\ReportHandleDTO.class
 com\pettrail\pettrailbackend\entity\AiModel.class
 com\pettrail\pettrailbackend\controller\admin\AdminFeedbackController.class

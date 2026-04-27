@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.dto.CommentVO;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.entity.PostComment;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -199,5 +201,60 @@ public class CommentService {
         }
 
         return vo;
+    }
+
+    public Page<PostComment> adminListComments(int page, int size, String keyword, Long postId, Integer deleted) {
+        Page<PostComment> pageParam = new Page<>(page, size);
+        LambdaQueryWrapper<PostComment> wrapper = new LambdaQueryWrapper<>();
+        if (keyword != null && !keyword.isEmpty()) {
+            wrapper.like(PostComment::getContent, keyword);
+        }
+        if (postId != null) {
+            wrapper.eq(PostComment::getPostId, postId);
+        }
+        if (deleted != null) {
+            wrapper.eq(PostComment::getStatus, deleted == 1 ? 0 : 1);
+        }
+        wrapper.orderByDesc(PostComment::getCreatedAt);
+        Page<PostComment> result = commentMapper.selectPage(pageParam, wrapper);
+        fillCommentUserNickname(result);
+        return result;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void adminDeleteComment(Long id) {
+        PostComment comment = commentMapper.selectById(id);
+        if (comment == null) {
+            throw new BusinessException(404, "评论不存在");
+        }
+        comment.setStatus(0);
+        commentMapper.updateById(comment);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void adminRestoreComment(Long id) {
+        PostComment comment = commentMapper.selectById(id);
+        if (comment == null) {
+            throw new BusinessException(404, "评论不存在");
+        }
+        comment.setStatus(1);
+        commentMapper.updateById(comment);
+    }
+
+    private void fillCommentUserNickname(Page<PostComment> result) {
+        Set<Long> userIds = result.getRecords().stream()
+                .map(PostComment::getUserId)
+                .filter(uid -> uid != null)
+                .collect(Collectors.toSet());
+        if (userIds.isEmpty()) return;
+        Map<Long, String> nicknameMap = userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId,
+                        u -> u.getNickname() != null ? u.getNickname() : "用户" + u.getId(),
+                        (a, b) -> a));
+        for (PostComment comment : result.getRecords()) {
+            if (comment.getUserId() != null) {
+                comment.setUserNickname(nicknameMap.getOrDefault(comment.getUserId(), "未知用户"));
+            }
+        }
     }
 }

@@ -303,6 +303,21 @@ export default {
       } catch (e) {
         console.error('获取用户信息失败:', e)
       }
+      if (!this.isSelf) {
+        this.checkFollowStatus()
+      }
+    },
+    async checkFollowStatus() {
+      try {
+        const token = uni.getStorageSync('token')
+        if (!token) return
+        const res = await postApi.checkFollow(this.userId)
+        if (res && res.success && res.data) {
+          this.$set(this.userInfo, 'isFollowing', res.data.following)
+        }
+      } catch (e) {
+        // ignore
+      }
     },
     async loadPosts() {
       if (this.loading) return

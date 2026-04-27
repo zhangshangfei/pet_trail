@@ -45,4 +45,25 @@ public class AdminExportController extends BaseAdminController {
                            @RequestParam(required = false) String module) throws IOException {
         exportService.exportLogs(response, module);
     }
+
+    @GetMapping("/pets")
+    @Operation(summary = "导出宠物数据")
+    public void exportPets(HttpServletResponse response,
+                           @RequestParam(required = false) Integer category) throws IOException {
+        exportService.exportPets(response, category);
+    }
+
+    @GetMapping("/challenges")
+    @Operation(summary = "导出挑战赛数据")
+    public void exportChallenges(HttpServletResponse response,
+                                  @RequestParam(required = false) Integer status) throws IOException {
+        exportService.exportChallenges(response, status);
+    }
+
+    @GetMapping("/products")
+    @Operation(summary = "导出商品数据")
+    public void exportProducts(HttpServletResponse response,
+                                @RequestParam(required = false) Integer status) throws IOException {
+        exportService.exportProducts(response, status);
+    }
 }

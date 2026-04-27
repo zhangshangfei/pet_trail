@@ -1,9 +1,12 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.alibaba.fastjson2.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.entity.PostEe;
 import com.pettrail.pettrailbackend.entity.PostLike;
+import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.event.PostCreateEvent;
 import com.pettrail.pettrailbackend.exception.NotFoundException;
 import com.pettrail.pettrailbackend.exception.BusinessException;
@@ -11,6 +14,7 @@ import com.pettrail.pettrailbackend.exception.ForbiddenException;
 import com.pettrail.pettrailbackend.mapper.PostEeMapper;
 import com.pettrail.pettrailbackend.mapper.PostLikeMapper;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
+import com.pettrail.pettrailbackend.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,7 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 动态服务
@@ -34,6 +40,7 @@ public class PostService {
     private final PostMapper postMapper;
     private final PostLikeMapper postLikeMapper;
     private final PostEeMapper postEeMapper;
+    private final UserMapper userMapper;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
@@ -351,5 +358,93 @@ public class PostService {
         redisTemplate.delete(eeKey);
 
         log.info("动态已删除：postId={}, userId={}", postId, userId);
+    }
+
+    public Page<Post> adminListPosts(int page, int size, Long userId, Integer auditStatus) {
+        Page<Post> pageParam = new Page<>(page, size);
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
+        if (userId != null) wrapper.eq(Post::getUserId, userId);
+        if (auditStatus != null) wrapper.eq(Post::getAuditStatus, auditStatus);
+        wrapper.orderByDesc(Post::getCreatedAt);
+        Page<Post> result = postMapper.selectPage(pageParam, wrapper);
+        fillPostUserNickname(result);
+        return result;
+    }
+
+    public Post adminGetPostDetail(Long id) {
+        Post post = postMapper.selectById(id);
+        if (post == null) throw new BusinessException(404, "动态不存在");
+        if (post.getUserId() != null) {
+            User user = userMapper.selectById(post.getUserId());
+            if (user != null) post.setUserNickname(user.getNickname());
+        }
+        return post;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void adminAuditPost(Long id, Integer auditStatus, String auditRemark) {
+        Post post = postMapper.selectById(id);
+        if (post == null) throw new BusinessException(404, "动态不存在");
+        post.setAuditStatus(auditStatus);
+        if (auditRemark != null) post.setAuditRemark(auditRemark);
+        postMapper.updateById(post);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void adminDeletePost(Long id) {
+        Post post = postMapper.selectById(id);
+        if (post == null) throw new BusinessException(404, "动态不存在");
+        post.setDeleted(1);
+        postMapper.updateById(post);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void adminBatchAudit(List<Integer> postIds, Integer auditStatus, String auditRemark) {
+        if (postIds == null || postIds.isEmpty() || auditStatus == null) {
+            throw new BusinessException(400, "参数不完整");
+        }
+        for (Integer postId : postIds) {
+            Post post = postMapper.selectById(postId.longValue());
+            if (post != null) {
+                post.setAuditStatus(auditStatus);
+                if (auditRemark != null) post.setAuditRemark(auditRemark);
+                postMapper.updateById(post);
+            }
+        }
+    }
+
+    public Page<Post> adminListDeletedPosts(int page, int size) {
+        Page<Post> pageParam = new Page<>(page, size);
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Post::getDeleted, 1);
+        wrapper.orderByDesc(Post::getCreatedAt);
+        Page<Post> result = postMapper.selectPage(pageParam, wrapper);
+        fillPostUserNickname(result);
+        return result;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void adminRestorePost(Long id) {
+        Post post = postMapper.selectById(id);
+        if (post == null) throw new BusinessException(404, "动态不存在");
+        post.setDeleted(0);
+        postMapper.updateById(post);
+    }
+
+    private void fillPostUserNickname(Page<Post> result) {
+        Set<Long> userIds = result.getRecords().stream()
+                .map(Post::getUserId)
+                .filter(uid -> uid != null)
+                .collect(Collectors.toSet());
+        if (userIds.isEmpty()) return;
+        Map<Long, String> nicknameMap = userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId,
+                        u -> u.getNickname() != null ? u.getNickname() : "用户" + u.getId(),
+                        (a, b) -> a));
+        for (Post post : result.getRecords()) {
+            if (post.getUserId() != null) {
+                post.setUserNickname(nicknameMap.getOrDefault(post.getUserId(), "未知用户"));
+            }
+        }
     }
 }

@@ -592,7 +592,28 @@ export default {
       this.postList = [];
       this.hasMore = true;
       this.loadCachedPosts();
+
+      if (tab === 'follow') {
+        this.checkFollowList()
+      }
+
       this.loadPosts();
+    },
+
+    async checkFollowList() {
+      try {
+        const res = await postApi.getFollowList()
+        if (res && res.success) {
+          const list = res.data || []
+          if (list.length === 0) {
+            this.postList = []
+            this.hasMore = false
+            return
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
     },
 
     getPetIcon(type) {

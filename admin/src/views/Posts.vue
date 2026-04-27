@@ -117,6 +117,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getPostList, getPostDetail, auditPost, deletePost, batchAuditPosts, getDeletedPosts, restorePost, exportPosts } from '../api/admin'
+import { useAdminStore } from '@/store/admin'
 
 const tableData = ref([])
 const loading = ref(false)
@@ -136,8 +137,8 @@ const showDeleted = ref(false)
 const deletedList = ref([])
 const deletedLoading = ref(false)
 
-const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}')
-const isSuperAdmin = computed(() => adminInfo.role === 'SUPER_ADMIN')
+const adminStore = useAdminStore()
+const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
 
 const parseFirstImage = (images) => {
   try { const arr = JSON.parse(images); return arr && arr.length > 0 ? arr[0] : '' } catch (e) { return '' }
