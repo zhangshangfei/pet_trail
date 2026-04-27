@@ -238,6 +238,13 @@
       }
     },
     {
+      "path": "pages/shop/detail",
+      "style": {
+        "navigationBarTitleText": "商品详情",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/vet/index",
       "style": {
         "navigationBarTitleText": "宠物医院",
