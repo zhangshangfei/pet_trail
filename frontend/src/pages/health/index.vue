@@ -579,7 +579,7 @@ export default {
           uni.showToast({ title: "保存成功", icon: "success" });
           this.weightForm.weight = "";
           this.weightForm.remark = "";
-          await this.loadLastWeightRecord();
+          setTimeout(() => { uni.switchTab({ url: "/pages/dashboard/index" }) }, 1500);
         } else {
           uni.showToast({ title: (res && res.message) || "保存失败", icon: "none" });
         }
@@ -608,6 +608,7 @@ export default {
           this.vaccineForm.hospital = "";
           this.vaccineForm.remark = "";
           this.vaccineForm.date = todayStr();
+          setTimeout(() => { uni.switchTab({ url: "/pages/dashboard/index" }) }, 1500);
         } else {
           uni.showToast({ title: (res && res.message) || "保存失败", icon: "none" });
         }
@@ -642,6 +643,7 @@ export default {
           this.dewormForm.medicine = "";
           this.dewormForm.remark = "";
           this.dewormForm.date = todayStr();
+          setTimeout(() => { uni.switchTab({ url: "/pages/dashboard/index" }) }, 1500);
         } else {
           uni.showToast({ title: (res && res.message) || "保存失败", icon: "none" });
         }

@@ -74,6 +74,9 @@
               >
                 <text class="switch-chip-text">{{ opt.label }}</text>
               </view>
+              <view class="switch-chip" @tap="goRecordList">
+                <text class="switch-chip-text">记录</text>
+              </view>
             </view>
           </view>
 
@@ -743,6 +746,10 @@ export default {
     goParasiteList() {
       if (!this.selectedPet || !this.selectedPet.id) return
       uni.navigateTo({ url: `/pages/health/parasite-list?petId=${this.selectedPet.id}` })
+    },
+    goRecordList() {
+      if (!this.selectedPet || !this.selectedPet.id) return
+      uni.navigateTo({ url: `/pages/health/record?petId=${this.selectedPet.id}` })
     },
     goAiAnalysis() {
       uni.navigateTo({ url: "/pages/health/analysis" });

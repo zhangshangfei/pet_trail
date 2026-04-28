@@ -58,6 +58,10 @@
                   {{ record.change > 0 ? '+' : '' }}{{ record.change }}%
                 </text>
               </view>
+              <view class="record-ops">
+                <text class="op-link" @click="onEditRecord(record)">编辑</text>
+                <text class="op-link op-danger" @click="onDeleteRecord(record)">删除</text>
+              </view>
             </view>
           </view>
         </view>
@@ -73,7 +77,7 @@
     <view class="modal-mask" v-if="showModal" @click="hideModal">
       <view class="modal-content" @click.stop>
         <view class="modal-header">
-          <text class="modal-title">记录体重</text>
+          <text class="modal-title">{{ editingRecord ? '编辑体重' : '记录体重' }}</text>
           <text class="modal-close" @click="hideModal">✕</text>
         </view>
         <view class="modal-body">
@@ -129,6 +133,7 @@ export default {
       records: [],
       currentWeight: null,
       showModal: false,
+      editingRecord: null,
       form: {
         weight: '',
         recordDate: ''
@@ -237,11 +242,44 @@ export default {
     async showRecordModal() {
       const loggedIn = await checkLogin('请先登录后再记录体重')
       if (!loggedIn) return
+      this.editingRecord = null
+      this.form.weight = ''
+      this.form.recordDate = new Date().toISOString().split('T')[0]
       this.showModal = true;
-      this.form.recordDate = this.form.recordDate || new Date().toISOString().split('T')[0];
+    },
+    onEditRecord(record) {
+      this.editingRecord = record
+      this.form.weight = String(record.weight)
+      this.form.recordDate = record.recordDate ? record.recordDate.split('T')[0] : ''
+      this.showModal = true
+    },
+    onDeleteRecord(record) {
+      uni.showModal({
+        title: '确认删除',
+        content: `确定要删除 ${record.weight}kg 的体重记录吗？`,
+        confirmText: '删除',
+        confirmColor: '#ff4d4f',
+        success: async (res) => {
+          if (res.confirm) {
+            try {
+              const result = await uni.$request.delete(`/api/pets/${this.petId}/weight-records/${record.id}`)
+              if (result && result.success) {
+                uni.showToast({ title: '删除成功', icon: 'success' })
+                this.loadRecords()
+                this.loadPetInfo()
+              } else {
+                uni.showToast({ title: (result && result.message) || '删除失败', icon: 'none' })
+              }
+            } catch (e) {
+              uni.showToast({ title: '网络错误', icon: 'none' })
+            }
+          }
+        }
+      })
     },
     hideModal() {
       this.showModal = false;
+      this.editingRecord = null;
     },
     onDateChange(e) {
       this.form.recordDate = e.detail.value;
@@ -260,6 +298,11 @@ export default {
 
       if (!this.form.weight) {
         uni.showToast({ title: '请输入体重', icon: 'none' });
+        return;
+      }
+
+      if (this.editingRecord) {
+        await this.updateRecord(this.editingRecord.id);
         return;
       }
 
@@ -609,6 +652,23 @@ export default {
 .record-change {
   margin-left: 16rpx;
   flex-shrink: 0;
+}
+
+.record-ops {
+  display: flex;
+  gap: 16rpx;
+  margin-left: 12rpx;
+  flex-shrink: 0;
+}
+
+.op-link {
+  font-size: 24rpx;
+  color: #ff7a3d;
+  font-weight: 500;
+}
+
+.op-link.op-danger {
+  color: #ff4d4f;
 }
 
 .change-text {
