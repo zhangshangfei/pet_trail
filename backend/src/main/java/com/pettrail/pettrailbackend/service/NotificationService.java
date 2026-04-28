@@ -8,7 +8,6 @@ import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.NotificationMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
 import com.pettrail.pettrailbackend.websocket.NotificationWebSocketHandler;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

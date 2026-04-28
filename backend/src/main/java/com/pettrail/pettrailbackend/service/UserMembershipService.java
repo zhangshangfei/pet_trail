@@ -1,10 +1,8 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.entity.UserMembership;
 import com.pettrail.pettrailbackend.mapper.UserMembershipMapper;
-import com.pettrail.pettrailbackend.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,7 +20,6 @@ import java.util.UUID;
 public class UserMembershipService {
 
     private final UserMembershipMapper userMembershipMapper;
-    private final UserMapper userMapper;
 
     private static final BigDecimal MONTHLY_PRICE = new BigDecimal("9.90");
     private static final BigDecimal YEARLY_PRICE = new BigDecimal("99.00");
