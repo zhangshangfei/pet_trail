@@ -3,7 +3,6 @@ package com.pettrail.pettrailbackend.controller;
 import com.pettrail.pettrailbackend.dto.CommentCreateDTO;
 import com.pettrail.pettrailbackend.dto.CommentVO;
 import com.pettrail.pettrailbackend.dto.Result;
-import com.pettrail.pettrailbackend.exception.NotFoundException;
 import com.pettrail.pettrailbackend.service.CommentService;
 import com.pettrail.pettrailbackend.service.PostService;
 import com.pettrail.pettrailbackend.service.UserBehaviorService;

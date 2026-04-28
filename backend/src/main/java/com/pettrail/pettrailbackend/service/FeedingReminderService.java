@@ -1,6 +1,5 @@
 package com.pettrail.pettrailbackend.service;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.pettrail.pettrailbackend.dto.ReminderMessage;
 import com.pettrail.pettrailbackend.entity.FeedingReminder;
@@ -15,8 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Slf4j
@@ -26,8 +23,6 @@ public class FeedingReminderService {
 
     private final FeedingReminderMapper feedingReminderMapper;
     private final ReminderMessageProducer reminderMessageProducer;
-
-    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
     public List<FeedingReminder> getUserReminders(Long userId) {
         return feedingReminderMapper.selectList(

@@ -27,7 +27,6 @@ public class AdminMenuController extends BaseAdminController {
     @GetMapping("/user")
     @Operation(summary = "获取当前用户菜单树")
     public Map<String, Object> getUserMenuTree() {
-        Long adminId = requireLogin();
         return Map.of("success", true, "data", sysMenuService.getMenuTree());
     }
 

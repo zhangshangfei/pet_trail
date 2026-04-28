@@ -5,7 +5,6 @@ import com.pettrail.pettrailbackend.dto.AdminVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.service.AdminService;
 import com.pettrail.pettrailbackend.service.SysMenuService;
-import com.pettrail.pettrailbackend.service.SysRoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +22,6 @@ public class AdminAuthController extends BaseAdminController {
 
     private final AdminService adminService;
     private final SysMenuService sysMenuService;
-    private final SysRoleService sysRoleService;
-
     @PostMapping("/login")
     @Operation(summary = "管理员登录")
     public Result<Map<String, Object>> login(@RequestBody AdminLoginDTO dto) {

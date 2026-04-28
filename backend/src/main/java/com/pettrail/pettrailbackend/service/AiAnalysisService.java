@@ -25,7 +25,6 @@ public class AiAnalysisService {
     private final AiModelService aiModelService;
     private final HealthAnalysisCacheService cacheService;
 
-    private static final long MAX_CALL_DURATION_MS = 25000;
     private final AtomicLong lastFailTime = new AtomicLong(0);
     private static final long CIRCUIT_BREAKER_RESET_MS = 60000;
     private static final int MAX_CONSECUTIVE_FAILURES = 3;

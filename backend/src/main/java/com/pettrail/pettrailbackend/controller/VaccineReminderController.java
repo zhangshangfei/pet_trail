@@ -6,7 +6,6 @@ import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.dto.VaccineReminderDTO;
 import com.pettrail.pettrailbackend.entity.VaccineReminder;
 import com.pettrail.pettrailbackend.service.VaccineReminderService;
-import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;

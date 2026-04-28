@@ -2,14 +2,14 @@
 
 ## 一、服务器信息
 
-| 项目 | 值 |
-|------|-----|
-| 云服务商 | 腾讯云 |
-| 服务器 IP | 124.222.51.71 |
-| 操作系统 | CentOS |
-| Docker | 已安装 |
-| Docker Compose | 已安装 |
-| 域名 | 审批中，暂用 IP 访问 |
+| 项目             | 值             |
+| -------------- | ------------- |
+| 云服务商           | 腾讯云           |
+| 服务器 IP         | 124.222.51.71 |
+| 操作系统           | CentOS        |
+| Docker         | 已安装           |
+| Docker Compose | 已安装           |
+| 域名             | 审批中，暂用 IP 访问  |
 
 ## 二、部署架构
 
@@ -117,26 +117,27 @@ curl http://localhost/health
 
 ### 5.1 当前（HTTP + IP 访问）
 
-| 用途 | 地址 |
-|------|------|
-| 健康检查 | http://124.222.51.71/health |
-| 后端 API | http://124.222.51.71/api/xxx |
-| 直连后端（调试用） | http://124.222.51.71:8080/api/xxx |
-| RabbitMQ 管理后台 | http://124.222.51.71:15672 |
+| 用途            | 地址                                  |
+| ------------- | ----------------------------------- |
+| 健康检查          | <http://124.222.51.71/health>       |
+| 后端 API        | <http://124.222.51.71/api/xxx>      |
+| 直连后端（调试用）     | <http://124.222.51.71:8080/api/xxx> |
+| RabbitMQ 管理后台 | <http://124.222.51.71:15672>        |
 
 ### 5.2 域名审批后（HTTPS + 域名访问）
 
-| 用途 | 地址 |
-|------|------|
-| 健康检查 | https://你的域名/health |
-| 后端 API | https://你的域名/api/xxx |
-| RabbitMQ 管理后台 | http://124.222.51.71:15672（不对外） |
+| 用途            | 地址                                |
+| ------------- | --------------------------------- |
+| 健康检查          | <https://你的域名/health>             |
+| 后端 API        | <https://你的域名/api/xxx>            |
+| RabbitMQ 管理后台 | <http://124.222.51.71:15672（不对外）> |
 
 ## 六、切换 HTTPS 步骤（域名审批后执行）
 
 ### 6.1 申请 SSL 证书
 
 在腾讯云控制台申请免费 SSL 证书：
+
 - 腾讯云 → SSL 证书 → 申请免费证书
 - 填写域名，选择 DNS 验证
 - 验证通过后下载 Nginx 格式证书
@@ -184,6 +185,7 @@ docker-compose restart nginx
 ### 6.5 配置微信小程序服务器域名
 
 微信公众平台 → 开发管理 → 服务器域名：
+
 - request 合法域名：`https://你的域名`
 - uploadFile 合法域名：`https://你的域名`
 
@@ -191,10 +193,10 @@ docker-compose restart nginx
 
 HTTPS 启用后，可以关闭 8080 端口的外网访问：
 
-| 端口 | 协议 | 来源 | 用途 |
-|------|------|------|------|
-| 80 | TCP | 0.0.0.0/0 | HTTP（跳转 HTTPS） |
-| 443 | TCP | 0.0.0.0/0 | HTTPS |
+| 端口       | 协议      | 来源            | 用途                 |
+| -------- | ------- | ------------- | ------------------ |
+| 80       | TCP     | 0.0.0.0/0     | HTTP（跳转 HTTPS）     |
+| 443      | TCP     | 0.0.0.0/0     | HTTPS              |
 | ~~8080~~ | ~~TCP~~ | ~~0.0.0.0/0~~ | ~~关闭，通过 Nginx 代理~~ |
 
 **不要开放**：3306（MySQL）、6379（Redis）、5672（RabbitMQ）
@@ -264,38 +266,38 @@ docker-compose up -d
 
 ## 八、环境变量说明
 
-| 变量名 | 说明 | 默认值 |
-|--------|------|--------|
-| MYSQL_PASSWORD | MySQL root 密码 | root123456 |
-| MYSQL_DATABASE | 数据库名 | pet_trail |
-| REDIS_PASSWORD | Redis 密码 | redis123456 |
-| JWT_SECRET | JWT 签名密钥 | - |
-| WECHAT_MINIAPP_APP_ID | 微信小程序 AppID | - |
-| WECHAT_MINIAPP_APP_SECRET | 微信小程序 AppSecret | - |
-| TENCENT_COS_SECRET_ID | 腾讯云 COS SecretId | - |
-| TENCENT_COS_SECRET_KEY | 腾讯云 COS SecretKey | - |
-| TENCENT_COS_BUCKET_NAME | COS Bucket 名称 | - |
-| TENCENT_COS_REGION | COS 地域 | ap-shanghai |
-| AI_ENABLED | AI 功能开关 | true |
-| AI_API_KEY | OpenRouter API 密钥 | - |
-| AI_GLM_API_KEY | 智谱 GLM API 密钥 | - |
-| RABBITMQ_ENABLED | RabbitMQ 开关 | false |
-| RABBITMQ_USER | RabbitMQ 用户名 | guest |
-| RABBITMQ_PASSWORD | RabbitMQ 密码 | guest |
-| SERVER_PORT | 后端服务端口 | 8080 |
+| 变量名                          | 说明                | 默认值         |
+| ---------------------------- | ----------------- | ----------- |
+| MYSQL\_PASSWORD              | MySQL root 密码     | root123456  |
+| MYSQL\_DATABASE              | 数据库名              | pet\_trail  |
+| REDIS\_PASSWORD              | Redis 密码          | redis123456 |
+| JWT\_SECRET                  | JWT 签名密钥          | -           |
+| WECHAT\_MINIAPP\_APP\_ID     | 微信小程序 AppID       | -           |
+| WECHAT\_MINIAPP\_APP\_SECRET | 微信小程序 AppSecret   | -           |
+| TENCENT\_COS\_SECRET\_ID     | 腾讯云 COS SecretId  | -           |
+| TENCENT\_COS\_SECRET\_KEY    | 腾讯云 COS SecretKey | -           |
+| TENCENT\_COS\_BUCKET\_NAME   | COS Bucket 名称     | -           |
+| TENCENT\_COS\_REGION         | COS 地域            | ap-shanghai |
+| AI\_ENABLED                  | AI 功能开关           | true        |
+| AI\_API\_KEY                 | OpenRouter API 密钥 | -           |
+| AI\_GLM\_API\_KEY            | 智谱 GLM API 密钥     | -           |
+| RABBITMQ\_ENABLED            | RabbitMQ 开关       | false       |
+| RABBITMQ\_USER               | RabbitMQ 用户名      | guest       |
+| RABBITMQ\_PASSWORD           | RabbitMQ 密码       | guest       |
+| SERVER\_PORT                 | 后端服务端口            | 8080        |
 
 ## 九、故障排查
 
-| 问题 | 排查命令 | 常见原因 |
-|------|---------|---------|
-| 后端启动失败 | `docker-compose logs backend` | MySQL/Redis 未就绪、密码错误 |
-| 数据库连不上 | `docker exec -it pet-trail-mysql mysql -u root -p` | 密码不对、容器未启动 |
-| Redis 连不上 | `docker exec -it pet-trail-redis redis-cli -a 密码 ping` | 密码不对 |
-| Nginx 502 | `docker-compose ps` | 后端未启动或未 healthy |
-| 端口访问不了 | `curl localhost:8080/health` | 安全组未放行、防火墙拦截 |
-| 80 端口冲突 | `lsof -i :80` | 宿主机 nginx 未停 |
-| MySQL 初始化失败 | `docker-compose logs mysql` | init.sql 语法错误 |
-| 构建失败 | `docker-compose build backend` | Maven 依赖下载失败 |
+| 问题          | 排查命令                                                   | 常见原因                 |
+| ----------- | ------------------------------------------------------ | -------------------- |
+| 后端启动失败      | `docker-compose logs backend`                          | MySQL/Redis 未就绪、密码错误 |
+| 数据库连不上      | `docker exec -it pet-trail-mysql mysql -u root -p`     | 密码不对、容器未启动           |
+| Redis 连不上   | `docker exec -it pet-trail-redis redis-cli -a 密码 ping` | 密码不对                 |
+| Nginx 502   | `docker-compose ps`                                    | 后端未启动或未 healthy      |
+| 端口访问不了      | `curl localhost:8080/health`                           | 安全组未放行、防火墙拦截         |
+| 80 端口冲突     | `lsof -i :80`                                          | 宿主机 nginx 未停         |
+| MySQL 初始化失败 | `docker-compose logs mysql`                            | init.sql 语法错误        |
+| 构建失败        | `docker-compose build backend`                         | Maven 依赖下载失败         |
 
 ## 十、一键部署脚本
 
@@ -326,6 +328,8 @@ chmod +x /opt/pet_trail/deploy.sh
 ```
 
 后续更新只需执行：
+
 ```bash
 ./deploy.sh
 ```
+
