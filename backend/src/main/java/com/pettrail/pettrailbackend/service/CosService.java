@@ -78,6 +78,7 @@ public class CosService {
         String defaultDomain = String.format("https://%s.tcb.qcloud.la",
                 cosConfig.getBucketName(),
                 cosConfig.getRegion());
+        // TODO 腾讯cos域名
         // String defaultDomain = String.format("https://%s.cos.%s.myqcloud.com",
         //         cosConfig.getBucketName(),
         //         cosConfig.getRegion());
