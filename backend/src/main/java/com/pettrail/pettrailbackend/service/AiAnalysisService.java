@@ -102,7 +102,6 @@ public class AiAnalysisService {
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
-            @SuppressWarnings("unchecked")
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.POST, request, (Class<Map<String, Object>>)(Class<?>)Map.class);
 
             long elapsed = System.currentTimeMillis() - startTime;
@@ -110,10 +109,8 @@ public class AiAnalysisService {
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> bodyResp = response.getBody();
-                @SuppressWarnings("unchecked")
                 List<Map<String, Object>> choices = (List<Map<String, Object>>) bodyResp.get("choices");
                 if (choices != null && !choices.isEmpty()) {
-                    @SuppressWarnings("unchecked")
                     Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
                     if (message != null) {
                         String content = (String) message.get("content");
@@ -160,7 +157,6 @@ public class AiAnalysisService {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void applyModelParameters(Map<String, Object> body, String parametersJson) {
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();

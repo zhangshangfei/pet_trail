@@ -3,10 +3,12 @@ package com.pettrail.pettrailbackend.listener;
 import com.alibaba.fastjson2.JSON;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.event.PostCreateEvent;
+import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.service.ContentAuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +23,8 @@ import java.util.List;
 public class PostCreateEventListener {
 
     private final ContentAuditService contentAuditService;
+    private final PostMapper postMapper;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 处理动态创建事件
@@ -37,7 +41,7 @@ public class PostCreateEventListener {
             boolean auditPassed = contentAuditService.auditText(post.getContent());
             if (!auditPassed) {
                 log.warn("动态内容审核不通过：postId={}", post.getId());
-                // TODO: 更新动态状态为审核不通过
+                rejectPost(post.getId(), "内容审核不通过");
                 return;
             }
 
@@ -50,14 +54,14 @@ public class PostCreateEventListener {
                     if (!imageAuditPassed) {
                         log.warn("动态图片审核不通过：postId={}, imageUrl={}",
                             post.getId(), imageUrl);
-                        // TODO: 更新动态状态为审核不通过
+                        rejectPost(post.getId(), "图片审核不通过");
                         return;
                     }
                 }
             }
 
             // 3. 审核通过，更新状态为正常
-            // postService.updateStatus(post.getId(), 1);
+            approvePost(post.getId());
 
             // 4. 推送给粉丝（后续实现）
             // notifyFansService.notify(post.getUserId(), post.getId());
@@ -67,5 +71,24 @@ public class PostCreateEventListener {
         } catch (Exception e) {
             log.error("处理动态事件失败：postId={}", post.getId(), e);
         }
+    }
+
+    private void rejectPost(Long postId, String reason) {
+        Post update = new Post();
+        update.setId(postId);
+        update.setStatus(2);
+        update.setAuditStatus(2);
+        update.setAuditRemark(reason);
+        postMapper.updateById(update);
+        redisTemplate.delete("post:detail:" + postId);
+    }
+
+    private void approvePost(Long postId) {
+        Post update = new Post();
+        update.setId(postId);
+        update.setStatus(1);
+        update.setAuditStatus(1);
+        postMapper.updateById(update);
+        redisTemplate.delete("post:detail:" + postId);
     }
 }

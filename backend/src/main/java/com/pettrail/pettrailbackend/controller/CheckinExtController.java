@@ -65,7 +65,6 @@ public class CheckinExtController extends BaseController {
             ? Math.round((double) report.getCheckinDays() / report.getTotalDays() * 1000.0) / 10.0
             : 0.0);
 
-        @SuppressWarnings("unchecked")
         List<Map<String, Object>> itemStats = stats.get("itemStats") != null
             ? (List<Map<String, Object>>) stats.get("itemStats")
             : List.of();
