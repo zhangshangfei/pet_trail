@@ -183,31 +183,17 @@ export default {
     async loadData() {
       this.loading = true;
       try {
-        // 并行加载宠物信息和提醒数据
         const [petRes, reminderRes] = await Promise.all([
-          uni.request({
-            url: `http://localhost:8080/api/pets/${this.petId}`,
-            method: 'GET',
-            header: {
-              'Authorization': uni.getStorageSync('token') || ''
-            }
-          }),
-          uni.request({
-            url: `http://localhost:8080/api/pets/${this.petId}/vaccine-reminders`,
-            method: 'GET',
-            header: {
-              'Authorization': uni.getStorageSync('token') || ''
-            }
-          })
+          uni.$request.get(`/api/pets/${this.petId}`),
+          uni.$request.get(`/api/pets/${this.petId}/vaccine-reminders`)
         ]);
 
-        // 一次性更新所有数据，避免多次渲染
-        if (petRes.data.success) {
-          this.pet = petRes.data.data;
+        if (petRes.success) {
+          this.pet = petRes.data;
         }
         
-        if (reminderRes.data.success) {
-          const data = reminderRes.data.data;
+        if (reminderRes.success) {
+          const data = reminderRes.data;
           this.upcomingReminders = data.filter(r => r.status === 0);
           this.completedReminders = data.filter(r => r.status === 1);
           this.calculateDays();
@@ -222,15 +208,9 @@ export default {
     // 加载宠物信息（保留但不再单独使用）
     async loadPetInfo() {
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.petId}`,
-          method: 'GET',
-          header: {
-            'Authorization': uni.getStorageSync('token') || ''
-          }
-        });
-        if (res.data.success) {
-          this.pet = res.data.data;
+        const res = await uni.$request.get(`/api/pets/${this.petId}`);
+        if (res.success) {
+          this.pet = res.data;
         }
       } catch (error) {
         console.error('加载宠物信息失败:', error);
@@ -240,16 +220,10 @@ export default {
     // 加载提醒（保留但不再单独使用）
     async loadReminders() {
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.petId}/vaccine-reminders`,
-          method: 'GET',
-          header: {
-            'Authorization': uni.getStorageSync('token') || ''
-          }
-        });
-        if (res.data.success) {
-          this.upcomingReminders = res.data.data.filter(r => r.status === 0);
-          this.completedReminders = res.data.data.filter(r => r.status === 1);
+        const res = await uni.$request.get(`/api/pets/${this.petId}/vaccine-reminders`);
+        if (res.success) {
+          this.upcomingReminders = res.data.filter(r => r.status === 0);
+          this.completedReminders = res.data.filter(r => r.status === 1);
           this.calculateDays();
         }
       } catch (error) {
@@ -330,21 +304,14 @@ export default {
       }
 
       try {
-        const url = this.isEditing
-          ? `http://localhost:8080/api/pets/${this.petId}/vaccine-reminders/${this.currentReminder.id}`
-          : `http://localhost:8080/api/pets/${this.petId}/vaccine-reminders`;
+        let res;
+        if (this.isEditing) {
+          res = await uni.$request.put(`/api/pets/${this.petId}/vaccine-reminders/${this.currentReminder.id}`, this.form);
+        } else {
+          res = await uni.$request.post(`/api/pets/${this.petId}/vaccine-reminders`, this.form);
+        }
 
-        const res = await uni.request({
-          url: url,
-          method: this.isEditing ? 'PUT' : 'POST',
-          header: {
-            'Authorization': uni.getStorageSync('token') || '',
-            'Content-Type': 'application/json'
-          },
-          data: this.form
-        });
-
-        if (res.data.success) {
+        if (res.success) {
           uni.showToast({
             title: this.isEditing ? '修改成功' : '添加成功',
             icon: 'success'
@@ -353,7 +320,7 @@ export default {
           this.loadReminders();
         } else {
           uni.showToast({
-            title: res.data.message || '操作失败',
+            title: res.message || '操作失败',
             icon: 'none'
           });
         }
@@ -369,19 +336,13 @@ export default {
     // 更新状态
     async updateStatus() {
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.petId}/vaccine-reminders/${this.currentReminder.id}/status`,
-          method: 'PUT',
-          header: {
-            'Authorization': uni.getStorageSync('token') || '',
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          data: {
-            status: this.tempStatus
-          }
+        const res = await uni.$request.put(`/api/pets/${this.petId}/vaccine-reminders/${this.currentReminder.id}/status`, {
+          status: this.tempStatus
+        }, {
+          'Content-Type': 'application/x-www-form-urlencoded'
         });
 
-        if (res.data.success) {
+        if (res.success) {
           uni.showToast({
             title: '状态修改成功',
             icon: 'success'
@@ -390,7 +351,7 @@ export default {
           this.loadReminders();
         } else {
           uni.showToast({
-            title: res.data.message || '修改失败',
+            title: res.message || '修改失败',
             icon: 'none'
           });
         }

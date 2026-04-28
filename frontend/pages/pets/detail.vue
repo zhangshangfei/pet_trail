@@ -140,20 +140,14 @@ export default {
     // 加载宠物详情
     async loadPetDetail(petId) {
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${petId}`,
-          method: 'GET',
-          header: {
-            'Authorization': uni.getStorageSync('token') || ''
-          }
-        });
-        if (res.data.success) {
-          this.pet = res.data.data;
+        const res = await uni.$request.get(`/api/pets/${petId}`);
+        if (res.success) {
+          this.pet = res.data;
           await this.loadRecentRecords();
           await this.loadUpcomingReminders();
         } else {
           uni.showToast({
-            title: res.data.message || '加载失败',
+            title: res.message || '加载失败',
             icon: 'none'
           });
         }
@@ -169,15 +163,9 @@ export default {
     // 加载最近体重记录
     async loadRecentRecords() {
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.pet.id}/weight-records`,
-          method: 'GET',
-          header: {
-            'Authorization': uni.getStorageSync('token') || ''
-          }
-        });
-        if (res.data.success) {
-          this.recentWeightRecords = res.data.data.slice(0, 3);
+        const res = await uni.$request.get(`/api/pets/${this.pet.id}/weight-records`);
+        if (res.success) {
+          this.recentWeightRecords = res.data.slice(0, 3);
           this.calculateChanges();
         }
       } catch (error) {
@@ -189,31 +177,19 @@ export default {
     async loadUpcomingReminders() {
       try {
         const [vaccineRes, parasiteRes] = await Promise.all([
-          uni.request({
-            url: `http://localhost:8080/api/pets/${this.pet.id}/vaccine-reminders/upcoming`,
-            method: 'GET',
-            header: {
-              'Authorization': uni.getStorageSync('token') || ''
-            }
-          }),
-          uni.request({
-            url: `http://localhost:8080/api/pets/${this.pet.id}/parasite-reminders/upcoming`,
-            method: 'GET',
-            header: {
-              'Authorization': uni.getStorageSync('token') || ''
-            }
-          })
+          uni.$request.get(`/api/pets/${this.pet.id}/vaccine-reminders/upcoming`),
+          uni.$request.get(`/api/pets/${this.pet.id}/parasite-reminders/upcoming`)
         ]);
 
-        if (vaccineRes.data.success) {
-          this.upcomingReminders = vaccineRes.data.data.map(r => ({
+        if (vaccineRes.success) {
+          this.upcomingReminders = vaccineRes.data.map(r => ({
             ...r,
             type: 'vaccine'
           }));
         }
 
-        if (parasiteRes.data.success) {
-          this.upcomingReminders = [...this.upcomingReminders, ...parasiteRes.data.data.map(r => ({
+        if (parasiteRes.success) {
+          this.upcomingReminders = [...this.upcomingReminders, ...parasiteRes.data.map(r => ({
             ...r,
             type: 'parasite'
           }))];
@@ -302,15 +278,9 @@ export default {
     // 删除宠物
     async deletePet() {
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.pet.id}`,
-          method: 'DELETE',
-          header: {
-            'Authorization': uni.getStorageSync('token') || ''
-          }
-        });
+        const res = await uni.$request.delete(`/api/pets/${this.pet.id}`);
 
-        if (res.data.success) {
+        if (res.success) {
           uni.showToast({
             title: '删除成功',
             icon: 'success'
@@ -321,7 +291,7 @@ export default {
           }, 1000);
         } else {
           uni.showToast({
-            title: res.data.message || '删除失败',
+            title: res.message || '删除失败',
             icon: 'none'
           });
         }

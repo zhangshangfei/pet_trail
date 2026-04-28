@@ -3,14 +3,15 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import config from './config/env'
 
-// 初始化微信云开发
 // #ifdef MP-WEIXIN
-if (wx.cloud) {
+if (BASE_URL === 'cloud' && wx.cloud) {
   wx.cloud.init({
     env: config.VITE_CLOUD_CONFIG.env,
     traceUser: true
   })
   console.log('微信云开发初始化完成，环境ID:', config.VITE_CLOUD_CONFIG.env)
+} else {
+  console.log('使用本地服务模式，API地址:', BASE_URL)
 }
 // #endif
 
