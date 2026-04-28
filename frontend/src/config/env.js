@@ -9,21 +9,17 @@
 // 获取 API 基础地址
 const getApiBaseUrl = () => {
   // #ifdef MP-WEIXIN
-  // 微信小程序环境 - 使用云托管
-  return 'cloud' // 标记使用云托管
+  return 'http://124.222.51.71:8080'
   // #endif
 
   // #ifdef H5
-  // H5 环境
   if (process.env.NODE_ENV === 'production') {
     return 'https://api.pettrail.com'
   }
-  // 开发环境
-  return 'http://localhost:8080'
+  return 'http://124.222.51.71:8080'
   // #endif
 
-  // 默认返回
-  return 'http://localhost:8080'
+  return 'http://124.222.51.71:8080'
 }
 
 // 云托管配置
@@ -43,18 +39,7 @@ const getCloudConfig = () => {
  */
 const getUploadHttpBase = () => {
   const api = getApiBaseUrl()
-  if (api !== 'cloud') {
-    return api.replace(/\/$/, '')
-  }
-  let fromEnv = ''
-  try {
-    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_UPLOAD_HTTP_BASE) {
-      fromEnv = String(import.meta.env.VITE_UPLOAD_HTTP_BASE).trim()
-    }
-  } catch (e) {
-    fromEnv = ''
-  }
-  return (fromEnv || 'https://springboot-4fyd-243081-4-1419682950.sh.run.tcloudbase.com').replace(/\/$/, '')
+  return api.replace(/\/$/, '')
 }
 
 export default {

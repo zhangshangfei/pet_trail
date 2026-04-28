@@ -113,15 +113,9 @@ export default {
     // 加载宠物信息
     async loadPetInfo() {
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.petId}`,
-          method: 'GET',
-          header: {
-            'Authorization': uni.getStorageSync('token') || ''
-          }
-        });
-        if (res.data.success) {
-          this.pet = res.data.data;
+        const res = await uni.$request.get(`/api/pets/${this.petId}`);
+        if (res.success) {
+          this.pet = res.data;
           this.currentWeight = this.pet.weight;
         }
       } catch (error) {
@@ -132,15 +126,9 @@ export default {
     // 加载记录
     async loadRecords() {
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.petId}/weight-records`,
-          method: 'GET',
-          header: {
-            'Authorization': uni.getStorageSync('token') || ''
-          }
-        });
-        if (res.data.success) {
-          this.records = res.data.data;
+        const res = await uni.$request.get(`/api/pets/${this.petId}/weight-records`);
+        if (res.success) {
+          this.records = res.data;
           this.calculateChanges();
         }
       } catch (error) {
@@ -196,20 +184,14 @@ export default {
       }
 
       try {
-        const res = await uni.request({
-          url: `http://localhost:8080/api/pets/${this.petId}/weight-records`,
-          method: 'POST',
-          header: {
-            'Authorization': uni.getStorageSync('token') || '',
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          data: {
-            weight: this.form.weight,
-            recordDate: this.form.recordDate
-          }
+        const res = await uni.$request.post(`/api/pets/${this.petId}/weight-records`, {
+          weight: this.form.weight,
+          recordDate: this.form.recordDate
+        }, {
+          'Content-Type': 'application/x-www-form-urlencoded'
         });
 
-        if (res.data.success) {
+        if (res.success) {
           uni.showToast({
             title: '记录成功',
             icon: 'success'
@@ -219,7 +201,7 @@ export default {
           this.loadPetInfo(); // 刷新宠物信息
         } else {
           uni.showToast({
-            title: res.data.message || '记录失败',
+            title: res.message || '记录失败',
             icon: 'none'
           });
         }

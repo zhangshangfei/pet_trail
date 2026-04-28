@@ -147,15 +147,9 @@ export default {
     // 加载宠物列表
     async loadPets() {
       try {
-        const res = await uni.request({
-          url: 'http://localhost:8080/api/pets',
-          method: 'GET',
-          header: {
-            'Authorization': uni.getStorageSync('token') || ''
-          }
-        });
-        if (res.data.success) {
-          this.pets = res.data.data;
+        const res = await uni.$request.get('/api/pets');
+        if (res.success) {
+          this.pets = res.data;
         }
       } catch (error) {
         console.error('加载宠物列表失败:', error);
@@ -166,15 +160,9 @@ export default {
     async loadWeightRecords() {
       try {
         for (const pet of this.pets) {
-          const res = await uni.request({
-            url: `http://localhost:8080/api/pets/${pet.id}/weight-records`,
-            method: 'GET',
-            header: {
-              'Authorization': uni.getStorageSync('token') || ''
-            }
-          });
-          if (res.data.success) {
-            this.$set(this.petWeightRecords, pet.id, res.data.data);
+          const res = await uni.$request.get(`/api/pets/${pet.id}/weight-records`);
+          if (res.success) {
+            this.$set(this.petWeightRecords, pet.id, res.data);
           }
         }
       } catch (error) {
@@ -186,15 +174,9 @@ export default {
     async loadVaccineReminders() {
       try {
         for (const pet of this.pets) {
-          const res = await uni.request({
-            url: `http://localhost:8080/api/pets/${pet.id}/vaccine-reminders`,
-            method: 'GET',
-            header: {
-              'Authorization': uni.getStorageSync('token') || ''
-            }
-          });
-          if (res.data.success) {
-            this.$set(this.vaccineReminders, pet.id, res.data.data);
+          const res = await uni.$request.get(`/api/pets/${pet.id}/vaccine-reminders`);
+          if (res.success) {
+            this.$set(this.vaccineReminders, pet.id, res.data);
           }
         }
       } catch (error) {
