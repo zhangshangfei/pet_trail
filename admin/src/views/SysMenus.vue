@@ -21,7 +21,7 @@
         @node-drop="onNodeDrop"
       >
         <template #default="{ node, data }">
-          <div class="menu-tree-node" :class="{ 'is-group': !data.path, 'is-page': data.path }">
+          <div class="menu-tree-node" :class="{ 'is-group': !data.path, 'is-page': data.path, 'is-disabled': data.status !== 1 }">
             <div class="node-main">
               <div class="node-icon" :class="{ 'is-group': !data.path }">
                 <el-icon v-if="data.icon" :size="16">
@@ -301,6 +301,23 @@ onMounted(() => loadData())
 .menu-tree-node.is-group:hover {
   background: #f0f2f5;
   border-color: #dcdfe6;
+}
+
+.menu-tree-node.is-disabled {
+  opacity: 0.55;
+}
+
+.menu-tree-node.is-disabled .node-name {
+  text-decoration: line-through;
+  color: #909399;
+}
+
+.menu-tree-node.is-disabled .node-icon {
+  background: #c0c4cc;
+}
+
+.menu-tree-node.is-disabled .node-icon.is-group {
+  background: #c0c4cc;
 }
 
 .node-main {

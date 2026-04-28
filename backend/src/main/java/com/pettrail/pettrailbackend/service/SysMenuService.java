@@ -28,8 +28,15 @@ public class SysMenuService {
         );
     }
 
+    public List<SysMenu> getAllMenusForAdmin() {
+        return sysMenuMapper.selectList(
+                new LambdaQueryWrapper<SysMenu>()
+                        .orderByAsc(SysMenu::getSortOrder)
+        );
+    }
+
     public List<Map<String, Object>> getMenuTree() {
-        List<SysMenu> all = getAllMenus();
+        List<SysMenu> all = getAllMenusForAdmin();
         return buildTree(all, 0L);
     }
 
@@ -113,6 +120,7 @@ public class SysMenuService {
 
                 Map<String, Object> node = new LinkedHashMap<>();
                 node.put("id", menu.getId());
+                node.put("parentId", menu.getParentId() != null ? menu.getParentId() : 0);
                 node.put("name", menu.getName() != null ? menu.getName() : "");
                 node.put("path", menu.getPath() != null ? menu.getPath() : "");
                 node.put("icon", menu.getIcon() != null ? menu.getIcon() : "");
@@ -120,6 +128,7 @@ public class SysMenuService {
                 node.put("buttons", btnList);
                 node.put("activeButtons", activeButtons);
                 node.put("sortOrder", menu.getSortOrder() != null ? menu.getSortOrder() : 0);
+                node.put("status", menu.getStatus() != null ? menu.getStatus() : 1);
                 node.put("children", buildTreeWithButtons(menus, menu.getId(), menuButtonMap));
                 tree.add(node);
             }
@@ -128,6 +137,9 @@ public class SysMenuService {
     }
 
     public SysMenu createMenu(SysMenu menu) {
+        if (menu.getStatus() == null) menu.setStatus(1);
+        if (menu.getParentId() == null) menu.setParentId(0L);
+        if (menu.getSortOrder() == null) menu.setSortOrder(0);
         menu.setCreatedAt(java.time.LocalDateTime.now());
         menu.setUpdatedAt(java.time.LocalDateTime.now());
         sysMenuMapper.insert(menu);
