@@ -225,9 +225,9 @@ export default {
     },
     calculateChanges() {
       if (this.records.length < 2) return;
-      for (let i = 1; i < this.records.length; i++) {
-        const prev = this.records[i - 1];
+      for (let i = 0; i < this.records.length - 1; i++) {
         const curr = this.records[i];
+        const prev = this.records[i + 1];
         if (prev.weight && curr.weight) {
           const change = ((curr.weight - prev.weight) / prev.weight) * 100;
           this.$set(this.records[i], 'change', change.toFixed(1));
