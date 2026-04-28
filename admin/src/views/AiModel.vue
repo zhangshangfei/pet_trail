@@ -4,7 +4,7 @@
       <h2>AI模型管理</h2>
       <div class="header-actions">
         <el-button @click="loadDashboard" :loading="loading">刷新</el-button>
-        <el-button type="primary" @click="openAdd" v-if="isSuperAdmin">新增模型</el-button>
+        <el-button type="primary" @click="openAdd" v-if="canManage">新增模型</el-button>
       </div>
     </div>
 
@@ -44,8 +44,10 @@
       <div class="section-header-inline">
         <h3>分析缓存状态</h3>
         <div style="display: flex; gap: 8px;">
-          <el-button size="small" @click="handleFlushStats" v-if="isSuperAdmin">持久化统计</el-button>
-          <el-button size="small" type="danger" @click="handleClearCache" v-if="isSuperAdmin">清除全部缓存</el-button>
+          <el-button size="small" type="primary" @click="handleRefreshCache" v-if="canManage">刷新模型缓存</el-button>
+          <el-button size="small" @click="showClearPetCache = true" v-if="canManage">按宠物清除</el-button>
+          <el-button size="small" @click="handleFlushStats" v-if="canManage">持久化统计</el-button>
+          <el-button size="small" type="danger" @click="handleClearCache" v-if="canManage">清除全部缓存</el-button>
         </div>
       </div>
       <el-row :gutter="16">
@@ -114,7 +116,7 @@
           <el-switch
             :model-value="row.status === 1"
             @change="(val) => handleToggleStatus(row, val)"
-            :disabled="!isSuperAdmin || (row.isActive && val === false)"
+            :disabled="!canManage || (row.isActive && val === false)"
             active-text="启用"
             inactive-text="禁用"
           />
@@ -139,11 +141,11 @@
       </el-table-column>
       <el-table-column label="操作" width="280" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" type="primary" @click="openEdit(row)" v-if="isSuperAdmin">编辑</el-button>
+          <el-button size="small" type="primary" @click="openEdit(row)" v-if="canManage">编辑</el-button>
           <el-button size="small" @click="openParams(row)">参数</el-button>
           <el-button size="small" @click="openStatsDetail(row)">统计</el-button>
-          <el-button size="small" type="success" @click="handleSwitch(row)" :disabled="row.isActive" v-if="isSuperAdmin">切换</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(row)" :disabled="row.isActive" v-if="isSuperAdmin">删除</el-button>
+          <el-button size="small" type="success" @click="handleSwitch(row)" :disabled="row.isActive" v-if="canManage">切换</el-button>
+          <el-button size="small" type="danger" @click="handleDelete(row)" :disabled="row.isActive" v-if="canManage">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -325,15 +327,29 @@
         </el-table>
       </div>
     </el-dialog>
+
+    <el-dialog v-model="showClearPetCache" title="按宠物清除缓存" width="400px">
+      <el-form label-width="80px">
+        <el-form-item label="宠物ID">
+          <el-input-number v-model="clearPetId" :min="1" :controls="false" style="width: 100%" placeholder="输入宠物ID" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showClearPetCache = false">取消</el-button>
+        <el-button type="primary" @click="handleClearPetCache">确认清除</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useAdminStore } from '@/store/admin'
 import {
-  getAiModelList, getAiModelDashboard, createAiModel, updateAiModel,
+  getAiModelList, getAiModelDetail, getAiModelDashboard, createAiModel, updateAiModel,
   setAiModelStatus, switchAiModel, deleteAiModel, getAiModelSwitchLogs,
   getAiModelParameters, updateAiModelParameters, getAiModelCacheStats, clearAiModelAllCache,
+  clearAiModelPetCache, refreshAiModelCache,
   getAiModelStats, getAiModelDailyStats, flushAiModelStats
 } from '../api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -353,6 +369,8 @@ const showStatsDetail = ref(false)
 const statsDetail = ref(null)
 const dailyStats = ref([])
 const currentStatsModelId = ref(null)
+const showClearPetCache = ref(false)
+const clearPetId = ref(null)
 
 const addForm = ref({
   modelName: '', displayName: '', provider: 'openrouter', baseUrl: '',
@@ -363,8 +381,8 @@ const editForm = ref({
   apiKey: '', modelVersion: '', icon: '', description: '', sortOrder: 0
 })
 
-const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}')
-const isSuperAdmin = computed(() => adminInfo.role === 'SUPER_ADMIN')
+const adminStore = useAdminStore()
+const canManage = computed(() => adminStore.hasButton('ai-model:manage'))
 
 const successRate = computed(() => {
   if (!dashboard.value || !dashboard.value.totalCalls) return 0
@@ -426,14 +444,21 @@ const handleAdd = async () => {
   } catch (e) {}
 }
 
-const openEdit = (row) => {
-  editForm.value = {
-    id: row.id, modelName: row.modelName, displayName: row.displayName,
-    provider: row.provider, baseUrl: row.baseUrl, apiKey: '',
-    modelVersion: row.modelVersion || '', icon: row.icon || '',
-    description: row.description || '', sortOrder: row.sortOrder || 0
+const openEdit = async (row) => {
+  try {
+    const res = await getAiModelDetail(row.id)
+    const detail = res.data || row
+    editForm.value = {
+      id: detail.id, modelName: detail.modelName, displayName: detail.displayName,
+      provider: detail.provider, baseUrl: detail.baseUrl, apiKey: '',
+      modelVersion: detail.modelVersion || '', icon: detail.icon || '',
+      description: detail.description || '', sortOrder: detail.sortOrder || 0
+    }
+    showEdit.value = true
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('获取模型详情失败')
   }
-  showEdit.value = true
 }
 
 const handleEdit = async () => {
@@ -525,6 +550,39 @@ const handleClearCache = async () => {
     if (e !== 'cancel') {
       ElMessage.error('清除缓存失败')
     }
+  }
+}
+
+const handleRefreshCache = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定刷新模型缓存？将重新加载模型配置信息。',
+      '确认刷新缓存',
+      { type: 'info' }
+    )
+    await refreshAiModelCache()
+    ElMessage.success('模型缓存已刷新')
+    loadDashboard()
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('刷新缓存失败')
+    }
+  }
+}
+
+const handleClearPetCache = async () => {
+  if (!clearPetId.value) {
+    ElMessage.warning('请输入宠物ID')
+    return
+  }
+  try {
+    await clearAiModelPetCache(clearPetId.value)
+    ElMessage.success(`宠物${clearPetId.value}的缓存已清除`)
+    showClearPetCache.value = false
+    clearPetId.value = null
+    loadDashboard()
+  } catch (e) {
+    ElMessage.error('清除缓存失败')
   }
 }
 

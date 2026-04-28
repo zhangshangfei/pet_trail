@@ -2,6 +2,7 @@ import request from '../utils/request'
 
 export const login = (data) => request.post('/api/admin/auth/login', data)
 export const getProfile = () => request.get('/api/admin/auth/profile')
+export const getAllPermissions = () => request.get('/api/admin/auth/permissions')
 export const changePassword = (data) => request.put('/api/admin/admins/password', data)
 
 export const getDashboardStats = () => request.get('/api/admin/dashboard/stats')
@@ -16,6 +17,7 @@ export const updateUserStatus = (id, status) => request.put(`/api/admin/users/${
 
 export const getPetList = (params) => request.get('/api/admin/pets', { params })
 export const getPetDetail = (id) => request.get(`/api/admin/pets/${id}`)
+export const updatePet = (id, data) => request.put(`/api/admin/pets/${id}`, data)
 export const deletePet = (id) => request.delete(`/api/admin/pets/${id}`)
 
 export const getPostList = (params) => request.get('/api/admin/posts', { params })
@@ -58,6 +60,9 @@ export const exportUsers = (params) => request.get('/api/admin/export/users', { 
 export const exportPosts = (params) => request.get('/api/admin/export/posts', { params, responseType: 'blob' })
 export const exportReports = (params) => request.get('/api/admin/export/reports', { params, responseType: 'blob' })
 export const exportLogs = (params) => request.get('/api/admin/export/logs', { params, responseType: 'blob' })
+export const exportPets = (params) => request.get('/api/admin/export/pets', { params, responseType: 'blob' })
+export const exportChallenges = (params) => request.get('/api/admin/export/challenges', { params, responseType: 'blob' })
+export const exportProducts = (params) => request.get('/api/admin/export/products', { params, responseType: 'blob' })
 
 export const getConfigList = (params) => request.get('/api/admin/config', { params })
 export const getConfigCategories = () => request.get('/api/admin/config/categories')
@@ -114,3 +119,27 @@ export const setClinicPartner = (id, isPartner) => request.put(`/api/admin/vet-c
 export const getClinicStats = () => request.get('/api/admin/vet-clinics/stats')
 export const getAppointmentList = (params) => request.get('/api/admin/vet-clinics/appointments', { params })
 export const updateAppointmentStatus = (id, status) => request.put(`/api/admin/vet-clinics/appointments/${id}/status`, { status })
+
+export const getMerchantList = (params) => request.get('/api/admin/merchants', { params })
+export const createMerchant = (data) => request.post('/api/admin/merchants', data)
+export const updateMerchant = (id, data) => request.put(`/api/admin/merchants/${id}`, data)
+export const updateMerchantStatus = (id, status) => request.put(`/api/admin/merchants/${id}/status`, { status })
+export const deleteMerchant = (id) => request.delete(`/api/admin/merchants/${id}`)
+
+export const getMenuTree = () => request.get('/api/admin/menus/tree')
+export const getUserMenus = () => request.get('/api/admin/menus/user')
+export const createMenu = (data) => request.post('/api/admin/menus', data)
+export const updateMenu = (id, data) => request.put(`/api/admin/menus/${id}`, data)
+export const deleteMenu = (id) => request.delete(`/api/admin/menus/${id}`)
+export const updateMenuStatus = (id, status) => request.put(`/api/admin/menus/${id}/status`, { status })
+export const batchSortMenus = (data) => request.put('/api/admin/menus/batch-sort', data)
+
+export const getRoleList = (params) => request.get('/api/admin/roles', { params })
+export const getAllRoles = () => request.get('/api/admin/roles/all')
+export const getRoleDetail = (id) => request.get(`/api/admin/roles/${id}`)
+export const createRole = (data) => request.post('/api/admin/roles', data)
+export const updateRole = (id, data) => request.put(`/api/admin/roles/${id}`, data)
+export const deleteRole = (id) => request.delete(`/api/admin/roles/${id}`)
+export const updateRoleStatus = (id, status) => request.put(`/api/admin/roles/${id}/status`, { status })
+export const getRoleMenus = (id) => request.get(`/api/admin/roles/${id}/menus`)
+export const saveRoleMenus = (id, data) => request.put(`/api/admin/roles/${id}/menus`, data)

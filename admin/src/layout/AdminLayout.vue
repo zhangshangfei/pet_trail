@@ -1,6 +1,6 @@
 <template>
   <el-container class="admin-layout">
-    <el-aside :width="isCollapse ? '64px' : '220px'" class="admin-aside">
+    <el-aside :width="isCollapse ? '64px' : '230px'" class="admin-aside">
       <div class="logo">
         <span v-if="!isCollapse" class="logo-text">🐾 宠迹管理</span>
         <span v-else class="logo-icon">🐾</span>
@@ -13,70 +13,22 @@
         text-color="#bfcbd9"
         active-text-color="#ff6a3d"
       >
-        <el-menu-item index="/dashboard">
-          <el-icon><DataAnalysis /></el-icon>
-          <template #title>仪表盘</template>
-        </el-menu-item>
-        <el-menu-item index="/users">
-          <el-icon><User /></el-icon>
-          <template #title>用户管理</template>
-        </el-menu-item>
-        <el-menu-item index="/pets">
-          <el-icon><Guide /></el-icon>
-          <template #title>宠物管理</template>
-        </el-menu-item>
-        <el-menu-item index="/posts">
-          <el-icon><Document /></el-icon>
-          <template #title>动态管理</template>
-        </el-menu-item>
-        <el-menu-item index="/comments">
-          <el-icon><ChatDotRound /></el-icon>
-          <template #title>评论管理</template>
-        </el-menu-item>
-        <el-menu-item index="/reports">
-          <el-icon><Warning /></el-icon>
-          <template #title>举报管理</template>
-        </el-menu-item>
-        <el-menu-item index="/notifications">
-          <el-icon><Bell /></el-icon>
-          <template #title>通知管理</template>
-        </el-menu-item>
-        <el-menu-item index="/feedbacks">
-          <el-icon><ChatLineSquare /></el-icon>
-          <template #title>反馈管理</template>
-        </el-menu-item>
-        <el-menu-item v-if="isSuperAdmin" index="/admins">
-          <el-icon><UserFilled /></el-icon>
-          <template #title>管理员管理</template>
-        </el-menu-item>
-        <el-menu-item index="/logs">
-          <el-icon><List /></el-icon>
-          <template #title>操作日志</template>
-        </el-menu-item>
-        <el-menu-item v-if="isSuperAdmin" index="/settings">
-          <el-icon><Setting /></el-icon>
-          <template #title>系统设置</template>
-        </el-menu-item>
-        <el-menu-item v-if="isSuperAdmin" index="/config">
-          <el-icon><Tools /></el-icon>
-          <template #title>系统配置管理</template>
-        </el-menu-item>
-        <el-menu-item index="/ai-models">
-          <el-icon><Cpu /></el-icon>
-          <template #title>AI模型管理</template>
-        </el-menu-item>
-        <el-menu-item index="/challenges">
-          <el-icon><Trophy /></el-icon>
-          <template #title>挑战赛配置</template>
-        </el-menu-item>
-        <el-menu-item index="/products">
-          <el-icon><ShoppingCart /></el-icon>
-          <template #title>商城管理</template>
-        </el-menu-item>
-        <el-menu-item index="/vet-clinics">
-          <el-icon><FirstAidKit /></el-icon>
-          <template #title>医院信息管理</template>
-        </el-menu-item>
+        <template v-for="menu in menuList" :key="menu.id">
+          <el-menu-item v-if="!menu.children || menu.children.length === 0" :index="menu.path">
+            <el-icon><component :is="menu.icon" /></el-icon>
+            <template #title>{{ menu.name }}</template>
+          </el-menu-item>
+          <el-sub-menu v-else :index="'menu-' + menu.id">
+            <template #title>
+              <el-icon><component :is="menu.icon" /></el-icon>
+              <span>{{ menu.name }}</span>
+            </template>
+            <el-menu-item v-for="child in menu.children" :key="child.id" :index="child.path">
+              <el-icon><component :is="child.icon" /></el-icon>
+              <template #title>{{ child.name }}</template>
+            </el-menu-item>
+          </el-sub-menu>
+        </template>
       </el-menu>
     </el-aside>
     <el-container>
@@ -96,7 +48,7 @@
             <span class="admin-info">
               <el-avatar :size="32" icon="UserFilled" />
               <span class="admin-name">{{ adminName }}</span>
-              <el-tag v-if="isSuperAdmin" type="danger" size="small" style="margin-left: 6px;">超管</el-tag>
+              <el-tag :type="roleTagType" size="small" style="margin-left: 6px;">{{ roleLabel }}</el-tag>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
@@ -136,10 +88,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProfile, changePassword } from '../api/admin'
+import { useAdminStore } from '@/store/admin'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
+const adminStore = useAdminStore()
 const isCollapse = ref(false)
 const adminName = ref('管理员')
 const adminRole = ref('')
@@ -147,12 +101,20 @@ const showChangePwd = ref(false)
 const pwdForm = ref({ oldPassword: '', newPassword: '', confirmPassword: '' })
 
 const activeMenu = computed(() => route.path)
-const isSuperAdmin = computed(() => adminRole.value === 'SUPER_ADMIN')
+const menuList = computed(() => adminStore.menus || [])
+
+const roleLabel = computed(() => {
+  return adminStore.roleName || '管理员'
+})
+
+const roleTagType = computed(() => {
+  const map = { SUPER_ADMIN: 'danger', ADMIN: '', MERCHANT_ADMIN: 'warning', MERCHANT_STAFF: 'info' }
+  return map[adminStore.roleCode] || ''
+})
 
 const handleCommand = (command) => {
   if (command === 'logout') {
-    localStorage.removeItem('admin_token')
-    localStorage.removeItem('admin_info')
+    adminStore.logout()
     router.push('/login')
   } else if (command === 'changePassword') {
     pwdForm.value = { oldPassword: '', newPassword: '', confirmPassword: '' }
@@ -177,8 +139,7 @@ const submitChangePwd = async () => {
     await changePassword(pwdForm.value)
     ElMessage.success('密码修改成功，请重新登录')
     showChangePwd.value = false
-    localStorage.removeItem('admin_token')
-    localStorage.removeItem('admin_info')
+    adminStore.logout()
     router.push('/login')
   } catch (e) {}
 }
@@ -195,9 +156,15 @@ onMounted(async () => {
   try {
     const res = await getProfile()
     if (res.data) {
-      adminName.value = res.data.nickname || res.data.username || '管理员'
-      adminRole.value = res.data.role || ''
-      localStorage.setItem('admin_info', JSON.stringify(res.data))
+      const admin = res.data.admin || res.data
+      adminName.value = admin.nickname || admin.username || '管理员'
+      adminRole.value = admin.role || ''
+      adminStore.adminInfo = admin
+      localStorage.setItem('admin_info', JSON.stringify(admin))
+      if (res.data.menus) {
+        adminStore.menus = res.data.menus
+        localStorage.setItem('admin_menus', JSON.stringify(res.data.menus))
+      }
     }
   } catch (e) {}
 })
@@ -211,6 +178,16 @@ onMounted(async () => {
   background: #1d1e1f;
   transition: width 0.3s;
   overflow: hidden;
+}
+.admin-aside :deep(.el-sub-menu__title:hover) {
+  background-color: #2d2e2f !important;
+}
+.admin-aside :deep(.el-sub-menu .el-menu-item) {
+  background-color: #1a1a1a !important;
+  padding-left: 52px !important;
+}
+.admin-aside :deep(.el-sub-menu .el-menu-item:hover) {
+  background-color: #2d2e2f !important;
 }
 .logo {
   height: 60px;

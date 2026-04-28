@@ -20,5 +20,6 @@ public class VetAppointmentVO {
     private LocalDateTime updatedAt;
     private String userName;
     private String clinicName;
+    private String clinicPhone;
     private String petName;
 }

@@ -88,6 +88,10 @@
               <view class="feature-icon-wrap feature-icon-green"><text class="feature-emoji">🏥</text></view>
               <text class="feature-text">宠物医院</text>
             </view>
+            <view class="feature-item" @tap="goToMyAppointments">
+              <view class="feature-icon-wrap feature-icon-blue"><text class="feature-emoji">📋</text></view>
+              <text class="feature-text">我的预约</text>
+            </view>
             <view class="feature-item" @tap="goToMembership">
               <view class="feature-icon-wrap feature-icon-blue"><text class="feature-emoji">👑</text></view>
               <text class="feature-text">宠迹Pro</text>
@@ -324,6 +328,9 @@ export default {
     },
     goToVet() {
       uni.navigateTo({ url: '/pages/vet/index' });
+    },
+    goToMyAppointments() {
+      uni.navigateTo({ url: '/pages/vet/appointments' });
     },
     goToMembership() {
       uni.navigateTo({ url: '/pages/me/membership' });

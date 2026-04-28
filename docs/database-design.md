@@ -1,6 +1,6 @@
 # 宠迹数据库设计
 
-> 最后更新：2026年4月21日 | 数据库：pet_trail | 共24张表
+> 最后更新：2026年4月27日 | 数据库：pet_trail | 共21张表
 
 ## 一、基础表
 
@@ -268,54 +268,6 @@ CREATE TABLE weight_records (
   FOREIGN KEY (pet_id) REFERENCES pets(id) ON DELETE CASCADE,
   INDEX idx_record_date (record_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='体重记录表';
-```
-
-### step_records (步数记录表)
-
-```sql
-CREATE TABLE step_records (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  pet_id BIGINT NOT NULL COMMENT '宠物ID',
-  user_id BIGINT NOT NULL COMMENT '用户ID',
-  steps INT NOT NULL COMMENT '步数',
-  distance DECIMAL(10,2) COMMENT '距离(km)',
-  record_date DATE NOT NULL COMMENT '记录日期',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_pet_date (pet_id, record_date),
-  INDEX idx_user_date (user_id, record_date)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='步数记录表';
-```
-
-### water_records (饮水记录表)
-
-```sql
-CREATE TABLE water_records (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  pet_id BIGINT NOT NULL COMMENT '宠物ID',
-  user_id BIGINT NOT NULL COMMENT '用户ID',
-  amount INT NOT NULL COMMENT '饮水量(ml)',
-  record_date DATE NOT NULL COMMENT '记录日期',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_pet_date (pet_id, record_date),
-  INDEX idx_user_date (user_id, record_date)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='饮水记录表';
-```
-
-### health_daily_stats (每日健康统计表)
-
-```sql
-CREATE TABLE health_daily_stats (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  pet_id BIGINT NOT NULL COMMENT '宠物ID',
-  record_date DATE NOT NULL COMMENT '记录日期',
-  weight DECIMAL(5,2) COMMENT '体重',
-  steps INT COMMENT '步数',
-  water INT COMMENT '饮水量(ml)',
-  checkin_count INT DEFAULT 0 COMMENT '打卡次数',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_pet_date (pet_id, record_date),
-  INDEX idx_record_date (record_date)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='每日健康统计表';
 ```
 
 ---

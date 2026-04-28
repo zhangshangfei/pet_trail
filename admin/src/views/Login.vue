@@ -26,8 +26,10 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { login } from '../api/admin'
+import { useAdminStore } from '@/store/admin'
 
 const router = useRouter()
+const adminStore = useAdminStore()
 const formRef = ref(null)
 const loading = ref(false)
 
@@ -44,7 +46,7 @@ const handleLogin = async () => {
   try {
     const res = await login(form)
     if (res.success && res.data) {
-      localStorage.setItem('admin_token', res.data.token)
+      adminStore.setLoginInfo(res.data.token, res.data.admin, res.data.menus)
       ElMessage.success('登录成功')
       router.push('/dashboard')
     }

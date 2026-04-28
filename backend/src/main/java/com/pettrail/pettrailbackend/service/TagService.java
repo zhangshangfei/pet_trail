@@ -102,4 +102,9 @@ public class TagService {
         }
         return tag;
     }
+
+    public Tag getTagByName(String name) {
+        String trimmed = name.trim().replaceAll("^#+", "");
+        return tagMapper.selectByName(trimmed);
+    }
 }

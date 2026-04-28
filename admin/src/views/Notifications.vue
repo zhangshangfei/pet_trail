@@ -17,7 +17,7 @@
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
             <el-button type="success" @click="showSendDialog">发送通知</el-button>
-            <el-button type="warning" @click="showBroadcastDialog" v-if="isSuperAdmin">广播通知</el-button>
+            <el-button type="warning" @click="showBroadcastDialog" v-if="canSend">广播通知</el-button>
           </div>
         </div>
       </template>
@@ -84,6 +84,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getNotificationList, sendNotification, broadcastNotification } from '../api/admin'
+import { useAdminStore } from '@/store/admin'
 
 const tableData = ref([])
 const loading = ref(false)
@@ -100,8 +101,8 @@ const broadcasting = ref(false)
 const sendForm = reactive({ userId: '', content: '', title: '' })
 const broadcastForm = reactive({ content: '', title: '' })
 
-const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}')
-const isSuperAdmin = computed(() => adminInfo.role === 'SUPER_ADMIN')
+const adminStore = useAdminStore()
+const canSend = computed(() => adminStore.hasButton('notification:send'))
 
 const loadData = async () => {
   loading.value = true

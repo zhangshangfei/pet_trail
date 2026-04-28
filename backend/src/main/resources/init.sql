@@ -211,7 +211,7 @@ CREATE TABLE IF NOT EXISTS `post_ee` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='收藏表';
 
 -- ========================================
--- 健康模块（体重、步数、饮水、统计）
+-- 健康模块（体重）
 -- ========================================
 
 -- 体重记录表
@@ -228,48 +228,6 @@ CREATE TABLE IF NOT EXISTS `weight_records` (
   KEY `idx_pet_id` (`pet_id`),
   KEY `idx_record_date` (`record_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='体重记录表';
-
--- 步数记录表
-CREATE TABLE IF NOT EXISTS `step_records` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` bigint(20) NOT NULL,
-  `pet_id` bigint(20) DEFAULT NULL,
-  `steps` int(11) NOT NULL COMMENT '步数',
-  `distance` decimal(10,2) DEFAULT NULL COMMENT '距离 (km)',
-  `record_date` date NOT NULL,
-  `source` tinyint(4) DEFAULT '1' COMMENT '来源：1-手动 2-设备同步',
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_pet_date` (`user_id`,`pet_id`,`record_date`),
-  KEY `idx_record_date` (`record_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='步数记录表';
-
--- 饮水记录表
-CREATE TABLE IF NOT EXISTS `water_records` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` bigint(20) NOT NULL,
-  `pet_id` bigint(20) DEFAULT NULL,
-  `amount` decimal(10,2) NOT NULL COMMENT '水量 (ml)',
-  `record_date` date NOT NULL,
-  `record_time` time DEFAULT NULL COMMENT '记录时间',
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_user_date` (`user_id`,`record_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='饮水记录表';
-
--- 健康统计表（每日聚合）
-CREATE TABLE IF NOT EXISTS `health_daily_stats` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` bigint(20) NOT NULL,
-  `pet_id` bigint(20) DEFAULT NULL,
-  `stat_date` date NOT NULL,
-  `total_steps` int(11) DEFAULT '0',
-  `total_water` decimal(10,2) DEFAULT '0',
-  `weight` decimal(5,2) DEFAULT NULL,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_pet_date` (`user_id`,`pet_id`,`stat_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='健康统计表';
 
 -- ========================================
 -- 提醒模块（疫苗、驱虫）
@@ -418,14 +376,98 @@ CREATE TABLE IF NOT EXISTS `admins` (
   `password` varchar(255) NOT NULL COMMENT '密码(BCrypt)',
   `nickname` varchar(50) DEFAULT NULL COMMENT '昵称',
   `avatar` varchar(255) DEFAULT NULL COMMENT '头像URL',
-  `role` varchar(50) DEFAULT 'ADMIN' COMMENT '角色: SUPER_ADMIN, ADMIN',
+  `role_id` bigint(20) DEFAULT NULL COMMENT '角色ID, 关联sys_role表',
+  `merchant_id` bigint(20) DEFAULT NULL COMMENT '所属商户ID',
   `status` tinyint(4) DEFAULT 1 COMMENT '状态: 1-正常 0-禁用',
   `last_login_at` datetime DEFAULT NULL COMMENT '最后登录时间',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_username` (`username`)
+  UNIQUE KEY `uk_username` (`username`),
+  KEY `idx_merchant_id` (`merchant_id`),
+  KEY `idx_role_id` (`role_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='管理员表';
+
+CREATE TABLE IF NOT EXISTS `merchants` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL COMMENT '商户名称',
+  `contact_name` varchar(50) DEFAULT NULL COMMENT '联系人',
+  `contact_phone` varchar(20) DEFAULT NULL COMMENT '联系电话',
+  `type` varchar(30) DEFAULT 'vet_clinic' COMMENT '商户类型: vet_clinic, pet_shop, other',
+  `status` tinyint(4) DEFAULT 1 COMMENT '状态: 1-正常 0-禁用',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商户表';
+
+CREATE TABLE IF NOT EXISTS `sys_menu` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `parent_id` bigint(20) DEFAULT 0 COMMENT '父菜单ID, 0为顶级',
+  `name` varchar(50) NOT NULL COMMENT '菜单名称',
+  `path` varchar(200) DEFAULT NULL COMMENT '路由路径',
+  `icon` varchar(50) DEFAULT NULL COMMENT '图标',
+  `permission` varchar(100) DEFAULT NULL COMMENT '关联权限码',
+  `buttons` varchar(500) DEFAULT NULL COMMENT '可用按钮权限码,逗号分隔',
+  `sort_order` int(11) DEFAULT 0 COMMENT '排序',
+  `status` tinyint(4) DEFAULT 1 COMMENT '状态: 1-启用 0-禁用',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_parent_id` (`parent_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统菜单表';
+
+CREATE TABLE IF NOT EXISTS `sys_role` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL COMMENT '角色名称',
+  `code` varchar(50) NOT NULL COMMENT '角色编码',
+  `description` varchar(200) DEFAULT NULL COMMENT '描述',
+  `status` tinyint(4) DEFAULT 1 COMMENT '状态: 1-启用 0-禁用',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统角色表';
+
+CREATE TABLE IF NOT EXISTS `sys_role_menu` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `role_id` bigint(20) NOT NULL COMMENT '角色ID',
+  `menu_id` bigint(20) NOT NULL COMMENT '菜单ID',
+  `buttons` varchar(500) DEFAULT NULL COMMENT '按钮权限码,逗号分隔',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_role_menu` (`role_id`, `menu_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色菜单关联表';
+
+INSERT IGNORE INTO `sys_menu` (`id`, `parent_id`, `name`, `path`, `icon`, `permission`, `buttons`, `sort_order`) VALUES
+(1,  0, '仪表盘',     '/dashboard',     'DataAnalysis',  'dashboard',        NULL,                            1),
+(2,  0, '用户与宠物',  NULL,             'User',          NULL,               NULL,                            2),
+(3,  2, '用户管理',    '/users',         'User',          'user:view',        'user:manage,export',            1),
+(4,  2, '宠物管理',    '/pets',          'Guide',         'pet:view',         'pet:manage,export',             2),
+(5,  0, '内容管理',    NULL,             'Document',      NULL,               NULL,                            3),
+(6,  5, '动态管理',    '/posts',         'Document',      'post:view',        'post:manage,export',            1),
+(7,  5, '评论管理',    '/comments',      'ChatDotRound',  'comment:view',     'comment:manage',                2),
+(8,  0, '运营与互动',  NULL,             'Bell',          NULL,               NULL,                            4),
+(9,  8, '举报管理',    '/reports',       'Warning',       'report:view',      'report:handle,export',          1),
+(10, 8, '通知管理',    '/notifications', 'Bell',          'notification:view', 'notification:send',            2),
+(11, 8, '反馈管理',    '/feedbacks',     'ChatLineSquare','feedback:view',    'feedback:reply',                3),
+(12, 8, '挑战赛配置',  '/challenges',    'Trophy',        'challenge:view',   'challenge:manage,export',       4),
+(13, 0, '商业服务',    NULL,             'ShoppingCart',  NULL,               NULL,                            5),
+(14, 13,'医院管理',    '/vet-clinics',   'FirstAidKit',   'vet-clinic:view',  'vet-clinic:manage',             1),
+(15, 13,'商品管理',    '/products',      'ShoppingCart',  'product:view',     'product:manage,export',         2),
+(16, 13,'商户管理',    '/merchants',     'OfficeBuilding','merchant:manage',  NULL,                            3),
+(17, 0, '系统管理',    NULL,             'Setting',       NULL,               NULL,                            6),
+(18, 17,'管理员管理',  '/admins',        'UserFilled',    'admin:manage',     NULL,                            1),
+(19, 17,'操作日志',    '/logs',          'List',          'log:view',         'export',                        2),
+(20, 17,'系统设置',    '/settings',      'Setting',       'setting:manage',   NULL,                            3),
+(21, 17,'系统配置',    '/config',        'Tools',         'config:manage',    NULL,                            4),
+(22, 17,'AI模型管理',  '/ai-models',     'Cpu',           'ai-model:view',    'ai-model:manage',               5),
+(23, 17,'角色管理',    '/roles',         'Stamp',         'admin:manage',     NULL,                            6),
+(24, 17,'菜单管理',    '/sys-menus',     'Menu',          'admin:manage',     NULL,                            7);
+
+INSERT IGNORE INTO `sys_role` (`id`, `name`, `code`, `description`) VALUES
+(1, '超级管理员', 'SUPER_ADMIN', '拥有全部权限'),
+(2, '平台管理员', 'ADMIN', '除系统管理外的所有权限'),
+(3, '商户管理员', 'MERCHANT_ADMIN', '管理本商户的医院、商品、反馈'),
+(4, '商户员工', 'MERCHANT_STAFF', '查看本商户的医院和商品');
 
 -- ========================================
 -- 初始化数据
