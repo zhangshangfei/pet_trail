@@ -71,14 +71,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:8080",
-            "https://localhost:8080",
-            "http://127.0.0.1:8080",
-            "http://localhost:5173",
-            "http://localhost:3000",
-            "https://springboot-4fyd-243081-4-1419682950.sh.run.tcloudbase.com"
-        ));
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
