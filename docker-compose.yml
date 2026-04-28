@@ -43,7 +43,9 @@ services:
       - pet-trail-network
 
   rabbitmq:
-    image: rabbitmq:3-management-alpine
+    build:
+      context: ./rabbitmq
+      dockerfile: Dockerfile
     container_name: pet-trail-rabbitmq
     restart: always
     environment:
