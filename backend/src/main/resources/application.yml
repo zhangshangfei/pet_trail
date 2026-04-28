@@ -7,15 +7,15 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOST:sh-cynosdbmysql-grp-768g91ci.sql.tencentcdb.com}:${MYSQL_PORT:22746}/${MYSQL_DATABASE:pet_trail}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:pet_trail}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${MYSQL_USERNAME:root}
-    password: ${MYSQL_PASSWORD:CD2wkKmj}
+    password: ${MYSQL_PASSWORD:root123456}
 
   data:
     redis:
-      host: ${REDIS_HOST:124.222.51.71}
+      host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:iherhj45135*}
+      password: ${REDIS_PASSWORD:}
       database: ${REDIS_DATABASE:0}
       timeout: 3000ms
       lettuce:
@@ -25,40 +25,20 @@ spring:
           max-idle: 10
           min-idle: 5
 
-  # Jackson 配置
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
     serialization:
       write-dates-as-timestamps: false
 
-  # 文件上传配置
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
 
-  # RabbitMQ 配置（仅当 RABBITMQ_ENABLED=true 时生效，默认关闭）
-  # 启用时通过环境变量注入: RABBITMQ_ENABLED=true, RABBITMQ_HOST=..., RABBITMQ_PORT=..., 等
   rabbitmq:
     enabled: ${RABBITMQ_ENABLED:false}
-    # host: ${RABBITMQ_HOST:localhost}
-    # port: ${RABBITMQ_PORT:5672}
-    # username: ${RABBITMQ_USERNAME:guest}
-    # password: ${RABBITMQ_PASSWORD:guest}
-    # virtual-host: ${RABBITMQ_VHOST:/}
-    # publisher-confirm-type: correlated
-    # publisher-returns: true
-    # listener:
-    #   simple:
-    #     acknowledge-mode: manual
-    #     prefetch: 10
-    #     retry:
-    #       enabled: true
-    #       max-attempts: 3
-    #       initial-interval: 1000ms
 
-# MyBatis-Plus 配置
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
@@ -71,49 +51,36 @@ mybatis-plus:
       logic-not-delete-value: 0
   mapper-locations: classpath*:/mapper/**/*.xml
 
-# 腾讯云 COS 配置 (微信云托管推荐)
 tencent:
   cos:
-    bucket-name: ${TENCENT_COS_BUCKET_NAME:7072-prod-3gyc3tpg28270da6-1419682950}
+    bucket-name: ${TENCENT_COS_BUCKET_NAME:}
     region: ${TENCENT_COS_REGION:ap-shanghai}
     secret-id: ${TENCENT_COS_SECRET_ID:}
     secret-key: ${TENCENT_COS_SECRET_KEY:}
 
-# JWT 配置
 jwt:
-  secret: ${JWT_SECRET:pet-trail-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256}
-  expiration: 604800  # 7 天 (秒)
+  secret: ${JWT_SECRET:pet-trail-default-jwt-secret-key-for-development-only}
+  expiration: 604800
 
-# 微信配置
 wechat:
   miniapp:
-    app-id: ${WECHAT_MINIAPP_APP_ID:wx252292b9bfa1ccc6}
-    app-secret: ${WECHAT_MINIAPP_APP_SECRET:3e17aa26e200c87c0fd22fa855a5348a}
+    app-id: ${WECHAT_MINIAPP_APP_ID:}
+    app-secret: ${WECHAT_MINIAPP_APP_SECRET:}
 
-# AI 分析配置
 ai:
   enabled: ${AI_ENABLED:true}
-  api-key: ${AI_API_KEY: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}
+  api-key: ${AI_API_KEY:}
   base-url: ${AI_BASE_URL:https://openrouter.ai/api/v1}
   model: ${AI_MODEL:openrouter/free}
   glm:
     enabled: ${AI_GLM_ENABLED:true}
-    api-key: ${AI_GLM_API_KEY:9369496ba97b4fb08b1fdfbf7907b049.LdjmNyZ81m6mQSEp}
+    api-key: ${AI_GLM_API_KEY:}
     base-url: ${AI_GLM_BASE_URL:https://open.bigmodel.cn/api/paas/v4}
     model: ${AI_GLM_MODEL:glm-4.7-flash}
 
-# Sentinel 配置（可选，需要单独安装 Sentinel Dashboard）
-# spring.cloud:
-#   sentinel:
-#     transport:
-#       dashboard: localhost:8080
-#       port: 8719
-
-# 日志配置
 logging:
   level:
     com.pettrail.pettrailbackend: debug
     com.pettrail.pettrailbackend.mapper: debug
-    # org.springframework.amqp: info  # 已注释 RabbitMQ
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
