@@ -11,7 +11,7 @@
         <el-option label="其他" :value="0" />
       </el-select>
       <el-button type="primary" @click="loadData">搜索</el-button>
-      <el-button type="success" @click="handleExport">导出Excel</el-button>
+      <el-button type="success" @click="handleExport" v-if="canExport">导出Excel</el-button>
     </div>
     <el-card shadow="hover">
       <el-table :data="list" v-loading="loading" stripe>
@@ -118,6 +118,7 @@ const editForm = ref({})
 
 const adminStore = useAdminStore()
 const canManage = computed(() => adminStore.hasButton('pet:manage'))
+const canExport = computed(() => adminStore.hasButton('export'))
 
 const loadData = async () => {
   loading.value = true

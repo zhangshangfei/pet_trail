@@ -12,7 +12,7 @@
               <el-option label="已拒绝" :value="2" />
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
-            <el-button type="success" @click="handleExport">导出Excel</el-button>
+            <el-button type="success" @click="handleExport" v-if="canExport">导出Excel</el-button>
             <el-button type="warning" @click="loadDeleted" v-if="canManage">回收站</el-button>
           </div>
         </div>
@@ -139,6 +139,7 @@ const deletedLoading = ref(false)
 
 const adminStore = useAdminStore()
 const canManage = computed(() => adminStore.hasButton('post:manage'))
+const canExport = computed(() => adminStore.hasButton('export'))
 
 const parseFirstImage = (images) => {
   try { const arr = JSON.parse(images); return arr && arr.length > 0 ? arr[0] : '' } catch (e) { return '' }

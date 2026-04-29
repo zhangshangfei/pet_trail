@@ -77,6 +77,9 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getRoleList, createRole, updateRole, deleteRole, updateRoleStatus, getRoleMenus, saveRoleMenus, getMenuTree } from '@/api/admin'
+import { useAdminStore } from '@/store/admin'
+
+const adminStore = useAdminStore()
 
 const btnLabelMap = {
   'user:manage': '管理', 'pet:manage': '管理', 'post:manage': '管理', 'comment:manage': '管理',
@@ -225,6 +228,7 @@ async function savePermission() {
     await saveRoleMenus(currentRole.value.id, menuPerms)
     ElMessage.success('权限保存成功')
     showPermission.value = false
+    adminStore.fetchProfile()
   } catch (e) { ElMessage.error('保存失败') }
 }
 

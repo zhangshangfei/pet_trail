@@ -13,7 +13,7 @@
               <el-option label="已禁用" :value="0" />
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
-            <el-button type="success" @click="handleExport">导出Excel</el-button>
+            <el-button type="success" @click="handleExport" v-if="canExport">导出Excel</el-button>
           </div>
         </div>
       </template>
@@ -101,6 +101,7 @@ const userStats = ref(null)
 
 const adminStore = useAdminStore()
 const canManage = computed(() => adminStore.hasButton('user:manage'))
+const canExport = computed(() => adminStore.hasButton('export'))
 
 const userStatCards = computed(() => [
   { key: 'pets', label: '宠物数', value: userStats.value?.petCount || 0 },

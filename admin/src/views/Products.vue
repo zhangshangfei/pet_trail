@@ -22,7 +22,7 @@
             <el-button type="primary" @click="loadData">查询</el-button>
             <el-button type="success" @click="openCreate">新增商品</el-button>
             <el-button @click="showOrders = true">查看订单</el-button>
-            <el-button @click="handleExport">导出Excel</el-button>
+            <el-button @click="handleExport" v-if="canExport">导出Excel</el-button>
           </div>
         </div>
       </template>
@@ -157,6 +157,7 @@ import { getProductList, getProductDetail, createProduct, updateProduct, deleteP
 
 const adminStore = useAdminStore()
 const canManage = computed(() => adminStore.hasButton('product:manage'))
+const canExport = computed(() => adminStore.hasButton('export'))
 
 const uploadUrl = (import.meta.env.VITE_API_BASE_URL || '') + '/api/upload'
 const uploadHeaders = { Authorization: 'Bearer ' + (localStorage.getItem('admin_token') || '') }

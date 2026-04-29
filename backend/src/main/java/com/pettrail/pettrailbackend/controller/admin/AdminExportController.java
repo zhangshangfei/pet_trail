@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.controller.admin;
 
+import com.pettrail.pettrailbackend.annotation.RequireButton;
 import com.pettrail.pettrailbackend.service.ExportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,6 +20,7 @@ public class AdminExportController extends BaseAdminController {
 
     @GetMapping("/users")
     @Operation(summary = "导出用户数据")
+    @RequireButton("export")
     public void exportUsers(HttpServletResponse response,
                             @RequestParam(required = false) String keyword,
                             @RequestParam(required = false) Integer status) throws IOException {
@@ -27,6 +29,7 @@ public class AdminExportController extends BaseAdminController {
 
     @GetMapping("/posts")
     @Operation(summary = "导出动态数据")
+    @RequireButton("export")
     public void exportPosts(HttpServletResponse response,
                             @RequestParam(required = false) Integer auditStatus) throws IOException {
         exportService.exportPosts(response, auditStatus);
@@ -34,6 +37,7 @@ public class AdminExportController extends BaseAdminController {
 
     @GetMapping("/reports")
     @Operation(summary = "导出举报数据")
+    @RequireButton("export")
     public void exportReports(HttpServletResponse response,
                               @RequestParam(required = false) Integer status) throws IOException {
         exportService.exportReports(response, status);
@@ -41,6 +45,7 @@ public class AdminExportController extends BaseAdminController {
 
     @GetMapping("/logs")
     @Operation(summary = "导出操作日志")
+    @RequireButton("export")
     public void exportLogs(HttpServletResponse response,
                            @RequestParam(required = false) String module) throws IOException {
         exportService.exportLogs(response, module);
@@ -48,6 +53,7 @@ public class AdminExportController extends BaseAdminController {
 
     @GetMapping("/pets")
     @Operation(summary = "导出宠物数据")
+    @RequireButton("export")
     public void exportPets(HttpServletResponse response,
                            @RequestParam(required = false) Integer category) throws IOException {
         exportService.exportPets(response, category);
@@ -55,6 +61,7 @@ public class AdminExportController extends BaseAdminController {
 
     @GetMapping("/challenges")
     @Operation(summary = "导出挑战赛数据")
+    @RequireButton("export")
     public void exportChallenges(HttpServletResponse response,
                                   @RequestParam(required = false) Integer status) throws IOException {
         exportService.exportChallenges(response, status);
@@ -62,6 +69,7 @@ public class AdminExportController extends BaseAdminController {
 
     @GetMapping("/products")
     @Operation(summary = "导出商品数据")
+    @RequireButton("export")
     public void exportProducts(HttpServletResponse response,
                                 @RequestParam(required = false) Integer status) throws IOException {
         exportService.exportProducts(response, status);

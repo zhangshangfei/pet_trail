@@ -37,12 +37,14 @@
                   <span class="node-name">{{ data.name }}</span>
                   <el-tag v-if="!data.path" size="small" type="warning" effect="light" class="type-tag">目录</el-tag>
                   <el-tag v-else size="small" type="success" effect="light" class="type-tag">页面</el-tag>
-                  <el-tag
-                    :type="Number(data.status ?? 1) === 1 ? 'success' : 'danger'"
+                  <el-switch
+                    :model-value="Number(data.status ?? 1) === 1"
                     size="small"
-                    effect="light"
-                    class="status-tag"
-                  >{{ Number(data.status ?? 1) === 1 ? '启用' : '禁用' }}</el-tag>
+                    inline-prompt
+                    active-text="启"
+                    inactive-text="停"
+                    @change="(val) => handleToggleStatus(data, val)"
+                  />
                 </div>
                 <div class="node-meta-row">
                   <span v-if="data.path" class="meta-item">
@@ -128,7 +130,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, Folder, Document, Link, Lock, Mouse, Sort } from '@element-plus/icons-vue'
-import { getMenuTree, createMenu, updateMenu, deleteMenu, batchSortMenus } from '@/api/admin'
+import { getMenuTree, createMenu, updateMenu, deleteMenu, batchSortMenus, updateMenuStatus } from '@/api/admin'
 
 const loading = ref(false)
 const treeList = ref([])
@@ -218,6 +220,16 @@ async function handleDelete(row) {
     await ElMessageBox.confirm(`确定删除菜单"${row.name}"？`, '提示', { type: 'warning' })
     await deleteMenu(row.id); ElMessage.success('删除成功'); loadData()
   } catch (e) {}
+}
+
+async function handleToggleStatus(row, val) {
+  try {
+    await updateMenuStatus(row.id, val ? 1 : 0)
+    row.status = val ? 1 : 0
+    ElMessage.success(val ? '已启用' : '已禁用')
+  } catch (e) {
+    ElMessage.error('状态更新失败')
+  }
 }
 
 onMounted(() => loadData())

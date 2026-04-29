@@ -56,6 +56,25 @@ function extractAdmin(data) {
   return {}
 }
 
+function extractMenuPaths(menus) {
+  const paths = new Set()
+  const walk = (list) => {
+    if (!list) return
+    for (const m of list) {
+      if (m.path && m.path.trim()) paths.add(m.path)
+      if (m.children) walk(m.children)
+    }
+  }
+  walk(menus)
+  return paths
+}
+
+function isPathAllowed(path, menus) {
+  if (path === '/dashboard' || path === '/') return true
+  const allowedPaths = extractMenuPaths(menus)
+  return allowedPaths.has(path)
+}
+
 router.beforeEach(async (to, from, next) => {
   const token = localStorage.getItem('admin_token')
 
@@ -84,8 +103,12 @@ router.beforeEach(async (to, from, next) => {
           next()
           return
         }
-        const requiredPermission = to.meta?.permission
-        if (!checkPermission(admin.roleCode, admin.permissions, requiredPermission)) {
+        const menus = res.data.menus || JSON.parse(localStorage.getItem('admin_menus') || '[]')
+        if (isPathAllowed(to.path, menus)) {
+          next()
+          return
+        }
+        if (!checkPermission(admin.roleCode, admin.permissions, to.meta?.permission)) {
           next('/dashboard')
           return
         }
@@ -106,9 +129,14 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
+  const menus = JSON.parse(localStorage.getItem('admin_menus') || '[]')
+  if (isPathAllowed(to.path, menus)) {
+    next()
+    return
+  }
+
   const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}')
-  const requiredPermission = to.meta?.permission
-  if (!checkPermission(adminInfo.roleCode, adminInfo.permissions, requiredPermission)) {
+  if (!checkPermission(adminInfo.roleCode, adminInfo.permissions, to.meta?.permission)) {
     next('/dashboard')
     return
   }
