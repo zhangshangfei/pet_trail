@@ -145,6 +145,7 @@ const handleStatus = async (row, status) => {
 }
 
 const handleExport = async () => {
+  if (!canExport.value) { ElMessage.warning('无导出权限'); return }
   try {
     const res = await exportUsers({ keyword: keyword.value || undefined, status: statusFilter.value ?? undefined })
     const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
