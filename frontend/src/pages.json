@@ -31,6 +31,13 @@
       }
     },
     {
+      "path": "pages/health/record",
+      "style": {
+        "navigationBarTitleText": "体重记录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/me/index",
       "style": {
         "navigationBarTitleText": "我的",
@@ -238,9 +245,39 @@
       }
     },
     {
+      "path": "pages/shop/detail",
+      "style": {
+        "navigationBarTitleText": "商品详情",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/vet/index",
       "style": {
         "navigationBarTitleText": "宠物医院",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/tag/posts",
+      "style": {
+        "navigationBarTitleText": "标签动态",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
+      }
+    },
+    {
+      "path": "pages/vet/detail",
+      "style": {
+        "navigationBarTitleText": "医院详情",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/vet/appointments",
+      "style": {
+        "navigationBarTitleText": "我的预约",
         "navigationStyle": "custom"
       }
     }

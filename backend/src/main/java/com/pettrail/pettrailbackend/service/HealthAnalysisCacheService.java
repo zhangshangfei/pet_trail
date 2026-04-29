@@ -73,7 +73,6 @@ public class HealthAnalysisCacheService {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private HealthAnalysisVO convertMapToVO(Map<String, Object> map) {
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();

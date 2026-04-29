@@ -3,7 +3,6 @@ package com.pettrail.pettrailbackend.controller;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.dto.UserBehaviorDTO;
 import com.pettrail.pettrailbackend.dto.UserBehaviorViewDTO;
-import com.pettrail.pettrailbackend.entity.UserBehavior;
 import com.pettrail.pettrailbackend.service.UserBehaviorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

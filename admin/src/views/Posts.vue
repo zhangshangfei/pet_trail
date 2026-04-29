@@ -12,8 +12,8 @@
               <el-option label="已拒绝" :value="2" />
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
-            <el-button type="success" @click="handleExport">导出Excel</el-button>
-            <el-button type="warning" @click="loadDeleted" v-if="isSuperAdmin">回收站</el-button>
+            <el-button type="success" @click="handleExport" v-if="canExport">导出Excel</el-button>
+            <el-button type="warning" @click="loadDeleted" v-if="canManage">回收站</el-button>
           </div>
         </div>
       </template>
@@ -44,7 +44,7 @@
             <el-button size="small" text @click="viewDetail(row)">详情</el-button>
             <el-button type="success" size="small" text @click="openAudit(row, 1)">通过</el-button>
             <el-button type="danger" size="small" text @click="openAudit(row, 2)">拒绝</el-button>
-            <el-button v-if="isSuperAdmin" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
+            <el-button v-if="canManage" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -117,6 +117,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getPostList, getPostDetail, auditPost, deletePost, batchAuditPosts, getDeletedPosts, restorePost, exportPosts } from '../api/admin'
+import { useAdminStore } from '@/store/admin'
 
 const tableData = ref([])
 const loading = ref(false)
@@ -136,8 +137,9 @@ const showDeleted = ref(false)
 const deletedList = ref([])
 const deletedLoading = ref(false)
 
-const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}')
-const isSuperAdmin = computed(() => adminInfo.role === 'SUPER_ADMIN')
+const adminStore = useAdminStore()
+const canManage = computed(() => adminStore.hasButton('post:manage'))
+const canExport = computed(() => adminStore.hasButton('export'))
 
 const parseFirstImage = (images) => {
   try { const arr = JSON.parse(images); return arr && arr.length > 0 ? arr[0] : '' } catch (e) { return '' }
@@ -215,9 +217,10 @@ const handleRestore = async (row) => {
 }
 
 const handleExport = async () => {
+  if (!canExport.value) { ElMessage.warning('无导出权限'); return }
   try {
     const res = await exportPosts({ auditStatus: auditFilter.value ?? undefined })
-    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url

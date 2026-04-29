@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.pettrail.pettrailbackend.entity.ParasiteReminder;
 import com.pettrail.pettrailbackend.entity.VaccineReminder;
 import com.pettrail.pettrailbackend.mapper.ParasiteReminderMapper;
@@ -103,7 +104,22 @@ public class ReminderService {
      * 清理过期的提醒
      */
     public void cleanExpiredReminders(LocalDate expiredDate) {
-        // TODO: 实现清理逻辑
         log.info("清理过期提醒：{}", expiredDate);
+
+        VaccineReminder vaccineUpdate = new VaccineReminder();
+        vaccineUpdate.setStatus(2);
+        int vaccineCount = vaccineReminderMapper.update(vaccineUpdate,
+                new LambdaQueryWrapper<VaccineReminder>()
+                        .lt(VaccineReminder::getNextDate, expiredDate)
+                        .eq(VaccineReminder::getStatus, 0));
+
+        ParasiteReminder parasiteUpdate = new ParasiteReminder();
+        parasiteUpdate.setStatus(2);
+        int parasiteCount = parasiteReminderMapper.update(parasiteUpdate,
+                new LambdaQueryWrapper<ParasiteReminder>()
+                        .lt(ParasiteReminder::getNextDate, expiredDate)
+                        .eq(ParasiteReminder::getStatus, 0));
+
+        log.info("清理过期提醒完成：疫苗提醒={}条，驱虫提醒={}条", vaccineCount, parasiteCount);
     }
 }

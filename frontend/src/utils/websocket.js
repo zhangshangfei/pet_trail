@@ -72,13 +72,10 @@ class WebSocketManager {
   }
 
   getWebSocketUrl() {
-    let uploadBase = env.VITE_UPLOAD_HTTP_BASE || ''
-    if (uploadBase) {
-      return uploadBase.replace(/^https?/, 'wss') + '/ws/notifications'
-    }
     let apiBase = env.VITE_API_BASE_URL
     if (apiBase && apiBase !== 'cloud') {
-      return apiBase.replace(/^https?/, 'wss').replace(/\/$/, '') + '/ws/notifications'
+      const wsProtocol = apiBase.startsWith('https') ? 'wss' : 'ws'
+      return apiBase.replace(/^https?/, wsProtocol).replace(/\/$/, '') + '/ws/notifications'
     }
     return 'wss://springboot-4fyd-243081-4-1419682950.sh.run.tcloudbase.com/ws/notifications'
   }

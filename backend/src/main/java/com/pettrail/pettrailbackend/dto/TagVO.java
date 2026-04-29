@@ -2,7 +2,6 @@ package com.pettrail.pettrailbackend.dto;
 
 import lombok.Data;
 
-import java.util.List;
 
 @Data
 public class TagVO {

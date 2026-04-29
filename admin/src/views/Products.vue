@@ -22,6 +22,7 @@
             <el-button type="primary" @click="loadData">查询</el-button>
             <el-button type="success" @click="openCreate">新增商品</el-button>
             <el-button @click="showOrders = true">查看订单</el-button>
+            <el-button @click="handleExport" v-if="canExport">导出Excel</el-button>
           </div>
         </div>
       </template>
@@ -62,7 +63,7 @@
             <el-button size="small" text @click="openEdit(row)">编辑</el-button>
             <el-button v-if="row.status === 1" type="warning" size="small" text @click="changeStatus(row.id, 0)">下架</el-button>
             <el-button v-if="row.status === 0" type="success" size="small" text @click="changeStatus(row.id, 1)">上架</el-button>
-            <el-button v-if="isSuperAdmin" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
+            <el-button v-if="canManage" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -76,7 +77,22 @@
       <el-form :model="form" label-width="100px">
         <el-form-item label="商品名称" required><el-input v-model="form.name" /></el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" :rows="3" /></el-form-item>
-        <el-form-item label="封面图"><el-input v-model="form.coverImage" placeholder="图片URL" /></el-form-item>
+        <el-form-item label="封面图">
+          <el-upload
+            class="cover-uploader"
+            :action="uploadUrl"
+            :headers="uploadHeaders"
+            name="file"
+            :show-file-list="false"
+            :on-success="handleCoverSuccess"
+            :before-upload="beforeCoverUpload"
+            accept="image/*"
+          >
+            <el-image v-if="form.coverImage" :src="form.coverImage" fit="cover" class="cover-preview" preview-teleported />
+            <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
+          </el-upload>
+          <el-input v-model="form.coverImage" placeholder="或手动输入图片URL" style="margin-top: 8px" />
+        </el-form-item>
         <el-form-item label="分类" required>
           <el-select v-model="form.category"><el-option label="粮食" value="food" /><el-option label="玩具" value="toy" /><el-option label="保健" value="health" /><el-option label="用品" value="supplies" /></el-select>
         </el-form-item>
@@ -100,6 +116,14 @@
     </el-dialog>
 
     <el-dialog v-model="showOrders" title="订单列表" width="900px" destroy-on-close>
+      <div style="margin-bottom: 12px; display: flex; gap: 12px;">
+        <el-select v-model="orderStatusFilter" placeholder="订单状态" clearable style="width: 140px" @change="loadOrders">
+          <el-option label="待支付" :value="0" />
+          <el-option label="已支付" :value="1" />
+          <el-option label="已退款" :value="2" />
+          <el-option label="已取消" :value="3" />
+        </el-select>
+      </div>
       <el-table :data="orderList" v-loading="orderLoading" stripe>
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="orderNo" label="订单号" width="180" show-overflow-tooltip />
@@ -127,11 +151,16 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { useAdminStore } from '@/store/admin'
-import { getProductList, createProduct, updateProduct, deleteProduct, updateProductStatus, getProductStats, getOrderList } from '@/api/admin'
+import { getProductList, getProductDetail, createProduct, updateProduct, deleteProduct, updateProductStatus, getProductStats, getOrderList, exportProducts } from '@/api/admin'
 
 const adminStore = useAdminStore()
-const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
+const canManage = computed(() => adminStore.hasButton('product:manage'))
+const canExport = computed(() => adminStore.hasButton('export'))
+
+const uploadUrl = (import.meta.env.VITE_API_BASE_URL || '') + '/api/upload'
+const uploadHeaders = { Authorization: 'Bearer ' + (localStorage.getItem('admin_token') || '') }
 
 const loading = ref(false)
 const tableData = ref([])
@@ -157,6 +186,7 @@ const orderLoading = ref(false)
 const orderPage = ref(1)
 const orderSize = ref(20)
 const orderTotal = ref(0)
+const orderStatusFilter = ref(null)
 
 async function loadData() {
   loading.value = true
@@ -176,7 +206,9 @@ async function loadStats() {
 async function loadOrders() {
   orderLoading.value = true
   try {
-    const res = await getOrderList({ page: orderPage.value, size: orderSize.value })
+    const params = { page: orderPage.value, size: orderSize.value }
+    if (orderStatusFilter.value != null) params.status = orderStatusFilter.value
+    const res = await getOrderList(params)
     if (res.data) { orderList.value = res.data.records || []; orderTotal.value = res.data.total || 0 }
   } catch (e) { console.error(e) } finally { orderLoading.value = false }
 }
@@ -187,10 +219,33 @@ function openCreate() {
   showDialog.value = true
 }
 
-function openEdit(row) {
-  isEdit.value = true; editId.value = row.id
-  form.value = { ...row }
-  showDialog.value = true
+function handleCoverSuccess(response) {
+  if (response.success && response.data && response.data.url) {
+    form.value.coverImage = response.data.url
+    ElMessage.success('图片上传成功')
+  } else {
+    ElMessage.error('上传失败')
+  }
+}
+
+function beforeCoverUpload(file) {
+  const isImage = file.type.startsWith('image/')
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isImage) { ElMessage.error('只能上传图片文件'); return false }
+  if (!isLt5M) { ElMessage.error('图片大小不能超过5MB'); return false }
+  return true
+}
+
+async function openEdit(row) {
+  try {
+    const res = await getProductDetail(row.id)
+    const detail = res.data || row
+    isEdit.value = true; editId.value = detail.id
+    form.value = { ...detail }
+    showDialog.value = true
+  } catch (e) {
+    console.error(e); ElMessage.error('获取详情失败')
+  }
 }
 
 async function submitForm() {
@@ -215,6 +270,21 @@ async function handleDelete(row) {
   } catch (e) { if (e !== 'cancel') console.error(e) }
 }
 
+async function handleExport() {
+  if (!canExport.value) { ElMessage.warning('无导出权限'); return }
+  try {
+    const res = await exportProducts({ status: statusFilter.value ?? undefined })
+    const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `商品数据_${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (e) { ElMessage.error('导出失败') }
+}
+
 onMounted(() => { loadData(); loadStats() })
 </script>
 
@@ -224,4 +294,8 @@ onMounted(() => { loadData(); loadStats() })
 .header-actions { display: flex; gap: 8px; align-items: center; }
 .pagination-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
 .stats-row .el-card { text-align: center; }
+.cover-uploader :deep(.el-upload) { border: 1px dashed #d9d9d9; border-radius: 6px; cursor: pointer; position: relative; overflow: hidden; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; }
+.cover-uploader :deep(.el-upload:hover) { border-color: #409eff; }
+.cover-preview { width: 120px; height: 120px; }
+.cover-uploader-icon { font-size: 28px; color: #8c939d; }
 </style>

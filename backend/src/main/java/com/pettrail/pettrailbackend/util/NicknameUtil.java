@@ -1,8 +1,6 @@
 package com.pettrail.pettrailbackend.util;
 
 import java.security.SecureRandom;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @program: pet-trail
@@ -34,9 +32,6 @@ public class NicknameUtil {
             "蓝胖子", "派大星", "海绵宝宝", "皮卡丘", "可达鸭" // 动漫角色通常被视为物品/角色名，非真实动物
     };
 
-    // 用于确保后缀唯一性的简单缓存（生产环境建议结合 Redis）
-    private static final Set<Long> USED_SUFFIXES = new HashSet<>();
-
     /**
      * 生成随机昵称
      * 格式：形容词 + 名词 + 5位随机数
@@ -51,21 +46,6 @@ public class NicknameUtil {
 
         // return adj + "的" + noun + suffix;
         return adj + noun;
-    }
-
-    /**
-     * 生成唯一后缀
-     * 逻辑：生成 10000-99999 之间的数字，如果已存在则重新生成
-     * 注意：单机环境下有效，分布式环境建议使用 Redis Set
-     */
-    private static synchronized long generateUniqueSuffix() {
-        long suffix;
-        do {
-            suffix = 10000 + random.nextInt(90000);
-        } while (USED_SUFFIXES.contains(suffix));
-
-        USED_SUFFIXES.add(suffix);
-        return suffix;
     }
 
     // 测试主方法

@@ -1,6 +1,5 @@
 package com.pettrail.pettrailbackend.util;
 
-import com.pettrail.pettrailbackend.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;

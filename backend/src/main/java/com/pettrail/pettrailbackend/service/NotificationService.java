@@ -1,21 +1,24 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.dto.NotificationVO;
 import com.pettrail.pettrailbackend.entity.Notification;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.NotificationMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
 import com.pettrail.pettrailbackend.websocket.NotificationWebSocketHandler;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -215,6 +218,87 @@ public class NotificationService {
             redisTemplate.delete(UNREAD_COUNT_PREFIX + userId);
         } catch (Exception e) {
             log.warn("未读数缓存清除异常: {}", e.getMessage());
+        }
+    }
+
+    public Page<Notification> adminListNotifications(int page, int size, Long userId, String type, Boolean isRead) {
+        Page<Notification> pageParam = new Page<>(page, size);
+        LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
+        if (userId != null) wrapper.eq(Notification::getUserId, userId);
+        if (type != null && !type.isEmpty()) wrapper.eq(Notification::getType, type);
+        if (isRead != null) wrapper.eq(Notification::getIsRead, isRead);
+        wrapper.orderByDesc(Notification::getCreatedAt);
+        Page<Notification> result = notificationMapper.selectPage(pageParam, wrapper);
+        fillNotificationUserNickname(result);
+        return result;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void adminSendNotification(Long userId, String title, String content) {
+        Notification notification = new Notification();
+        notification.setUserId(userId);
+        notification.setFromUserId(0L);
+        notification.setType("system");
+        notification.setContent(content);
+        notification.setTitle(title != null ? title : "系统通知");
+        notification.setIsRead(false);
+        notificationMapper.insert(notification);
+        invalidateUnreadCache(userId);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public int adminBroadcast(String title, String content) {
+        List<User> users = userMapper.selectList(new LambdaQueryWrapper<User>().eq(User::getStatus, 1));
+        int batchSize = 500;
+        List<Notification> batch = new ArrayList<>(batchSize);
+        int count = 0;
+        for (User user : users) {
+            Notification notification = new Notification();
+            notification.setUserId(user.getId());
+            notification.setFromUserId(0L);
+            notification.setType("system");
+            notification.setContent(content);
+            notification.setTitle(title != null ? title : "系统通知");
+            notification.setIsRead(false);
+            batch.add(notification);
+            count++;
+            if (batch.size() >= batchSize) {
+                for (Notification n : batch) {
+                    notificationMapper.insert(n);
+                }
+                batch.clear();
+            }
+        }
+        if (!batch.isEmpty()) {
+            for (Notification n : batch) {
+                notificationMapper.insert(n);
+            }
+        }
+        for (User user : users) {
+            invalidateUnreadCache(user.getId());
+        }
+        return count;
+    }
+
+    private void fillNotificationUserNickname(Page<Notification> result) {
+        Set<Long> userIds = result.getRecords().stream()
+                .flatMap(n -> java.util.stream.Stream.of(n.getUserId(), n.getFromUserId()))
+                .filter(uid -> uid != null && uid > 0)
+                .collect(Collectors.toSet());
+        if (userIds.isEmpty()) return;
+        Map<Long, String> nicknameMap = userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId,
+                        u -> u.getNickname() != null ? u.getNickname() : "用户" + u.getId(),
+                        (a, b) -> a));
+        for (Notification n : result.getRecords()) {
+            if (n.getUserId() != null) {
+                n.setUserNickname(nicknameMap.getOrDefault(n.getUserId(), "未知用户"));
+            }
+            if (n.getFromUserId() != null && n.getFromUserId() > 0) {
+                n.setFromUserNickname(nicknameMap.getOrDefault(n.getFromUserId(), "系统"));
+            } else {
+                n.setFromUserNickname("系统");
+            }
         }
     }
 }

@@ -6,6 +6,7 @@ import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.service.ContentAuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,7 @@ public class PostAuditScheduledTask {
 
     private final PostMapper postMapper;
     private final ContentAuditService contentAuditService;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 每 6 小时执行一次
@@ -82,8 +84,7 @@ public class PostAuditScheduledTask {
         boolean contentAuditPassed = contentAuditService.auditText(post.getContent());
         if (!contentAuditPassed) {
             log.warn("动态内容审核不通过：postId={}", post.getId());
-            // TODO: 更新状态为审核不通过
-            // postMapper.updateStatus(post.getId(), 2);
+            rejectPost(post.getId(), "内容审核不通过");
             return false;
         }
 
@@ -95,16 +96,34 @@ public class PostAuditScheduledTask {
                 if (!imageAuditPassed) {
                     log.warn("动态图片审核不通过：postId={}, imageUrl={}",
                         post.getId(), imageUrl);
-                    // TODO: 更新状态为审核不通过
-                    // postMapper.updateStatus(post.getId(), 2);
+                    rejectPost(post.getId(), "图片审核不通过");
                     return false;
                 }
             }
         }
 
         // 3. 审核通过，更新状态为正常
-        // postMapper.updateStatus(post.getId(), 1);
+        approvePost(post.getId());
         log.info("动态审核通过：postId={}", post.getId());
         return true;
+    }
+
+    private void rejectPost(Long postId, String reason) {
+        Post update = new Post();
+        update.setId(postId);
+        update.setStatus(2);
+        update.setAuditStatus(2);
+        update.setAuditRemark(reason);
+        postMapper.updateById(update);
+        redisTemplate.delete("post:detail:" + postId);
+    }
+
+    private void approvePost(Long postId) {
+        Post update = new Post();
+        update.setId(postId);
+        update.setStatus(1);
+        update.setAuditStatus(1);
+        postMapper.updateById(update);
+        redisTemplate.delete("post:detail:" + postId);
     }
 }

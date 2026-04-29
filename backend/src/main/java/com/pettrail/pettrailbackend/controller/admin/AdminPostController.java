@@ -1,6 +1,5 @@
 package com.pettrail.pettrailbackend.controller.admin;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.annotation.OperationLog;
 import com.pettrail.pettrailbackend.annotation.RequireRole;
@@ -8,18 +7,11 @@ import com.pettrail.pettrailbackend.dto.PostAuditDTO;
 import com.pettrail.pettrailbackend.dto.PostBatchAuditDTO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Post;
-import com.pettrail.pettrailbackend.entity.User;
-import com.pettrail.pettrailbackend.mapper.PostMapper;
-import com.pettrail.pettrailbackend.mapper.UserMapper;
+import com.pettrail.pettrailbackend.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/posts")
@@ -27,8 +19,7 @@ import java.util.stream.Collectors;
 @Tag(name = "Admin-动态管理", description = "后台动态内容管理")
 public class AdminPostController extends BaseAdminController {
 
-    private final PostMapper postMapper;
-    private final UserMapper userMapper;
+    private final PostService postService;
 
     @GetMapping
     @Operation(summary = "分页查询动态列表")
@@ -37,50 +28,20 @@ public class AdminPostController extends BaseAdminController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) Integer auditStatus) {
-        Page<Post> pageParam = new Page<>(page, size);
-        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
-        if (userId != null) {
-            wrapper.eq(Post::getUserId, userId);
-        }
-        if (auditStatus != null) {
-            wrapper.eq(Post::getAuditStatus, auditStatus);
-        }
-        wrapper.orderByDesc(Post::getCreatedAt);
-
-        Page<Post> result = postMapper.selectPage(pageParam, wrapper);
-        fillPostUserNickname(result);
-        return Result.success(result);
+        return Result.success(postService.adminListPosts(page, size, userId, auditStatus));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "获取动态详情")
     public Result<Post> getDetail(@PathVariable Long id) {
-        Post post = postMapper.selectById(id);
-        if (post == null) {
-            return Result.error(404, "动态不存在");
-        }
-        if (post.getUserId() != null) {
-            User user = userMapper.selectById(post.getUserId());
-            if (user != null) {
-                post.setUserNickname(user.getNickname());
-            }
-        }
-        return Result.success(post);
+        return Result.success(postService.adminGetPostDetail(id));
     }
 
     @PutMapping("/{id}/audit")
     @Operation(summary = "审核动态（通过/拒绝）")
     @OperationLog(module = "post", action = "audit", detail = "审核动态")
     public Result<Void> audit(@PathVariable Long id, @RequestBody PostAuditDTO dto) {
-        Post post = postMapper.selectById(id);
-        if (post == null) {
-            return Result.error(404, "动态不存在");
-        }
-        post.setAuditStatus(dto.getAuditStatus());
-        if (dto.getAuditRemark() != null) {
-            post.setAuditRemark(dto.getAuditRemark());
-        }
-        postMapper.updateById(post);
+        postService.adminAuditPost(id, dto.getAuditStatus(), dto.getAuditRemark());
         return Result.success(null);
     }
 
@@ -89,12 +50,7 @@ public class AdminPostController extends BaseAdminController {
     @RequireRole("SUPER_ADMIN")
     @OperationLog(module = "post", action = "delete", detail = "删除动态")
     public Result<Void> delete(@PathVariable Long id) {
-        Post post = postMapper.selectById(id);
-        if (post == null) {
-            return Result.error(404, "动态不存在");
-        }
-        post.setDeleted(1);
-        postMapper.updateById(post);
+        postService.adminDeletePost(id);
         return Result.success(null);
     }
 
@@ -102,24 +58,7 @@ public class AdminPostController extends BaseAdminController {
     @Operation(summary = "批量审核动态")
     @OperationLog(module = "post", action = "batch_audit", detail = "批量审核动态")
     public Result<Void> batchAudit(@RequestBody PostBatchAuditDTO dto) {
-        List<Integer> postIds = dto.getPostIds();
-        Integer auditStatus = dto.getAuditStatus();
-        String auditRemark = dto.getAuditRemark();
-
-        if (postIds == null || postIds.isEmpty() || auditStatus == null) {
-            return Result.error(400, "参数不完整");
-        }
-
-        for (Integer postId : postIds) {
-            Post post = postMapper.selectById(postId.longValue());
-            if (post != null) {
-                post.setAuditStatus(auditStatus);
-                if (auditRemark != null) {
-                    post.setAuditRemark(auditRemark);
-                }
-                postMapper.updateById(post);
-            }
-        }
+        postService.adminBatchAudit(dto.getPostIds(), dto.getAuditStatus(), dto.getAuditRemark());
         return Result.success(null);
     }
 
@@ -128,13 +67,7 @@ public class AdminPostController extends BaseAdminController {
     public Result<Page<Post>> deletedList(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Page<Post> pageParam = new Page<>(page, size);
-        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Post::getDeleted, 1);
-        wrapper.orderByDesc(Post::getCreatedAt);
-        Page<Post> result = postMapper.selectPage(pageParam, wrapper);
-        fillPostUserNickname(result);
-        return Result.success(result);
+        return Result.success(postService.adminListDeletedPosts(page, size));
     }
 
     @PutMapping("/{id}/restore")
@@ -142,26 +75,7 @@ public class AdminPostController extends BaseAdminController {
     @RequireRole("SUPER_ADMIN")
     @OperationLog(module = "post", action = "restore", detail = "恢复动态")
     public Result<Void> restore(@PathVariable Long id) {
-        Post post = postMapper.selectById(id);
-        if (post == null) {
-            return Result.error(404, "动态不存在");
-        }
-        post.setDeleted(0);
-        postMapper.updateById(post);
+        postService.adminRestorePost(id);
         return Result.success(null);
-    }
-
-    private void fillPostUserNickname(Page<Post> result) {
-        Set<Long> userIds = result.getRecords().stream()
-                .map(Post::getUserId)
-                .filter(uid -> uid != null)
-                .collect(Collectors.toSet());
-        if (userIds.isEmpty()) return;
-        Map<Long, String> nicknameMap = buildNicknameMap(userIds, userMapper);
-        for (Post post : result.getRecords()) {
-            if (post.getUserId() != null) {
-                post.setUserNickname(nicknameMap.getOrDefault(post.getUserId(), "未知用户"));
-            }
-        }
     }
 }

@@ -1,12 +1,12 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.VetAppointmentVO;
 import com.pettrail.pettrailbackend.entity.VetAppointment;
 import com.pettrail.pettrailbackend.entity.VetClinic;
 import com.pettrail.pettrailbackend.service.VetClinicService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -47,7 +47,7 @@ public class VetClinicController extends BaseController {
     }
 
     @GetMapping("/appointments")
-    public Result<List<VetAppointment>> myAppointments() {
+    public Result<List<VetAppointmentVO>> myAppointments() {
         Long userId = requireLogin();
         return Result.success(vetClinicService.getUserAppointments(userId));
     }

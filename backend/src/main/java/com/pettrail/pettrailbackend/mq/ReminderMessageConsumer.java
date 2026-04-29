@@ -1,7 +1,5 @@
 package com.pettrail.pettrailbackend.mq;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.pettrail.pettrailbackend.config.RabbitMQConfig;
 import com.pettrail.pettrailbackend.dto.ReminderMessage;
 import com.pettrail.pettrailbackend.entity.CheckinItem;

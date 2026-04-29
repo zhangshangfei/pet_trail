@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -65,7 +64,6 @@ public class RecommendService {
         try {
             Object cached = redisTemplate.opsForValue().get(cacheKey);
             if (cached != null) {
-                @SuppressWarnings("unchecked")
                 List<Map<String, Object>> cachedList = (List<Map<String, Object>>) cached;
                 int start = (page - 1) * size;
                 int end = Math.min(start + size, cachedList.size());
@@ -310,7 +308,6 @@ public class RecommendService {
         try {
             Object cached = redisTemplate.opsForValue().get(cacheKey);
             if (cached != null) {
-                @SuppressWarnings("unchecked")
                 List<Long> cachedIds = (List<Long>) cached;
                 int start = (page - 1) * size;
                 int end = Math.min(start + size, cachedIds.size());

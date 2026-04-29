@@ -6,7 +6,6 @@ import com.pettrail.pettrailbackend.dto.PostCreateDTO;
 import com.pettrail.pettrailbackend.dto.PostVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Post;
-import com.pettrail.pettrailbackend.exception.NotFoundException;
 import com.pettrail.pettrailbackend.service.PostService;
 import com.pettrail.pettrailbackend.service.RecommendService;
 import com.pettrail.pettrailbackend.service.TagService;
@@ -16,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

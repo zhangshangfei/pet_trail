@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.entity.Challenge;
 import com.pettrail.pettrailbackend.entity.ChallengeParticipant;
 import com.pettrail.pettrailbackend.exception.BusinessException;
@@ -13,7 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -34,7 +37,6 @@ public class ChallengeService {
         try {
             Object cached = redisTemplate.opsForValue().get(cacheKey);
             if (cached != null) {
-                @SuppressWarnings("unchecked")
                 List<Challenge> result = (List<Challenge>) cached;
                 return result;
             }
@@ -143,5 +145,67 @@ public class ChallengeService {
                         .eq(ChallengeParticipant::getChallengeId, challengeId)
                         .orderByDesc(ChallengeParticipant::getProgress)
                         .last("LIMIT " + limit));
+    }
+
+    public Page<Challenge> adminListChallenges(int page, int size, Integer status, Integer type) {
+        Page<Challenge> pageParam = new Page<>(page, size);
+        LambdaQueryWrapper<Challenge> wrapper = new LambdaQueryWrapper<>();
+        if (status != null) wrapper.eq(Challenge::getStatus, status);
+        if (type != null) wrapper.eq(Challenge::getType, type);
+        wrapper.orderByDesc(Challenge::getCreatedAt);
+        return challengeMapper.selectPage(pageParam, wrapper);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Challenge adminCreateChallenge(Challenge challenge) {
+        challenge.setCreatedAt(LocalDateTime.now());
+        challenge.setUpdatedAt(LocalDateTime.now());
+        challenge.setParticipantCount(0);
+        challengeMapper.insert(challenge);
+        return challenge;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Challenge adminUpdateChallenge(Long id, Challenge challenge) {
+        Challenge existing = challengeMapper.selectById(id);
+        if (existing == null) throw new BusinessException(404, "挑战赛不存在");
+        challenge.setId(id);
+        challenge.setUpdatedAt(LocalDateTime.now());
+        challengeMapper.updateById(challenge);
+        return challenge;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void adminDeleteChallenge(Long id) {
+        challengeMapper.deleteById(id);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void adminUpdateChallengeStatus(Long id, Integer status) {
+        Challenge challenge = challengeMapper.selectById(id);
+        if (challenge == null) throw new BusinessException(404, "挑战赛不存在");
+        challenge.setStatus(status);
+        challenge.setUpdatedAt(LocalDateTime.now());
+        challengeMapper.updateById(challenge);
+    }
+
+    public Map<String, Object> adminGetChallengeStats(Long id) {
+        Map<String, Object> stats = new HashMap<>();
+        long totalParticipants = participantMapper.selectCount(
+                new LambdaQueryWrapper<ChallengeParticipant>().eq(ChallengeParticipant::getChallengeId, id));
+        long completedCount = participantMapper.selectCount(
+                new LambdaQueryWrapper<ChallengeParticipant>().eq(ChallengeParticipant::getChallengeId, id).eq(ChallengeParticipant::getCompleted, true));
+        stats.put("totalParticipants", totalParticipants);
+        stats.put("completedCount", completedCount);
+        stats.put("completionRate", totalParticipants > 0 ? String.format("%.1f%%", completedCount * 100.0 / totalParticipants) : "0%");
+        return stats;
+    }
+
+    public Page<ChallengeParticipant> adminListParticipants(Long id, int page, int size) {
+        Page<ChallengeParticipant> pageParam = new Page<>(page, size);
+        LambdaQueryWrapper<ChallengeParticipant> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ChallengeParticipant::getChallengeId, id);
+        wrapper.orderByDesc(ChallengeParticipant::getProgress);
+        return participantMapper.selectPage(pageParam, wrapper);
     }
 }

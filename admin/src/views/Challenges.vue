@@ -24,6 +24,7 @@
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
             <el-button type="success" @click="openCreate">新增挑战赛</el-button>
+            <el-button @click="handleExport" v-if="canExport">导出Excel</el-button>
           </div>
         </div>
       </template>
@@ -60,7 +61,7 @@
             <el-button size="small" text @click="openEdit(row)">编辑</el-button>
             <el-button v-if="row.status === 1" type="warning" size="small" text @click="changeStatus(row.id, 0)">下线</el-button>
             <el-button v-if="row.status === 0" type="success" size="small" text @click="changeStatus(row.id, 1)">上线</el-button>
-            <el-button v-if="isSuperAdmin" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
+            <el-button v-if="canManage" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -120,10 +121,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAdminStore } from '@/store/admin'
-import { getChallengeList, createChallenge, updateChallenge, deleteChallenge, updateChallengeStatus, getChallengeStats, getChallengeParticipants } from '@/api/admin'
+import { getChallengeList, getChallengeDetail, createChallenge, updateChallenge, deleteChallenge, updateChallengeStatus, getChallengeStats, getChallengeParticipants, exportChallenges } from '@/api/admin'
 
 const adminStore = useAdminStore()
-const isSuperAdmin = computed(() => adminStore.isSuperAdmin)
+const canManage = computed(() => adminStore.hasButton('challenge:manage'))
+const canExport = computed(() => adminStore.hasButton('export'))
 
 const loading = ref(false)
 const tableData = ref([])
@@ -157,9 +159,11 @@ async function loadData() {
     if (res.data) {
       tableData.value = res.data.records || []
       total.value = res.data.total || 0
-      activeCount.value = tableData.value.filter(r => r.status === 1).length
-      endedCount.value = tableData.value.filter(r => r.status === 2).length
     }
+    const allRes = await getChallengeList({ page: 1, size: 1, status: 1 })
+    activeCount.value = allRes.data?.total || 0
+    const endedRes = await getChallengeList({ page: 1, size: 1, status: 2 })
+    endedCount.value = endedRes.data?.total || 0
   } catch (e) { console.error(e); ElMessage.error('加载失败') } finally { loading.value = false }
 }
 
@@ -169,10 +173,16 @@ function openCreate() {
   showDialog.value = true
 }
 
-function openEdit(row) {
-  isEdit.value = true; editId.value = row.id
-  form.value = { ...row }
-  showDialog.value = true
+async function openEdit(row) {
+  try {
+    const res = await getChallengeDetail(row.id)
+    const detail = res.data || row
+    isEdit.value = true; editId.value = detail.id
+    form.value = { ...detail }
+    showDialog.value = true
+  } catch (e) {
+    console.error(e); ElMessage.error('获取详情失败')
+  }
 }
 
 async function submitForm() {
@@ -217,6 +227,21 @@ async function viewStats(row) {
     statsData.value = statsRes.data || {}
     participantList.value = partRes.data?.records || []
   } catch (e) { console.error(e); ElMessage.error('加载统计失败') } finally { participantLoading.value = false }
+}
+
+async function handleExport() {
+  if (!canExport.value) { ElMessage.warning('无导出权限'); return }
+  try {
+    const res = await exportChallenges({ status: statusFilter.value ?? undefined })
+    const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `挑战赛数据_${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (e) { ElMessage.error('导出失败') }
 }
 
 onMounted(() => { loadData() })

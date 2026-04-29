@@ -17,7 +17,8 @@ public class Admin {
     private String password;
     private String nickname;
     private String avatar;
-    private String role;
+    private Long roleId;
+    private Long merchantId;
     private Integer status;
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;

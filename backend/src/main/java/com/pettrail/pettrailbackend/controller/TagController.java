@@ -1,17 +1,20 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.converter.PostConverter;
+import com.pettrail.pettrailbackend.dto.PostVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.dto.TagVO;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.entity.Tag;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.service.TagService;
+import com.pettrail.pettrailbackend.util.UserContext;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +27,7 @@ public class TagController extends BaseController {
 
     private final TagService tagService;
     private final PostMapper postMapper;
+    private final PostConverter postConverter;
 
     @GetMapping("/hot")
     @Operation(summary = "获取热门标签")
@@ -41,15 +45,44 @@ public class TagController extends BaseController {
 
     @GetMapping("/{id}/posts")
     @Operation(summary = "获取标签下的动态")
-    public Result<List<Object>> getTagPosts(@PathVariable Long id,
+    public Result<List<PostVO>> getTagPosts(@PathVariable Long id,
                                              @RequestParam(defaultValue = "1") int page,
                                              @RequestParam(defaultValue = "20") int size) {
         List<Long> postIds = tagService.getPostIdsByTagId(id, page, size);
         if (postIds.isEmpty()) {
-            return Result.success(new ArrayList<>());
+            return Result.success(Collections.emptyList());
         }
         List<Post> posts = postMapper.selectBatchIds(postIds);
-        return Result.success(new ArrayList<>(posts));
+        Long currentUserId = UserContext.getCurrentUserId();
+        return Result.success(postConverter.convertToPostVOList(posts, currentUserId));
+    }
+
+    @GetMapping("/name/{name}/posts")
+    @Operation(summary = "根据标签名称获取动态")
+    public Result<List<PostVO>> getTagPostsByName(@PathVariable String name,
+                                                    @RequestParam(defaultValue = "1") int page,
+                                                    @RequestParam(defaultValue = "20") int size) {
+        Tag tag = tagService.getTagByName(name);
+        if (tag == null) {
+            return Result.success(Collections.emptyList());
+        }
+        List<Long> postIds = tagService.getPostIdsByTagId(tag.getId(), page, size);
+        if (postIds.isEmpty()) {
+            return Result.success(Collections.emptyList());
+        }
+        List<Post> posts = postMapper.selectBatchIds(postIds);
+        Long currentUserId = UserContext.getCurrentUserId();
+        return Result.success(postConverter.convertToPostVOList(posts, currentUserId));
+    }
+
+    @GetMapping("/name/{name}")
+    @Operation(summary = "根据名称获取标签信息")
+    public Result<TagVO> getTagByName(@PathVariable String name) {
+        Tag tag = tagService.getTagByName(name);
+        if (tag == null) {
+            return Result.success(null);
+        }
+        return Result.success(convertToVO(tag));
     }
 
     private TagVO convertToVO(Tag tag) {

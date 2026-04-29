@@ -11,3 +11,11 @@ export const searchTags = (keyword, limit = 20) => {
 export const getTagPosts = (tagId, page = 1, size = 20) => {
   return request.get(`/api/tags/${tagId}/posts`, { page, size })
 }
+
+export const getTagByName = (name) => {
+  return request.get(`/api/tags/name/${encodeURIComponent(name)}`)
+}
+
+export const getTagPostsByName = (name, page = 1, size = 20) => {
+  return request.get(`/api/tags/name/${encodeURIComponent(name)}/posts`, { page, size })
+}

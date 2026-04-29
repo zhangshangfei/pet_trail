@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -101,5 +100,10 @@ public class TagService {
             tagMapper.insert(tag);
         }
         return tag;
+    }
+
+    public Tag getTagByName(String name) {
+        String trimmed = name.trim().replaceAll("^#+", "");
+        return tagMapper.selectByName(trimmed);
     }
 }

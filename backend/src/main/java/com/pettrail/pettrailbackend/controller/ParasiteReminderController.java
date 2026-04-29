@@ -6,7 +6,6 @@ import com.pettrail.pettrailbackend.dto.ReminderStatusDTO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.ParasiteReminder;
 import com.pettrail.pettrailbackend.service.ParasiteReminderService;
-import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;

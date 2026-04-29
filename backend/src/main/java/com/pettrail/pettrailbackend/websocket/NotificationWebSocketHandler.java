@@ -6,6 +6,8 @@ import com.pettrail.pettrailbackend.service.NotificationService;
 import com.pettrail.pettrailbackend.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -29,7 +31,7 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
     private static final ConcurrentHashMap<Long, WebSocketSession> USER_SESSIONS = new ConcurrentHashMap<>();
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+    public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception {
         Long userId = extractUserId(session);
         if (userId == null) {
             session.close(CloseStatus.NOT_ACCEPTABLE);
@@ -63,7 +65,7 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleTextMessage(@NonNull WebSocketSession session, @NonNull TextMessage message) throws Exception {
         Long userId = extractUserId(session);
         if (userId == null) return;
 
@@ -83,7 +85,7 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+    public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus status) {
         Long userId = (Long) session.getAttributes().get("userId");
         if (userId != null) {
             USER_SESSIONS.remove(userId, session);
@@ -92,7 +94,7 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void handleTransportError(WebSocketSession session, Throwable exception) {
+    public void handleTransportError(@NonNull WebSocketSession session, @NonNull Throwable exception) {
         Long userId = (Long) session.getAttributes().get("userId");
         log.warn("WebSocket传输错误: userId={}, error={}", userId, exception.getMessage());
         if (session.isOpen()) {
@@ -134,7 +136,7 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    public boolean isUserOnline(Long userId) {
+    public boolean isUserOnline(@NonNull Long userId) {
         WebSocketSession session = USER_SESSIONS.get(userId);
         return session != null && session.isOpen();
     }

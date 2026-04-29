@@ -13,7 +13,7 @@
               <el-option label="已禁用" :value="0" />
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
-            <el-button type="success" @click="handleExport">导出Excel</el-button>
+            <el-button type="success" @click="handleExport" v-if="canExport">导出Excel</el-button>
           </div>
         </div>
       </template>
@@ -47,8 +47,8 @@
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button size="small" text @click="viewDetail(row)">详情</el-button>
-            <el-button v-if="row.status === 1 && isSuperAdmin" type="danger" size="small" text @click="handleStatus(row, 0)">禁用</el-button>
-            <el-button v-if="row.status !== 1 && isSuperAdmin" type="success" size="small" text @click="handleStatus(row, 1)">启用</el-button>
+            <el-button v-if="row.status === 1 && canManage" type="danger" size="small" text @click="handleStatus(row, 0)">禁用</el-button>
+            <el-button v-if="row.status !== 1 && canManage" type="success" size="small" text @click="handleStatus(row, 1)">启用</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -86,6 +86,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getUserList, getUserStats, updateUserStatus, exportUsers } from '../api/admin'
+import { useAdminStore } from '@/store/admin'
 
 const tableData = ref([])
 const loading = ref(false)
@@ -98,8 +99,9 @@ const showDetail = ref(false)
 const detailUser = ref(null)
 const userStats = ref(null)
 
-const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}')
-const isSuperAdmin = computed(() => adminInfo.role === 'SUPER_ADMIN')
+const adminStore = useAdminStore()
+const canManage = computed(() => adminStore.hasButton('user:manage'))
+const canExport = computed(() => adminStore.hasButton('export'))
 
 const userStatCards = computed(() => [
   { key: 'pets', label: '宠物数', value: userStats.value?.petCount || 0 },
@@ -143,9 +145,10 @@ const handleStatus = async (row, status) => {
 }
 
 const handleExport = async () => {
+  if (!canExport.value) { ElMessage.warning('无导出权限'); return }
   try {
     const res = await exportUsers({ keyword: keyword.value || undefined, status: statusFilter.value ?? undefined })
-    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url

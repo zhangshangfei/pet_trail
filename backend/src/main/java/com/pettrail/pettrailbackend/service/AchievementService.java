@@ -10,7 +10,6 @@ import com.pettrail.pettrailbackend.mapper.CheckinStatsMapper;
 import com.pettrail.pettrailbackend.mapper.FollowMapper;
 import com.pettrail.pettrailbackend.mapper.PetMapper;
 import com.pettrail.pettrailbackend.mapper.PostCommentMapper;
-import com.pettrail.pettrailbackend.mapper.PostLikeMapper;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.mapper.UserAchievementMapper;
 import com.pettrail.pettrailbackend.mapper.WeightRecordMapper;
@@ -36,7 +35,6 @@ public class AchievementService {
     private final CheckinStatsMapper checkinStatsMapper;
     private final PetMapper petMapper;
     private final PostMapper postMapper;
-    private final PostLikeMapper postLikeMapper;
     private final WeightRecordMapper weightRecordMapper;
     private final FollowMapper followMapper;
     private final PostCommentMapper postCommentMapper;

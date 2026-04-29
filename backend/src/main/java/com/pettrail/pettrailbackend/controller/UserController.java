@@ -70,8 +70,6 @@ public class UserController extends BaseController {
         JSONObject json = JSONObject.parseObject(wxResponse);
         String openid = json.getString("openid");
         String errmsg = json.getString("errmsg");
-        Integer errcode = json.getInteger("errcode");
-
         if (openid == null || openid.isEmpty()) {
             redisTemplate.delete(codeKey);
             return Result.error(401, "微信登录失败：" + errmsg);
