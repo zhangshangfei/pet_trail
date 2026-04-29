@@ -183,11 +183,23 @@ function onButtonChange() {}
 
 async function savePermission() {
   if (!permTreeRef.value || !currentRole.value) return
-  const checkedNodes = permTreeRef.value.getCheckedNodes(false, true)
-  const halfChecked = permTreeRef.value.getHalfCheckedNodes()
-  const allNodes = [...checkedNodes, ...halfChecked]
+  const checkedKeys = permTreeRef.value.getCheckedKeys()
+  const halfCheckedKeys = permTreeRef.value.getHalfCheckedKeys()
+  const allKeys = [...new Set([...checkedKeys, ...halfCheckedKeys])]
+
+  const nodeMap = new Map()
+  const collectNodes = (nodes) => {
+    for (const n of nodes) {
+      nodeMap.set(n.id, n)
+      if (n.children) collectNodes(n.children)
+    }
+  }
+  collectNodes(menuTree.value)
+
   const menuPerms = []
-  for (const node of allNodes) {
+  for (const key of allKeys) {
+    const node = nodeMap.get(key)
+    if (!node) continue
     const btns = []
     if (node.buttons && node.buttons.length > 0) {
       for (const b of node.buttons) {

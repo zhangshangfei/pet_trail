@@ -17,5 +17,9 @@ export default defineConfig({
         changeOrigin: true
       }
     }
-  }
+  },
+  build: {
+    outDir: 'dist'
+  },
+  base: process.env.NODE_ENV === 'production' ? '/admin/' : '/'
 })
