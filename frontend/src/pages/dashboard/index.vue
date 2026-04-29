@@ -752,7 +752,8 @@ export default {
       uni.navigateTo({ url: `/pages/health/record?petId=${this.selectedPet.id}` })
     },
     goAiAnalysis() {
-      uni.navigateTo({ url: "/pages/health/analysis" });
+      if (!this.selectedPet || !this.selectedPet.id) return
+      uni.navigateTo({ url: `/pages/health/analysis?petId=${this.selectedPet.id}` });
     },
     onChartRangeChange(range) {
       this.chartRange = range

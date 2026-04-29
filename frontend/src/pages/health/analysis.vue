@@ -229,6 +229,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { getHealthAnalysis } from '@/api/health'
 import { getPetList } from '@/api/pet'
 import { useUserStore } from '@/store/user'
@@ -320,6 +321,13 @@ const runAnalysis = async () => {
   }
 }
 
+onLoad((options) => {
+  if (options && options.petId) {
+    currentPetId.value = Number(options.petId)
+    uni.setStorageSync('currentPetId', currentPetId.value)
+  }
+})
+
 onMounted(async () => {
   const sysInfo = uni.getSystemInfoSync()
   statusBarHeight.value = sysInfo.statusBarHeight || 44
@@ -328,17 +336,19 @@ onMounted(async () => {
     await userStore.loadUserInfo()
   }
 
-  const petId = uni.getStorageSync('currentPetId')
-  if (petId) {
-    currentPetId.value = petId
-  } else {
-    try {
-      const res = await getPetList()
-      if (res.code === 200 && res.data && res.data.length > 0) {
-        currentPetId.value = res.data[0].id
-        uni.setStorageSync('currentPetId', res.data[0].id)
-      }
-    } catch (e) {}
+  if (!currentPetId.value) {
+    const petId = uni.getStorageSync('currentPetId')
+    if (petId) {
+      currentPetId.value = petId
+    } else {
+      try {
+        const res = await getPetList()
+        if (res.code === 200 && res.data && res.data.length > 0) {
+          currentPetId.value = res.data[0].id
+          uni.setStorageSync('currentPetId', res.data[0].id)
+        }
+      } catch (e) {}
+    }
   }
 
   if (currentPetId.value) {

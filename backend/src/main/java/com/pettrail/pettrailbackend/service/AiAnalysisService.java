@@ -109,7 +109,7 @@ public class AiAnalysisService {
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> bodyResp = response.getBody();
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) bodyResp.get("choices");
+                List<Map<String, Object>> choices = bodyResp != null ? (List<Map<String, Object>>) bodyResp.get("choices") : null;
                 if (choices != null && !choices.isEmpty()) {
                     Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
                     if (message != null) {
@@ -127,7 +127,7 @@ public class AiAnalysisService {
                         return content;
                     }
                 }
-                log.warn("[AI调用] 调用异常 === 耗时: {}ms, 状态码: 200, 响应体结构异常, keys: {}", elapsed, response.getBody().keySet());
+                log.warn("[AI调用] 调用异常 === 耗时: {}ms, 状态码: 200, 响应体结构异常, keys: {}", elapsed, bodyResp != null ? bodyResp.keySet() : "null");
             } else {
                 log.warn("[AI调用] 调用失败 === 耗时: {}ms, 状态码: {}, 响应体: {}", elapsed, response.getStatusCode(), response.getBody());
             }
