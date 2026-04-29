@@ -87,20 +87,37 @@ AI_API_KEY=你的AI密钥
 AI_GLM_API_KEY=你的GLM密钥
 ```
 
-### 4.3 停掉宿主机 Nginx（避免端口冲突）
+### 4.3 构建管理后台前端
+
+```bash
+# 安装 Node.js（如果没有）
+curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+yum install -y nodejs
+
+# 构建管理后台
+cd /opt/pet_trail/admin
+npm install
+npm run build
+
+# 构建完成后会在 admin/dist 目录生成静态文件
+# docker-compose 会自动挂载到 nginx 容器中
+cd /opt/pet_trail
+```
+
+### 4.4 停掉宿主机 Nginx（避免端口冲突）
 
 ```bash
 systemctl stop nginx
 systemctl disable nginx
 ```
 
-### 4.4 启动所有服务
+### 4.5 启动所有服务
 
 ```bash
 docker-compose up -d
 ```
 
-### 4.5 验证部署
+### 4.6 验证部署
 
 ```bash
 # 检查容器状态
@@ -121,6 +138,7 @@ curl http://localhost/health
 | ------------- | ----------------------------------- |
 | 健康检查          | <http://124.222.51.71/health>       |
 | 后端 API        | <http://124.222.51.71/api/xxx>      |
+| 管理后台          | <http://124.222.51.71/admin/>       |
 | 直连后端（调试用）     | <http://124.222.51.71:8080/api/xxx> |
 | RabbitMQ 管理后台 | <http://124.222.51.71:15672>        |
 
@@ -130,6 +148,7 @@ curl http://localhost/health
 | ------------- | --------------------------------- |
 | 健康检查          | <https://你的域名/health>             |
 | 后端 API        | <https://你的域名/api/xxx>            |
+| 管理后台          | <https://你的域名/admin/>             |
 | RabbitMQ 管理后台 | <http://124.222.51.71:15672（不对外）> |
 
 ## 六、切换 HTTPS 步骤（域名审批后执行）
@@ -218,6 +237,10 @@ docker-compose restart backend
 # 代码更新后重新部署后端
 git pull
 docker-compose up -d --build backend
+
+# 管理后台前端更新后重新构建
+cd /opt/pet_trail/admin && npm run build && cd /opt/pet_trail
+docker-compose restart nginx
 
 # 只启动部分服务（不用 nginx）
 docker-compose up -d mysql redis rabbitmq backend

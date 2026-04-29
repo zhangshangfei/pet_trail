@@ -87,7 +87,11 @@ public class SysRoleService {
     public void saveRoleMenus(Long roleId, List<SysRoleMenu> menuPermissions) {
         sysRoleMenuMapper.delete(
                 new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, roleId));
+        java.util.Set<Long> insertedMenuIds = new java.util.HashSet<>();
         for (SysRoleMenu rm : menuPermissions) {
+            if (rm.getMenuId() == null || !insertedMenuIds.add(rm.getMenuId())) {
+                continue;
+            }
             rm.setRoleId(roleId);
             rm.setId(null);
             sysRoleMenuMapper.insert(rm);
