@@ -47,9 +47,6 @@ request.interceptors.response.use(
         localStorage.removeItem('admin_info')
         router.push('/login')
       }
-      if (res.code === 403) {
-        ElMessage.error('权限不足')
-      }
       return Promise.reject(new Error(res.message))
     }
     return res
@@ -62,7 +59,7 @@ request.interceptors.response.use(
         ElMessage.error('登录已过期，请重新登录')
         router.push('/login')
       } else if (error.response.status === 403) {
-        ElMessage.error('权限不足')
+        ElMessage.error(error.response.data?.message || '权限不足')
       } else {
         ElMessage.error(error.response.data?.message || '请求失败')
       }

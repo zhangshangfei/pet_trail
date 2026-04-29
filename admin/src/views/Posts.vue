@@ -228,9 +228,7 @@ const handleExport = async () => {
     a.click()
     window.URL.revokeObjectURL(url)
     ElMessage.success('导出成功')
-  } catch (e) {
-    ElMessage.error('导出失败')
-  }
+  } catch (e) {}
 }
 
 onMounted(loadData)

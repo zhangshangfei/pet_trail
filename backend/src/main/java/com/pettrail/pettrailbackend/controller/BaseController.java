@@ -11,6 +11,7 @@ import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,7 @@ public class BaseController implements ApplicationContextAware {
     private static ApplicationContext applicationContext;
 
     @Override
-    public void setApplicationContext(ApplicationContext context) {
+    public void setApplicationContext(@NonNull ApplicationContext context) {
         applicationContext = context;
         log.info("BaseController applicationContext initialized: {}", context != null);
     }
