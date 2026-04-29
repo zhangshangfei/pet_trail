@@ -101,15 +101,28 @@ const showChangePwd = ref(false)
 const pwdForm = ref({ oldPassword: '', newPassword: '', confirmPassword: '' })
 
 const activeMenu = computed(() => route.path)
-const menuList = computed(() => adminStore.menus || [])
+const menuList = computed(() => {
+  const filterMenus = (menus) => {
+    return menus
+      .filter(m => {
+        if (m.children && m.children.length > 0) {
+          m.children = filterMenus(m.children)
+          return true
+        }
+        return m.path && m.path.trim() !== ''
+      })
+      .map(m => ({ ...m }))
+  }
+  return filterMenus(adminStore.menus || [])
+})
 
 const roleLabel = computed(() => {
   return adminStore.roleName || '管理员'
 })
 
 const roleTagType = computed(() => {
-  const map = { SUPER_ADMIN: 'danger', ADMIN: '', MERCHANT_ADMIN: 'warning', MERCHANT_STAFF: 'info' }
-  return map[adminStore.roleCode] || ''
+  const map = { SUPER_ADMIN: 'danger', ADMIN: 'warning', MERCHANT_ADMIN: 'warning', MERCHANT_STAFF: 'info' }
+  return map[adminStore.roleCode] || 'info'
 })
 
 const handleCommand = (command) => {

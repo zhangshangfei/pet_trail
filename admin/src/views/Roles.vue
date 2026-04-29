@@ -54,7 +54,7 @@
           <el-button size="small" @click="selectAll">全选菜单</el-button>
           <el-button size="small" @click="deselectAll">清空</el-button>
         </div>
-        <el-tree ref="permTreeRef" :data="menuTree" show-checkbox node-key="id" :default-checked-keys="checkedMenuIds" :props="{ label: 'name', children: 'children' }" @check="onTreeCheck">
+        <el-tree ref="permTreeRef" :data="menuTree" show-checkbox node-key="id" default-expand-all :default-checked-keys="checkedMenuIds" :props="{ label: 'name', children: 'children' }" @check="onTreeCheck">
           <template #default="{ node, data }">
             <div class="tree-node">
               <span>{{ data.name }}</span>
@@ -147,9 +147,10 @@ async function openPermission(row) {
     const [treeRes, menuRes] = await Promise.all([getMenuTree(), getRoleMenus(row.id)])
     menuTree.value = treeRes.data || []
     const roleMenus = menuRes.data || []
-    const checkedIds = []
+
+    const allMenuIds = new Set()
     for (const rm of roleMenus) {
-      checkedIds.push(rm.menuId)
+      allMenuIds.add(rm.menuId)
       if (rm.buttons) {
         const btnArr = Array.isArray(rm.buttons) ? rm.buttons : String(rm.buttons).split(',')
         for (const b of btnArr) {
@@ -158,17 +159,29 @@ async function openPermission(row) {
         }
       }
     }
-    checkedMenuIds.value = checkedIds
+
+    const parentIds = new Set()
+    const collectParentIds = (nodes) => {
+      for (const n of nodes) {
+        if (n.children && n.children.length > 0) {
+          parentIds.add(n.id)
+          collectParentIds(n.children)
+        }
+      }
+    }
+    collectParentIds(menuTree.value)
+
+    checkedMenuIds.value = [...allMenuIds].filter(id => !parentIds.has(id))
     showPermission.value = true
   } catch (e) { ElMessage.error('加载权限失败') }
 }
 
 function selectAll() {
   if (permTreeRef.value) {
-    const allIds = []
-    const collect = (nodes) => { for (const n of nodes) { allIds.push(n.id); if (n.children) collect(n.children) } }
-    collect(menuTree.value)
-    permTreeRef.value.setCheckedKeys(allIds)
+    const leafIds = []
+    const collectLeaves = (nodes) => { for (const n of nodes) { if (n.children && n.children.length > 0) { collectLeaves(n.children) } else { leafIds.push(n.id) } } }
+    collectLeaves(menuTree.value)
+    permTreeRef.value.setCheckedKeys(leafIds)
   }
 }
 
