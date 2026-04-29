@@ -45,47 +45,42 @@ public class SysMenuService {
 
         List<SysMenu> all = getAllMenusForAdmin();
 
-        boolean isSuperAdmin = false;
-        if (roleId != null) {
-            List<SysRoleMenu> allRoleMenus = sysRoleMenuMapper.selectList(
-                    new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, roleId));
-            Set<Long> menuIds = allRoleMenus.stream().map(SysRoleMenu::getMenuId).collect(Collectors.toSet());
-            isSuperAdmin = all.stream().allMatch(m -> menuIds.contains(m.getId()));
+        List<SysRoleMenu> roleMenuList = sysRoleMenuMapper.selectList(
+                new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, roleId));
+        Set<Long> menuIds = roleMenuList.stream().map(SysRoleMenu::getMenuId).collect(Collectors.toSet());
+        Map<Long, String> menuButtonMap = new HashMap<>();
+        for (SysRoleMenu rm : roleMenuList) {
+            menuButtonMap.put(rm.getMenuId(), rm.getButtons() != null ? rm.getButtons() : "");
         }
+
+        boolean isSuperAdmin = all.stream().allMatch(m -> menuIds.contains(m.getId()));
 
         if (isSuperAdmin) {
             return buildTreeWithButtons(all, 0L, Collections.emptyMap());
         }
 
-        List<SysRoleMenu> roleMenus = sysRoleMenuMapper.selectList(
-                new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, roleId));
-        Map<Long, String> menuButtonMap = new HashMap<>();
-        Set<Long> menuIds = new HashSet<>();
-        for (SysRoleMenu rm : roleMenus) {
-            menuIds.add(rm.getMenuId());
-            menuButtonMap.put(rm.getMenuId(), rm.getButtons() != null ? rm.getButtons() : "");
-        }
-
-        List<SysMenu> visible = new ArrayList<>();
+        Set<Long> visibleIds = new LinkedHashSet<>();
         for (SysMenu menu : all) {
             if (menuIds.contains(menu.getId())) {
-                visible.add(menu);
+                visibleIds.add(menu.getId());
+                addParentIds(all, menu.getParentId(), visibleIds);
             }
-            addParents(all, menu.getParentId(), visible, menuIds);
         }
 
-        List<SysMenu> deduped = visible.stream().distinct().collect(Collectors.toList());
-        return buildTreeWithButtons(deduped, 0L, menuButtonMap);
+        List<SysMenu> visible = all.stream()
+                .filter(m -> visibleIds.contains(m.getId()))
+                .collect(Collectors.toList());
+
+        return buildTreeWithButtons(visible, 0L, menuButtonMap);
     }
 
-    private void addParents(List<SysMenu> all, Long parentId, List<SysMenu> visible, Set<Long> menuIds) {
+    private void addParentIds(List<SysMenu> all, Long parentId, Set<Long> visibleIds) {
         if (parentId == null || parentId == 0) return;
         for (SysMenu m : all) {
             if (m.getId().equals(parentId)) {
-                if (!visible.contains(m)) {
-                    visible.add(m);
+                if (visibleIds.add(m.getId())) {
+                    addParentIds(all, m.getParentId(), visibleIds);
                 }
-                addParents(all, m.getParentId(), visible, menuIds);
                 break;
             }
         }
