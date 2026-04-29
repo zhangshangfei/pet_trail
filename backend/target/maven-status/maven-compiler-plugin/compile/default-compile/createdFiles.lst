@@ -34,7 +34,6 @@ com\pettrail\pettrailbackend\entity\WxSubscribeAuthorization.class
 com\pettrail\pettrailbackend\mapper\PostLikeMapper.class
 com\pettrail\pettrailbackend\entity\AiModelSwitchLog.class
 com\pettrail\pettrailbackend\converter\PostConverter.class
-com\pettrail\pettrailbackend\service\AdminService.class
 com\pettrail\pettrailbackend\controller\AchievementController.class
 com\pettrail\pettrailbackend\controller\ProductController$1.class
 com\pettrail\pettrailbackend\dto\CheckinReportVO.class
@@ -99,7 +98,6 @@ com\pettrail\pettrailbackend\config\MybatisPlusConfig.class
 com\pettrail\pettrailbackend\mapper\FollowMapper.class
 com\pettrail\pettrailbackend\dto\PostBatchAuditDTO.class
 com\pettrail\pettrailbackend\entity\Product.class
-com\pettrail\pettrailbackend\config\DataInitConfig.class
 com\pettrail\pettrailbackend\dto\AdminLoginDTO.class
 com\pettrail\pettrailbackend\service\PetService.class
 com\pettrail\pettrailbackend\service\ParasiteReminderService.class
@@ -212,7 +210,6 @@ com\pettrail\pettrailbackend\controller\WeightRecordController.class
 com\pettrail\pettrailbackend\dto\ChangePasswordDTO.class
 com\pettrail\pettrailbackend\exception\BusinessException.class
 com\pettrail\pettrailbackend\service\OrderService.class
-com\pettrail\pettrailbackend\controller\admin\AdminAdminController.class
 com\pettrail\pettrailbackend\controller\FollowController.class
 com\pettrail\pettrailbackend\dto\ReportCreateDTO.class
 com\pettrail\pettrailbackend\task\FallbackReminderTask.class

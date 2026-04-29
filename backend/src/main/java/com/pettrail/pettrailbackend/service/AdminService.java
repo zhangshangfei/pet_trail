@@ -7,6 +7,7 @@ import com.pettrail.pettrailbackend.entity.*;
 import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.mapper.AdminMapper;
 import com.pettrail.pettrailbackend.mapper.MerchantMapper;
+import com.pettrail.pettrailbackend.mapper.SysMenuMapper;
 import com.pettrail.pettrailbackend.mapper.SysRoleMapper;
 import com.pettrail.pettrailbackend.mapper.SysRoleMenuMapper;
 import com.pettrail.pettrailbackend.util.JwtUtil;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,6 +30,7 @@ public class AdminService {
     private final MerchantMapper merchantMapper;
     private final SysRoleMapper sysRoleMapper;
     private final SysRoleMenuMapper sysRoleMenuMapper;
+    private final SysMenuMapper sysMenuMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -103,6 +106,7 @@ public class AdminService {
             List<String> btns = new ArrayList<>();
             List<SysRoleMenu> roleMenus = sysRoleMenuMapper.selectList(
                     new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, admin.getRoleId()));
+            Set<Long> menuIds = roleMenus.stream().map(SysRoleMenu::getMenuId).collect(Collectors.toSet());
             for (SysRoleMenu rm : roleMenus) {
                 if (rm.getButtons() != null && !rm.getButtons().isEmpty()) {
                     for (String b : rm.getButtons().split(",")) {
@@ -111,6 +115,15 @@ public class AdminService {
                             btns.add(trimmed);
                             perms.add(trimmed);
                         }
+                    }
+                }
+            }
+            if (!menuIds.isEmpty()) {
+                List<SysMenu> menus = sysMenuMapper.selectList(
+                        new LambdaQueryWrapper<SysMenu>().in(SysMenu::getId, menuIds));
+                for (SysMenu menu : menus) {
+                    if (menu.getPermission() != null && !menu.getPermission().isEmpty()) {
+                        perms.add(menu.getPermission());
                     }
                 }
             }

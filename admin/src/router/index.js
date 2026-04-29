@@ -43,11 +43,11 @@ const router = createRouter({
 
 let profileChecked = false
 
-function checkPermission(roleCode, buttons, requiredPermission) {
+function checkPermission(roleCode, permissions, requiredPermission) {
   if (!requiredPermission) return true
   if (roleCode === 'SUPER_ADMIN') return true
-  if (!buttons) return false
-  return buttons.includes(requiredPermission)
+  if (!permissions) return false
+  return permissions.includes(requiredPermission)
 }
 
 function extractAdmin(data) {
@@ -85,7 +85,7 @@ router.beforeEach(async (to, from, next) => {
           return
         }
         const requiredPermission = to.meta?.permission
-        if (!checkPermission(admin.roleCode, admin.buttons, requiredPermission)) {
+        if (!checkPermission(admin.roleCode, admin.permissions, requiredPermission)) {
           next('/dashboard')
           return
         }
@@ -108,7 +108,7 @@ router.beforeEach(async (to, from, next) => {
 
   const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}')
   const requiredPermission = to.meta?.permission
-  if (!checkPermission(adminInfo.roleCode, adminInfo.buttons, requiredPermission)) {
+  if (!checkPermission(adminInfo.roleCode, adminInfo.permissions, requiredPermission)) {
     next('/dashboard')
     return
   }
