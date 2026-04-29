@@ -16,7 +16,7 @@
       </el-select>
       <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 260px" @change="loadData" />
       <el-button type="primary" @click="loadData">搜索</el-button>
-      <el-button type="success" @click="handleExport">导出Excel</el-button>
+      <el-button type="success" @click="handleExport" v-if="canExport">导出Excel</el-button>
     </div>
     <el-card shadow="hover">
       <el-table :data="list" v-loading="loading" stripe>
@@ -64,9 +64,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getOperationLogs, exportLogs } from '../api/admin'
+import { useAdminStore } from '@/store/admin'
+
+const adminStore = useAdminStore()
+const canExport = computed(() => adminStore.hasButton('export'))
 
 const loading = ref(false)
 const list = ref([])

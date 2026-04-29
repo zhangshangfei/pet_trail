@@ -24,7 +24,7 @@
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
             <el-button type="success" @click="openCreate">新增挑战赛</el-button>
-            <el-button @click="handleExport">导出Excel</el-button>
+            <el-button @click="handleExport" v-if="canExport">导出Excel</el-button>
           </div>
         </div>
       </template>
@@ -125,6 +125,7 @@ import { getChallengeList, getChallengeDetail, createChallenge, updateChallenge,
 
 const adminStore = useAdminStore()
 const canManage = computed(() => adminStore.hasButton('challenge:manage'))
+const canExport = computed(() => adminStore.hasButton('export'))
 
 const loading = ref(false)
 const tableData = ref([])

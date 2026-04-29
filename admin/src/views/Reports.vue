@@ -16,7 +16,7 @@
               <el-option label="用户" value="user" />
             </el-select>
             <el-button type="primary" @click="loadData">查询</el-button>
-            <el-button type="success" @click="handleExport">导出Excel</el-button>
+            <el-button type="success" @click="handleExport" v-if="canExport">导出Excel</el-button>
           </div>
         </div>
       </template>
@@ -73,9 +73,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getReportList, handleReport as handleReportApi, deletePost, updateUserStatus, deleteComment, exportReports } from '../api/admin'
+import { useAdminStore } from '@/store/admin'
+
+const adminStore = useAdminStore()
+const canExport = computed(() => adminStore.hasButton('export'))
 
 const tableData = ref([])
 const loading = ref(false)
