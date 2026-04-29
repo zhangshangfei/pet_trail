@@ -108,6 +108,7 @@ const viewDetail = (row) => {
 }
 
 const handleExport = async () => {
+  if (!canExport.value) { ElMessage.warning('无导出权限'); return }
   try {
     const res = await exportLogs({ module: module.value || undefined })
     const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })

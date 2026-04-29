@@ -172,6 +172,7 @@ const handleDelete = async (row) => {
 }
 
 const handleExport = async () => {
+  if (!canExport.value) { ElMessage.warning('无导出权限'); return }
   try {
     const res = await exportPets({ keyword: keyword.value || undefined, category: category.value ?? undefined })
     const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })

@@ -1,9 +1,9 @@
 package com.pettrail.pettrailbackend.annotation;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Admin;
 import com.pettrail.pettrailbackend.entity.SysRoleMenu;
+import com.pettrail.pettrailbackend.exception.ForbiddenException;
 import com.pettrail.pettrailbackend.mapper.AdminMapper;
 import com.pettrail.pettrailbackend.mapper.SysRoleMenuMapper;
 import com.pettrail.pettrailbackend.util.UserContext;
@@ -33,7 +33,7 @@ public class RequireButtonAspect {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
-            return Result.error(401, "未登录");
+            throw new ForbiddenException("未登录");
         }
 
         boolean isSuperAdmin = auth.getAuthorities().stream()
@@ -44,12 +44,12 @@ public class RequireButtonAspect {
 
         Long adminId = UserContext.getCurrentUserId();
         if (adminId == null) {
-            return Result.error(401, "未登录");
+            throw new ForbiddenException("未登录");
         }
 
         Admin admin = adminMapper.selectById(adminId);
         if (admin == null || admin.getRoleId() == null) {
-            return Result.error(403, "权限不足，需要 " + buttonCode + " 权限");
+            throw new ForbiddenException("权限不足，需要 " + buttonCode + " 权限");
         }
 
         List<SysRoleMenu> roleMenus = sysRoleMenuMapper.selectList(
@@ -70,7 +70,7 @@ public class RequireButtonAspect {
 
         if (!hasButton) {
             log.warn("按钮权限不足: 需要 {}, 管理员ID: {}", buttonCode, adminId);
-            return Result.error(403, "权限不足，需要 " + buttonCode + " 权限");
+            throw new ForbiddenException("权限不足，需要 " + buttonCode + " 权限");
         }
 
         return joinPoint.proceed();
