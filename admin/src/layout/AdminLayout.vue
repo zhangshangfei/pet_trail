@@ -14,18 +14,18 @@
         active-text-color="#ff6a3d"
       >
         <template v-for="menu in menuList" :key="menu.id">
-          <el-menu-item v-if="!menu.children || menu.children.length === 0" :index="menu.path">
+          <el-menu-item v-if="!menu.children || menu.children.length === 0" :index="menu.path" :class="{ 'menu-disabled': Number(menu.status ?? 1) !== 1 }">
             <el-icon><component :is="menu.icon" /></el-icon>
-            <template #title>{{ menu.name }}</template>
+            <template #title>{{ menu.name }}<span v-if="Number(menu.status ?? 1) !== 1" class="menu-disabled-tag">（已禁用）</span></template>
           </el-menu-item>
-          <el-sub-menu v-else :index="'menu-' + menu.id">
+          <el-sub-menu v-else :index="'menu-' + menu.id" :class="{ 'menu-disabled': Number(menu.status ?? 1) !== 1 }">
             <template #title>
               <el-icon><component :is="menu.icon" /></el-icon>
-              <span>{{ menu.name }}</span>
+              <span>{{ menu.name }}<span v-if="Number(menu.status ?? 1) !== 1" class="menu-disabled-tag">（已禁用）</span></span>
             </template>
-            <el-menu-item v-for="child in menu.children" :key="child.id" :index="child.path">
+            <el-menu-item v-for="child in menu.children" :key="child.id" :index="child.path" :class="{ 'menu-disabled': Number(child.status ?? 1) !== 1 }">
               <el-icon><component :is="child.icon" /></el-icon>
-              <template #title>{{ child.name }}</template>
+              <template #title>{{ child.name }}<span v-if="Number(child.status ?? 1) !== 1" class="menu-disabled-tag">（已禁用）</span></template>
             </el-menu-item>
           </el-sub-menu>
         </template>
@@ -243,5 +243,15 @@ onMounted(async () => {
 .admin-main {
   background: #f5f5f5;
   padding: 20px;
+}
+
+.menu-disabled {
+  opacity: 0.5;
+}
+
+.menu-disabled-tag {
+  font-size: 11px;
+  color: #f56c6c;
+  margin-left: 4px;
 }
 </style>

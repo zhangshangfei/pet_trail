@@ -35,6 +35,12 @@ public class RequireRoleAspect {
                             || a.getAuthority().equals("ROLE_SUPER_ADMIN"));
         }
 
+        if ("SUPER_ADMIN".equals(requiredRole)) {
+            hasRole = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_SUPER_ADMIN")
+                            || a.getAuthority().equals("ROLE_ADMIN"));
+        }
+
         if (!hasRole) {
             log.warn("权限不足: 需要角色 {}, 当前角色: {}", requiredRole, auth.getAuthorities());
             return Result.error(403, "权限不足，需要 " + requiredRole + " 角色");

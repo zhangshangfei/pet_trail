@@ -43,16 +43,16 @@ public class SysMenuService {
     public List<Map<String, Object>> getUserMenuTree(Long roleId) {
         if (roleId == null) return List.of();
 
+        List<SysMenu> all = getAllMenusForAdmin();
+
         boolean isSuperAdmin = false;
         if (roleId != null) {
             List<SysRoleMenu> allRoleMenus = sysRoleMenuMapper.selectList(
                     new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, roleId));
             Set<Long> menuIds = allRoleMenus.stream().map(SysRoleMenu::getMenuId).collect(Collectors.toSet());
-            List<SysMenu> all = getAllMenus();
             isSuperAdmin = all.stream().allMatch(m -> menuIds.contains(m.getId()));
         }
 
-        List<SysMenu> all = getAllMenus();
         if (isSuperAdmin) {
             return buildTreeWithButtons(all, 0L, Collections.emptyMap());
         }
