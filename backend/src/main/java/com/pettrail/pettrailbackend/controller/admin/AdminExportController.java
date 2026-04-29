@@ -20,58 +20,58 @@ public class AdminExportController extends BaseAdminController {
 
     @GetMapping("/users")
     @Operation(summary = "导出用户数据")
-    @RequireButton("export")
     public void exportUsers(HttpServletResponse response,
                             @RequestParam(required = false) String keyword,
                             @RequestParam(required = false) Integer status) throws IOException {
+        requireExportPermission();
         exportService.exportUsers(response, keyword, status);
     }
 
     @GetMapping("/posts")
     @Operation(summary = "导出动态数据")
-    @RequireButton("export")
     public void exportPosts(HttpServletResponse response,
                             @RequestParam(required = false) Integer auditStatus) throws IOException {
+        requireExportPermission();
         exportService.exportPosts(response, auditStatus);
     }
 
     @GetMapping("/reports")
     @Operation(summary = "导出举报数据")
-    @RequireButton("export")
     public void exportReports(HttpServletResponse response,
                               @RequestParam(required = false) Integer status) throws IOException {
+        requireExportPermission();
         exportService.exportReports(response, status);
     }
 
     @GetMapping("/logs")
     @Operation(summary = "导出操作日志")
-    @RequireButton("export")
     public void exportLogs(HttpServletResponse response,
                            @RequestParam(required = false) String module) throws IOException {
+        requireExportPermission();
         exportService.exportLogs(response, module);
     }
 
     @GetMapping("/pets")
     @Operation(summary = "导出宠物数据")
-    @RequireButton("export")
     public void exportPets(HttpServletResponse response,
                            @RequestParam(required = false) Integer category) throws IOException {
+        requireExportPermission();
         exportService.exportPets(response, category);
     }
 
     @GetMapping("/challenges")
     @Operation(summary = "导出挑战赛数据")
-    @RequireButton("export")
     public void exportChallenges(HttpServletResponse response,
                                   @RequestParam(required = false) Integer status) throws IOException {
+        requireExportPermission();
         exportService.exportChallenges(response, status);
     }
 
     @GetMapping("/products")
     @Operation(summary = "导出商品数据")
-    @RequireButton("export")
     public void exportProducts(HttpServletResponse response,
                                 @RequestParam(required = false) Integer status) throws IOException {
+        requireExportPermission();
         exportService.exportProducts(response, status);
     }
 }
