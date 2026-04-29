@@ -37,7 +37,6 @@ public class ChallengeService {
         try {
             Object cached = redisTemplate.opsForValue().get(cacheKey);
             if (cached != null) {
-                @SuppressWarnings("unchecked")
                 List<Challenge> result = (List<Challenge>) cached;
                 return result;
             }

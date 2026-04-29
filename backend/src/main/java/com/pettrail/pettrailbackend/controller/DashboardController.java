@@ -4,7 +4,6 @@ import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.*;
 import com.pettrail.pettrailbackend.service.*;
 import com.pettrail.pettrailbackend.util.JwtUtil;
-import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;

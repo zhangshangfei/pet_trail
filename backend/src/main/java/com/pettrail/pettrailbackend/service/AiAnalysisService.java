@@ -25,7 +25,6 @@ public class AiAnalysisService {
     private final AiModelService aiModelService;
     private final HealthAnalysisCacheService cacheService;
 
-    private static final long MAX_CALL_DURATION_MS = 25000;
     private final AtomicLong lastFailTime = new AtomicLong(0);
     private static final long CIRCUIT_BREAKER_RESET_MS = 60000;
     private static final int MAX_CONSECUTIVE_FAILURES = 3;
@@ -103,7 +102,6 @@ public class AiAnalysisService {
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
-            @SuppressWarnings("unchecked")
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.POST, request, (Class<Map<String, Object>>)(Class<?>)Map.class);
 
             long elapsed = System.currentTimeMillis() - startTime;
@@ -111,10 +109,8 @@ public class AiAnalysisService {
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> bodyResp = response.getBody();
-                @SuppressWarnings("unchecked")
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) bodyResp.get("choices");
+                List<Map<String, Object>> choices = bodyResp != null ? (List<Map<String, Object>>) bodyResp.get("choices") : null;
                 if (choices != null && !choices.isEmpty()) {
-                    @SuppressWarnings("unchecked")
                     Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
                     if (message != null) {
                         String content = (String) message.get("content");
@@ -131,7 +127,7 @@ public class AiAnalysisService {
                         return content;
                     }
                 }
-                log.warn("[AI调用] 调用异常 === 耗时: {}ms, 状态码: 200, 响应体结构异常, keys: {}", elapsed, response.getBody().keySet());
+                log.warn("[AI调用] 调用异常 === 耗时: {}ms, 状态码: 200, 响应体结构异常, keys: {}", elapsed, bodyResp != null ? bodyResp.keySet() : "null");
             } else {
                 log.warn("[AI调用] 调用失败 === 耗时: {}ms, 状态码: {}, 响应体: {}", elapsed, response.getStatusCode(), response.getBody());
             }
@@ -161,7 +157,6 @@ public class AiAnalysisService {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void applyModelParameters(Map<String, Object> body, String parametersJson) {
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();

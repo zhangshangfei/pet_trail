@@ -60,6 +60,12 @@
               >
                 <text class="btn-action-text">{{ item.isCompleted ? "已完成" : "标记完成" }}</text>
               </button>
+              <button v-if="!item.isCompleted" class="btn-action btn-edit" @tap="onEdit(item)">
+                <text class="btn-action-text">编辑</text>
+              </button>
+              <button v-if="!item.isCompleted" class="btn-action btn-delete" @tap="onDelete(item)">
+                <text class="btn-action-text">删除</text>
+              </button>
             </view>
           </view>
         </view>
@@ -80,6 +86,39 @@
         </view>
       </view>
     </view>
+
+    <!-- 编辑弹窗 -->
+    <view class="modal-mask" v-if="showEditModal" @click="hideEditModal">
+      <view class="modal-content" @click.stop>
+        <view class="modal-header">
+          <text class="modal-title">编辑疫苗提醒</text>
+          <text class="modal-close" @click="hideEditModal">✕</text>
+        </view>
+        <view class="modal-body">
+          <view class="form-group">
+            <text class="form-label">疫苗名称</text>
+            <input class="form-input" v-model="editForm.vaccineName" placeholder="请输入疫苗名称" />
+          </view>
+          <view class="form-group">
+            <text class="form-label">计划日期</text>
+            <picker mode="date" :value="editForm.nextDate" @change="onEditDateChange">
+              <view class="picker-value">
+                <text :class="editForm.nextDate ? 'value-text' : 'picker-placeholder'">{{ editForm.nextDate || '请选择日期' }}</text>
+                <text class="picker-arrow">▼</text>
+              </view>
+            </picker>
+          </view>
+          <view class="form-group">
+            <text class="form-label">备注</text>
+            <input class="form-input" v-model="editForm.note" placeholder="选填" />
+          </view>
+        </view>
+        <view class="modal-footer">
+          <view class="modal-btn modal-btn-cancel" @click="hideEditModal"><text class="modal-btn-text-cancel">取消</text></view>
+          <view class="modal-btn modal-btn-confirm" @click="submitEdit"><text class="modal-btn-text-confirm">保存</text></view>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -91,7 +130,14 @@ export default {
     return {
       statusBarHeight: 20,
       petId: null,
-      records: []
+      records: [],
+      showEditModal: false,
+      editingItem: null,
+      editForm: {
+        vaccineName: '',
+        nextDate: '',
+        note: ''
+      }
     }
   },
   onLoad(options) {
@@ -177,6 +223,74 @@ export default {
     },
     goBack() {
       uni.navigateBack()
+    },
+    onEdit(item) {
+      this.editingItem = item
+      this.editForm = {
+        vaccineName: item.name || '',
+        nextDate: item.date || '',
+        note: item.note || ''
+      }
+      this.showEditModal = true
+    },
+    hideEditModal() {
+      this.showEditModal = false
+      this.editingItem = null
+    },
+    onEditDateChange(e) {
+      this.editForm.nextDate = e.detail.value
+    },
+    async submitEdit() {
+      if (!this.editForm.vaccineName) {
+        uni.showToast({ title: '请输入疫苗名称', icon: 'none' })
+        return
+      }
+      try {
+        const res = await uni.$request.put(
+          `/api/pets/${this.petId}/vaccine-reminders/${this.editingItem.id}`,
+          {
+            vaccineName: this.editForm.vaccineName,
+            nextDate: this.editForm.nextDate,
+            note: this.editForm.note
+          }
+        )
+        if (res && res.success) {
+          uni.showToast({ title: '修改成功', icon: 'success' })
+          this.hideEditModal()
+          this.loadRecords()
+        } else {
+          uni.showToast({ title: (res && res.message) || '修改失败', icon: 'none' })
+        }
+      } catch (e) {
+        console.error('修改疫苗提醒失败:', e)
+        uni.showToast({ title: '网络错误', icon: 'none' })
+      }
+    },
+    onDelete(item) {
+      uni.showModal({
+        title: '确认删除',
+        content: `确定要删除"${item.name}"的疫苗提醒吗？`,
+        confirmText: '删除',
+        confirmColor: '#ff4d4f',
+        success: async (res) => {
+          if (res.confirm) {
+            try {
+              const result = await uni.$request.delete(
+                `/api/pets/${this.petId}/vaccine-reminders/${item.id}`
+              )
+              if (result && result.success) {
+                uni.showToast({ title: '删除成功', icon: 'success' })
+                this.loadRecords()
+              } else {
+                uni.showToast({ title: (result && result.message) || '删除失败', icon: 'none' })
+              }
+            } catch (e) {
+              console.error('删除疫苗提醒失败:', e)
+              uni.showToast({ title: '网络错误', icon: 'none' })
+            }
+          }
+        }
+      })
     },
     addRecord() {
       uni.navigateTo({ url: `/pages/health/index?petId=${this.petId}&tab=1` })
@@ -419,6 +533,7 @@ export default {
 .record-actions {
   display: flex;
   justify-content: center;
+  gap: 12rpx;
 }
 
 .btn-action {
@@ -448,6 +563,24 @@ export default {
 
 .btn-action.completed .btn-action-text {
   color: #047857;
+}
+
+.btn-edit {
+  background: #e0e7ff !important;
+  box-shadow: none !important;
+}
+
+.btn-edit .btn-action-text {
+  color: #4f46e5 !important;
+}
+
+.btn-delete {
+  background: #fff5f5 !important;
+  box-shadow: none !important;
+}
+
+.btn-delete .btn-action-text {
+  color: #ff4d4f !important;
 }
 
 .empty-state {
@@ -527,5 +660,144 @@ export default {
   width: 5rpx;
   height: 38rpx;
   transform: translateX(-50%);
+}
+
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 80%;
+  max-height: 80vh;
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32rpx;
+  border-bottom: 1rpx solid #f3f4f6;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #111827;
+}
+
+.modal-close {
+  font-size: 36rpx;
+  color: #9ca3af;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-body {
+  padding: 32rpx;
+}
+
+.form-group {
+  margin-bottom: 28rpx;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 14rpx;
+  display: block;
+}
+
+.form-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #f9fafb;
+  border: none;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  min-height: 80rpx;
+  font-size: 28rpx;
+  color: #374151;
+}
+
+.picker-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9fafb;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  min-height: 80rpx;
+}
+
+.value-text {
+  font-size: 28rpx;
+  color: #374151;
+}
+
+.picker-placeholder {
+  font-size: 28rpx;
+  color: #9ca3af;
+}
+
+.picker-arrow {
+  font-size: 20rpx;
+  color: #9ca3af;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 16rpx;
+  padding: 24rpx 32rpx;
+  border-top: 1rpx solid #f3f4f6;
+}
+
+.modal-btn {
+  flex: 1;
+  height: 88rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-btn-cancel {
+  background: #f3f4f6;
+}
+
+.modal-btn-text-cancel {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.modal-btn-confirm {
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
+}
+
+.modal-btn-text-confirm {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #fff;
 }
 </style>

@@ -7,9 +7,7 @@ import com.pettrail.pettrailbackend.mapper.VaccineReminderMapper;
 import com.pettrail.pettrailbackend.mapper.ParasiteReminderMapper;
 import com.pettrail.pettrailbackend.mapper.WeightRecordMapper;
 import com.pettrail.pettrailbackend.mapper.CheckinRecordMapper;
-import com.pettrail.pettrailbackend.mapper.CheckinItemMapper;
 import com.pettrail.pettrailbackend.entity.CheckinRecord;
-import com.pettrail.pettrailbackend.entity.CheckinItem;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +27,6 @@ public class HealthRecordService {
     private final ParasiteReminderMapper parasiteReminderMapper;
     private final WeightRecordMapper weightRecordMapper;
     private final CheckinRecordMapper checkinRecordMapper;
-    private final CheckinItemMapper checkinItemMapper;
 
     public Map<String, Object> getDashboard(Long userId, Long petId) {
         Map<String, Object> result = new HashMap<>();

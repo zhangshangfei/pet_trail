@@ -7,7 +7,6 @@ import com.pettrail.pettrailbackend.entity.VetClinic;
 import com.pettrail.pettrailbackend.service.VetClinicService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;

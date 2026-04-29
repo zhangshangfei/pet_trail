@@ -41,7 +41,6 @@ public class PetService extends ServiceImpl<PetMapper, Pet> {
         try {
             Object cached = redisTemplate.opsForValue().get(cacheKey);
             if (cached != null) {
-                @SuppressWarnings("unchecked")
                 List<Pet> result = (List<Pet>) cached;
                 return result;
             }

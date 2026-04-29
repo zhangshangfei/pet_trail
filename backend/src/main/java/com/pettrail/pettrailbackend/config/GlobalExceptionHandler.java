@@ -134,8 +134,11 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<?> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
         String paramName = e.getName();
-        String paramValue = e.getValue() != null ? e.getValue().toString() : "null";
-        log.warn("参数类型转换失败：{}={}, 期望类型：{}", paramName, paramValue, e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "未知");
+        Object value = e.getValue();
+        String paramValue = value != null ? value.toString() : "null";
+        Class<?> requiredType = e.getRequiredType();
+        String requiredTypeName = requiredType != null ? requiredType.getSimpleName() : "未知";
+        log.warn("参数类型转换失败：{}={}, 期望类型：{}", paramName, paramValue, requiredTypeName);
         return Result.error(400, "参数 " + paramName + " 格式不正确");
     }
 

@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.dto.VetAppointmentVO;
 import com.pettrail.pettrailbackend.entity.Pet;
-import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.entity.VetAppointment;
 import com.pettrail.pettrailbackend.entity.VetClinic;
 import com.pettrail.pettrailbackend.exception.BusinessException;

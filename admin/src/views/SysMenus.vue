@@ -21,7 +21,7 @@
         @node-drop="onNodeDrop"
       >
         <template #default="{ node, data }">
-          <div class="menu-tree-node" :class="{ 'is-group': !data.path, 'is-page': data.path, 'is-disabled': data.status !== 1 }">
+          <div class="menu-tree-node" :class="{ 'is-group': !data.path, 'is-page': data.path, 'is-disabled': Number(data.status ?? 1) !== 1 }">
             <div class="node-main">
               <div class="node-icon" :class="{ 'is-group': !data.path }">
                 <el-icon v-if="data.icon" :size="16">
@@ -38,11 +38,11 @@
                   <el-tag v-if="!data.path" size="small" type="warning" effect="light" class="type-tag">目录</el-tag>
                   <el-tag v-else size="small" type="success" effect="light" class="type-tag">页面</el-tag>
                   <el-tag
-                    :type="data.status === 1 ? 'success' : 'danger'"
+                    :type="Number(data.status ?? 1) === 1 ? 'success' : 'danger'"
                     size="small"
                     effect="light"
                     class="status-tag"
-                  >{{ data.status === 1 ? '启用' : '禁用' }}</el-tag>
+                  >{{ Number(data.status ?? 1) === 1 ? '启用' : '禁用' }}</el-tag>
                 </div>
                 <div class="node-meta-row">
                   <span v-if="data.path" class="meta-item">
