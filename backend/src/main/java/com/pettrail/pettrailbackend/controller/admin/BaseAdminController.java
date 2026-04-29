@@ -40,8 +40,8 @@ public class BaseAdminController {
         return userId;
     }
 
-    protected void requireExportPermission() {
-        log.info("requireExportPermission called");
+    protected void requireExportPermission(Long menuId) {
+        log.info("requireExportPermission menuId: {}", menuId);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             log.warn("未认证");
@@ -50,7 +50,7 @@ public class BaseAdminController {
 
         boolean isSuperAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_SUPER_ADMIN"));
-        log.info("isSuperAdmin: {}, authorities: {}", isSuperAdmin, auth.getAuthorities());
+        log.info("isSuperAdmin: {}", isSuperAdmin);
         if (isSuperAdmin) {
             log.info("超级管理员，放行");
             return;
@@ -68,23 +68,30 @@ public class BaseAdminController {
             throw new ForbiddenException("权限不足");
         }
 
-        List<SysRoleMenu> roleMenus = sysRoleMenuMapper.selectList(
-                new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, admin.getRoleId()));
-        log.info("roleMenus count: {}, roleId: {}", roleMenus.size(), admin.getRoleId());
+        SysRoleMenu roleMenu = sysRoleMenuMapper.selectOne(
+                new LambdaQueryWrapper<SysRoleMenu>()
+                        .eq(SysRoleMenu::getRoleId, admin.getRoleId())
+                        .eq(SysRoleMenu::getMenuId, menuId));
+        log.info("roleMenu: menuId={}, buttons={}", roleMenu != null ? roleMenu.getMenuId() : null, roleMenu != null ? roleMenu.getButtons() : null);
 
-        for (SysRoleMenu rm : roleMenus) {
-            log.info("  menuId={}, buttons={}", rm.getMenuId(), rm.getButtons());
-            if (rm.getButtons() != null && !rm.getButtons().isEmpty()) {
-                for (String b : rm.getButtons().split(",")) {
-                    if ("export".equals(b.trim())) {
-                        log.info("找到export权限");
-                        return;
-                    }
-                }
+        if (roleMenu == null || roleMenu.getButtons() == null || roleMenu.getButtons().isEmpty()) {
+            log.warn("菜单 {} 无任何按钮权限", menuId);
+            throw new ForbiddenException("权限不足，需要导出权限");
+        }
+
+        boolean hasExport = false;
+        for (String b : roleMenu.getButtons().split(",")) {
+            if ("export".equals(b.trim())) {
+                hasExport = true;
+                break;
             }
         }
 
-        log.warn("未找到export权限，roleId={}", admin.getRoleId());
-        throw new ForbiddenException("权限不足，需要导出权限");
+        if (!hasExport) {
+            log.warn("菜单 {} 没有export权限", menuId);
+            throw new ForbiddenException("权限不足，需要导出权限");
+        }
+
+        log.info("菜单 {} 有export权限，放行", menuId);
     }
 }

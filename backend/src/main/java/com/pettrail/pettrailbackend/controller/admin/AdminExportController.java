@@ -1,6 +1,5 @@
 package com.pettrail.pettrailbackend.controller.admin;
 
-import com.pettrail.pettrailbackend.annotation.RequireButton;
 import com.pettrail.pettrailbackend.service.ExportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,7 +22,7 @@ public class AdminExportController extends BaseAdminController {
     public void exportUsers(HttpServletResponse response,
                             @RequestParam(required = false) String keyword,
                             @RequestParam(required = false) Integer status) throws IOException {
-        requireExportPermission();
+        requireExportPermission(3L);
         exportService.exportUsers(response, keyword, status);
     }
 
@@ -31,7 +30,7 @@ public class AdminExportController extends BaseAdminController {
     @Operation(summary = "导出动态数据")
     public void exportPosts(HttpServletResponse response,
                             @RequestParam(required = false) Integer auditStatus) throws IOException {
-        requireExportPermission();
+        requireExportPermission(6L);
         exportService.exportPosts(response, auditStatus);
     }
 
@@ -39,7 +38,7 @@ public class AdminExportController extends BaseAdminController {
     @Operation(summary = "导出举报数据")
     public void exportReports(HttpServletResponse response,
                               @RequestParam(required = false) Integer status) throws IOException {
-        requireExportPermission();
+        requireExportPermission(9L);
         exportService.exportReports(response, status);
     }
 
@@ -47,7 +46,7 @@ public class AdminExportController extends BaseAdminController {
     @Operation(summary = "导出操作日志")
     public void exportLogs(HttpServletResponse response,
                            @RequestParam(required = false) String module) throws IOException {
-        requireExportPermission();
+        requireExportPermission(18L);
         exportService.exportLogs(response, module);
     }
 
@@ -55,7 +54,7 @@ public class AdminExportController extends BaseAdminController {
     @Operation(summary = "导出宠物数据")
     public void exportPets(HttpServletResponse response,
                            @RequestParam(required = false) Integer category) throws IOException {
-        requireExportPermission();
+        requireExportPermission(5L);
         exportService.exportPets(response, category);
     }
 
@@ -63,7 +62,7 @@ public class AdminExportController extends BaseAdminController {
     @Operation(summary = "导出挑战赛数据")
     public void exportChallenges(HttpServletResponse response,
                                   @RequestParam(required = false) Integer status) throws IOException {
-        requireExportPermission();
+        requireExportPermission(11L);
         exportService.exportChallenges(response, status);
     }
 
@@ -71,7 +70,7 @@ public class AdminExportController extends BaseAdminController {
     @Operation(summary = "导出商品数据")
     public void exportProducts(HttpServletResponse response,
                                 @RequestParam(required = false) Integer status) throws IOException {
-        requireExportPermission();
+        requireExportPermission(12L);
         exportService.exportProducts(response, status);
     }
 }
