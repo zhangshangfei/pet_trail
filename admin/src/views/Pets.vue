@@ -1,46 +1,48 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <h2>宠物管理</h2>
-    </div>
-    <div class="filter-bar">
-      <el-input v-model="keyword" placeholder="搜索宠物名称" clearable style="width: 200px" @clear="loadData" @keyup.enter="loadData" />
-      <el-select v-model="category" placeholder="类别" clearable style="width: 120px" @change="loadData">
-        <el-option label="猫" :value="1" />
-        <el-option label="狗" :value="2" />
-        <el-option label="其他" :value="0" />
-      </el-select>
-      <el-button type="primary" @click="loadData">搜索</el-button>
-      <el-button type="success" @click="handleExport" v-if="canExport">导出Excel</el-button>
-    </div>
     <el-card shadow="hover">
+      <template #header>
+        <div class="page-header">
+          <span class="card-title">宠物管理</span>
+        </div>
+      </template>
+      <div class="search-area">
+        <el-input v-model="keyword" placeholder="搜索宠物名称" clearable style="width: 200px" @clear="loadData" @keyup.enter="loadData" />
+        <el-select v-model="category" placeholder="类别" clearable style="width: 120px" @change="loadData">
+          <el-option label="猫" :value="1" />
+          <el-option label="狗" :value="2" />
+          <el-option label="其他" :value="0" />
+        </el-select>
+        <el-button type="primary" @click="loadData">搜索</el-button>
+        <el-button type="success" @click="handleExport" v-if="canExport">导出Excel</el-button>
+      </div>
       <el-table :data="list" v-loading="loading" stripe>
-      <el-table-column prop="id" label="ID" width="70" />
-      <el-table-column label="头像" width="70">
-        <template #default="{ row }">
-          <el-avatar v-if="row.avatar" :src="row.avatar" :size="32" />
-          <el-avatar v-else :size="32">{{ row.name?.[0] || '?' }}</el-avatar>
-        </template>
-      </el-table-column>
-      <el-table-column prop="name" label="名称" width="120" />
-      <el-table-column prop="breed" label="品种" width="120" />
-      <el-table-column label="类别" width="80">
-        <template #default="{ row }">{{ categoryMap[row.category] || '其他' }}</template>
-      </el-table-column>
-      <el-table-column label="性别" width="70">
-        <template #default="{ row }">{{ row.gender === 1 ? '♂' : row.gender === 2 ? '♀' : '?' }}</template>
-      </el-table-column>
-      <el-table-column prop="weight" label="体重(kg)" width="90" />
-      <el-table-column prop="userId" label="主人ID" width="80" />
-      <el-table-column prop="userNickname" label="主人昵称" width="120" />
-      <el-table-column prop="createdAt" label="创建时间" width="170" />
-      <el-table-column label="操作" width="180" fixed="right">
-        <template #default="{ row }">
-          <el-button size="small" text @click="viewDetail(row)">详情</el-button>
-          <el-button size="small" text type="primary" @click="openEdit(row)">编辑</el-button>
-          <el-button size="small" text type="danger" @click="handleDelete(row)" v-if="canManage">删除</el-button>
-        </template>
-      </el-table-column>
+        <el-table-column prop="id" label="ID" width="70" />
+        <el-table-column label="头像" width="70">
+          <template #default="{ row }">
+            <el-avatar v-if="row.avatar" :src="row.avatar" :size="32" />
+            <el-avatar v-else :size="32">{{ row.name?.[0] || '?' }}</el-avatar>
+          </template>
+        </el-table-column>
+        <el-table-column prop="name" label="名称" width="120" />
+        <el-table-column prop="breed" label="品种" width="120" />
+        <el-table-column label="类别" width="80">
+          <template #default="{ row }">{{ categoryMap[row.category] || '其他' }}</template>
+        </el-table-column>
+        <el-table-column label="性别" width="70">
+          <template #default="{ row }">{{ row.gender === 1 ? '♂' : row.gender === 2 ? '♀' : '?' }}</template>
+        </el-table-column>
+        <el-table-column prop="weight" label="体重(kg)" width="90" />
+        <el-table-column prop="userId" label="主人ID" width="80" />
+        <el-table-column prop="userNickname" label="主人昵称" width="120" />
+        <el-table-column prop="createdAt" label="创建时间" width="170" />
+        <el-table-column label="操作" width="180" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" text @click="viewDetail(row)">详情</el-button>
+            <el-button size="small" text @click="openEdit(row)">编辑</el-button>
+            <el-button size="small" text type="danger" @click="handleDelete(row)" v-if="canManage">删除</el-button>
+          </template>
+        </el-table-column>
       </el-table>
       <div class="pagination-wrap">
         <el-pagination v-if="total > 0" :current-page="page" :page-size="size" :total="total" layout="total, prev, pager, next" @current-change="handlePageChange" />
@@ -191,8 +193,4 @@ onMounted(() => loadData())
 
 <style scoped>
 .page-container { padding: 0; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.page-header h2 { margin: 0; font-size: 18px; }
-.filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-.pagination-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
 </style>

@@ -1,8 +1,12 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <h2>反馈管理</h2>
-      <div class="filter-group">
+    <el-card shadow="hover">
+      <template #header>
+        <div class="page-header">
+          <span class="card-title">反馈管理</span>
+        </div>
+      </template>
+      <div class="search-area">
         <el-select v-model="statusFilter" placeholder="状态筛选" clearable style="width: 120px" @change="loadData">
           <el-option label="待处理" :value="0" />
           <el-option label="处理中" :value="1" />
@@ -15,51 +19,49 @@
           <el-option label="其他" value="other" />
         </el-select>
       </div>
-    </div>
-
-    <el-table :data="feedbackList" stripe style="width: 100%" v-loading="loading">
-      <el-table-column prop="id" label="ID" width="60" />
-      <el-table-column prop="userId" label="用户ID" width="80" />
-      <el-table-column prop="userNickname" label="用户名" width="120" />
-      <el-table-column prop="type" label="类型" width="100">
-        <template #default="{ row }">
-          <el-tag :type="typeTagMap[row.type]" size="small">{{ typeLabelMap[row.type] || row.type }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="content" label="反馈内容" min-width="200" show-overflow-tooltip />
-      <el-table-column prop="status" label="状态" width="90">
-        <template #default="{ row }">
-          <el-tag :type="statusTagMap[row.status]" size="small">{{ statusLabelMap[row.status] || '未知' }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="reply" label="备注" min-width="150" show-overflow-tooltip>
-        <template #default="{ row }">
-          <span v-if="row.reply">{{ row.reply }}</span>
-          <span v-else style="color: #c0c4cc">暂无备注</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="createdAt" label="提交时间" width="170" />
-      <el-table-column label="操作" width="180" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link size="small" @click="openReplyDialog(row)">回复</el-button>
-          <el-button type="success" link size="small" @click="openStatusDialog(row, 2)" :disabled="row.status === 2">已发布</el-button>
-          <el-button type="info" link size="small" @click="showDetail(row)">详情</el-button>
-          <el-button type="danger" link size="small" @click="handleDelete(row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <div class="pagination-wrap">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :total="total"
-        :page-sizes="[10, 20, 50]"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="loadData"
-        @current-change="loadData"
-      />
-    </div>
+      <el-table :data="feedbackList" stripe style="width: 100%" v-loading="loading">
+        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column prop="userId" label="用户ID" width="80" />
+        <el-table-column prop="userNickname" label="用户名" width="120" />
+        <el-table-column prop="type" label="类型" width="100">
+          <template #default="{ row }">
+            <el-tag :type="typeTagMap[row.type]" size="small">{{ typeLabelMap[row.type] || row.type }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="content" label="反馈内容" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="status" label="状态" width="90">
+          <template #default="{ row }">
+            <el-tag :type="statusTagMap[row.status]" size="small">{{ statusLabelMap[row.status] || '未知' }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="reply" label="备注" min-width="150" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span v-if="row.reply">{{ row.reply }}</span>
+            <span v-else style="color: #c0c4cc">暂无备注</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="提交时间" width="170" />
+        <el-table-column label="操作" width="220" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" text @click="openReplyDialog(row)">回复</el-button>
+            <el-button size="small" text type="success" @click="openStatusDialog(row, 2)" :disabled="row.status === 2">已发布</el-button>
+            <el-button size="small" text @click="showDetail(row)">详情</el-button>
+            <el-button size="small" text type="danger" @click="handleDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div class="pagination-wrap">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :total="total"
+          :page-sizes="[10, 20, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="loadData"
+          @current-change="loadData"
+        />
+      </div>
+    </el-card>
 
     <el-dialog v-model="statusDialogVisible" :title="statusDialogTitle" width="500px">
       <el-form :model="statusForm" label-width="80px">
@@ -270,30 +272,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-container {
-  padding: 0;
-}
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.page-header h2 {
-  margin: 0;
-  font-size: 18px;
-}
-.filter-group {
-  display: flex;
-  gap: 10px;
-}
-.pagination-wrap {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-.detail-images {
-  display: flex;
-  flex-wrap: wrap;
-}
+.page-container { padding: 0; }
+.detail-images { display: flex; flex-wrap: wrap; }
 </style>

@@ -53,8 +53,8 @@
       <el-table-column prop="updatedAt" label="更新时间" width="170" />
       <el-table-column label="操作" width="150" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" @click="openEdit(row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+          <el-button size="small" text @click="openEdit(row)">编辑</el-button>
+          <el-button size="small" text type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>

@@ -1,30 +1,36 @@
 <template>
   <div class="page-container">
-    <div class="page-header">
-      <h2>系统设置</h2>
-      <el-button type="primary" size="small" @click="addSetting">新增设置项</el-button>
-    </div>
-    <div v-loading="loading">
-      <el-card shadow="hover" v-for="group in settingGroups" :key="group.key" style="margin-bottom: 16px;">
-        <template #header>
-          <span style="font-weight: 600;">{{ group.label }}</span>
-        </template>
-        <el-form label-width="160px">
-          <el-form-item v-for="item in group.items" :key="item.settingKey" :label="item.label || item.settingKey">
-            <div style="display: flex; gap: 8px; width: 100%; align-items: center;">
-              <el-switch v-if="item.type === 'switch'" v-model="settingsMap[item.settingKey]" active-value="true" inactive-value="false" />
-              <el-radio-group v-else-if="item.type === 'radio'" v-model="settingsMap[item.settingKey]">
-                <el-radio v-for="opt in item.options" :key="opt.value" :value="opt.value">{{ opt.label }}</el-radio>
-              </el-radio-group>
-              <el-input-number v-else-if="item.type === 'number'" v-model="settingsMap[item.settingKey]" :min="item.min" :max="item.max" :precision="item.precision || 0" />
-              <el-input v-else v-model="settingsMap[item.settingKey]" :type="item.type === 'textarea' ? 'textarea' : 'text'" :rows="item.rows || 3" :placeholder="item.placeholder || ''" />
-              <el-button size="small" text type="danger" @click="removeSetting(item.settingKey)" v-if="!item.builtin" style="flex-shrink: 0;">删除</el-button>
-            </div>
-          </el-form-item>
-        </el-form>
-      </el-card>
-      <el-button type="primary" @click="handleSave" :loading="saving" style="margin-top: 8px;">保存设置</el-button>
-    </div>
+    <el-card shadow="hover">
+      <template #header>
+        <div class="page-header">
+          <span class="card-title">系统设置</span>
+          <div class="header-actions">
+            <el-button type="primary" size="small" @click="addSetting">新增设置项</el-button>
+          </div>
+        </div>
+      </template>
+      <div v-loading="loading">
+        <el-card shadow="hover" v-for="group in settingGroups" :key="group.key" style="margin-bottom: 16px;">
+          <template #header>
+            <span style="font-weight: 600;">{{ group.label }}</span>
+          </template>
+          <el-form label-width="160px">
+            <el-form-item v-for="item in group.items" :key="item.settingKey" :label="item.label || item.settingKey">
+              <div style="display: flex; gap: 8px; width: 100%; align-items: center;">
+                <el-switch v-if="item.type === 'switch'" v-model="settingsMap[item.settingKey]" active-value="true" inactive-value="false" />
+                <el-radio-group v-else-if="item.type === 'radio'" v-model="settingsMap[item.settingKey]">
+                  <el-radio v-for="opt in item.options" :key="opt.value" :value="opt.value">{{ opt.label }}</el-radio>
+                </el-radio-group>
+                <el-input-number v-else-if="item.type === 'number'" v-model="settingsMap[item.settingKey]" :min="item.min" :max="item.max" :precision="item.precision || 0" />
+                <el-input v-else v-model="settingsMap[item.settingKey]" :type="item.type === 'textarea' ? 'textarea' : 'text'" :rows="item.rows || 3" :placeholder="item.placeholder || ''" />
+                <el-button size="small" text type="danger" @click="removeSetting(item.settingKey)" v-if="!item.builtin" style="flex-shrink: 0;">删除</el-button>
+              </div>
+            </el-form-item>
+          </el-form>
+        </el-card>
+        <el-button type="primary" @click="handleSave" :loading="saving" style="margin-top: 8px;">保存设置</el-button>
+      </div>
+    </el-card>
 
     <el-dialog v-model="showAddDialog" title="新增设置项" width="450px">
       <el-form :model="addForm" label-width="80px">
@@ -173,6 +179,4 @@ onMounted(() => loadData())
 
 <style scoped>
 .page-container { padding: 0; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.page-header h2 { margin: 0; font-size: 18px; }
 </style>

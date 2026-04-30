@@ -1,16 +1,20 @@
 <template>
   <div class="page-container">
-    <div class="page-header"><h2>评论管理</h2></div>
-    <div class="filter-bar">
-      <el-input v-model="keyword" placeholder="搜索评论内容" clearable style="width: 200px" @clear="loadData" @keyup.enter="loadData" />
-      <el-input v-model="postId" placeholder="动态ID" clearable style="width: 120px" @clear="loadData" @keyup.enter="loadData" />
-      <el-select v-model="deleted" placeholder="状态" clearable style="width: 120px" @change="loadData">
-        <el-option label="正常" :value="0" />
-        <el-option label="已删除" :value="1" />
-      </el-select>
-      <el-button type="primary" @click="loadData">搜索</el-button>
-    </div>
     <el-card shadow="hover">
+      <template #header>
+        <div class="page-header">
+          <span class="card-title">评论管理</span>
+        </div>
+      </template>
+      <div class="search-area">
+        <el-input v-model="keyword" placeholder="搜索评论内容" clearable style="width: 200px" @clear="loadData" @keyup.enter="loadData" />
+        <el-input v-model="postId" placeholder="动态ID" clearable style="width: 120px" @clear="loadData" @keyup.enter="loadData" />
+        <el-select v-model="deleted" placeholder="状态" clearable style="width: 120px" @change="loadData">
+          <el-option label="正常" :value="0" />
+          <el-option label="已删除" :value="1" />
+        </el-select>
+        <el-button type="primary" @click="loadData">搜索</el-button>
+      </div>
       <el-table :data="list" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="content" label="内容" show-overflow-tooltip min-width="200" />
@@ -123,8 +127,4 @@ onMounted(() => loadData())
 
 <style scoped>
 .page-container { padding: 0; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.page-header h2 { margin: 0; font-size: 18px; }
-.filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-.pagination-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
 </style>

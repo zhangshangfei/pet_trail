@@ -1,24 +1,28 @@
 <template>
   <div class="page-container">
-    <div class="page-header"><h2>操作日志</h2></div>
-    <div class="filter-bar">
-      <el-input v-model="adminName" placeholder="操作人" clearable style="width: 150px" @clear="loadData" @keyup.enter="loadData" />
-      <el-select v-model="module" placeholder="模块" clearable style="width: 130px" @change="loadData">
-        <el-option label="用户" value="user" />
-        <el-option label="动态" value="post" />
-        <el-option label="评论" value="comment" />
-        <el-option label="举报" value="report" />
-        <el-option label="通知" value="notification" />
-        <el-option label="管理员" value="admin" />
-        <el-option label="设置" value="setting" />
-        <el-option label="反馈" value="feedback" />
-        <el-option label="宠物" value="pet" />
-      </el-select>
-      <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 260px" @change="loadData" />
-      <el-button type="primary" @click="loadData">搜索</el-button>
-      <el-button type="success" @click="handleExport" v-if="canExport">导出Excel</el-button>
-    </div>
     <el-card shadow="hover">
+      <template #header>
+        <div class="page-header">
+          <span class="card-title">操作日志</span>
+        </div>
+      </template>
+      <div class="search-area">
+        <el-input v-model="adminName" placeholder="操作人" clearable style="width: 150px" @clear="loadData" @keyup.enter="loadData" />
+        <el-select v-model="module" placeholder="模块" clearable style="width: 130px" @change="loadData">
+          <el-option label="用户" value="user" />
+          <el-option label="动态" value="post" />
+          <el-option label="评论" value="comment" />
+          <el-option label="举报" value="report" />
+          <el-option label="通知" value="notification" />
+          <el-option label="管理员" value="admin" />
+          <el-option label="设置" value="setting" />
+          <el-option label="反馈" value="feedback" />
+          <el-option label="宠物" value="pet" />
+        </el-select>
+        <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 260px" @change="loadData" />
+        <el-button type="primary" @click="loadData">搜索</el-button>
+        <el-button type="success" @click="handleExport" v-if="canExport">导出Excel</el-button>
+      </div>
       <el-table :data="list" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="adminName" label="操作人" width="120" />
@@ -127,8 +131,4 @@ onMounted(() => loadData())
 
 <style scoped>
 .page-container { padding: 0; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.page-header h2 { margin: 0; font-size: 18px; }
-.filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-.pagination-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
 </style>

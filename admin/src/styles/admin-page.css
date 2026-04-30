@@ -1,0 +1,61 @@
+/* 管理后台页面统一样式 */
+
+/* 页面头部 */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.page-header h2,
+.page-header .card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
+
+/* 头部操作区 */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* 搜索区域 */
+.search-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+/* 分页区域 */
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* 表格操作按钮统一 */
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 卡片标题 */
+.card-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: #303133;
+}
+
+/* 对话框头部 */
+.dialog-header {
+  font-weight: 600;
+  font-size: 16px;
+}
