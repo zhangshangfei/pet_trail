@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '../router'
+import { useAdminStore } from '../store/admin'
 
 const getBaseURL = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
@@ -15,9 +16,9 @@ const request = axios.create({
 })
 
 request.interceptors.request.use(config => {
-  const token = localStorage.getItem('admin_token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+  const adminStore = useAdminStore()
+  if (adminStore.token) {
+    config.headers.Authorization = `Bearer ${adminStore.token}`
   }
   return config
 })
@@ -30,8 +31,8 @@ request.interceptors.response.use(
           const err = JSON.parse(text)
           ElMessage.error(err.message || '请求失败')
           if (err.code === 401) {
-            localStorage.removeItem('admin_token')
-            localStorage.removeItem('admin_info')
+            const adminStore = useAdminStore()
+            adminStore.logout()
             router.push('/login')
           }
           return Promise.reject(new Error(err.message))
@@ -43,8 +44,8 @@ request.interceptors.response.use(
     if (res.success === false) {
       ElMessage.error(res.message || '请求失败')
       if (res.code === 401) {
-        localStorage.removeItem('admin_token')
-        localStorage.removeItem('admin_info')
+        const adminStore = useAdminStore()
+        adminStore.logout()
         router.push('/login')
       }
       return Promise.reject(new Error(res.message))
@@ -54,8 +55,8 @@ request.interceptors.response.use(
   error => {
     if (error.response) {
       if (error.response.status === 401) {
-        localStorage.removeItem('admin_token')
-        localStorage.removeItem('admin_info')
+        const adminStore = useAdminStore()
+        adminStore.logout()
         ElMessage.error('登录已过期，请重新登录')
         router.push('/login')
       } else if (error.response.status === 403) {

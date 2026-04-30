@@ -160,7 +160,7 @@ const canManage = computed(() => adminStore.hasButton('product:manage'))
 const canExport = computed(() => adminStore.hasButton('export'))
 
 const uploadUrl = (import.meta.env.VITE_API_BASE_URL || '') + '/api/upload'
-const uploadHeaders = { Authorization: 'Bearer ' + (localStorage.getItem('admin_token') || '') }
+const uploadHeaders = computed(() => ({ Authorization: 'Bearer ' + (adminStore.token || '') }))
 
 const loading = ref(false)
 const tableData = ref([])

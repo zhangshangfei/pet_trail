@@ -47,7 +47,7 @@
           <el-dropdown @command="handleCommand">
             <span class="admin-info">
               <el-avatar :size="32" icon="UserFilled" />
-              <span class="admin-name">{{ adminName }}</span>
+              <span class="admin-name">{{ adminStore.adminInfo?.nickname || adminStore.adminInfo?.username || '管理员' }}</span>
               <el-tag :type="roleTagType" size="small" style="margin-left: 6px;">{{ roleLabel }}</el-tag>
             </span>
             <template #dropdown>
@@ -87,7 +87,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getProfile, changePassword } from '../api/admin'
+import { changePassword } from '../api/admin'
 import { useAdminStore } from '@/store/admin'
 import { ElMessage } from 'element-plus'
 
@@ -95,8 +95,6 @@ const route = useRoute()
 const router = useRouter()
 const adminStore = useAdminStore()
 const isCollapse = ref(false)
-const adminName = ref('管理员')
-const adminRole = ref('')
 const showChangePwd = ref(false)
 const pwdForm = ref({ oldPassword: '', newPassword: '', confirmPassword: '' })
 
@@ -158,28 +156,7 @@ const submitChangePwd = async () => {
 }
 
 onMounted(async () => {
-  const cached = localStorage.getItem('admin_info')
-  if (cached) {
-    try {
-      const info = JSON.parse(cached)
-      adminName.value = info.nickname || info.username || '管理员'
-      adminRole.value = info.role || ''
-    } catch (e) {}
-  }
-  try {
-    const res = await getProfile()
-    if (res.data) {
-      const admin = res.data.admin || res.data
-      adminName.value = admin.nickname || admin.username || '管理员'
-      adminRole.value = admin.role || ''
-      adminStore.adminInfo = admin
-      localStorage.setItem('admin_info', JSON.stringify(admin))
-      if (res.data.menus) {
-        adminStore.menus = res.data.menus
-        localStorage.setItem('admin_menus', JSON.stringify(res.data.menus))
-      }
-    }
-  } catch (e) {}
+  await adminStore.fetchProfile()
 })
 </script>
 

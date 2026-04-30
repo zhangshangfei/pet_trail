@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { getProfile } from '../api/admin'
+import { useAdminStore } from '../store/admin'
 
 const routes = [
   {
@@ -50,12 +50,6 @@ function checkPermission(roleCode, permissions, requiredPermission) {
   return permissions.includes(requiredPermission)
 }
 
-function extractAdmin(data) {
-  if (data.admin) return data.admin
-  if (data.roleCode) return data
-  return {}
-}
-
 function extractMenuPaths(menus) {
   const paths = new Set()
   const walk = (list) => {
@@ -76,51 +70,42 @@ function isPathAllowed(path, menus) {
 }
 
 router.beforeEach(async (to, from, next) => {
-  const token = localStorage.getItem('admin_token')
+  const adminStore = useAdminStore()
 
   if (to.path === '/login') {
     next()
     return
   }
 
-  if (!token) {
+  if (!adminStore.token) {
     next('/login')
     return
   }
 
   if (!profileChecked) {
     try {
-      const res = await getProfile()
-      if (res.data) {
-        const admin = extractAdmin(res.data)
-        localStorage.setItem('admin_info', JSON.stringify(admin))
-        if (res.data.menus) {
-          localStorage.setItem('admin_menus', JSON.stringify(res.data.menus))
-        }
-        profileChecked = true
+      await adminStore.fetchProfile()
+      profileChecked = true
 
-        if (to.path === '/dashboard' || to.path === '/') {
-          next()
-          return
-        }
-        const menus = res.data.menus || JSON.parse(localStorage.getItem('admin_menus') || '[]')
-        if (isPathAllowed(to.path, menus)) {
-          next()
-          return
-        }
-        if (!checkPermission(admin.roleCode, admin.permissions, to.meta?.permission)) {
-          next('/dashboard')
-          return
-        }
+      if (to.path === '/dashboard' || to.path === '/') {
+        next()
+        return
       }
-      next()
+      const menus = adminStore.menus || []
+      if (isPathAllowed(to.path, menus)) {
+        next()
+        return
+      }
+      if (!checkPermission(adminStore.roleCode, adminStore.adminInfo?.permissions, to.meta?.permission)) {
+        next('/dashboard')
+        return
+      }
     } catch (e) {
-      localStorage.removeItem('admin_token')
-      localStorage.removeItem('admin_info')
-      localStorage.removeItem('admin_menus')
+      adminStore.logout()
       profileChecked = false
       next('/login')
     }
+    next()
     return
   }
 
@@ -129,14 +114,13 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  const menus = JSON.parse(localStorage.getItem('admin_menus') || '[]')
+  const menus = adminStore.menus || []
   if (isPathAllowed(to.path, menus)) {
     next()
     return
   }
 
-  const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}')
-  if (!checkPermission(adminInfo.roleCode, adminInfo.permissions, to.meta?.permission)) {
+  if (!checkPermission(adminStore.roleCode, adminStore.adminInfo?.permissions, to.meta?.permission)) {
     next('/dashboard')
     return
   }
