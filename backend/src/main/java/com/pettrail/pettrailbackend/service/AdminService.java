@@ -141,9 +141,42 @@ public class AdminService {
         return vo;
     }
 
-    public Page<Admin> adminListAdmins(int page, int size) {
+    public Page<AdminVO> adminListAdmins(int page, int size) {
         Page<Admin> pageParam = new Page<>(page, size);
-        return adminMapper.selectPage(pageParam, new LambdaQueryWrapper<Admin>().orderByDesc(Admin::getCreatedAt));
+        Page<Admin> adminPage = adminMapper.selectPage(pageParam, new LambdaQueryWrapper<Admin>().orderByDesc(Admin::getCreatedAt));
+        Page<AdminVO> voPage = new Page<>(adminPage.getCurrent(), adminPage.getSize(), adminPage.getTotal());
+        voPage.setRecords(adminPage.getRecords().stream().map(this::convertToListVO).collect(Collectors.toList()));
+        return voPage;
+    }
+
+    private AdminVO convertToListVO(Admin admin) {
+        AdminVO vo = new AdminVO();
+        vo.setId(admin.getId());
+        vo.setUsername(admin.getUsername());
+        vo.setNickname(admin.getNickname());
+        vo.setAvatar(admin.getAvatar());
+        vo.setRoleId(admin.getRoleId());
+        vo.setMerchantId(admin.getMerchantId());
+        vo.setStatus(admin.getStatus());
+        vo.setLastLoginAt(admin.getLastLoginAt());
+        vo.setCreatedAt(admin.getCreatedAt());
+
+        if (admin.getRoleId() != null) {
+            SysRole role = sysRoleMapper.selectById(admin.getRoleId());
+            if (role != null) {
+                vo.setRoleName(role.getName());
+                vo.setRoleCode(role.getCode());
+            }
+        }
+
+        if (admin.getMerchantId() != null) {
+            Merchant merchant = merchantMapper.selectById(admin.getMerchantId());
+            if (merchant != null) {
+                vo.setMerchantName(merchant.getName());
+            }
+        }
+
+        return vo;
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pettrail.pettrailbackend.dto.AdminVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Admin;
 import com.pettrail.pettrailbackend.service.AdminService;
@@ -21,7 +22,7 @@ public class AdminAdminController extends BaseAdminController {
 
     @GetMapping
     @Operation(summary = "分页查询管理员列表")
-    public Result<Page<Admin>> list(
+    public Result<Page<AdminVO>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
         return Result.success(adminService.adminListAdmins(page, size));
