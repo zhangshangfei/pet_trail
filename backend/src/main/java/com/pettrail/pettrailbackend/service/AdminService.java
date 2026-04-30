@@ -141,6 +141,14 @@ public class AdminService {
         return vo;
     }
 
+    public AdminVO adminGetAdminDetail(Long id) {
+        Admin admin = adminMapper.selectById(id);
+        if (admin == null) {
+            throw new BusinessException(404, "管理员不存在");
+        }
+        return convertToListVO(admin);
+    }
+
     public Page<AdminVO> adminListAdmins(int page, int size) {
         Page<Admin> pageParam = new Page<>(page, size);
         Page<Admin> adminPage = adminMapper.selectPage(pageParam, new LambdaQueryWrapper<Admin>().orderByDesc(Admin::getCreatedAt));

@@ -129,7 +129,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getConfigList, getConfigCategories, createConfig, updateConfig, deleteConfig, refreshConfigCache } from '../api/admin'
+import { getConfigList, getConfigDetail, getConfigCategories, createConfig, updateConfig, deleteConfig, refreshConfigCache } from '../api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
@@ -220,18 +220,22 @@ const handleAdd = async () => {
   } catch (e) {}
 }
 
-const openEdit = (row) => {
-  editForm.value = {
-    id: row.id,
-    configName: row.configName,
-    configKey: row.configKey,
-    configValue: row.configValue || '',
-    configDesc: row.configDesc || '',
-    category: row.category || 'system',
-    sortOrder: row.sortOrder || 0,
-    newCategory: ''
-  }
-  showEdit.value = true
+const openEdit = async (row) => {
+  try {
+    const res = await getConfigDetail(row.id)
+    const detail = res.data || row
+    editForm.value = {
+      id: detail.id,
+      configName: detail.configName,
+      configKey: detail.configKey,
+      configValue: detail.configValue || '',
+      configDesc: detail.configDesc || '',
+      category: detail.category || 'system',
+      sortOrder: detail.sortOrder || 0,
+      newCategory: ''
+    }
+    showEdit.value = true
+  } catch (e) {}
 }
 
 const handleEdit = async () => {

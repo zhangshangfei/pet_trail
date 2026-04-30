@@ -35,6 +35,14 @@ public class SysMenuService {
         );
     }
 
+    public SysMenu getMenuDetail(Long id) {
+        SysMenu menu = sysMenuMapper.selectById(id);
+        if (menu == null) {
+            throw new com.pettrail.pettrailbackend.exception.BusinessException(404, "菜单不存在");
+        }
+        return menu;
+    }
+
     public List<Map<String, Object>> getMenuTree() {
         List<SysMenu> all = getAllMenusForAdmin();
         return buildTree(all, 0L);

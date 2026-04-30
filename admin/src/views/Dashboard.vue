@@ -53,6 +53,10 @@
               <span class="today-label">今日新增动态</span>
               <span class="today-value">{{ todayStats.todayNewPosts || 0 }}</span>
             </div>
+            <div class="today-item">
+              <span class="today-label">今日活跃用户</span>
+              <span class="today-value active">{{ todayStats.todayActiveUsers || 0 }}</span>
+            </div>
           </div>
         </el-card>
       </el-col>
@@ -91,7 +95,7 @@ let auditChart = null
 
 const statCards = computed(() => [
   { key: 'users', label: '总用户数', value: stats.value.totalUsers || 0, icon: 'User', color: '#409eff' },
-  { key: 'pets', label: '总宠物数', value: stats.value.totalPets || 0, icon: 'ChatDotRound', color: '#67c23a' },
+  { key: 'activeUsers', label: '今日活跃', value: stats.value.todayActiveUsers || 0, icon: 'UserFilled', color: '#67c23a' },
   { key: 'posts', label: '总动态数', value: stats.value.totalPosts || 0, icon: 'Document', color: '#e6a23c' },
   { key: 'reports', label: '总举报数', value: stats.value.totalReports || 0, icon: 'Warning', color: '#f56c6c' }
 ])
@@ -191,4 +195,5 @@ onBeforeUnmount(() => {
 .today-label { color: #666; font-size: 14px; }
 .today-value { font-size: 24px; font-weight: 700; color: #333; }
 .today-value.pending { color: #f56c6c; }
+.today-value.active { color: #67c23a; }
 </style>

@@ -130,7 +130,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, Folder, Document, Link, Lock, Mouse, Sort } from '@element-plus/icons-vue'
-import { getMenuTree, createMenu, updateMenu, deleteMenu, batchSortMenus, updateMenuStatus } from '@/api/admin'
+import { getMenuTree, getMenuDetail, createMenu, updateMenu, deleteMenu, batchSortMenus, updateMenuStatus } from '@/api/admin'
 
 const loading = ref(false)
 const treeList = ref([])
@@ -191,13 +191,17 @@ function openCreate(parentId) {
   showDialog.value = true
 }
 
-function openEdit(row) {
-  isEdit.value = true; editId.value = row.id
-  form.value = {
-    parentId: row.parentId, name: row.name, path: row.path || '', icon: row.icon || '',
-    permission: row.permission || '', btnList: parseButtons(row.buttons), sortOrder: row.sortOrder || 0, status: row.status
-  }
-  showDialog.value = true
+async function openEdit(row) {
+  try {
+    const res = await getMenuDetail(row.id)
+    const detail = res.data || row
+    isEdit.value = true; editId.value = detail.id
+    form.value = {
+      parentId: detail.parentId, name: detail.name, path: detail.path || '', icon: detail.icon || '',
+      permission: detail.permission || '', btnList: parseButtons(detail.buttons), sortOrder: detail.sortOrder || 0, status: detail.status
+    }
+    showDialog.value = true
+  } catch (e) {}
 }
 
 async function submitForm() {

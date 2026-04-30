@@ -19,6 +19,14 @@ public class MerchantService {
 
     private final MerchantMapper merchantMapper;
 
+    public Merchant adminGetMerchantDetail(Long id) {
+        Merchant merchant = merchantMapper.selectById(id);
+        if (merchant == null) {
+            throw new BusinessException(404, "商户不存在");
+        }
+        return merchant;
+    }
+
     public Page<Merchant> adminListMerchants(int page, int size, String keyword, String type, Integer status) {
         Page<Merchant> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Merchant> wrapper = new LambdaQueryWrapper<>();

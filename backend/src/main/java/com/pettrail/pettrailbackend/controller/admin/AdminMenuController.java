@@ -30,6 +30,12 @@ public class AdminMenuController extends BaseAdminController {
         return Map.of("success", true, "data", sysMenuService.getMenuTree());
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "获取菜单详情")
+    public Map<String, Object> getDetail(@PathVariable Long id) {
+        return Map.of("success", true, "data", sysMenuService.getMenuDetail(id));
+    }
+
     @PostMapping
     @Operation(summary = "创建菜单")
     public Map<String, Object> create(@RequestBody SysMenu menu) {

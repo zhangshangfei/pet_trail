@@ -28,6 +28,12 @@ public class AdminAdminController extends BaseAdminController {
         return Result.success(adminService.adminListAdmins(page, size));
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "获取管理员详情")
+    public Result<AdminVO> getDetail(@PathVariable Long id) {
+        return Result.success(adminService.adminGetAdminDetail(id));
+    }
+
     @PostMapping
     @Operation(summary = "创建管理员")
     public Result<Admin> create(@RequestBody Admin admin) {

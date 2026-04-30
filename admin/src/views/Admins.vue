@@ -67,7 +67,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getAdminList, createAdmin, updateAdmin, updateAdminStatus, resetAdminPassword, getMerchantList, getAllRoles } from '@/api/admin'
+import { getAdminList, getAdminDetail, createAdmin, updateAdmin, updateAdminStatus, resetAdminPassword, getMerchantList, getAllRoles } from '@/api/admin'
 
 const roleTagMap = { SUPER_ADMIN: 'danger', ADMIN: '', MERCHANT_ADMIN: 'warning', MERCHANT_STAFF: 'info' }
 
@@ -120,10 +120,14 @@ async function openCreate() {
 }
 
 async function openEdit(row) {
-  isEdit.value = true; editId.value = row.id
-  form.value = { nickname: row.nickname, roleId: row.roleId, merchantId: row.merchantId }
-  await loadRoles(); await loadMerchants()
-  showDialog.value = true
+  try {
+    const res = await getAdminDetail(row.id)
+    const detail = res.data || row
+    isEdit.value = true; editId.value = detail.id
+    form.value = { nickname: detail.nickname, roleId: detail.roleId, merchantId: detail.merchantId }
+    await loadRoles(); await loadMerchants()
+    showDialog.value = true
+  } catch (e) {}
 }
 
 async function submitForm() {

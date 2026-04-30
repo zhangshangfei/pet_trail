@@ -81,7 +81,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getMerchantList, createMerchant, updateMerchant, updateMerchantStatus, deleteMerchant } from '@/api/admin'
+import { getMerchantList, getMerchantDetail, createMerchant, updateMerchant, updateMerchantStatus, deleteMerchant } from '@/api/admin'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -124,11 +124,15 @@ function openCreate() {
   showDialog.value = true
 }
 
-function openEdit(row) {
-  isEdit.value = true
-  editId.value = row.id
-  form.value = { ...row }
-  showDialog.value = true
+async function openEdit(row) {
+  try {
+    const res = await getMerchantDetail(row.id)
+    const detail = res.data || row
+    isEdit.value = true
+    editId.value = detail.id
+    form.value = { ...detail }
+    showDialog.value = true
+  } catch (e) {}
 }
 
 async function submitForm() {

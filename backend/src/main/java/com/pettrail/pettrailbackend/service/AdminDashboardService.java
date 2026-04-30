@@ -35,6 +35,10 @@ public class AdminDashboardService {
         stats.put("totalPosts", postMapper.selectCount(null));
         stats.put("totalComments", commentMapper.selectCount(null));
         stats.put("pendingReports", reportMapper.selectCount(new LambdaQueryWrapper<Report>().eq(Report::getStatus, 0)));
+
+        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+        stats.put("todayActiveUsers", countActiveUsers(todayStart, LocalDateTime.now()));
+
         return stats;
     }
 
@@ -43,7 +47,32 @@ public class AdminDashboardService {
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
         stats.put("todayNewUsers", userMapper.selectCount(new LambdaQueryWrapper<User>().ge(User::getCreatedAt, todayStart)));
         stats.put("todayNewPosts", postMapper.selectCount(new LambdaQueryWrapper<Post>().ge(Post::getCreatedAt, todayStart)));
+        stats.put("todayActiveUsers", countActiveUsers(todayStart, LocalDateTime.now()));
         return stats;
+    }
+
+    private long countActiveUsers(LocalDateTime start, LocalDateTime end) {
+        List<Long> userIds = new ArrayList<>();
+
+        postMapper.selectList(new LambdaQueryWrapper<Post>()
+                        .select(Post::getUserId)
+                        .ge(Post::getCreatedAt, start)
+                        .le(Post::getCreatedAt, end))
+                .forEach(p -> { if (!userIds.contains(p.getUserId())) userIds.add(p.getUserId()); });
+
+        commentMapper.selectList(new LambdaQueryWrapper<PostComment>()
+                        .select(PostComment::getUserId)
+                        .ge(PostComment::getCreatedAt, start)
+                        .le(PostComment::getCreatedAt, end))
+                .forEach(c -> { if (!userIds.contains(c.getUserId())) userIds.add(c.getUserId()); });
+
+        postLikeMapper.selectList(new LambdaQueryWrapper<PostLike>()
+                        .select(PostLike::getUserId)
+                        .ge(PostLike::getCreatedAt, start)
+                        .le(PostLike::getCreatedAt, end))
+                .forEach(l -> { if (!userIds.contains(l.getUserId())) userIds.add(l.getUserId()); });
+
+        return userIds.size();
     }
 
     public Map<String, Object> getTrend(int days) {
@@ -61,7 +90,7 @@ public class AdminDashboardService {
             LocalDateTime dayEnd = date.atTime(LocalTime.MAX);
             newUsers.add(userMapper.selectCount(new LambdaQueryWrapper<User>().ge(User::getCreatedAt, dayStart).le(User::getCreatedAt, dayEnd)));
             newPosts.add(postMapper.selectCount(new LambdaQueryWrapper<Post>().ge(Post::getCreatedAt, dayStart).le(Post::getCreatedAt, dayEnd)));
-            activeUsers.add(postMapper.selectCount(new LambdaQueryWrapper<Post>().ge(Post::getCreatedAt, dayStart).le(Post::getCreatedAt, dayEnd)));
+            activeUsers.add(countActiveUsers(dayStart, dayEnd));
         }
 
         result.put("dates", dates);

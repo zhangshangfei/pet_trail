@@ -35,6 +35,13 @@ public class AdminMerchantController extends BaseAdminController {
         ));
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "获取商户详情")
+    public Map<String, Object> getDetail(@PathVariable Long id) {
+        Merchant merchant = merchantService.adminGetMerchantDetail(id);
+        return Map.of("success", true, "data", merchant);
+    }
+
     @PostMapping
     @Operation(summary = "创建商户")
     public Map<String, Object> create(@RequestBody Merchant merchant) {

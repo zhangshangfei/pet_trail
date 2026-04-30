@@ -50,6 +50,10 @@ public class SysConfigService {
         }
     }
 
+    public SysConfig getById(Long id) {
+        return sysConfigMapper.selectById(id);
+    }
+
     public List<SysConfig> listByCategory(String category) {
         LambdaQueryWrapper<SysConfig> wrapper = new LambdaQueryWrapper<>();
         if (category != null && !category.isEmpty()) {

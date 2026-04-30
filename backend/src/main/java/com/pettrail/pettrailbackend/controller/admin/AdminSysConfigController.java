@@ -37,6 +37,17 @@ public class AdminSysConfigController {
         return Result.success(sysConfigService.listCategories());
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "获取配置详情")
+    @RequireRole("ADMIN")
+    public Result<SysConfig> getDetail(@PathVariable Long id) {
+        SysConfig config = sysConfigService.getById(id);
+        if (config == null) {
+            return Result.error(404, "配置项不存在");
+        }
+        return Result.success(config);
+    }
+
     @PostMapping
     @Operation(summary = "新增配置项")
     @RequireRole("SUPER_ADMIN")

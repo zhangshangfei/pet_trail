@@ -76,7 +76,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getRoleList, createRole, updateRole, deleteRole, updateRoleStatus, getRoleMenus, saveRoleMenus, getMenuTree } from '@/api/admin'
+import { getRoleList, getRoleDetail, createRole, updateRole, deleteRole, updateRoleStatus, getRoleMenus, saveRoleMenus, getMenuTree } from '@/api/admin'
 import { useAdminStore } from '@/store/admin'
 
 const adminStore = useAdminStore()
@@ -116,10 +116,14 @@ function openCreate() {
   showDialog.value = true
 }
 
-function openEdit(row) {
-  isEdit.value = true; editId.value = row.id
-  form.value = { name: row.name, code: row.code, description: row.description, status: row.status }
-  showDialog.value = true
+async function openEdit(row) {
+  try {
+    const res = await getRoleDetail(row.id)
+    const detail = res.data?.role || row
+    isEdit.value = true; editId.value = detail.id
+    form.value = { name: detail.name, code: detail.code, description: detail.description, status: detail.status }
+    showDialog.value = true
+  } catch (e) {}
 }
 
 async function submitForm() {

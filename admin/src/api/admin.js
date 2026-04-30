@@ -46,6 +46,7 @@ export const updateFeedbackStatus = (id, data) => request.put(`/api/admin/feedba
 export const deleteFeedback = (id) => request.delete(`/api/admin/feedbacks/${id}`)
 
 export const getAdminList = (params) => request.get('/api/admin/admins', { params })
+export const getAdminDetail = (id) => request.get(`/api/admin/admins/${id}`)
 export const createAdmin = (data) => request.post('/api/admin/admins', data)
 export const updateAdmin = (id, data) => request.put(`/api/admin/admins/${id}`, data)
 export const updateAdminStatus = (id, status) => request.put(`/api/admin/admins/${id}/status`, { status })
@@ -65,6 +66,7 @@ export const exportChallenges = (params) => request.get('/api/admin/export/chall
 export const exportProducts = (params) => request.get('/api/admin/export/products', { params, responseType: 'blob' })
 
 export const getConfigList = (params) => request.get('/api/admin/config', { params })
+export const getConfigDetail = (id) => request.get(`/api/admin/config/${id}`)
 export const getConfigCategories = () => request.get('/api/admin/config/categories')
 export const createConfig = (data) => request.post('/api/admin/config', data)
 export const updateConfig = (id, data) => request.put(`/api/admin/config/${id}`, data)
@@ -121,12 +123,14 @@ export const getAppointmentList = (params) => request.get('/api/admin/vet-clinic
 export const updateAppointmentStatus = (id, status) => request.put(`/api/admin/vet-clinics/appointments/${id}/status`, { status })
 
 export const getMerchantList = (params) => request.get('/api/admin/merchants', { params })
+export const getMerchantDetail = (id) => request.get(`/api/admin/merchants/${id}`)
 export const createMerchant = (data) => request.post('/api/admin/merchants', data)
 export const updateMerchant = (id, data) => request.put(`/api/admin/merchants/${id}`, data)
 export const updateMerchantStatus = (id, status) => request.put(`/api/admin/merchants/${id}/status`, { status })
 export const deleteMerchant = (id) => request.delete(`/api/admin/merchants/${id}`)
 
 export const getMenuTree = () => request.get('/api/admin/menus/tree')
+export const getMenuDetail = (id) => request.get(`/api/admin/menus/${id}`)
 export const getUserMenus = () => request.get('/api/admin/menus/user')
 export const createMenu = (data) => request.post('/api/admin/menus', data)
 export const updateMenu = (id, data) => request.put(`/api/admin/menus/${id}`, data)
