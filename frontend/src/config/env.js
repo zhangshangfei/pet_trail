@@ -14,7 +14,7 @@ const getApiBaseUrl = () => {
 
   // #ifdef H5
   if (process.env.NODE_ENV === 'production') {
-    return 'https://api.pettrail.com'
+    return 'https://aipetfamily.cn'
   }
   return 'http://124.222.51.71:8080'
   // #endif
