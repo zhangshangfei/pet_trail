@@ -22,10 +22,4 @@ public class Notification {
     private String title;
     private Boolean isRead;
     private LocalDateTime createdAt;
-
-    @TableField(exist = false)
-    private String userNickname;
-
-    @TableField(exist = false)
-    private String fromUserNickname;
 }

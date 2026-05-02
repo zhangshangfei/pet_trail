@@ -2,10 +2,10 @@ package com.pettrail.pettrailbackend.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.annotation.RequireRole;
+import com.pettrail.pettrailbackend.dto.NotificationAdminVO;
 import com.pettrail.pettrailbackend.dto.NotificationBroadcastDTO;
 import com.pettrail.pettrailbackend.dto.NotificationSendDTO;
 import com.pettrail.pettrailbackend.dto.Result;
-import com.pettrail.pettrailbackend.entity.Notification;
 import com.pettrail.pettrailbackend.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,7 +24,7 @@ public class AdminNotificationController extends BaseAdminController {
 
     @GetMapping
     @Operation(summary = "分页查询通知列表")
-    public Result<Page<Notification>> list(
+    public Result<Page<NotificationAdminVO>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Long userId,

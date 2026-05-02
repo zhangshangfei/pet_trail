@@ -2,6 +2,7 @@ package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pettrail.pettrailbackend.dto.FeedbackAdminVO;
 import com.pettrail.pettrailbackend.entity.Feedback;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.exception.BusinessException;
@@ -25,7 +26,7 @@ public class FeedbackService {
     private final FeedbackMapper feedbackMapper;
     private final UserMapper userMapper;
 
-    public Page<Feedback> adminListFeedbacks(int page, int size, Integer status, String type) {
+    public Page<FeedbackAdminVO> adminListFeedbacks(int page, int size, Integer status, String type) {
         Page<Feedback> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Feedback> wrapper = new LambdaQueryWrapper<>();
         if (status != null) {
@@ -36,22 +37,65 @@ public class FeedbackService {
         }
         wrapper.orderByDesc(Feedback::getCreatedAt);
         Page<Feedback> result = feedbackMapper.selectPage(pageParam, wrapper);
-        fillFeedbackUserNickname(result);
-        return result;
+
+        Set<Long> userIds = result.getRecords().stream()
+                .map(Feedback::getUserId)
+                .filter(uid -> uid != null)
+                .collect(Collectors.toSet());
+        Map<Long, User> userMap = userIds.isEmpty() ? Map.of() :
+                userMapper.selectBatchIds(userIds).stream()
+                        .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
+
+        Page<FeedbackAdminVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
+        voPage.setRecords(result.getRecords().stream().map(f -> {
+            FeedbackAdminVO vo = new FeedbackAdminVO();
+            vo.setId(f.getId());
+            vo.setUserId(f.getUserId());
+            vo.setType(f.getType());
+            vo.setContent(f.getContent());
+            vo.setContact(f.getContact());
+            vo.setImages(f.getImages());
+            vo.setStatus(f.getStatus());
+            vo.setReply(f.getReply());
+            vo.setCreatedAt(f.getCreatedAt());
+            vo.setUpdatedAt(f.getUpdatedAt());
+
+            User user = f.getUserId() != null ? userMap.get(f.getUserId()) : null;
+            vo.setUserNickname(user != null ? (user.getNickname() != null ? user.getNickname() : "用户" + f.getUserId()) : "未知用户");
+            vo.setUserAvatar(user != null && user.getAvatar() != null ? user.getAvatar() : "");
+            return vo;
+        }).collect(Collectors.toList()));
+        return voPage;
     }
 
-    public Feedback adminGetFeedbackDetail(Long id) {
+    public FeedbackAdminVO adminGetFeedbackDetail(Long id) {
         Feedback feedback = feedbackMapper.selectById(id);
         if (feedback == null) {
             throw new BusinessException(404, "反馈不存在");
         }
+        FeedbackAdminVO vo = new FeedbackAdminVO();
+        vo.setId(feedback.getId());
+        vo.setUserId(feedback.getUserId());
+        vo.setType(feedback.getType());
+        vo.setContent(feedback.getContent());
+        vo.setContact(feedback.getContact());
+        vo.setImages(feedback.getImages());
+        vo.setStatus(feedback.getStatus());
+        vo.setReply(feedback.getReply());
+        vo.setCreatedAt(feedback.getCreatedAt());
+        vo.setUpdatedAt(feedback.getUpdatedAt());
+
         if (feedback.getUserId() != null) {
             User user = userMapper.selectById(feedback.getUserId());
             if (user != null) {
-                feedback.setUserNickname(user.getNickname());
+                vo.setUserNickname(user.getNickname() != null ? user.getNickname() : "用户" + feedback.getUserId());
+                vo.setUserAvatar(user.getAvatar() != null ? user.getAvatar() : "");
+            } else {
+                vo.setUserNickname("未知用户");
+                vo.setUserAvatar("");
             }
         }
-        return feedback;
+        return vo;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -93,27 +137,5 @@ public class FeedbackService {
             throw new BusinessException(404, "反馈不存在");
         }
         feedbackMapper.deleteById(id);
-    }
-
-    private void fillFeedbackUserNickname(Page<Feedback> result) {
-        Set<Long> userIds = result.getRecords().stream()
-                .map(Feedback::getUserId)
-                .filter(uid -> uid != null)
-                .collect(Collectors.toSet());
-        if (userIds.isEmpty()) return;
-        Map<Long, String> nicknameMap = buildNicknameMap(userIds);
-        for (Feedback f : result.getRecords()) {
-            if (f.getUserId() != null) {
-                f.setUserNickname(nicknameMap.getOrDefault(f.getUserId(), "未知用户"));
-            }
-        }
-    }
-
-    private Map<Long, String> buildNicknameMap(Set<Long> userIds) {
-        if (userIds == null || userIds.isEmpty()) return Map.of();
-        return userMapper.selectBatchIds(userIds).stream()
-                .collect(Collectors.toMap(User::getId,
-                        u -> u.getNickname() != null ? u.getNickname() : "用户" + u.getId(),
-                        (a, b) -> a));
     }
 }

@@ -2,6 +2,7 @@ package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pettrail.pettrailbackend.dto.NotificationAdminVO;
 import com.pettrail.pettrailbackend.dto.NotificationVO;
 import com.pettrail.pettrailbackend.entity.Notification;
 import com.pettrail.pettrailbackend.entity.User;
@@ -221,7 +222,7 @@ public class NotificationService {
         }
     }
 
-    public Page<Notification> adminListNotifications(int page, int size, Long userId, String type, Boolean isRead) {
+    public Page<NotificationAdminVO> adminListNotifications(int page, int size, Long userId, String type, Boolean isRead) {
         Page<Notification> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
         if (userId != null) wrapper.eq(Notification::getUserId, userId);
@@ -229,8 +230,43 @@ public class NotificationService {
         if (isRead != null) wrapper.eq(Notification::getIsRead, isRead);
         wrapper.orderByDesc(Notification::getCreatedAt);
         Page<Notification> result = notificationMapper.selectPage(pageParam, wrapper);
-        fillNotificationUserNickname(result);
-        return result;
+
+        Set<Long> userIds = result.getRecords().stream()
+                .flatMap(n -> java.util.stream.Stream.of(n.getUserId(), n.getFromUserId()))
+                .filter(uid -> uid != null && uid > 0)
+                .collect(Collectors.toSet());
+        Map<Long, User> userMap = userIds.isEmpty() ? Map.of() :
+                userMapper.selectBatchIds(userIds).stream()
+                        .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
+
+        Page<NotificationAdminVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());
+        voPage.setRecords(result.getRecords().stream().map(n -> {
+            NotificationAdminVO vo = new NotificationAdminVO();
+            vo.setId(n.getId());
+            vo.setUserId(n.getUserId());
+            vo.setFromUserId(n.getFromUserId());
+            vo.setType(n.getType());
+            vo.setTargetId(n.getTargetId());
+            vo.setContent(n.getContent());
+            vo.setTitle(n.getTitle());
+            vo.setIsRead(n.getIsRead());
+            vo.setCreatedAt(n.getCreatedAt());
+
+            User toUser = n.getUserId() != null ? userMap.get(n.getUserId()) : null;
+            vo.setUserNickname(toUser != null ? (toUser.getNickname() != null ? toUser.getNickname() : "用户" + n.getUserId()) : "未知用户");
+            vo.setUserAvatar(toUser != null && toUser.getAvatar() != null ? toUser.getAvatar() : "");
+
+            if (n.getFromUserId() != null && n.getFromUserId() > 0) {
+                User fromUser = userMap.get(n.getFromUserId());
+                vo.setFromUserNickname(fromUser != null ? (fromUser.getNickname() != null ? fromUser.getNickname() : "用户" + n.getFromUserId()) : "系统");
+                vo.setFromUserAvatar(fromUser != null && fromUser.getAvatar() != null ? fromUser.getAvatar() : "");
+            } else {
+                vo.setFromUserNickname("系统");
+                vo.setFromUserAvatar("");
+            }
+            return vo;
+        }).collect(Collectors.toList()));
+        return voPage;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -278,27 +314,5 @@ public class NotificationService {
             invalidateUnreadCache(user.getId());
         }
         return count;
-    }
-
-    private void fillNotificationUserNickname(Page<Notification> result) {
-        Set<Long> userIds = result.getRecords().stream()
-                .flatMap(n -> java.util.stream.Stream.of(n.getUserId(), n.getFromUserId()))
-                .filter(uid -> uid != null && uid > 0)
-                .collect(Collectors.toSet());
-        if (userIds.isEmpty()) return;
-        Map<Long, String> nicknameMap = userMapper.selectBatchIds(userIds).stream()
-                .collect(Collectors.toMap(User::getId,
-                        u -> u.getNickname() != null ? u.getNickname() : "用户" + u.getId(),
-                        (a, b) -> a));
-        for (Notification n : result.getRecords()) {
-            if (n.getUserId() != null) {
-                n.setUserNickname(nicknameMap.getOrDefault(n.getUserId(), "未知用户"));
-            }
-            if (n.getFromUserId() != null && n.getFromUserId() > 0) {
-                n.setFromUserNickname(nicknameMap.getOrDefault(n.getFromUserId(), "系统"));
-            } else {
-                n.setFromUserNickname("系统");
-            }
-        }
     }
 }

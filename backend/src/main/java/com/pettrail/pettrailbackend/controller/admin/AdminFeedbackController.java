@@ -1,10 +1,10 @@
 package com.pettrail.pettrailbackend.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pettrail.pettrailbackend.dto.FeedbackAdminVO;
 import com.pettrail.pettrailbackend.dto.FeedbackReplyDTO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.dto.StatusDTO;
-import com.pettrail.pettrailbackend.entity.Feedback;
 import com.pettrail.pettrailbackend.service.FeedbackService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,7 +21,7 @@ public class AdminFeedbackController extends BaseAdminController {
 
     @GetMapping
     @Operation(summary = "分页查询反馈列表")
-    public Result<Page<Feedback>> list(
+    public Result<Page<FeedbackAdminVO>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Integer status,
@@ -31,7 +31,7 @@ public class AdminFeedbackController extends BaseAdminController {
 
     @GetMapping("/{id}")
     @Operation(summary = "获取反馈详情")
-    public Result<Feedback> getDetail(@PathVariable Long id) {
+    public Result<FeedbackAdminVO> getDetail(@PathVariable Long id) {
         return Result.success(feedbackService.adminGetFeedbackDetail(id));
     }
 
