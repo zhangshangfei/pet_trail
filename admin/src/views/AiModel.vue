@@ -71,9 +71,12 @@
         </div>
       </template>
       <el-descriptions :column="3" border size="small">
-        <el-descriptions-item label="当前模型">{{ cacheInfo.currentModelId || '未配置' }}</el-descriptions-item>
+        <el-descriptions-item label="当前模型">{{ cacheInfo.currentModelName || '未配置' }}</el-descriptions-item>
         <el-descriptions-item label="缓存模型数">{{ cacheInfo.modelCount || 0 }}</el-descriptions-item>
         <el-descriptions-item label="最后更新">{{ cacheInfo.lastUpdated || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="命中次数">{{ cacheInfo.hitCount ?? 0 }}</el-descriptions-item>
+        <el-descriptions-item label="命中率">{{ cacheInfo.hitRate || '0%' }}</el-descriptions-item>
+        <el-descriptions-item label="未命中次数">{{ cacheInfo.missCount ?? 0 }}</el-descriptions-item>
       </el-descriptions>
     </el-card>
 
@@ -93,7 +96,6 @@
       </template>
       <el-table :data="modelList" v-loading="loading" stripe>
         <el-table-column type="index" label="序号" width="60" align="center" />
-        <el-table-column prop="id" label="ID" width="70" />
         <el-table-column label="模型" min-width="200">
           <template #default="{ row }">
             <div class="model-info-cell">

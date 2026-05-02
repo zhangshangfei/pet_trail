@@ -5,13 +5,15 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pettrail.pettrailbackend.dto.*;
+import com.pettrail.pettrailbackend.entity.Admin;
 import com.pettrail.pettrailbackend.entity.AiModel;
-import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.entity.AiModelStats;
 import com.pettrail.pettrailbackend.entity.AiModelSwitchLog;
+import com.pettrail.pettrailbackend.exception.BusinessException;
+import com.pettrail.pettrailbackend.mapper.AdminMapper;
 import com.pettrail.pettrailbackend.mapper.AiModelMapper;
-import com.pettrail.pettrailbackend.mapper.AiModelStatsMapper;
 import com.pettrail.pettrailbackend.mapper.AiModelSwitchLogMapper;
+import com.pettrail.pettrailbackend.mapper.AiModelStatsMapper;
 import com.pettrail.pettrailbackend.util.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ public class AiModelService {
     private final AiModelMapper aiModelMapper;
     private final AiModelSwitchLogMapper switchLogMapper;
     private final AiModelStatsMapper statsMapper;
+    private final AdminMapper adminMapper;
     private final ObjectMapper objectMapper;
     private final HealthAnalysisCacheService cacheService;
 
@@ -96,7 +99,14 @@ public class AiModelService {
         switchLog.setToModelName(toModel.getDisplayName());
         switchLog.setSwitchType("manual");
         switchLog.setOperatorId(UserContext.getCurrentUserId());
-        switchLog.setOperatorName(UserContext.getCurrentUsername());
+        String operatorName = UserContext.getCurrentUsername();
+        if (UserContext.getCurrentUserId() != null) {
+            Admin admin = adminMapper.selectById(UserContext.getCurrentUserId());
+            if (admin != null) {
+                operatorName = admin.getNickname() != null ? admin.getNickname() : admin.getUsername();
+            }
+        }
+        switchLog.setOperatorName(operatorName);
         switchLog.setReason(reason);
         switchLog.setCreatedAt(LocalDateTime.now());
 
