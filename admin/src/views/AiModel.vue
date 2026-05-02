@@ -211,8 +211,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAdminStore } from '@/store/admin'
 import {
   getAiModelList, getAiModelDetail, createAiModel, updateAiModel, deleteAiModel,
-  getAiModelDashboard, switchAiModel, getAiModelSwitchLogs, getAiModelCacheInfo,
-  clearAiModelCache, persistAiModelCache, updateAiModelParams
+  getAiModelDashboard, switchAiModel, getAiModelSwitchLogs, getAiModelCacheStats,
+  clearAiModelAllCache, refreshAiModelCache, updateAiModelParameters
 } from '../api/admin'
 
 const adminStore = useAdminStore()
@@ -274,7 +274,7 @@ const loadSwitchLogs = async () => {
 
 const loadCacheInfo = async () => {
   try {
-    const res = await getAiModelCacheInfo()
+    const res = await getAiModelCacheStats()
     cacheInfo.value = res.data || null
   } catch (e) {}
 }
@@ -372,7 +372,7 @@ const submitParams = async () => {
   }
   submitting.value = true
   try {
-    await updateAiModelParams(paramModelId.value, { params })
+    await updateAiModelParameters(paramModelId.value, { params })
     ElMessage.success('参数更新成功')
     showParamsDialog.value = false
   } catch (e) {
@@ -392,7 +392,7 @@ const openStatsDetail = async (row) => {
 const clearCache = async () => {
   try {
     await ElMessageBox.confirm('确定清空模型缓存吗？', '确认', { type: 'warning' })
-    await clearAiModelCache()
+    await clearAiModelAllCache()
     ElMessage.success('缓存已清空')
     loadCacheInfo()
   } catch (e) {
@@ -402,7 +402,7 @@ const clearCache = async () => {
 
 const persistCache = async () => {
   try {
-    await persistAiModelCache()
+    await refreshAiModelCache()
     ElMessage.success('持久化成功')
   } catch (e) {
     ElMessage.error('持久化失败')
