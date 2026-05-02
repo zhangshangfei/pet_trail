@@ -39,10 +39,10 @@
                   <el-tag v-else size="small" type="success" effect="light" class="type-tag">页面</el-tag>
                   <el-switch
                     :model-value="Number(data.status ?? 1) === 1"
-                    size="small"
                     inline-prompt
-                    active-text="启"
-                    inactive-text="停"
+                    active-text="启用"
+                    inactive-text="禁用"
+                    style="--el-switch-on-color: #67c23a; --el-switch-off-color: #f56c6c;"
                     @change="(val) => handleToggleStatus(data, val)"
                   />
                 </div>
