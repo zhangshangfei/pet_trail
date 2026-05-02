@@ -1,36 +1,69 @@
 <template>
   <div class="admins-page">
-    <el-card shadow="hover">
+    <!-- 顶部统计卡片 -->
+    <el-row :gutter="16" class="stats-row">
+      <el-col :xs="12" :sm="6" v-for="item in overviewCards" :key="item.key">
+        <el-card shadow="hover" class="overview-card" :body-style="{ padding: '16px 20px' }">
+          <div class="overview-content">
+            <div class="overview-icon" :style="{ background: item.bg, color: item.color }">
+              <el-icon :size="20"><component :is="item.icon" /></el-icon>
+            </div>
+            <div class="overview-info">
+              <div class="overview-value">{{ item.value }}</div>
+              <div class="overview-label">{{ item.label }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 管理员列表 -->
+    <el-card shadow="hover" class="table-card">
       <template #header>
         <div class="page-header">
-          <span class="card-title">管理员管理</span>
-          <el-button type="success" @click="openCreate">新增管理员</el-button>
+          <div class="header-left">
+            <span class="card-title">管理员列表</span>
+            <el-tag size="small" type="info">共 {{ total }} 条</el-tag>
+          </div>
+          <div class="header-actions">
+            <el-button type="success" :icon="Plus" @click="openCreate">新增管理员</el-button>
+          </div>
         </div>
       </template>
 
       <el-table :data="list" v-loading="loading" stripe>
+        <el-table-column type="index" label="序号" width="60" align="center" />
         <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column prop="username" label="用户名" width="130" />
-        <el-table-column prop="nickname" label="昵称" width="120" />
-        <el-table-column label="角色" width="130">
+        <el-table-column prop="username" label="用户名" min-width="130" />
+        <el-table-column prop="nickname" label="昵称" min-width="120" />
+        <el-table-column label="角色" min-width="130" align="center">
           <template #default="{ row }">
-            <el-tag :type="roleTagMap[row.roleCode] || 'info'" size="small">{{ row.roleName || '-' }}</el-tag>
+            <el-tag :type="roleTagMap[row.roleCode] || 'info'" effect="light" size="small">{{ row.roleName || '-' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="所属商户" width="140" show-overflow-tooltip>
+        <el-table-column label="所属商户" min-width="140" show-overflow-tooltip>
           <template #default="{ row }">{{ row.merchantName || '-' }}</template>
         </el-table-column>
-        <el-table-column label="状态" width="80">
+        <el-table-column label="状态" width="90" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">{{ row.status === 1 ? '正常' : '禁用' }}</el-tag>
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'" effect="light" size="small">{{ row.status === 1 ? '正常' : '禁用' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="lastLoginAt" label="最后登录" width="170" />
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column label="最后登录" width="170">
           <template #default="{ row }">
-            <el-button size="small" text @click="openEdit(row)">编辑</el-button>
-            <el-button size="small" :type="row.status === 1 ? 'warning' : 'success'" text @click="toggleStatus(row)">{{ row.status === 1 ? '禁用' : '启用' }}</el-button>
-            <el-button size="small" type="info" text @click="handleResetPwd(row)">重置密码</el-button>
+            <div class="time-cell">
+              <el-icon :size="12"><Clock /></el-icon>
+              <span>{{ row.lastLoginAt || '-' }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="320" fixed="right" align="center">
+          <template #default="{ row }">
+            <div class="action-btns">
+              <el-button size="small" text type="primary" :icon="EditPen" @click="openEdit(row)">编辑</el-button>
+              <el-button size="small" :type="row.status === 1 ? 'warning' : 'success'" text :icon="row.status === 1 ? CircleClose : CircleCheck" @click="toggleStatus(row)">{{ row.status === 1 ? '禁用' : '启用' }}</el-button>
+              <el-button size="small" type="info" text :icon="Key" @click="handleResetPwd(row)">重置密码</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -40,11 +73,24 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="showDialog" :title="isEdit ? '编辑管理员' : '新增管理员'" width="500px" destroy-on-close>
-      <el-form :model="form" label-width="100px">
-        <el-form-item v-if="!isEdit" label="用户名" required><el-input v-model="form.username" /></el-form-item>
+    <!-- 新增/编辑弹窗 -->
+    <el-dialog v-model="showDialog" :title="isEdit ? '编辑管理员' : '新增管理员'" width="500px" destroy-on-close class="admin-dialog">
+      <div v-if="isEdit && form.id" class="dialog-profile">
+        <div class="dialog-profile-icon" style="background: #ecf5ff; color: #409eff;">
+          <el-icon :size="28"><UserFilled /></el-icon>
+        </div>
+        <div class="dialog-profile-info">
+          <div class="dialog-profile-name">{{ form.nickname || form.username || '未命名' }}</div>
+          <div class="dialog-profile-meta">
+            <el-tag :type="form.status === 1 ? 'success' : 'danger'" size="small" effect="light" round>{{ form.status === 1 ? '正常' : '已禁用' }}</el-tag>
+          </div>
+        </div>
+      </div>
+      <el-divider v-if="isEdit && form.id" class="dialog-divider" />
+      <el-form :model="form" label-width="100px" class="dialog-form">
+        <el-form-item v-if="!isEdit" label="用户名" required><el-input v-model="form.username" placeholder="请输入用户名" /></el-form-item>
         <el-form-item v-if="!isEdit" label="密码"><el-input v-model="form.password" type="password" show-password placeholder="默认 admin123" /></el-form-item>
-        <el-form-item label="昵称"><el-input v-model="form.nickname" /></el-form-item>
+        <el-form-item label="昵称"><el-input v-model="form.nickname" placeholder="请输入昵称" /></el-form-item>
         <el-form-item label="角色" required>
           <el-select v-model="form.roleId" placeholder="选择角色" style="width: 100%" @change="onRoleChange">
             <el-option v-for="r in roleList" :key="r.id" :label="r.name" :value="r.id" :disabled="r.status === 0" />
@@ -67,6 +113,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, EditPen, CircleCheck, CircleClose, Clock, Key, UserFilled } from '@element-plus/icons-vue'
 import { getAdminList, getAdminDetail, createAdmin, updateAdmin, updateAdminStatus, resetAdminPassword, getMerchantList, getAllRoles } from '@/api/admin'
 
 const roleTagMap = { SUPER_ADMIN: 'danger', ADMIN: '', MERCHANT_ADMIN: 'warning', MERCHANT_STAFF: 'info' }
@@ -87,6 +134,13 @@ const isMerchantRole = computed(() => {
   const role = roleList.value.find(r => r.id === form.value.roleId)
   return role && (role.code === 'MERCHANT_ADMIN' || role.code === 'MERCHANT_STAFF')
 })
+
+const overviewCards = computed(() => [
+  { key: 'total', label: '总管理员', value: total.value, icon: 'UserFilled', color: '#409eff', bg: '#ecf5ff' },
+  { key: 'super', label: '超级管理员', value: list.value.filter(a => a.roleCode === 'SUPER_ADMIN').length, icon: 'Star', color: '#f56c6c', bg: '#fef0f0' },
+  { key: 'normal', label: '正常状态', value: list.value.filter(a => a.status === 1).length, icon: 'CircleCheck', color: '#67c23a', bg: '#f0f9eb' },
+  { key: 'disabled', label: '已禁用', value: list.value.filter(a => a.status === 0).length, icon: 'CircleClose', color: '#909399', bg: '#f4f4f5' }
+])
 
 function onRoleChange() {
   if (!isMerchantRole.value) form.value.merchantId = null
@@ -124,7 +178,7 @@ async function openEdit(row) {
     const res = await getAdminDetail(row.id)
     const detail = res.data || row
     isEdit.value = true; editId.value = detail.id
-    form.value = { nickname: detail.nickname, roleId: detail.roleId, merchantId: detail.merchantId }
+    form.value = { ...detail }
     await loadRoles(); await loadMerchants()
     showDialog.value = true
   } catch (e) {}
@@ -162,7 +216,62 @@ onMounted(() => loadData())
 </script>
 
 <style scoped>
-.page-header { display: flex; justify-content: space-between; align-items: center; }
-.card-title { font-size: 16px; font-weight: 600; }
+.admins-page { padding: 0; }
+
+.stats-row { margin-bottom: 16px; }
+.overview-card { transition: transform 0.2s; }
+.overview-card:hover { transform: translateY(-2px); }
+.overview-content { display: flex; align-items: center; gap: 14px; }
+.overview-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.overview-info { flex: 1; min-width: 0; }
+.overview-value { font-size: 22px; font-weight: 700; color: #303133; line-height: 1.2; }
+.overview-label { font-size: 12px; color: #909399; margin-top: 2px; }
+
+.table-card { min-height: 500px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.header-left { display: flex; align-items: center; gap: 8px; }
+.card-title { font-weight: 600; font-size: 15px; color: #303133; }
+.header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.time-cell { display: flex; align-items: center; gap: 4px; font-size: 13px; color: #606266; }
+
+.action-btns {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
 .pagination-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+/* 弹窗样式 */
+.admin-dialog :deep(.el-dialog__body) { padding-top: 8px; }
+.dialog-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 4px 12px;
+}
+.dialog-profile-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.dialog-profile-info { flex: 1; }
+.dialog-profile-name { font-size: 18px; font-weight: 600; color: #303133; margin-bottom: 8px; }
+.dialog-profile-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dialog-divider { margin: 4px 0 16px; }
+.dialog-form :deep(.el-form-item) { margin-bottom: 16px; }
 </style>

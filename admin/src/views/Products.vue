@@ -1,16 +1,30 @@
 <template>
   <div class="products-page">
+    <!-- 顶部统计卡片 -->
     <el-row :gutter="16" class="stats-row">
-      <el-col :span="6"><el-card shadow="hover"><el-statistic title="上架商品" :value="stats.totalProducts" /></el-card></el-col>
-      <el-col :span="6"><el-card shadow="hover"><el-statistic title="总订单" :value="stats.totalOrders" /></el-card></el-col>
-      <el-col :span="6"><el-card shadow="hover"><el-statistic title="已支付" :value="stats.paidOrders" /></el-card></el-col>
-      <el-col :span="6"><el-card shadow="hover"><el-statistic title="支付率" :value="payRate" /></el-card></el-col>
+      <el-col :xs="12" :sm="6" v-for="item in overviewCards" :key="item.key">
+        <el-card shadow="hover" class="overview-card" :body-style="{ padding: '16px 20px' }">
+          <div class="overview-content">
+            <div class="overview-icon" :style="{ background: item.bg, color: item.color }">
+              <el-icon :size="20"><component :is="item.icon" /></el-icon>
+            </div>
+            <div class="overview-info">
+              <div class="overview-value">{{ item.value }}</div>
+              <div class="overview-label">{{ item.label }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
     </el-row>
 
-    <el-card shadow="hover" style="margin-top: 16px">
+    <!-- 商品列表 -->
+    <el-card shadow="hover" class="table-card">
       <template #header>
         <div class="page-header">
-          <span class="card-title">商城管理</span>
+          <div class="header-left">
+            <span class="card-title">商城管理</span>
+            <el-tag size="small" type="info">共 {{ total }} 条</el-tag>
+          </div>
           <div class="header-actions">
             <el-select v-model="categoryFilter" placeholder="分类" clearable style="width: 120px" @change="loadData">
               <el-option label="粮食" value="food" /><el-option label="玩具" value="toy" />
@@ -19,51 +33,61 @@
             <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 120px" @change="loadData">
               <el-option label="上架" :value="1" /><el-option label="下架" :value="0" />
             </el-select>
-            <el-button type="primary" @click="loadData">查询</el-button>
-            <el-button type="success" @click="openCreate">新增商品</el-button>
-            <el-button @click="showOrders = true">查看订单</el-button>
-            <el-button @click="handleExport" v-if="canExport">导出Excel</el-button>
+            <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
+            <el-button type="success" :icon="Plus" @click="openCreate">新增商品</el-button>
+            <el-button :icon="List" @click="showOrders = true">查看订单</el-button>
+            <el-button :icon="Download" @click="handleExport" v-if="canExport">导出</el-button>
           </div>
         </div>
       </template>
 
       <el-table :data="tableData" v-loading="loading" stripe>
+        <el-table-column type="index" label="序号" width="60" align="center" />
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column label="图片" width="80">
           <template #default="{ row }">
-            <el-image v-if="row.coverImage" :src="row.coverImage" style="width: 50px; height: 50px" fit="cover" :preview-src-list="[row.coverImage]" preview-teleported />
-            <span v-else>-</span>
+            <el-image v-if="row.coverImage" :src="row.coverImage" style="width: 50px; height: 50px; border-radius: 6px;" fit="cover" :preview-src-list="[row.coverImage]" preview-teleported />
+            <span v-else style="color: #c0c4cc">-</span>
           </template>
         </el-table-column>
         <el-table-column prop="name" label="商品名称" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="category" label="分类" width="90">
+        <el-table-column label="分类" width="90" align="center">
           <template #default="{ row }">
-            <el-tag size="small">{{ { food: '粮食', toy: '玩具', health: '保健', supplies: '用品' }[row.category] || row.category }}</el-tag>
+            <el-tag effect="light" size="small">{{ { food: '粮食', toy: '玩具', health: '保健', supplies: '用品' }[row.category] || row.category }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="brand" label="品牌" width="100" show-overflow-tooltip />
-        <el-table-column label="价格" width="120">
+        <el-table-column label="价格" width="120" align="center">
           <template #default="{ row }">
             <span style="color: #f56c6c; font-weight: 600">¥{{ row.price }}</span>
             <span v-if="row.originalPrice" style="text-decoration: line-through; color: #bbb; font-size: 12px; margin-left: 4px">¥{{ row.originalPrice }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="salesCount" label="销量" width="80" />
-        <el-table-column prop="rating" label="评分" width="80" />
-        <el-table-column prop="petType" label="适用" width="80">
-          <template #default="{ row }">{{ { 0: '通用', 1: '猫', 2: '狗' }[row.petType] || '通用' }}</template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="80">
+        <el-table-column prop="salesCount" label="销量" width="80" align="center" />
+        <el-table-column label="评分" width="80" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? '上架' : '下架' }}</el-tag>
+            <div class="rating-cell">
+              <el-icon :size="12" style="color: #f7ba2a"><Star /></el-icon>
+              <span>{{ row.rating || '-' }}</span>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="适用" width="80" align="center">
+          <template #default="{ row }">{{ { 0: '通用', 1: '猫', 2: '狗' }[row.petType] || '通用' }}</template>
+        </el-table-column>
+        <el-table-column label="状态" width="80" align="center">
           <template #default="{ row }">
-            <el-button size="small" text @click="openEdit(row)">编辑</el-button>
-            <el-button v-if="row.status === 1" type="warning" size="small" text @click="changeStatus(row.id, 0)">下架</el-button>
-            <el-button v-if="row.status === 0" type="success" size="small" text @click="changeStatus(row.id, 1)">上架</el-button>
-            <el-button v-if="canManage" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
+            <el-tag :type="row.status === 1 ? 'success' : 'info'" effect="light" size="small">{{ row.status === 1 ? '上架' : '下架' }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="280" fixed="right" align="center">
+          <template #default="{ row }">
+            <div class="action-btns">
+              <el-button size="small" text type="primary" :icon="EditPen" @click="openEdit(row)">编辑</el-button>
+              <el-button v-if="row.status === 1" size="small" text type="warning" :icon="CircleClose" @click="handleStatus(row, 0)">下架</el-button>
+              <el-button v-if="row.status === 0" size="small" text type="success" :icon="CircleCheck" @click="handleStatus(row, 1)">上架</el-button>
+              <el-button v-if="canManage" size="small" text type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -73,10 +97,24 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="showDialog" :title="isEdit ? '编辑商品' : '新增商品'" width="650px" destroy-on-close>
-      <el-form :model="form" label-width="100px">
-        <el-form-item label="商品名称" required><el-input v-model="form.name" /></el-form-item>
-        <el-form-item label="描述"><el-input v-model="form.description" type="textarea" :rows="3" /></el-form-item>
+    <!-- 新增/编辑弹窗 -->
+    <el-dialog v-model="showDialog" :title="isEdit ? '编辑商品' : '新增商品'" width="650px" destroy-on-close class="product-dialog">
+      <div v-if="isEdit && form.id" class="dialog-profile">
+        <div class="dialog-profile-icon" style="background: #fdf6ec; color: #e6a23c;">
+          <el-icon :size="28"><Goods /></el-icon>
+        </div>
+        <div class="dialog-profile-info">
+          <div class="dialog-profile-name">{{ form.name || '未命名商品' }}</div>
+          <div class="dialog-profile-meta">
+            <el-tag :type="form.status === 1 ? 'success' : 'info'" size="small" effect="light" round>{{ form.status === 1 ? '上架中' : '已下架' }}</el-tag>
+            <span v-if="form.price" class="dialog-profile-price">¥{{ form.price }}</span>
+          </div>
+        </div>
+      </div>
+      <el-divider v-if="isEdit && form.id" class="dialog-divider" />
+      <el-form :model="form" label-width="100px" class="dialog-form">
+        <el-form-item label="商品名称" required><el-input v-model="form.name" placeholder="请输入商品名称" /></el-form-item>
+        <el-form-item label="描述"><el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入商品描述" /></el-form-item>
         <el-form-item label="封面图">
           <el-upload
             class="cover-uploader"
@@ -96,11 +134,11 @@
         <el-form-item label="分类" required>
           <el-select v-model="form.category"><el-option label="粮食" value="food" /><el-option label="玩具" value="toy" /><el-option label="保健" value="health" /><el-option label="用品" value="supplies" /></el-select>
         </el-form-item>
-        <el-form-item label="品牌"><el-input v-model="form.brand" /></el-form-item>
+        <el-form-item label="品牌"><el-input v-model="form.brand" placeholder="请输入品牌" /></el-form-item>
         <el-form-item label="售价" required><el-input-number v-model="form.price" :min="0" :precision="2" /></el-form-item>
         <el-form-item label="原价"><el-input-number v-model="form.originalPrice" :min="0" :precision="2" /></el-form-item>
         <el-form-item label="佣金比例"><el-input-number v-model="form.commissionRate" :min="0" :max="1" :precision="4" :step="0.01" /></el-form-item>
-        <el-form-item label="来源链接"><el-input v-model="form.sourceUrl" /></el-form-item>
+        <el-form-item label="来源链接"><el-input v-model="form.sourceUrl" placeholder="请输入来源链接" /></el-form-item>
         <el-form-item label="来源平台">
           <el-select v-model="form.sourcePlatform"><el-option label="京东" value="jd" /><el-option label="淘宝" value="tb" /><el-option label="拼多多" value="pdd" /></el-select>
         </el-form-item>
@@ -115,6 +153,7 @@
       </template>
     </el-dialog>
 
+    <!-- 订单列表弹窗 -->
     <el-dialog v-model="showOrders" title="订单列表" width="900px" destroy-on-close>
       <div style="margin-bottom: 12px; display: flex; gap: 12px;">
         <el-select v-model="orderStatusFilter" placeholder="订单状态" clearable style="width: 140px" @change="loadOrders">
@@ -123,18 +162,19 @@
           <el-option label="已退款" :value="2" />
           <el-option label="已取消" :value="3" />
         </el-select>
+        <el-button type="primary" :icon="Search" @click="loadOrders">查询</el-button>
       </div>
       <el-table :data="orderList" v-loading="orderLoading" stripe>
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="orderNo" label="订单号" width="180" show-overflow-tooltip />
         <el-table-column prop="userId" label="用户ID" width="90" />
         <el-table-column prop="plan" label="套餐" width="100" />
-        <el-table-column prop="amount" label="金额" width="100">
-          <template #default="{ row }"><span style="color: #f56c6c">¥{{ row.amount }}</span></template>
+        <el-table-column label="金额" width="100" align="center">
+          <template #default="{ row }"><span style="color: #f56c6c; font-weight: 600">¥{{ row.amount }}</span></template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="90">
+        <el-table-column label="状态" width="90" align="center">
           <template #default="{ row }">
-            <el-tag :type="{ 0: 'warning', 1: 'success', 2: 'info', 3: 'danger' }[row.status]" size="small">
+            <el-tag :type="{ 0: 'warning', 1: 'success', 2: 'info', 3: 'danger' }[row.status]" effect="light" size="small">
               {{ { 0: '待支付', 1: '已支付', 2: '已退款', 3: '已取消' }[row.status] }}
             </el-tag>
           </template>
@@ -151,7 +191,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Search, EditPen, Delete, CircleCheck, CircleClose, Star, Download, List, Goods } from '@element-plus/icons-vue'
 import { useAdminStore } from '@/store/admin'
 import { getProductList, getProductDetail, createProduct, updateProduct, deleteProduct, updateProductStatus, getProductStats, getOrderList, exportProducts } from '@/api/admin'
 
@@ -187,6 +227,13 @@ const orderPage = ref(1)
 const orderSize = ref(20)
 const orderTotal = ref(0)
 const orderStatusFilter = ref(null)
+
+const overviewCards = computed(() => [
+  { key: 'products', label: '上架商品', value: stats.value.totalProducts, icon: 'Goods', color: '#409eff', bg: '#ecf5ff' },
+  { key: 'orders', label: '总订单', value: stats.value.totalOrders, icon: 'List', color: '#e6a23c', bg: '#fdf6ec' },
+  { key: 'paid', label: '已支付', value: stats.value.paidOrders, icon: 'CircleCheck', color: '#67c23a', bg: '#f0f9eb' },
+  { key: 'rate', label: '支付率', value: payRate.value, icon: 'TrendCharts', color: '#f56c6c', bg: '#fef0f0' }
+])
 
 async function loadData() {
   loading.value = true
@@ -259,8 +306,14 @@ async function submitForm() {
   } catch (e) { console.error(e); ElMessage.error('操作失败') }
 }
 
-async function changeStatus(id, status) {
-  try { await updateProductStatus(id, status); ElMessage.success('状态更新成功'); loadData(); loadStats() } catch (e) { console.error(e); ElMessage.error('操作失败') }
+async function handleStatus(row, status) {
+  const action = status === 1 ? '上架' : '下架'
+  try {
+    await ElMessageBox.confirm(`确定要将商品 "${row.name}" ${action}吗？`, '确认', { type: 'warning' })
+    await updateProductStatus(row.id, status)
+    ElMessage.success(`${action}成功`)
+    loadData(); loadStats()
+  } catch (e) { if (e !== 'cancel') { console.error(e); ElMessage.error('操作失败') } }
 }
 
 async function handleDelete(row) {
@@ -289,13 +342,68 @@ onMounted(() => { loadData(); loadStats() })
 </script>
 
 <style scoped>
-.page-header { display: flex; justify-content: space-between; align-items: center; }
-.card-title { font-size: 16px; font-weight: 600; }
-.header-actions { display: flex; gap: 8px; align-items: center; }
+.products-page { padding: 0; }
+
+.stats-row { margin-bottom: 16px; }
+.overview-card { transition: transform 0.2s; }
+.overview-card:hover { transform: translateY(-2px); }
+.overview-content { display: flex; align-items: center; gap: 14px; }
+.overview-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.overview-info { flex: 1; min-width: 0; }
+.overview-value { font-size: 22px; font-weight: 700; color: #303133; line-height: 1.2; }
+.overview-label { font-size: 12px; color: #909399; margin-top: 2px; }
+
+.table-card { min-height: 500px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.header-left { display: flex; align-items: center; gap: 8px; }
+.card-title { font-weight: 600; font-size: 15px; color: #303133; }
+.header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.rating-cell { display: flex; align-items: center; gap: 4px; font-size: 13px; color: #606266; }
+
+.action-btns {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
 .pagination-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
-.stats-row .el-card { text-align: center; }
+
 .cover-uploader :deep(.el-upload) { border: 1px dashed #d9d9d9; border-radius: 6px; cursor: pointer; position: relative; overflow: hidden; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; }
 .cover-uploader :deep(.el-upload:hover) { border-color: #409eff; }
 .cover-preview { width: 120px; height: 120px; }
 .cover-uploader-icon { font-size: 28px; color: #8c939d; }
+
+/* 弹窗样式 */
+.product-dialog :deep(.el-dialog__body) { padding-top: 8px; }
+.dialog-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 4px 12px;
+}
+.dialog-profile-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.dialog-profile-info { flex: 1; }
+.dialog-profile-name { font-size: 18px; font-weight: 600; color: #303133; margin-bottom: 8px; }
+.dialog-profile-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dialog-profile-price { color: #f56c6c; font-weight: 600; font-size: 14px; }
+.dialog-divider { margin: 4px 0 16px; }
+.dialog-form :deep(.el-form-item) { margin-bottom: 16px; }
 </style>

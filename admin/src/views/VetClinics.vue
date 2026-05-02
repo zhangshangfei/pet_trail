@@ -1,16 +1,30 @@
 <template>
   <div class="vet-clinics-page">
+    <!-- 顶部统计卡片 -->
     <el-row :gutter="16" class="stats-row">
-      <el-col :span="6"><el-card shadow="hover"><el-statistic title="营业医院" :value="stats.totalClinics" /></el-card></el-col>
-      <el-col :span="6"><el-card shadow="hover"><el-statistic title="合作医院" :value="stats.partnerClinics" /></el-card></el-col>
-      <el-col :span="6"><el-card shadow="hover"><el-statistic title="总预约数" :value="stats.totalAppointments" /></el-card></el-col>
-      <el-col :span="6"><el-card shadow="hover"><el-statistic title="待处理预约" :value="stats.pendingAppointments" /></el-card></el-col>
+      <el-col :xs="12" :sm="6" v-for="item in overviewCards" :key="item.key">
+        <el-card shadow="hover" class="overview-card" :body-style="{ padding: '16px 20px' }">
+          <div class="overview-content">
+            <div class="overview-icon" :style="{ background: item.bg, color: item.color }">
+              <el-icon :size="20"><component :is="item.icon" /></el-icon>
+            </div>
+            <div class="overview-info">
+              <div class="overview-value">{{ item.value }}</div>
+              <div class="overview-label">{{ item.label }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
     </el-row>
 
-    <el-card shadow="hover" style="margin-top: 16px">
+    <!-- 医院列表 -->
+    <el-card shadow="hover" class="table-card">
       <template #header>
         <div class="page-header">
-          <span class="card-title">医院信息管理</span>
+          <div class="header-left">
+            <span class="card-title">医院信息管理</span>
+            <el-tag size="small" type="info">共 {{ total }} 条</el-tag>
+          </div>
           <div class="header-actions">
             <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 120px" @change="loadData">
               <el-option label="营业" :value="1" /><el-option label="停业" :value="0" />
@@ -18,45 +32,55 @@
             <el-select v-model="partnerFilter" placeholder="合作" clearable style="width: 120px" @change="loadData">
               <el-option label="合作医院" :value="true" /><el-option label="非合作" :value="false" />
             </el-select>
-            <el-button type="primary" @click="loadData">查询</el-button>
-            <el-button type="success" @click="openCreate">新增医院</el-button>
-            <el-button @click="openAppointments">查看预约</el-button>
+            <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
+            <el-button type="success" :icon="Plus" @click="openCreate">新增医院</el-button>
+            <el-button :icon="Calendar" @click="openAppointments">查看预约</el-button>
           </div>
         </div>
       </template>
 
       <el-table :data="tableData" v-loading="loading" stripe>
+        <el-table-column type="index" label="序号" width="60" align="center" />
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column label="封面" width="80">
           <template #default="{ row }">
-            <el-image v-if="row.coverImage" :src="row.coverImage" style="width: 50px; height: 50px" fit="cover" :preview-src-list="[row.coverImage]" preview-teleported />
-            <span v-else>-</span>
+            <el-image v-if="row.coverImage" :src="row.coverImage" style="width: 50px; height: 50px; border-radius: 6px;" fit="cover" :preview-src-list="[row.coverImage]" preview-teleported />
+            <span v-else style="color: #c0c4cc">-</span>
           </template>
         </el-table-column>
         <el-table-column prop="name" label="医院名称" min-width="160" show-overflow-tooltip />
         <el-table-column prop="address" label="地址" min-width="180" show-overflow-tooltip />
         <el-table-column prop="phone" label="联系电话" width="130" />
         <el-table-column prop="businessHours" label="营业时间" width="130" show-overflow-tooltip />
-        <el-table-column prop="rating" label="评分" width="80" />
+        <el-table-column prop="rating" label="评分" width="80" align="center">
+          <template #default="{ row }">
+            <div class="rating-cell">
+              <el-icon :size="12" style="color: #f7ba2a"><Star /></el-icon>
+              <span>{{ row.rating || '-' }}</span>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column prop="specialties" label="专科" width="120" show-overflow-tooltip />
-        <el-table-column label="合作" width="80">
+        <el-table-column label="合作" width="80" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.isPartner ? 'success' : 'info'" size="small">{{ row.isPartner ? '合作' : '普通' }}</el-tag>
+            <el-tag :type="row.isPartner ? 'success' : 'info'" effect="light" size="small">{{ row.isPartner ? '合作' : '普通' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="80">
+        <el-table-column label="状态" width="80" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">{{ row.status === 1 ? '营业' : '停业' }}</el-tag>
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'" effect="light" size="small">{{ row.status === 1 ? '营业' : '停业' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="260" fixed="right">
+        <el-table-column label="操作" width="360" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button size="small" text @click="openEdit(row)">编辑</el-button>
-            <el-button v-if="row.status === 1" type="warning" size="small" text @click="changeStatus(row.id, 0)">停业</el-button>
-            <el-button v-if="row.status === 0" type="success" size="small" text @click="changeStatus(row.id, 1)">营业</el-button>
-            <el-button v-if="!row.isPartner" type="primary" size="small" text @click="togglePartner(row.id, true)">设为合作</el-button>
-            <el-button v-if="row.isPartner" type="info" size="small" text @click="togglePartner(row.id, false)">取消合作</el-button>
-            <el-button v-if="canManage" type="danger" size="small" text @click="handleDelete(row)">删除</el-button>
+            <div class="action-btns">
+              <el-button size="small" text type="primary" :icon="EditPen" @click="openEdit(row)">编辑</el-button>
+              <el-button v-if="row.status === 1" size="small" text type="warning" :icon="CircleClose" @click="handleStatus(row, 0)">停业</el-button>
+              <el-button v-if="row.status === 0" size="small" text type="success" :icon="CircleCheck" @click="handleStatus(row, 1)">营业</el-button>
+              <el-button v-if="!row.isPartner" size="small" text type="primary" :icon="Connection" @click="handlePartner(row, true)">设为合作</el-button>
+              <el-button v-if="row.isPartner" size="small" text type="info" :icon="Connection" @click="handlePartner(row, false)">取消合作</el-button>
+              <el-button v-if="canManage" size="small" text type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -66,10 +90,24 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="showDialog" :title="isEdit ? '编辑医院' : '新增医院'" width="700px" destroy-on-close>
-      <el-form :model="form" label-width="100px">
-        <el-form-item label="医院名称" required><el-input v-model="form.name" /></el-form-item>
-        <el-form-item label="描述"><el-input v-model="form.description" type="textarea" :rows="3" /></el-form-item>
+    <!-- 新增/编辑弹窗 -->
+    <el-dialog v-model="showDialog" :title="isEdit ? '编辑医院' : '新增医院'" width="700px" destroy-on-close class="clinic-dialog">
+      <div v-if="isEdit && form.id" class="dialog-profile">
+        <div class="dialog-profile-icon" style="background: #ecf5ff; color: #409eff;">
+          <el-icon :size="28"><OfficeBuilding /></el-icon>
+        </div>
+        <div class="dialog-profile-info">
+          <div class="dialog-profile-name">{{ form.name || '未命名医院' }}</div>
+          <div class="dialog-profile-meta">
+            <el-tag :type="form.status === 1 ? 'success' : 'danger'" size="small" effect="light" round>{{ form.status === 1 ? '营业中' : '已停业' }}</el-tag>
+            <el-tag v-if="form.isPartner" type="success" size="small" effect="light" round>合作医院</el-tag>
+          </div>
+        </div>
+      </div>
+      <el-divider v-if="isEdit && form.id" class="dialog-divider" />
+      <el-form :model="form" label-width="100px" class="dialog-form">
+        <el-form-item label="医院名称" required><el-input v-model="form.name" placeholder="请输入医院名称" /></el-form-item>
+        <el-form-item label="描述"><el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入医院描述" /></el-form-item>
         <el-form-item label="封面图">
           <el-upload
             class="cover-uploader"
@@ -86,7 +124,7 @@
           </el-upload>
           <el-input v-model="form.coverImage" placeholder="或手动输入图片URL" style="margin-top: 8px" />
         </el-form-item>
-        <el-form-item label="地址" required><el-input v-model="form.address" /></el-form-item>
+        <el-form-item label="地址" required><el-input v-model="form.address" placeholder="请输入医院地址" /></el-form-item>
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="纬度"><el-input-number v-model="form.latitude" :precision="6" :step="0.001" :controls="false" style="width: 100%" /></el-form-item>
@@ -95,7 +133,7 @@
             <el-form-item label="经度"><el-input-number v-model="form.longitude" :precision="6" :step="0.001" :controls="false" style="width: 100%" /></el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="联系电话" required><el-input v-model="form.phone" /></el-form-item>
+        <el-form-item label="联系电话" required><el-input v-model="form.phone" placeholder="请输入联系电话" /></el-form-item>
         <el-form-item label="营业时间"><el-input v-model="form.businessHours" placeholder="如: 周一至周日 09:00-21:00" /></el-form-item>
         <el-form-item label="评分"><el-input-number v-model="form.rating" :min="0" :max="5" :precision="1" :step="0.1" /></el-form-item>
         <el-form-item label="专科特色"><el-input v-model="form.specialties" placeholder="如: 内科,外科,皮肤科" /></el-form-item>
@@ -112,6 +150,7 @@
       </template>
     </el-dialog>
 
+    <!-- 预约管理弹窗 -->
     <el-dialog v-model="showAppointments" title="预约管理" width="1050px" destroy-on-close>
       <div style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap">
         <el-select v-model="appointmentStatusFilter" placeholder="预约状态" clearable style="width: 130px" @change="loadAppointments">
@@ -121,8 +160,10 @@
         <el-select v-model="appointmentClinicFilter" placeholder="医院" clearable filterable style="width: 180px" @change="loadAppointments">
           <el-option v-for="c in allClinics" :key="c.id" :label="c.name" :value="c.id" />
         </el-select>
-        <el-input v-model="appointmentKeyword" placeholder="搜索症状" clearable style="width: 160px" @clear="loadAppointments" @keyup.enter="loadAppointments" />
-        <el-button type="primary" @click="loadAppointments">查询</el-button>
+        <el-input v-model="appointmentKeyword" placeholder="搜索症状" clearable style="width: 160px" @clear="loadAppointments" @keyup.enter="loadAppointments">
+          <template #prefix><el-icon><Search /></el-icon></template>
+        </el-input>
+        <el-button type="primary" :icon="Search" @click="loadAppointments">查询</el-button>
       </div>
       <el-table :data="appointmentList" v-loading="appointmentLoading" stripe>
         <el-table-column prop="id" label="ID" width="70" />
@@ -132,19 +173,21 @@
         <el-table-column prop="appointmentDate" label="预约日期" width="120" />
         <el-table-column prop="appointmentTime" label="预约时间" width="110" />
         <el-table-column prop="symptom" label="症状" min-width="140" show-overflow-tooltip />
-        <el-table-column label="状态" width="100">
+        <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="{ 0: 'warning', 1: '', 2: 'success', 3: 'danger' }[row.status]" size="small">
+            <el-tag :type="{ 0: 'warning', 1: '', 2: 'success', 3: 'danger' }[row.status]" effect="light" size="small">
               {{ { 0: '待确认', 1: '已确认', 2: '已完成', 3: '已取消' }[row.status] }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="170" />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" width="160" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button v-if="row.status === 0" type="success" size="small" text @click="changeAppointmentStatus(row.id, 1)">确认</el-button>
-            <el-button v-if="row.status === 1" type="success" size="small" text @click="changeAppointmentStatus(row.id, 2)">完成</el-button>
-            <el-button v-if="row.status === 0 || row.status === 1" type="danger" size="small" text @click="changeAppointmentStatus(row.id, 3)">取消</el-button>
+            <div class="action-btns">
+              <el-button v-if="row.status === 0" type="success" size="small" text :icon="CircleCheck" @click="changeAppointmentStatus(row.id, 1)">确认</el-button>
+              <el-button v-if="row.status === 1" type="success" size="small" text :icon="CircleCheck" @click="changeAppointmentStatus(row.id, 2)">完成</el-button>
+              <el-button v-if="row.status === 0 || row.status === 1" type="danger" size="small" text :icon="CircleClose" @click="changeAppointmentStatus(row.id, 3)">取消</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -158,7 +201,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Search, EditPen, Delete, CircleCheck, CircleClose, Star, Calendar, Connection } from '@element-plus/icons-vue'
 import { useAdminStore } from '@/store/admin'
 import { getClinicList, getClinicDetail, createClinic, updateClinic, deleteClinic, updateClinicStatus, setClinicPartner, getClinicStats, getAppointmentList, updateAppointmentStatus } from '@/api/admin'
 
@@ -192,6 +235,13 @@ const appointmentStatusFilter = ref(null)
 const appointmentClinicFilter = ref(null)
 const appointmentKeyword = ref('')
 const allClinics = ref([])
+
+const overviewCards = computed(() => [
+  { key: 'total', label: '营业医院', value: stats.value.totalClinics, icon: 'OfficeBuilding', color: '#409eff', bg: '#ecf5ff' },
+  { key: 'partner', label: '合作医院', value: stats.value.partnerClinics, icon: 'Connection', color: '#67c23a', bg: '#f0f9eb' },
+  { key: 'appointments', label: '总预约数', value: stats.value.totalAppointments, icon: 'Calendar', color: '#e6a23c', bg: '#fdf6ec' },
+  { key: 'pending', label: '待处理预约', value: stats.value.pendingAppointments, icon: 'Clock', color: '#f56c6c', bg: '#fef0f0' }
+])
 
 async function loadData() {
   loading.value = true
@@ -249,12 +299,24 @@ async function submitForm() {
   } catch (e) { console.error(e); ElMessage.error('操作失败') }
 }
 
-async function changeStatus(id, status) {
-  try { await updateClinicStatus(id, status); ElMessage.success('状态更新成功'); loadData(); loadStats() } catch (e) { console.error(e); ElMessage.error('操作失败') }
+async function handleStatus(row, status) {
+  const action = status === 1 ? '营业' : '停业'
+  try {
+    await ElMessageBox.confirm(`确定要将医院 "${row.name}" 设为${action}吗？`, '确认', { type: 'warning' })
+    await updateClinicStatus(row.id, status)
+    ElMessage.success(`${action}成功`)
+    loadData(); loadStats()
+  } catch (e) { if (e !== 'cancel') { console.error(e); ElMessage.error('操作失败') } }
 }
 
-async function togglePartner(id, isPartner) {
-  try { await setClinicPartner(id, isPartner); ElMessage.success(isPartner ? '已设为合作医院' : '已取消合作'); loadData(); loadStats() } catch (e) { console.error(e); ElMessage.error('操作失败') }
+async function handlePartner(row, isPartner) {
+  const action = isPartner ? '设为合作' : '取消合作'
+  try {
+    await ElMessageBox.confirm(`确定要将医院 "${row.name}" ${action}吗？`, '确认', { type: 'warning' })
+    await setClinicPartner(row.id, isPartner)
+    ElMessage.success(isPartner ? '已设为合作医院' : '已取消合作')
+    loadData(); loadStats()
+  } catch (e) { if (e !== 'cancel') { console.error(e); ElMessage.error('操作失败') } }
 }
 
 async function handleDelete(row) {
@@ -304,13 +366,67 @@ function beforeCoverUpload(file) {
 </script>
 
 <style scoped>
-.page-header { display: flex; justify-content: space-between; align-items: center; }
-.card-title { font-size: 16px; font-weight: 600; }
-.header-actions { display: flex; gap: 8px; align-items: center; }
+.vet-clinics-page { padding: 0; }
+
+.stats-row { margin-bottom: 16px; }
+.overview-card { transition: transform 0.2s; }
+.overview-card:hover { transform: translateY(-2px); }
+.overview-content { display: flex; align-items: center; gap: 14px; }
+.overview-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.overview-info { flex: 1; min-width: 0; }
+.overview-value { font-size: 22px; font-weight: 700; color: #303133; line-height: 1.2; }
+.overview-label { font-size: 12px; color: #909399; margin-top: 2px; }
+
+.table-card { min-height: 500px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.header-left { display: flex; align-items: center; gap: 8px; }
+.card-title { font-weight: 600; font-size: 15px; color: #303133; }
+.header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.rating-cell { display: flex; align-items: center; gap: 4px; font-size: 13px; color: #606266; }
+
+.action-btns {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
 .pagination-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
-.stats-row .el-card { text-align: center; }
+
 .cover-uploader :deep(.el-upload) { border: 1px dashed #d9d9d9; border-radius: 6px; cursor: pointer; position: relative; overflow: hidden; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; }
 .cover-uploader :deep(.el-upload:hover) { border-color: #409eff; }
 .cover-preview { width: 120px; height: 120px; }
 .cover-uploader-icon { font-size: 28px; color: #8c939d; }
+
+/* 弹窗样式 */
+.clinic-dialog :deep(.el-dialog__body) { padding-top: 8px; }
+.dialog-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 4px 12px;
+}
+.dialog-profile-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.dialog-profile-info { flex: 1; }
+.dialog-profile-name { font-size: 18px; font-weight: 600; color: #303133; margin-bottom: 8px; }
+.dialog-profile-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dialog-divider { margin: 4px 0 16px; }
+.dialog-form :deep(.el-form-item) { margin-bottom: 16px; }
 </style>
