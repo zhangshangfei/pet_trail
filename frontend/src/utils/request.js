@@ -313,7 +313,10 @@ const request = (options = {}) => {
 
 // 封装常用请求方法
 export default {
-  // GET 请求
+  defaults: {
+    baseURL: BASE_URL
+  },
+
   get(url, data = {}, header = {}) {
     return request({
       url,
@@ -323,7 +326,6 @@ export default {
     })
   },
 
-  // POST 请求
   post(url, data = {}, header = {}, timeout) {
     return request({
       url,
@@ -334,7 +336,6 @@ export default {
     })
   },
 
-  // PUT 请求
   put(url, data = {}, header = {}) {
     return request({
       url,
@@ -344,7 +345,6 @@ export default {
     })
   },
 
-  // DELETE 请求
   delete(url, data = {}, header = {}) {
     return request({
       url,
