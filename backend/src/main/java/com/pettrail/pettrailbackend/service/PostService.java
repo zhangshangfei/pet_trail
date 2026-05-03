@@ -72,6 +72,7 @@ public class PostService {
         post.setBubble(bubble != null ? JSON.toJSONString(bubble) : null);
         post.setLocation(location);
         post.setStatus(1);
+        post.setAuditStatus(0);
         post.setLikeCount(0);
         post.setCommentCount(0);
         post.setShareCount(0);
@@ -302,6 +303,7 @@ public class PostService {
             new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Post>()
                 .eq(Post::getUserId, userId)
                 .eq(Post::getStatus, 1)
+                .eq(Post::getDeleted, 0)
         ).intValue();
     }
 
@@ -346,7 +348,7 @@ public class PostService {
         if (!post.getUserId().equals(userId)) {
             throw new ForbiddenException("无权删除他人动态");
         }
-        post.setStatus(0);
+        post.setDeleted(1);
         postMapper.updateById(post);
 
         String cacheKey = "post:detail:" + postId;
@@ -363,6 +365,7 @@ public class PostService {
     public Page<Post> adminListPosts(int page, int size, Long userId, Integer auditStatus) {
         Page<Post> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Post::getDeleted, 0);
         if (userId != null) wrapper.eq(Post::getUserId, userId);
         if (auditStatus != null) wrapper.eq(Post::getAuditStatus, auditStatus);
         wrapper.orderByDesc(Post::getCreatedAt);
@@ -428,6 +431,9 @@ public class PostService {
         Post post = postMapper.selectById(id);
         if (post == null) throw new BusinessException(404, "动态不存在");
         post.setDeleted(0);
+        if (post.getStatus() == null || post.getStatus() == 0) {
+            post.setStatus(1);
+        }
         postMapper.updateById(post);
     }
 
