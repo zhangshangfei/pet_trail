@@ -8,8 +8,14 @@ import * as achievement from './achievement'
 import * as challenge from './challenge'
 import * as product from './product'
 import * as vet from './vet'
+import * as follow from './follow'
+import * as upload from './upload'
+import * as notification from './notification'
+import * as tag from './tag'
+import * as behavior from './behavior'
+import * as report from './report'
 
-export { auth, pet, health, reminder, post, checkin, achievement, challenge, product, vet }
+export { auth, pet, health, reminder, post, checkin, achievement, challenge, product, vet, follow, upload, notification, tag, behavior, report }
 
 export default {
   auth,
@@ -21,5 +27,11 @@ export default {
   achievement,
   challenge,
   product,
-  vet
+  vet,
+  follow,
+  upload,
+  notification,
+  tag,
+  behavior,
+  report
 }

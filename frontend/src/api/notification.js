@@ -1,9 +1,6 @@
 import request from '@/utils/request'
 
 export const getNotifications = (params = {}) => {
-  if (typeof params === 'number') {
-    params = { page: params, size: arguments[1] || 20 }
-  }
   return request.get('/api/notifications', params)
 }
 
