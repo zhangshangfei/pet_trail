@@ -7,6 +7,7 @@ const CLOUD_CONFIG = config.VITE_CLOUD_CONFIG
 const pendingRequests = new Map()
 const responseCache = new Map()
 const CACHE_TTL = 3000
+const CACHE_MAX_SIZE = 100
 const DEDUP_TTL = 500
 
 // 将对象编码为 application/x-www-form-urlencoded 格式
@@ -276,13 +277,18 @@ const request = (options = {}) => {
     }
   }
 
-  if (options.method === 'GET') {
-    const cacheKey = options.url
+  if (options.method === 'GET' && options.cache !== false) {
+    const cacheKey = options.url + (options.data ? '|' + JSON.stringify(options.data) : '')
+    const ttl = options.cacheTTL || CACHE_TTL
     const now = Date.now()
 
     const cached = responseCache.get(cacheKey)
-    if (cached && now - cached.timestamp < CACHE_TTL) {
+    if (cached && now - cached.timestamp < ttl) {
       return Promise.resolve(cached.data)
+    }
+
+    if (cached) {
+      responseCache.delete(cacheKey)
     }
 
     const pending = pendingRequests.get(cacheKey)
@@ -292,6 +298,10 @@ const request = (options = {}) => {
 
     const promise = (BASE_URL === 'cloud' ? cloudRequest(options) : httpRequest(options))
       .then(data => {
+        if (responseCache.size >= CACHE_MAX_SIZE) {
+          const oldestKey = responseCache.keys().next().value
+          responseCache.delete(oldestKey)
+        }
         responseCache.set(cacheKey, { data, timestamp: Date.now() })
         pendingRequests.delete(cacheKey)
         return data
