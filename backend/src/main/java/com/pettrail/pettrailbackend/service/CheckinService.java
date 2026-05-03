@@ -140,7 +140,7 @@ public class CheckinService {
         String todayStr = today.format(DateTimeFormatter.ISO_DATE);
         log.info("开始打卡: userId={}, petId={}, itemId={}, date={}", userId, petId, itemId, todayStr);
 
-        String redisKey = String.format("checkin:%s:user:%d", todayStr, userId);
+        String redisKey = String.format("checkin:%s:user:%d:pet:%d", todayStr, userId, petId);
         String fieldKey = String.valueOf(itemId);
 
         Boolean isNew = redisTemplate.opsForHash()
