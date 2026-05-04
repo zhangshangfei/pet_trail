@@ -238,6 +238,13 @@
       }
     },
     {
+      "path": "pages/challenge/detail",
+      "style": {
+        "navigationBarTitleText": "挑战详情",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/shop/index",
       "style": {
         "navigationBarTitleText": "宠物商城",
