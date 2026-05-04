@@ -205,7 +205,7 @@ export const loadWxSubscribeTemplates = async () => {
       console.warn('loadWxSubscribeTemplates: 未登录，跳过')
       return
     }
-    const res = await uni.$request.get('/api/wx-subscribe/templates')
+    const res = await subscribeApi.getSubscribeTemplates()
     console.log('订阅消息模板接口返回:', JSON.stringify(res))
     if (res && res.success && res.data) {
       const templates = res.data
@@ -268,7 +268,7 @@ const reportAuthorization = async (templateType, count) => {
   try {
     const token = uni.getStorageSync('token')
     if (!token) return
-    await uni.$request.post('/api/wx-subscribe/authorize', { templateType, count })
+    await subscribeApi.authorizeSubscribe(templateType, count)
     console.log('授权积分上报成功:', templateType, '+', count)
   } catch (e) {
     console.warn('授权积分上报失败:', e)
@@ -282,7 +282,7 @@ export const wechatLogin = () => {
       success: async (res) => {
         if (res.code) {
           try {
-            const loginRes = await uni.$request.post('/api/users/login', { code: res.code })
+            const loginRes = await authApi.loginByCode(res.code)
             uni.hideLoading()
             if (loginRes.success) {
               uni.setStorageSync('token', loginRes.data.token)

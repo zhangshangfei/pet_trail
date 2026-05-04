@@ -274,6 +274,9 @@
 import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL, loadWxSubscribeTemplates, requestWxSubscribe } from '@/utils/index'
 import UserTopBar from '@/components/UserTopBar.vue'
 import AvatarView from '@/components/AvatarView.vue'
+import * as authApi from '@/api/auth'
+import * as petApi from '@/api/pet'
+import * as healthApi from '@/api/health'
 
 export default {
   components: { UserTopBar, AvatarView },
@@ -476,7 +479,7 @@ export default {
 
       if (token) {
         try {
-          const res = await uni.$request.get("/api/users/profile");
+          const res = await authApi.getProfile();
           if (res.success) {
             const userData = res.data;
             this.userAvatar = getUserAvatar(userData.id, userData.avatar);
@@ -490,7 +493,7 @@ export default {
     },
     async loadPets() {
       try {
-        const res = await uni.$request.get("/api/pets");
+        const res = await petApi.getPetList();
         if (res && res.success && Array.isArray(res.data)) {
           this.pets = res.data.map(pet => ({
             ...pet,
@@ -527,9 +530,9 @@ export default {
 
       try {
         const [weightRes, vaccineRes, parasiteRes] = await Promise.all([
-          uni.$request.get(`/api/pets/${petId}/weight-records/trend`, { days: this.chartRange }),
-          uni.$request.get(`/api/pets/${petId}/vaccine-reminders`),
-          uni.$request.get(`/api/pets/${petId}/parasite-reminders`)
+          healthApi.getWeightTrend(petId, this.chartRange),
+          petApi.getVaccineReminders(petId),
+          petApi.getParasiteReminders(petId)
         ]);
 
         this.loadAiSummary(petId);
@@ -652,10 +655,7 @@ export default {
         success: async (res) => {
           if (res.confirm) {
             try {
-              const result = await uni.$request.put(
-                `/api/pets/${this.selectedPet.id}/vaccine-reminders/${item.id}/status`,
-                { status: 1 }
-              );
+              const result = await petApi.updateVaccineReminderStatus(this.selectedPet.id, item.id, { status: 1 });
               if (result.success) {
                 uni.showToast({ title: "已标记完成", icon: "success" });
                 this.loadDashboardData();
@@ -682,10 +682,7 @@ export default {
         success: async (res) => {
           if (res.confirm) {
             try {
-              const result = await uni.$request.put(
-                `/api/pets/${this.selectedPet.id}/parasite-reminders/${item.id}/status`,
-                { status: 1 }
-              );
+              const result = await petApi.updateParasiteReminderStatus(this.selectedPet.id, item.id, { status: 1 });
               if (result.success) {
                 uni.showToast({ title: "已标记完成", icon: "success" });
                 this.loadDashboardData();
@@ -761,7 +758,7 @@ export default {
     },
     async loadAiSummary(petId) {
       try {
-        const res = await uni.$request.post(`/api/health/analysis/${petId}`);
+        const res = await healthApi.getHealthAnalysis(petId);
         if (res && res.success && res.data) {
           this.aiSummary = {
             score: res.data.score || 0,

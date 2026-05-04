@@ -72,6 +72,7 @@
 
 <script>
 import { checkLogin } from '@/utils/index'
+import * as checkinApi from '@/api/checkin'
 import { deleteCheckinItem, hideCheckinItem, showCheckinItem } from '@/api/checkin'
 
 export default {
@@ -106,7 +107,7 @@ export default {
     },
     async loadItems() {
       try {
-        const res = await uni.$request.get('/api/checkin/items')
+        const res = await checkinApi.getCheckinItems()
         if (res && res.success && Array.isArray(res.data)) {
           this.allItems = res.data.map(item => ({
             id: item.id,

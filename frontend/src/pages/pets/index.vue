@@ -55,6 +55,7 @@
 <script>
 import AddPetModal from "../../components/AddPetModal.vue";
 import { checkLogin } from '@/utils/index'
+import * as petApi from '@/api/pet'
 
 export default {
   components: {
@@ -88,7 +89,7 @@ export default {
     // 加载宠物列表
     async loadPets() {
       try {
-        const res = await uni.$request.get('/api/pets');
+        const res = await petApi.getPetList();
         console.log('[pet-list] 加载宠物列表响应:', res);
         if (res.success) {
           this.pets = res.data || [];
@@ -160,7 +161,7 @@ export default {
       }
 
       try {
-        const res = await uni.$request.post('/api/pets', data);
+        const res = await petApi.createPet(data);
         console.log('[pet-list] 创建宠物响应:', res);
 
         if (res.success) {

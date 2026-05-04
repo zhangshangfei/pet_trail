@@ -14,8 +14,12 @@ import * as notification from './notification'
 import * as tag from './tag'
 import * as behavior from './behavior'
 import * as report from './report'
+import * as subscribe from './subscribe'
+import * as membership from './membership'
+import * as feedback from './feedback'
+import * as feeding from './feeding'
 
-export { auth, pet, health, reminder, post, checkin, achievement, challenge, product, vet, follow, upload, notification, tag, behavior, report }
+export { auth, pet, health, reminder, post, checkin, achievement, challenge, product, vet, follow, upload, notification, tag, behavior, report, subscribe, membership, feedback, feeding }
 
 export default {
   auth,
@@ -33,5 +37,9 @@ export default {
   notification,
   tag,
   behavior,
-  report
+  report,
+  subscribe,
+  membership,
+  feedback,
+  feeding
 }

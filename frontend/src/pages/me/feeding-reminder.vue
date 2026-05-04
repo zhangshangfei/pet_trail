@@ -208,7 +208,7 @@ export default {
 
     async loadPets() {
       try {
-        const res = await uni.$request.get('/api/pets')
+        const res = await petApi.getPetList()
         if (res && res.success && Array.isArray(res.data)) {
           this.pets = res.data
           if (this.pets.length && !this.currentPetId) {
@@ -225,7 +225,7 @@ export default {
 
     async loadReminders() {
       try {
-        const res = await uni.$request.get('/api/feeding-reminders')
+        const res = await feedingApi.getFeedingReminders()
         if (res && res.success && Array.isArray(res.data)) {
           this.reminders = res.data
         } else {
@@ -257,7 +257,7 @@ export default {
 
     async onToggleReminder(reminder) {
       try {
-        const res = await uni.$request.put(`/api/feeding-reminders/${reminder.id}/toggle`)
+        const res = await feedingApi.toggleFeedingReminder(reminder.id)
         if (res && res.success) {
           reminder.enabled = res.data.enabled
         }
@@ -287,7 +287,7 @@ export default {
         async success(res) {
           if (!res.confirm) return
           try {
-            const result = await uni.$request.delete(`/api/feeding-reminders/${reminder.id}`)
+            const result = await feedingApi.deleteFeedingReminder(reminder.id)
             if (result && result.success) {
               self.reminders = self.reminders.filter(r => r.id !== reminder.id)
               uni.showToast({ title: '已删除', icon: 'success' })
@@ -323,14 +323,14 @@ export default {
       try {
         let res
         if (this.editingReminder) {
-          res = await uni.$request.put(`/api/feeding-reminders/${this.editingReminder.id}`, {
+          res = await feedingApi.updateFeedingReminder(this.editingReminder.id, {
             mealType: this.form.mealType,
             time: this.form.time,
             repeat: this.form.repeat,
             note: this.form.note || null
           })
         } else {
-          res = await uni.$request.post('/api/feeding-reminders', {
+          res = await feedingApi.createFeedingReminder( {
             petId: this.currentPetId,
             mealType: this.form.mealType,
             time: this.form.time,

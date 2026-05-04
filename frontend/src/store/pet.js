@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import * as petApi from '@/api/pet'
 import { ref, computed } from 'vue'
 
 const DEFAULT_PET_AVATAR = '/static/images/default-pet.png'
@@ -21,7 +22,7 @@ export const usePetStore = defineStore('pet', () => {
 
   async function loadPets() {
     try {
-      const res = await uni.$request.get('/api/pets/my')
+      const res = await petApi.getPetList()
       if (res.success && res.data) {
         petList.value = res.data
         loaded.value = true

@@ -79,7 +79,7 @@ public class AiModelService {
         return model;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AiModelVO switchModel(Long targetModelId, String reason) {
         long startTime = System.currentTimeMillis();
         AiModel fromModel = getCurrentModel();
@@ -171,7 +171,7 @@ public class AiModelService {
         return vo;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AiModelVO createModel(AiModelCreateDTO dto) {
         AiModel model = new AiModel();
         model.setModelName(dto.getModelName());
@@ -195,7 +195,7 @@ public class AiModelService {
         return convertToVO(model);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AiModelVO updateModel(Long id, AiModelUpdateDTO dto) {
         AiModel model = aiModelMapper.selectById(id);
         if (model == null) {
@@ -225,7 +225,7 @@ public class AiModelService {
         return convertToVO(model);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteModel(Long id) {
         AiModel model = aiModelMapper.selectById(id);
         if (model == null) {
@@ -242,7 +242,7 @@ public class AiModelService {
         return true;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AiModelVO setModelStatus(Long id, Integer status) {
         AiModel model = aiModelMapper.selectById(id);
         if (model == null) {
@@ -366,7 +366,7 @@ public class AiModelService {
         flushPendingStats();
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void flushPendingStats() {
         if (pendingStatsMap.isEmpty()) return;
 
@@ -456,7 +456,7 @@ public class AiModelService {
         }
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void updateModelParameters(Long modelId, Map<String, Object> parameters) {
         AiModel model = aiModelMapper.selectById(modelId);
         if (model == null) {

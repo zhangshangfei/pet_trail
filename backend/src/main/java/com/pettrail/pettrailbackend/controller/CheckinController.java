@@ -73,7 +73,7 @@ public class CheckinController extends BaseController {
             return Result.error(400, "打卡项ID不能为空");
         }
         return Result.success(checkinService.checkin(userId, request.getPetId(),
-                request.getItemId(), request.getNote(), request.getImages()));
+                request.getItemId(), request.getNote(), request.getImages(), request.getDate()));
     }
 
     @GetMapping("/calendar")

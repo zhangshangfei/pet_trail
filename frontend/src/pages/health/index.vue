@@ -272,6 +272,9 @@
 <script>
 import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL, loadWxSubscribeTemplates, requestWxSubscribe } from '@/utils/index'
 import UserTopBar from '@/components/UserTopBar.vue'
+import * as authApi from '@/api/auth'
+import * as petApi from '@/api/pet'
+import * as healthApi from '@/api/health'
 
 function todayStr() {
   const d = new Date();
@@ -442,7 +445,7 @@ export default {
 
       if (token) {
         try {
-          const res = await uni.$request.get("/api/users/profile");
+          const res = await authApi.getProfile();
           if (res && res.success) {
             const userData = res.data;
             this.userAvatar = getUserAvatar(userData.id, userData.avatar);
@@ -456,7 +459,7 @@ export default {
     },
     async loadPets() {
       try {
-        const res = await uni.$request.get("/api/pets");
+        const res = await petApi.getPetList();
         if (res && res.success && Array.isArray(res.data)) {
           this.pets = res.data.map(pet => ({
             ...pet,
@@ -489,7 +492,7 @@ export default {
         return;
       }
       try {
-        const res = await uni.$request.get(`/api/pets/${this.currentPet.id}/weight-records`);
+        const res = await healthApi.getWeightRecords(this.currentPet.id);
         if (res && res.success && Array.isArray(res.data) && res.data.length) {
           const r = res.data[0];
           this.lastWeightRecord = {
@@ -510,7 +513,7 @@ export default {
         return;
       }
       try {
-        const res = await uni.$request.post(`/api/health/analysis/${this.currentPet.id}`);
+        const res = await healthApi.getHealthAnalysis(this.currentPet.id);
         if (res && res.success && res.data) {
           this.healthScore = res.data.score || 0;
         } else {
@@ -570,11 +573,7 @@ export default {
         return;
       }
       try {
-        const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/weight-records`, {
-          weight: this.weightForm.weight,
-          recordDate: this.weightForm.date,
-          note: this.weightForm.remark || null
-        });
+        const res = await healthApi.createWeightRecord(this.currentPet.id, this.weightForm.weight, this.weightForm.date);
         if (res && res.success) {
           uni.showToast({ title: "保存成功", icon: "success" });
           this.weightForm.weight = "";
@@ -597,7 +596,7 @@ export default {
       if (!loggedIn) return
       const vaccineName = this.vaccineTypes[this.vaccineForm.typeIndex];
       try {
-        const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/vaccine-reminders`, {
+        const res = await petApi.createVaccineReminder(this.currentPet.id, {
           vaccineName,
           nextDate: this.vaccineForm.date,
           note: this.vaccineForm.remark || null
@@ -631,7 +630,7 @@ export default {
       if (!loggedIn) return
       const type = this.dewormTypeToApiType(this.dewormForm.typeIndex);
       try {
-        const res = await uni.$request.post(`/api/pets/${this.currentPet.id}/parasite-reminders`, {
+        const res = await petApi.createParasiteReminder(this.currentPet.id, {
           type,
           nextDate: this.dewormForm.date,
           productName: this.dewormForm.medicine || null,

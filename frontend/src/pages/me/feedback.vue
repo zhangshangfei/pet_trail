@@ -81,6 +81,7 @@
 
 <script>
 import { checkLogin } from '@/utils/index'
+import * as feedbackApi from '@/api/feedback'
 
 export default {
   data() {
@@ -155,7 +156,7 @@ export default {
 
       this.submitting = true
       try {
-        const res = await uni.$request.post('/api/feedback', {
+        const res = await feedbackApi.createFeedback( {
           type: this.form.type,
           content: this.form.content.trim(),
           contact: this.form.contact.trim(),

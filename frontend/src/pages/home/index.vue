@@ -250,6 +250,7 @@ import * as notificationApi from '@/api/notification'
 import * as behaviorApi from '@/api/behavior'
 // import wsManager from '@/utils/websocket'
 import { checkLogin, wechatLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
+import * as authApi from '@/api/auth'
 
 export default {
   components: {
@@ -411,7 +412,7 @@ export default {
         this.avatarUrl = getUserAvatar(cachedUserInfo.id, cachedUserInfo.avatar);
       }
       try {
-        const res = await uni.$request.get('/api/users/profile');
+        const res = await authApi.getProfile();
         if (res.success) {
           const userData = res.data;
           this.isLoggedIn = true;
@@ -507,7 +508,7 @@ export default {
         success: async (res) => {
           if (res.code) {
             try {
-              const loginRes = await uni.$request.post('/api/users/login', { code: res.code });
+              const loginRes = await authApi.loginByCode(res.code);
               uni.hideLoading();
 
               if (loginRes.success) {

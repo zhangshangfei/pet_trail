@@ -122,6 +122,8 @@
 
 <script>
 import { checkLogin } from '@/utils/index'
+import * as petApi from '@/api/pet'
+import * as healthApi from '@/api/health'
 
 export default {
   data() {
@@ -181,7 +183,7 @@ export default {
     },
     async loadPets() {
       try {
-        const res = await uni.$request.get('/api/pets');
+        const res = await petApi.getPetList();
         if (res && res.success && Array.isArray(res.data)) {
           this.pets = res.data;
           if (!this.pets.length) {
@@ -202,7 +204,7 @@ export default {
     async loadPetInfo() {
       if (!this.petId) return;
       try {
-        const res = await uni.$request.get(`/api/pets/${this.petId}`);
+        const res = await petApi.getPetDetail(this.petId);
         if (res.success) {
           this.pet = res.data;
           this.currentWeight = this.pet.weight;
@@ -214,7 +216,7 @@ export default {
     async loadRecords() {
       if (!this.petId) return;
       try {
-        const res = await uni.$request.get(`/api/pets/${this.petId}/weight-records`);
+        const res = await healthApi.getWeightRecords(this.petId);
         if (res.success) {
           this.records = res.data;
           this.calculateChanges();
@@ -262,7 +264,7 @@ export default {
         success: async (res) => {
           if (res.confirm) {
             try {
-              const result = await uni.$request.delete(`/api/pets/${this.petId}/weight-records/${record.id}`)
+              const result = await healthApi.deleteWeightRecord(this.petId, record.id)
               if (result && result.success) {
                 uni.showToast({ title: '删除成功', icon: 'success' })
                 this.loadRecords()
@@ -331,10 +333,7 @@ export default {
     },
     async createNewRecord() {
       try {
-        const res = await uni.$request.post(`/api/pets/${this.petId}/weight-records`, {
-          weight: this.form.weight,
-          recordDate: this.form.recordDate
-        });
+        const res = await healthApi.createWeightRecord(this.petId, this.weight, this.form.date);
 
         if (res && res.success) {
           uni.showToast({ title: '记录成功', icon: 'success' });
@@ -350,10 +349,7 @@ export default {
     },
     async updateRecord(recordId) {
       try {
-        const res = await uni.$request.put(`/api/pets/${this.petId}/weight-records/${recordId}`, {
-          weight: this.form.weight,
-          recordDate: this.form.recordDate
-        });
+        const res = await healthApi.updateWeightRecord(this.petId, recordId, { weight: this.editWeight, recordDate: this.editDate });
 
         if (res && res.success) {
           uni.showToast({ title: '修改成功', icon: 'success' });

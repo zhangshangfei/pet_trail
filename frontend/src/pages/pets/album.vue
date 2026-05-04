@@ -108,6 +108,7 @@
 
 <script>
 import { DEFAULT_PET_AVATAR_URL } from '@/utils/index'
+import config from '@/config/env'
 
 export default {
   data() {
@@ -149,7 +150,7 @@ export default {
 
     async loadPets() {
       try {
-        const res = await uni.$request.get('/api/pets')
+        const res = await petApi.getPetList()
         if (res && res.success && Array.isArray(res.data)) {
           this.pets = res.data
           if (this.pets.length && !this.currentPetId) {
@@ -164,10 +165,7 @@ export default {
     async loadPhotos() {
       if (!this.currentPetId) { this.photos = []; return }
       try {
-        const res = await uni.$request.get(`/api/pets/${this.currentPetId}/album`, {
-          year: this.currentYear,
-          month: this.currentMonth
-        })
+        const res = await petApi.getPetAlbum(this.currentPetId, { page: this.albumPage, size: 20 })
         if (res && res.success && Array.isArray(res.data)) {
           this.photos = res.data
         } else {
@@ -235,7 +233,7 @@ export default {
               async success(r) {
                 if (!r.confirm) return
                 try {
-                  const result = await uni.$request.delete(`/api/pets/${self.currentPetId}/album/${photo.id}`)
+                  const result = await petApi.deletePetAlbumPhoto(self.currentPetId, photo.id)
                   if (result && result.success) {
                     self.photos = self.photos.filter(p => p.id !== photo.id)
                     uni.showToast({ title: '已删除', icon: 'success' })
@@ -276,7 +274,7 @@ export default {
             uni.showLoading({ title: '上传中...' })
             const uploadRes = await new Promise((resolve, reject) => {
               uni.uploadFile({
-                url: uni.$request.defaults.baseURL + '/api/upload',
+                url: (config.VITE_UPLOAD_HTTP_BASE || config.VITE_API_BASE_URL || '').replace(/\/$/, '') + '/api/upload',
                 filePath: tempPath,
                 name: 'file',
                 header: { Authorization: 'Bearer ' + uni.getStorageSync('token') },
@@ -321,12 +319,7 @@ export default {
       this.saving = true
 
       try {
-        const res = await uni.$request.post(`/api/pets/${this.currentPetId}/album`, {
-          imageUrl: this.form.imageUrl,
-          title: this.form.title || null,
-          note: this.form.note || null,
-          recordDate: this.form.recordDate || null
-        })
+        const res = await petApi.addPetAlbumPhoto(this.currentPetId, { url: uploadRes.data.url })
         if (res && res.success) {
           uni.showToast({ title: '保存成功', icon: 'success' })
           this.closeModal()

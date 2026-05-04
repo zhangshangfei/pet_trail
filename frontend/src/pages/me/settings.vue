@@ -263,7 +263,7 @@ export default {
             async success(res2) {
               if (!res2.confirm) return
               try {
-                const result = await uni.$request.delete('/api/users/account')
+                const result = await authApi.deleteAccount()
                 if (result && result.success) {
                   uni.clearStorageSync()
                   uni.showToast({ title: '账号已注销', icon: 'success' })

@@ -24,6 +24,10 @@ export const deleteWeightRecord = (petId, recordId) => {
   return request.delete(`/api/pets/${petId}/weight-records/${recordId}`)
 }
 
+export const updateWeightRecord = (petId, recordId, data) => {
+  return request.put(`/api/pets/${petId}/weight-records/${recordId}`, data)
+}
+
 export const getHealthDashboard = (petId) => {
   return request.get('/api/health/dashboard', { pet_id: petId })
 }

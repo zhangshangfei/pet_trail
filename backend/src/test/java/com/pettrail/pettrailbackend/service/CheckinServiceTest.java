@@ -196,7 +196,7 @@ class CheckinServiceTest {
         when(checkinStatsMapper.selectByUserIdAndItemId(100L, 1L)).thenReturn(null);
         when(checkinStatsMapper.insert(any(CheckinStats.class))).thenReturn(1);
 
-        CheckinRecord result = checkinService.checkin(100L, 10L, 1L, "备注", null);
+        CheckinRecord result = checkinService.checkin(100L, 10L, 1L, "备注", null, null);
 
         assertNotNull(result);
         assertEquals(100L, result.getUserId());
@@ -213,7 +213,7 @@ class CheckinServiceTest {
                 .thenReturn(existing);
 
         assertThrows(BusinessException.class,
-                () -> checkinService.checkin(100L, 10L, 1L, null, null));
+                () -> checkinService.checkin(100L, 10L, 1L, null, null, null));
     }
 
     @Test
@@ -224,7 +224,7 @@ class CheckinServiceTest {
         when(checkinStatsMapper.selectByUserIdAndItemId(100L, 1L)).thenReturn(existingStats);
         when(checkinStatsMapper.updateById(any(CheckinStats.class))).thenReturn(1);
 
-        checkinService.checkin(100L, 10L, 1L, null, null);
+        checkinService.checkin(100L, 10L, 1L, null, null, null);
 
         ArgumentCaptor<CheckinStats> captor = ArgumentCaptor.forClass(CheckinStats.class);
         verify(checkinStatsMapper).updateById(captor.capture());
@@ -242,7 +242,7 @@ class CheckinServiceTest {
         when(checkinStatsMapper.selectByUserIdAndItemId(100L, 1L)).thenReturn(existingStats);
         when(checkinStatsMapper.updateById(any(CheckinStats.class))).thenReturn(1);
 
-        checkinService.checkin(100L, 10L, 1L, null, null);
+        checkinService.checkin(100L, 10L, 1L, null, null, null);
 
         ArgumentCaptor<CheckinStats> captor = ArgumentCaptor.forClass(CheckinStats.class);
         verify(checkinStatsMapper).updateById(captor.capture());

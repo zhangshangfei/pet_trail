@@ -165,7 +165,7 @@ export default {
 
     async loadPets() {
       try {
-        const res = await uni.$request.get('/api/pets')
+        const res = await petApi.getPetList()
         if (res && res.success && Array.isArray(res.data)) {
           this.pets = res.data
           if (this.pets.length && !this.currentPetId) {
@@ -206,13 +206,13 @@ export default {
 
       try {
         const [checkinRes, weightRes, vaccineRes, parasiteRes] = await Promise.all([
-          uni.$request.get('/api/checkin/calendar', { year: this.currentYear, month: this.currentMonth }),
-          uni.$request.get(`/api/pets/${this.currentPetId}/weight-records/range`, {
-            startDate: `${this.currentYear}-${String(this.currentMonth).padStart(2, '0')}-01`,
-            endDate: this.getLastDayStr()
-          }),
-          uni.$request.get(`/api/pets/${this.currentPetId}/vaccine-reminders`),
-          uni.$request.get(`/api/pets/${this.currentPetId}/parasite-reminders`)
+          checkinApi.getCalendar(this.currentYear, this.currentMonth),
+          healthApi.getWeightRecordsByRange(this.currentPetId,
+            `${this.currentYear}-${String(this.currentMonth).padStart(2, '0')}-01`,
+            this.getLastDayStr()
+          ),
+          petApi.getVaccineReminders(this.currentPetId),
+          petApi.getParasiteReminders(this.currentPetId)
         ])
 
         this.checkinMap = {}

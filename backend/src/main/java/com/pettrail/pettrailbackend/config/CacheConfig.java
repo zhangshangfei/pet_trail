@@ -35,6 +35,12 @@ public class CacheConfig {
         SimpleCacheManager cacheManager = new SimpleCacheManager();
         List<Cache> caches = new ArrayList<>();
         
+        // 通用本地缓存（供MultiLevelCache使用）
+        caches.add(new CaffeineCache("local", Caffeine.newBuilder()
+            .maximumSize(5000)
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .build()));
+        
         // 用户信息缓存
         caches.add(new CaffeineCache("user", Caffeine.newBuilder()
             .maximumSize(1000)

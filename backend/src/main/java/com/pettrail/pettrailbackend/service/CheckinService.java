@@ -135,8 +135,13 @@ public class CheckinService {
      * 打卡（幂等性保证）
      */
     @Transactional(rollbackFor = Exception.class)
-    public CheckinRecord checkin(Long userId, Long petId, Long itemId, String note, List<String> images) {
-        LocalDate today = LocalDate.now();
+    public CheckinRecord checkin(Long userId, Long petId, Long itemId, String note, List<String> images, String dateStr) {
+        LocalDate today;
+        if (dateStr != null && !dateStr.isEmpty()) {
+            today = LocalDate.parse(dateStr, DateTimeFormatter.ISO_DATE);
+        } else {
+            today = LocalDate.now();
+        }
         String todayStr = today.format(DateTimeFormatter.ISO_DATE);
         log.info("开始打卡: userId={}, petId={}, itemId={}, date={}", userId, petId, itemId, todayStr);
 

@@ -74,6 +74,7 @@
 
 <script>
 import { checkLogin } from '@/utils/index'
+import * as feedbackApi from '@/api/feedback'
 
 export default {
   data() {
@@ -105,7 +106,7 @@ export default {
         return
       }
       try {
-        const res = await uni.$request.get('/api/feedback/my')
+        const res = await feedbackApi.getMyFeedback()
         if (res && res.success && Array.isArray(res.data)) {
           this.feedbackList = res.data
         } else {

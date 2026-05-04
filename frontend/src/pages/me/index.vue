@@ -139,6 +139,8 @@ import UserTopBar from '@/components/UserTopBar.vue'
 import AddPetModal from '@/components/AddPetModal.vue'
 import AvatarView from '@/components/AvatarView.vue'
 import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
+import * as authApi from '@/api/auth'
+import * as petApi from '@/api/pet'
 
 export default {
   components: {
@@ -217,7 +219,7 @@ export default {
       }
       if (token) {
         try {
-          const res = await uni.$request.get('/api/users/profile');
+          const res = await authApi.getProfile();
           if (res && res.success) {
             const userData = res.data;
             this.avatarUrl = getUserAvatar(userData.id, userData.avatar);
@@ -231,7 +233,7 @@ export default {
     },
     async loadPets() {
       try {
-        const res = await uni.$request.get('/api/pets');
+        const res = await petApi.getPetList();
         if (res && res.success) {
           this.pets = Array.isArray(res.data) ? res.data : [];
         } else {
@@ -280,7 +282,7 @@ export default {
       if (!loggedIn) return
 
       try {
-        const res = await uni.$request.post('/api/pets', payload);
+        const res = await petApi.createPet(payload);
         if (res && res.success) {
           uni.showToast({ title: "添加成功", icon: "success" });
           this.showAddPetModal = false;

@@ -121,7 +121,7 @@ export default {
 
     async loadMembershipInfo() {
       try {
-        const res = await uni.$request.get('/api/membership/info')
+        const res = await membershipApi.getMembershipInfo()
         if (res && res.success && res.data) {
           this.isPro = res.data.isPro || false
           if (res.data.expireDate) {
@@ -147,7 +147,7 @@ export default {
           if (!res.confirm) return
           try {
             uni.showLoading({ title: '创建订单...' })
-            const orderRes = await uni.$request.post('/api/membership/orders', {
+            const orderRes = await membershipApi.createMembershipOrder( {
               plan: self.selectedPlan
             })
             if (!orderRes || !orderRes.success || !orderRes.data) {
@@ -157,7 +157,7 @@ export default {
             }
 
             uni.showLoading({ title: '支付中...' })
-            const payRes = await uni.$request.post(`/api/membership/orders/${orderRes.data.id}/pay`)
+            const payRes = await membershipApi.payMembershipOrder(orderRes.data.id)
             uni.hideLoading()
 
             if (payRes && payRes.success) {
@@ -185,7 +185,7 @@ export default {
         async success(res) {
           if (!res.confirm) return
           try {
-            const result = await uni.$request.post('/api/membership/cancel')
+            const result = await membershipApi.cancelMembership()
             if (result && result.success) {
               uni.showToast({ title: '已取消续费', icon: 'none' })
             }

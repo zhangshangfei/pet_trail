@@ -174,6 +174,9 @@
 
 <script>
 import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
+import * as authApi from '@/api/auth'
+import * as petApi from '@/api/pet'
+import * as checkinApi from '@/api/checkin'
 import UserTopBar from '@/components/UserTopBar.vue'
 
 const DEFAULT_PET_AVATAR = '/static/images/default-pet-avatar.png'
@@ -268,7 +271,7 @@ export default {
     },
     async loadPets() {
       try {
-        const res = await uni.$request.get('/api/pets')
+        const res = await petApi.getPetList()
         if (res && res.success && Array.isArray(res.data)) {
           this.pets = res.data
           if (!this.pets.length) {
@@ -295,7 +298,7 @@ export default {
     async loadPetInfo() {
       if (!this.petId) return
       try {
-        const res = await uni.$request.get(`/api/pets/${this.petId}`)
+        const res = await petApi.getPetDetail(this.petId)
         if (res && res.success) {
           this.pet = res.data || null
           this.petAvatar = (this.pet && this.pet.avatar) || DEFAULT_PET_AVATAR
@@ -308,7 +311,7 @@ export default {
     },
     async loadCheckinItems() {
       try {
-        const res = await uni.$request.get('/api/checkin/items')
+        const res = await checkinApi.getCheckinItems()
         if (res && res.success && Array.isArray(res.data)) {
           this.allItems = res.data.map((item) => ({
             id: item.id,
@@ -333,7 +336,7 @@ export default {
       const requests = this.getMonthRequests(3)
       try {
         const responses = await Promise.all(
-          requests.map(item => uni.$request.get('/api/checkin/calendar', item).catch(() => null))
+          requests.map(item => checkinApi.getCalendar(item.year, item.month).catch(() => null))
         )
         const result = []
         for (const res of responses) {
@@ -460,10 +463,7 @@ export default {
       if (!loggedIn) return
 
       try {
-        const res = await uni.$request.post('/api/checkin', {
-          petId: this.petId,
-          itemId: item.id
-        })
+        const res = await checkinApi.checkin({ petId: this.petId, itemIds: this.selectedItems, date: this.today })
         if (!res || res.success !== true) {
           uni.showToast({ title: (res && res.message) || '打卡失败', icon: 'none' })
           return
@@ -535,7 +535,7 @@ export default {
           if (userInfo.nickname) this.userName = userInfo.nickname
           if (userInfo.avatar) this.userAvatar = getUserAvatar(userInfo.id, userInfo.avatar)
         }
-        const res = await uni.$request.get('/api/users/profile')
+        const res = await authApi.getProfile()
         if (res && res.success && res.data) {
           if (res.data.nickname) this.userName = res.data.nickname
           this.userAvatar = getUserAvatar(res.data.id, res.data.avatar)

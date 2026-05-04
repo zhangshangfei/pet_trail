@@ -9,4 +9,5 @@ public class CheckinRequest {
     private Long petId;
     private String note;
     private java.util.List<String> images;
+    private String date;
 }

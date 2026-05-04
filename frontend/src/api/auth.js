@@ -55,9 +55,12 @@ export const discoverUsers = (params) => {
  * 退出登录
  */
 export const logout = () => {
-  // 清除本地存储
   uni.removeStorageSync('token')
   uni.removeStorageSync('tokenExpireTime')
   uni.removeStorageSync('userInfo')
   return Promise.resolve()
+}
+
+export const deleteAccount = () => {
+  return request.delete('/api/users/account')
 }

@@ -111,6 +111,7 @@
 <script>
 import AddPetModal from '@/components/AddPetModal.vue'
 import { checkLogin } from '@/utils/index'
+import * as petApi from '@/api/pet'
 
 export default {
   components: { AddPetModal },
@@ -144,7 +145,7 @@ export default {
   methods: {
     async loadPetDetail(petId) {
       try {
-        const res = await uni.$request.get(`/api/pets/${petId}`)
+        const res = await petApi.getPetDetail(petId)
         if (res && res.success) {
           this.pet = res.data
         } else {
@@ -215,7 +216,7 @@ export default {
       const loggedIn = await checkLogin('请先登录后再编辑')
       if (!loggedIn) return
       try {
-        const res = await uni.$request.put(`/api/pets/${this.pet.id}`, payload)
+        const res = await petApi.updatePet(this.pet.id, payload)
         if (res && res.success) {
           uni.showToast({ title: '保存成功', icon: 'success' })
           this.showEditModal = false
@@ -237,7 +238,7 @@ export default {
     },
     async doDelete() {
       try {
-        const res = await uni.$request.delete(`/api/pets/${this.pet.id}`)
+        const res = await petApi.deletePet(this.pet.id)
         if (res && res.success) {
           uni.showToast({ title: '删除成功', icon: 'success' })
           this.showDeleteConfirm = false

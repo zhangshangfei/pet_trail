@@ -124,6 +124,7 @@
 
 <script>
 import { checkLogin } from '@/utils/index'
+import * as petApi from '@/api/pet'
 
 export default {
   data() {
@@ -165,7 +166,7 @@ export default {
     async loadRecords() {
       if (!this.petId) return
       try {
-        const res = await uni.$request.get(`/api/pets/${this.petId}/vaccine-reminders`)
+        const res = await petApi.getVaccineReminders(this.petId)
         if (res && res.success && Array.isArray(res.data)) {
           const now = new Date()
           this.records = res.data.map((r) => {
@@ -205,10 +206,7 @@ export default {
         success: async (res) => {
           if (res.confirm) {
             try {
-              const result = await uni.$request.put(
-                `/api/pets/${this.petId}/vaccine-reminders/${item.id}/status`,
-                { status: 1 }
-              )
+              const result = await petApi.updateVaccineReminderStatus(this.petId, item.id, { status: 1 })
               if (result.success) {
                 uni.showToast({ title: "已标记完成", icon: "success" })
                 this.loadRecords()
@@ -246,14 +244,11 @@ export default {
         return
       }
       try {
-        const res = await uni.$request.put(
-          `/api/pets/${this.petId}/vaccine-reminders/${this.editingItem.id}`,
-          {
+        const res = await petApi.updateVaccineReminder(this.petId, this.editingItem.id, {
             vaccineName: this.editForm.vaccineName,
             nextDate: this.editForm.nextDate,
             note: this.editForm.note
-          }
-        )
+          })
         if (res && res.success) {
           uni.showToast({ title: '修改成功', icon: 'success' })
           this.hideEditModal()
@@ -275,9 +270,7 @@ export default {
         success: async (res) => {
           if (res.confirm) {
             try {
-              const result = await uni.$request.delete(
-                `/api/pets/${this.petId}/vaccine-reminders/${item.id}`
-              )
+              const result = await petApi.deleteVaccineReminder(this.petId, item.id)
               if (result && result.success) {
                 uni.showToast({ title: '删除成功', icon: 'success' })
                 this.loadRecords()

@@ -179,6 +179,7 @@
 
 <script>
 import { checkLogin } from '@/utils/index'
+import * as petApi from '@/api/pet'
 
 export default {
   data() {
@@ -228,7 +229,7 @@ export default {
     },
     async loadPetInfo() {
       try {
-        const res = await uni.$request.get(`/api/pets/${this.petId}`);
+        const res = await petApi.getPetDetail(this.petId);
         if (res.success) {
           this.pet = res.data;
         }
@@ -238,7 +239,7 @@ export default {
     },
     async loadReminders() {
       try {
-        const res = await uni.$request.get(`/api/pets/${this.petId}/parasite-reminders`);
+        const res = await petApi.getParasiteReminders(this.petId);
         if (res.success) {
           this.upcomingReminders = res.data.filter(r => r.status === 0);
           this.completedReminders = res.data.filter(r => r.status === 1);
@@ -309,9 +310,9 @@ export default {
         const data = this.form;
         let res;
         if (this.isEditing) {
-          res = await uni.$request.put(`/api/pets/${this.petId}/parasite-reminders/${this.currentReminder.id}`, data);
+          res = await petApi.updateParasiteReminder(this.petId, this.currentReminder.id, data);
         } else {
-          res = await uni.$request.post(`/api/pets/${this.petId}/parasite-reminders`, data);
+          res = await petApi.createParasiteReminder(this.petId, data);
         }
 
         if (res.success) {
@@ -331,9 +332,7 @@ export default {
       if (!loggedIn) return
 
       try {
-        const res = await uni.$request.put(`/api/pets/${this.petId}/parasite-reminders/${this.currentReminder.id}/status`, {
-          status: this.tempStatus
-        });
+        const res = await petApi.updateParasiteReminderStatus(this.petId, this.currentReminder.id, { status: 1 });
 
         if (res.success) {
           uni.showToast({ title: '状态修改成功', icon: 'success' });

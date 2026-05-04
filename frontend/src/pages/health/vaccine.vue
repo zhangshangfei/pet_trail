@@ -166,6 +166,7 @@
 
 <script>
 import { checkLogin } from '@/utils/index'
+import * as petApi from '@/api/pet'
 
 export default {
   data() {
@@ -215,7 +216,7 @@ export default {
     },
     async loadPetInfo() {
       try {
-        const res = await uni.$request.get(`/api/pets/${this.petId}`);
+        const res = await petApi.getPetDetail(this.petId);
         if (res.success) {
           this.pet = res.data;
         }
@@ -225,7 +226,7 @@ export default {
     },
     async loadReminders() {
       try {
-        const res = await uni.$request.get(`/api/pets/${this.petId}/vaccine-reminders`);
+        const res = await petApi.getVaccineReminders(this.petId);
         if (res.success) {
           this.upcomingReminders = res.data.filter(r => r.status === 0);
           this.completedReminders = res.data.filter(r => r.status === 1);
@@ -294,8 +295,8 @@ export default {
 
       try {
         const res = this.isEditing
-          ? await uni.$request.put(`/api/pets/${this.petId}/vaccine-reminders/${this.currentReminder.id}`, this.form)
-          : await uni.$request.post(`/api/pets/${this.petId}/vaccine-reminders`, this.form);
+          ? await petApi.updateVaccineReminder(this.petId, this.currentReminder.id, this.form)
+          : await petApi.createVaccineReminder(this.petId, this.form);
 
         if (res.success) {
           uni.showToast({ title: this.isEditing ? '修改成功' : '添加成功', icon: 'success' });
@@ -314,9 +315,7 @@ export default {
       if (!loggedIn) return
 
       try {
-        const res = await uni.$request.put(`/api/pets/${this.petId}/vaccine-reminders/${this.currentReminder.id}/status`, {
-          status: this.tempStatus
-        });
+        const res = await petApi.updateVaccineReminderStatus(this.petId, this.currentReminder.id, { status: 1 });
 
         if (res.success) {
           uni.showToast({ title: '状态修改成功', icon: 'success' });

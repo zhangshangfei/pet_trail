@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import * as authApi from '@/api/auth'
 import { ref, computed } from 'vue'
 
 export const useUserStore = defineStore('user', () => {
@@ -24,7 +25,7 @@ export const useUserStore = defineStore('user', () => {
       return
     }
     try {
-      const res = await uni.$request.get('/api/users/profile')
+      const res = await authApi.getProfile()
       if (res.success && res.data) {
         userInfo.value = res.data
         isLoggedIn.value = true
