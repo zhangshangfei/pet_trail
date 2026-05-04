@@ -8,8 +8,8 @@ export const checkin = (data) => {
   return request.post('/api/checkin', data)
 }
 
-export const getCalendar = (year, month) => {
-  return request.get('/api/checkin/calendar', { year, month })
+export const getCalendar = (year, month, noCache = false) => {
+  return request.get('/api/checkin/calendar', { year, month }, {}, noCache ? { cache: false } : {})
 }
 
 export const cancelCheckin = (id) => {

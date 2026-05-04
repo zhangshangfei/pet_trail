@@ -327,12 +327,13 @@ export default {
     baseURL: BASE_URL
   },
 
-  get(url, data = {}, header = {}) {
+  get(url, data = {}, header = {}, options = {}) {
     return request({
       url,
       method: 'GET',
       data,
-      header
+      header,
+      ...options
     })
   },
 

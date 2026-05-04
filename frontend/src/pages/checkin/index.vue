@@ -332,11 +332,11 @@ export default {
         console.error('加载打卡项失败:', error)
       }
     },
-    async loadCalendarRecords() {
+    async loadCalendarRecords(forceRefresh = false) {
       const requests = this.getMonthRequests(3)
       try {
         const responses = await Promise.all(
-          requests.map(item => checkinApi.getCalendar(item.year, item.month).catch(() => null))
+          requests.map(item => checkinApi.getCalendar(item.year, item.month, forceRefresh).catch(() => null))
         )
         const result = []
         for (const res of responses) {
@@ -470,7 +470,17 @@ export default {
         }
         try { uni.vibrateShort({ type: 'medium' }) } catch (e) { /* ignore */ }
         this.showSuccessFeedback()
-        await this.loadCalendarRecords()
+
+        if (res.data && Array.isArray(res.data)) {
+          for (const record of res.data) {
+            if (record && record.itemId) {
+              this.allRecords.push(record)
+            }
+          }
+        }
+        this.syncPageState()
+
+        await this.loadCalendarRecords(true)
         this.syncPageState()
       } catch (error) {
         console.error('打卡失败:', error)

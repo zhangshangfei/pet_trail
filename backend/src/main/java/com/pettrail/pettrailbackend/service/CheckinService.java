@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -172,6 +173,7 @@ public class CheckinService {
         record.setStatus(1);
         record.setNote(note);
         record.setImages(images != null ? JSON.toJSONString(images) : null);
+        record.setCreatedAt(LocalDateTime.now());
         
         int insertResult = checkinRecordMapper.insert(record);
         log.info("打卡记录插入结果: rows={}, recordId={}", insertResult, record.getId());
