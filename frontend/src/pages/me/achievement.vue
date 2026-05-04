@@ -3,7 +3,7 @@
     <view class="header" :style="{ paddingTop: statusBarHeight + 'px' }">
       <view class="header-inner">
         <view class="back-btn" @tap="goBack">
-          <text class="back-icon">‹</text>
+          <text class="back-icon">&#8249;</text>
         </view>
         <text class="header-title">成就墙</text>
         <view class="header-right">
@@ -14,13 +14,19 @@
 
     <scroll-view scroll-y class="achievement-scroll" :style="{ top: headerHeight + 'px' }">
       <view class="achievement-content">
-        <view class="progress-bar-wrap">
+        <!-- 总进度条 -->
+        <view class="progress-card">
+          <view class="progress-info">
+            <text class="progress-label">成就进度</text>
+            <text class="progress-percent">{{ progressPercent }}%</text>
+          </view>
           <view class="progress-bar">
             <view class="progress-fill" :style="{ width: progressPercent + '%' }"></view>
           </view>
-          <text class="progress-label">已解锁 {{ progressPercent }}%</text>
+          <text class="progress-sub">已解锁 {{ unlockedCount }} / {{ totalCount }} 个成就</text>
         </view>
 
+        <!-- 类型筛选 -->
         <view class="type-tabs">
           <view
             v-for="tab in typeTabs"
@@ -29,55 +35,46 @@
             :class="{ active: activeType === tab.value }"
             @tap="switchType(tab.value)"
           >
-            <text class="tab-icon">{{ tab.icon }}</text>
             <text class="tab-text">{{ tab.label }}</text>
           </view>
         </view>
 
-        <view class="achievement-grid">
+        <!-- 成就网格 -->
+        <view class="achievement-grid" v-if="filteredAchievements.length > 0">
           <view
             v-for="item in filteredAchievements"
             :key="item.id"
             class="achievement-card"
-            :class="{ unlocked: item.unlocked, locked: !item.unlocked }"
+            :class="{ unlocked: item.unlocked, claimable: item.status === 2, locked: !item.unlocked }"
             @tap="onAchievementTap(item)"
           >
-            <view class="achievement-icon-wrap" :class="{ 'icon-glow': item.unlocked }">
-              <text class="achievement-icon">{{ item.unlocked ? item.icon : '🔒' }}</text>
+            <view class="card-icon-wrap" :class="{ 'icon-glow': item.unlocked }">
+              <text class="card-icon">{{ item.unlocked ? (item.icon || '&#127942;') : '&#128274;' }}</text>
             </view>
-            <text class="achievement-name">{{ item.name }}</text>
-            <text class="achievement-desc">{{ item.description }}</text>
-            <view class="achievement-progress" v-if="!item.unlocked">
-              <view class="mini-progress-bar">
-                <view class="mini-progress-fill" :style="{ width: getProgressPercent(item) + '%' }"></view>
+            <text class="card-name">{{ item.name }}</text>
+            <text class="card-desc">{{ item.description }}</text>
+            <view class="card-progress" v-if="!item.unlocked">
+              <view class="mini-bar">
+                <view class="mini-fill" :style="{ width: getProgressPercent(item) + '%' }"></view>
               </view>
-              <text class="mini-progress-text">{{ item.currentProgress || 0 }}/{{ item.conditionValue }}</text>
+              <text class="mini-text">{{ item.currentProgress || 0 }}/{{ item.conditionValue }}</text>
             </view>
-            <view class="achievement-badge" v-if="item.unlocked">
-              <text class="badge-check">✓</text>
+            <view class="card-badge" v-if="item.status === 3">
+              <text class="badge-check">&#9989;</text>
+            </view>
+            <view class="claim-tag" v-if="item.status === 2">
+              <text class="claim-tag-text">领取</text>
             </view>
           </view>
         </view>
 
         <view class="empty-tip" v-if="filteredAchievements.length === 0">
-          <text class="empty-icon">🏆</text>
+          <view class="empty-icon">&#127942;</view>
           <text class="empty-text">暂无该类型成就</text>
         </view>
       </view>
     </scroll-view>
 
-    <view class="unlock-popup" v-if="showUnlockPopup" @tap="closeUnlockPopup">
-      <view class="popup-content" @tap.stop>
-        <view class="popup-glow"></view>
-        <text class="popup-icon">{{ unlockItem.icon }}</text>
-        <text class="popup-title">🎉 成就解锁！</text>
-        <text class="popup-name">{{ unlockItem.name }}</text>
-        <text class="popup-desc">{{ unlockItem.description }}</text>
-        <view class="popup-btn" @tap="closeUnlockPopup">
-          <text class="popup-btn-text">太棒了！</text>
-        </view>
-      </view>
-    </view>
   </view>
 </template>
 
@@ -88,19 +85,17 @@ export default {
   data() {
     return {
       statusBarHeight: 20,
-      headerHeight: 70,
+      headerHeight: 74,
       achievements: [],
       unlockedCount: 0,
       totalCount: 0,
       activeType: 0,
-      showUnlockPopup: false,
-      unlockItem: {},
       typeTabs: [
-        { label: '全部', value: 0, icon: '🏆' },
-        { label: '打卡', value: 1, icon: '✅' },
-        { label: '健康', value: 2, icon: '💪' },
-        { label: '社交', value: 3, icon: '📱' },
-        { label: '成长', value: 4, icon: '🌱' }
+        { label: '全部', value: 0 },
+        { label: '打卡', value: 1 },
+        { label: '健康', value: 2 },
+        { label: '社交', value: 3 },
+        { label: '成长', value: 4 }
       ]
     }
   },
@@ -118,12 +113,10 @@ export default {
     try {
       const sys = uni.getSystemInfoSync()
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20
-      this.headerHeight = this.statusBarHeight + 50
     } catch (e) {
       this.statusBarHeight = 20
-      this.headerHeight = 70
     }
-    this.loadAchievements()
+    this.headerHeight = this.statusBarHeight + 54
   },
   onShow() {
     this.loadAchievements()
@@ -149,18 +142,7 @@ export default {
       return Math.min(100, Math.round(((item.currentProgress || 0) / item.conditionValue) * 100))
     },
     onAchievementTap(item) {
-      if (item.unlocked) {
-        this.unlockItem = item
-        this.showUnlockPopup = true
-      } else {
-        uni.showToast({
-          title: `还需 ${item.conditionValue - (item.currentProgress || 0)} 步解锁`,
-          icon: 'none'
-        })
-      }
-    },
-    closeUnlockPopup() {
-      this.showUnlockPopup = false
+      uni.navigateTo({ url: `/pages/achievement/detail?id=${item.id}` })
     },
     goBack() {
       uni.navigateBack()
@@ -169,32 +151,33 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .achievement-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background: #f9fafb;
 }
 
+/* 头部 - 与首页 UserTopBar 一致 */
 .header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  background: rgba(26, 26, 46, 0.95);
-  backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
 }
 
 .header-inner {
   display: flex;
   align-items: center;
-  height: 50px;
-  padding: 0 20rpx;
+  justify-content: space-between;
+  height: 54px;
+  padding: 0 24rpx;
 }
 
 .back-btn {
-  width: 60rpx;
-  height: 60rpx;
+  width: 72rpx;
+  height: 72rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -202,29 +185,29 @@ export default {
 
 .back-icon {
   font-size: 40rpx;
-  color: #fff;
+  color: #ffffff;
+  font-weight: 300;
 }
 
 .header-title {
-  flex: 1;
-  text-align: center;
   font-size: 32rpx;
   font-weight: 600;
-  color: #fff;
+  color: #ffffff;
 }
 
 .header-right {
-  padding: 4rpx 16rpx;
-  background: rgba(255, 255, 255, 0.15);
+  padding: 6rpx 20rpx;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 999rpx;
 }
 
 .progress-text {
   font-size: 24rpx;
-  color: #fbbf24;
+  color: #ffffff;
   font-weight: 600;
 }
 
+/* 滚动区域 */
 .achievement-scroll {
   position: fixed;
   left: 0;
@@ -233,72 +216,92 @@ export default {
 }
 
 .achievement-content {
-  padding: 20rpx 24rpx 200rpx;
+  padding: 20rpx;
 }
 
-.progress-bar-wrap {
-  margin-bottom: 28rpx;
+/* 进度卡片 - 与首页 post-card 一致 */
+.progress-card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.progress-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #111827;
+}
+
+.progress-percent {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #ff6a3d;
 }
 
 .progress-bar {
-  height: 12rpx;
-  background: rgba(255, 255, 255, 0.1);
+  height: 16rpx;
+  background: #f3f4f6;
   border-radius: 999rpx;
   overflow: hidden;
+  margin-bottom: 8rpx;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  background: linear-gradient(90deg, #ff7a3d, #ff5a3d);
   border-radius: 999rpx;
   transition: width 0.5s ease;
 }
 
-.progress-label {
-  font-size: 22rpx;
-  color: rgba(255, 255, 255, 0.6);
-  margin-top: 8rpx;
-  display: block;
-  text-align: right;
+.progress-sub {
+  font-size: 24rpx;
+  color: #9ca3af;
 }
 
+/* 类型筛选 - 与首页 segmented-control 一致 */
 .type-tabs {
   display: flex;
   gap: 12rpx;
-  margin-bottom: 28rpx;
-  overflow-x: auto;
-  white-space: nowrap;
-  padding-bottom: 8rpx;
+  margin-bottom: 20rpx;
+  background: rgba(243, 244, 246, 0.6);
+  border-radius: 999rpx;
+  padding: 6rpx;
 }
 
 .type-tab {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 6rpx;
-  padding: 12rpx 20rpx;
+  justify-content: center;
+  padding: 12rpx 0;
   border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.08);
-  flex-shrink: 0;
-
-  &.active {
-    background: linear-gradient(135deg, #f59e0b, #fbbf24);
-  }
 }
 
-.tab-icon {
-  font-size: 24rpx;
+.type-tab.active {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
 }
 
 .tab-text {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 26rpx;
+  color: #6b7280;
 }
 
 .type-tab.active .tab-text {
-  color: #1a1a2e;
-  font-weight: 600;
+  color: #111827;
+  font-weight: 700;
 }
 
+/* 成就网格 */
 .achievement-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -306,218 +309,135 @@ export default {
 }
 
 .achievement-card {
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 20rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
   padding: 28rpx 20rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-
-  &.unlocked {
-    background: rgba(251, 191, 36, 0.12);
-    border: 1rpx solid rgba(251, 191, 36, 0.3);
-  }
-
-  &.locked {
-    opacity: 0.7;
-  }
-
-  &:active {
-    transform: scale(0.97);
-  }
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
 }
 
-.achievement-icon-wrap {
+.achievement-card.locked {
+  opacity: 0.65;
+}
+
+.achievement-card.unlocked {
+  background: linear-gradient(135deg, #fff7ed 0%, #fff1f2 100%);
+  border: 1rpx solid rgba(255, 122, 61, 0.15);
+}
+
+.achievement-card.claimable {
+  border: 2rpx solid #ff6a3d;
+}
+
+.card-icon-wrap {
   width: 96rpx;
   height: 96rpx;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
+  background: #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 16rpx;
-
-  &.icon-glow {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(245, 158, 11, 0.2));
-    box-shadow: 0 0 30rpx rgba(251, 191, 36, 0.3);
-  }
 }
 
-.achievement-icon {
+.card-icon-wrap.icon-glow {
+  background: linear-gradient(135deg, rgba(255, 122, 61, 0.2), rgba(255, 77, 79, 0.15));
+}
+
+.card-icon {
   font-size: 44rpx;
 }
 
-.achievement-name {
+.card-name {
   font-size: 26rpx;
   font-weight: 600;
-  color: #fff;
+  color: #111827;
   margin-bottom: 6rpx;
   text-align: center;
 }
 
-.achievement-desc {
-  font-size: 20rpx;
-  color: rgba(255, 255, 255, 0.5);
+.card-desc {
+  font-size: 22rpx;
+  color: #6b7280;
   text-align: center;
   margin-bottom: 12rpx;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.achievement-progress {
+.card-progress {
   width: 100%;
 }
 
-.mini-progress-bar {
+.mini-bar {
   height: 6rpx;
-  background: rgba(255, 255, 255, 0.1);
+  background: #f3f4f6;
   border-radius: 999rpx;
   overflow: hidden;
   margin-bottom: 6rpx;
 }
 
-.mini-progress-fill {
+.mini-fill {
   height: 100%;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  background: linear-gradient(90deg, #ff7a3d, #ff5a3d);
   border-radius: 999rpx;
   transition: width 0.3s ease;
 }
 
-.mini-progress-text {
-  font-size: 18rpx;
-  color: rgba(255, 255, 255, 0.4);
+.mini-text {
+  font-size: 20rpx;
+  color: #9ca3af;
   text-align: center;
   display: block;
 }
 
-.achievement-badge {
+.card-badge {
   position: absolute;
   top: 12rpx;
   right: 12rpx;
-  width: 36rpx;
-  height: 36rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #f59e0b, #fbbf24);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .badge-check {
-  font-size: 20rpx;
-  color: #1a1a2e;
-  font-weight: 700;
+  font-size: 28rpx;
 }
 
+.claim-tag {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  padding: 4rpx 16rpx;
+  background: linear-gradient(135deg, #ff7a3d, #ff5a3d);
+  border-radius: 999rpx;
+}
+
+.claim-tag-text {
+  font-size: 20rpx;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 空状态 */
 .empty-tip {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80rpx 0;
+  padding: 120rpx 0;
 }
 
 .empty-icon {
-  font-size: 64rpx;
-  margin-bottom: 16rpx;
+  font-size: 80rpx;
+  margin-bottom: 24rpx;
+  opacity: 0.5;
 }
 
 .empty-text {
-  font-size: 26rpx;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.unlock-popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-.popup-content {
-  width: 560rpx;
-  background: linear-gradient(180deg, #1e293b, #0f172a);
-  border-radius: 32rpx;
-  padding: 60rpx 40rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  overflow: hidden;
-  border: 1rpx solid rgba(251, 191, 36, 0.3);
-}
-
-.popup-glow {
-  position: absolute;
-  top: -60rpx;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 300rpx;
-  height: 300rpx;
-  background: radial-gradient(circle, rgba(251, 191, 36, 0.2), transparent);
-  border-radius: 50%;
-}
-
-.popup-icon {
-  font-size: 80rpx;
-  margin-bottom: 20rpx;
-  position: relative;
-  z-index: 1;
-}
-
-.popup-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #fbbf24;
-  margin-bottom: 12rpx;
-  position: relative;
-  z-index: 1;
-}
-
-.popup-name {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 8rpx;
-  position: relative;
-  z-index: 1;
-}
-
-.popup-desc {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 40rpx;
-  text-align: center;
-  position: relative;
-  z-index: 1;
-}
-
-.popup-btn {
-  width: 100%;
-  height: 80rpx;
-  border-radius: 999rpx;
-  background: linear-gradient(135deg, #f59e0b, #fbbf24);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 1;
-
-  &:active {
-    transform: scale(0.97);
-  }
-}
-
-.popup-btn-text {
   font-size: 28rpx;
-  font-weight: 600;
-  color: #1a1a2e;
+  color: #9ca3af;
 }
 </style>

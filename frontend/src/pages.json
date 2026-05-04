@@ -210,6 +210,13 @@
       }
     },
     {
+      "path": "pages/achievement/detail",
+      "style": {
+        "navigationBarTitleText": "成就详情",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/checkin/report",
       "style": {
         "navigationBarTitleText": "打卡报表",
