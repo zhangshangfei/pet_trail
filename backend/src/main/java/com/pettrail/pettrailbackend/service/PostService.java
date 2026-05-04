@@ -399,6 +399,15 @@ public class PostService {
         if (post == null) throw new BusinessException(404, "动态不存在");
         post.setDeleted(1);
         postMapper.updateById(post);
+
+        String cacheKey = "post:detail:" + id;
+        redisTemplate.delete(cacheKey);
+        String likeKey = "post:like:" + id;
+        String eeKey = "post:ee:" + id;
+        redisTemplate.delete(likeKey);
+        redisTemplate.delete(eeKey);
+
+        log.info("管理端动态已删除：postId={}", id);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -435,6 +444,11 @@ public class PostService {
             post.setStatus(1);
         }
         postMapper.updateById(post);
+
+        String cacheKey = "post:detail:" + id;
+        redisTemplate.delete(cacheKey);
+
+        log.info("管理端动态已恢复：postId={}", id);
     }
 
     private void fillPostUserNickname(Page<Post> result) {

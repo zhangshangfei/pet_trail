@@ -4,8 +4,8 @@ export const createPost = (data) => {
   return request.post('/api/posts', data)
 }
 
-export const getFeed = (page = 1, size = 20, tab = 'all') => {
-  return request.get('/api/posts/feed', { page, size, tab })
+export const getFeed = (page = 1, size = 20, tab = 'all', noCache = false) => {
+  return request.get('/api/posts/feed', { page, size, tab }, {}, noCache ? { cache: false } : {})
 }
 
 export const getPostDetail = (id) => {
@@ -28,8 +28,8 @@ export const getComments = (postId, page = 1, size = 20) => {
   return request.get(`/api/posts/${postId}/comments`, { page, size })
 }
 
-export const getUserPosts = (userId, page = 1, size = 20) => {
-  return request.get(`/api/posts/user/${userId}`, { page, size })
+export const getUserPosts = (userId, page = 1, size = 20, noCache = false) => {
+  return request.get(`/api/posts/user/${userId}`, { page, size }, {}, noCache ? { cache: false } : {})
 }
 
 export const getUserLikedPosts = (userId, page = 1, size = 20) => {

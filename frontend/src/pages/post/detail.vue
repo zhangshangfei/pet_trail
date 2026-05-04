@@ -610,6 +610,7 @@ export default {
       try {
         const res = await postApi.deletePost(this.postId)
         if (res.success) {
+          uni.$emit('postDeleted', { postId: this.postId })
           uni.showToast({ title: '已删除', icon: 'success' })
           setTimeout(() => {
             const pages = getCurrentPages()

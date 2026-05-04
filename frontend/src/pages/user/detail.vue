@@ -256,6 +256,7 @@ export default {
   onShow() {
     if (this.userId) {
       this.loadUserInfo()
+      this.refreshPosts()
     }
   },
   onPullDownRefresh() {
@@ -264,6 +265,9 @@ export default {
       this.loadPosts()
     }
     setTimeout(() => { uni.stopPullDownRefresh() }, 800)
+  },
+  onUnload() {
+    uni.$off('postDeleted')
   },
   methods: {
     getUserAvatar,
@@ -319,7 +323,7 @@ export default {
         // ignore
       }
     },
-    async loadPosts() {
+    async loadPosts(forceRefresh = false) {
       if (this.loading) return
       this.loading = true
       try {
@@ -327,7 +331,7 @@ export default {
         if (this.currentTab === 'likes') {
           res = await postApi.getUserLikedPosts(this.userId, this.page, this.size)
         } else {
-          res = await postApi.getUserPosts(this.userId, this.page, this.size)
+          res = await postApi.getUserPosts(this.userId, this.page, this.size, forceRefresh)
         }
         if (res && res.success && Array.isArray(res.data)) {
           const newPosts = res.data.map(post => ({
@@ -364,6 +368,12 @@ export default {
       if (!this.hasMore || this.loading) return
       this.page++
       this.loadPosts()
+    },
+    refreshPosts() {
+      this.page = 1
+      this.postList = []
+      this.hasMore = true
+      this.loadPosts(true)
     },
     switchTab(tab) {
       if (this.currentTab === tab) return
@@ -434,6 +444,7 @@ export default {
             try {
               const result = await postApi.deletePost(post.id)
               if (result.success) {
+                uni.$emit('postDeleted', { postId: post.id })
                 uni.showToast({ title: '已删除', icon: 'success' })
                 this.postList = this.postList.filter(p => p.id !== post.id)
               } else {

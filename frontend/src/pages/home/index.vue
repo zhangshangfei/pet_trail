@@ -317,6 +317,10 @@ export default {
       this.checkLoginStatus()
       this.fetchUnreadCount()
     })
+
+    uni.$on('postDeleted', () => {
+      this.refreshFeed()
+    })
   },
   onHide() {
     // this.disconnectWebSocket()
@@ -328,6 +332,7 @@ export default {
     }
     // this.disconnectWebSocket()
     uni.$off('loginSuccess')
+    uni.$off('postDeleted')
   },
   onPullDownRefresh() {
     this.page = 1
@@ -715,8 +720,8 @@ export default {
       });
     },
 
-    async loadPosts() {
-      if (this.loading || !this.hasMore) return;
+    async loadPosts(forceRefresh = false) {
+      if (this.loading || (!forceRefresh && !this.hasMore)) return;
 
       if (this.currentTab !== 'all') {
         const loggedIn = await checkLogin('请先登录后查看')
@@ -725,7 +730,7 @@ export default {
 
       this.loading = true;
       try {
-        const res = await postApi.getFeed(this.page, this.size, this.currentTab);
+        const res = await postApi.getFeed(this.page, this.size, this.currentTab, forceRefresh);
         console.log('getFeed response:', res);
         if (res.success && Array.isArray(res.data)) {
           console.log('获取到动态数量:', res.data.length);
@@ -773,6 +778,13 @@ export default {
       if (this.hasMore && !this.loading) {
         this.loadPosts();
       }
+    },
+
+    refreshFeed() {
+      this.page = 1
+      this.postList = []
+      this.hasMore = true
+      this.loadPosts(true)
     },
 
     formatTime(timestamp) {
