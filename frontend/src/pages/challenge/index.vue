@@ -3,7 +3,7 @@
     <view class="header" :style="{ paddingTop: statusBarHeight + 'px' }">
       <view class="header-inner">
         <view class="back-btn" @tap="goBack">
-          <text class="back-icon">‹</text>
+          <text class="back-icon">&#8249;</text>
         </view>
         <text class="header-title">挑战赛</text>
         <view class="header-right" @tap="goMyChallenges">
@@ -34,8 +34,14 @@
               <text class="card-title">{{ item.title }}</text>
               <text class="card-desc">{{ item.description }}</text>
               <view class="card-meta">
-                <text class="meta-item">👥 {{ item.participantCount || 0 }}人参与</text>
-                <text class="meta-item">🎁 {{ item.rewardDescription || '神秘奖励' }}</text>
+                <view class="meta-item">
+                  <text class="meta-icon">&#128101;</text>
+                  <text class="meta-text">{{ item.participantCount || 0 }}人参与</text>
+                </view>
+                <view class="meta-item">
+                  <text class="meta-icon">&#127873;</text>
+                  <text class="meta-text">{{ item.rewardDescription || '神秘奖励' }}</text>
+                </view>
               </view>
               <view class="card-footer">
                 <text class="time-text">{{ formatTimeRange(item) }}</text>
@@ -48,7 +54,7 @@
         </view>
 
         <view class="empty-tip" v-if="!loading && challenges.length === 0">
-          <text class="empty-icon">🏆</text>
+          <text class="empty-icon">&#127942;</text>
           <text class="empty-text">暂无进行中的挑战赛</text>
         </view>
 
@@ -119,8 +125,8 @@ export default {
       uni.navigateBack()
     },
     getTypeIcon(type) {
-      const icons = { 1: '✅', 2: '📱', 3: '💪' }
-      return icons[type] || '🏆'
+      const icons = { 1: '&#9989;', 2: '&#128241;', 3: '&#128170;' }
+      return icons[type] || '&#127942;'
     },
     getTypeName(type) {
       const names = { 1: '打卡', 2: '社交', 3: '健康' }
@@ -139,162 +145,206 @@ export default {
 <style scoped>
 .challenge-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #ff6a3d 0%, #ff8f6b 15%, #f5f5f5 30%);
+  background: #f9fafb;
 }
+
 .header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  background: linear-gradient(135deg, #ff6a3d, #ff8f6b);
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
 }
+
 .header-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 54px;
-  padding: 0 16px;
+  padding: 0 24rpx;
 }
+
 .back-btn {
-  width: 36px;
-  height: 36px;
+  width: 72rpx;
+  height: 72rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .back-icon {
-  font-size: 28px;
-  color: #fff;
+  font-size: 40rpx;
+  color: #ffffff;
+  font-weight: 300;
 }
+
 .header-title {
-  font-size: 18px;
+  font-size: 32rpx;
   font-weight: 600;
-  color: #fff;
+  color: #ffffff;
 }
+
 .header-right {
-  padding: 4px 12px;
+  padding: 8rpx 20rpx;
 }
+
 .my-btn {
-  font-size: 14px;
-  color: #fff;
+  font-size: 26rpx;
+  color: #ffffff;
+  font-weight: 500;
 }
+
 .challenge-scroll {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
 }
+
 .challenge-content {
-  padding: 12px 16px;
+  padding: 20rpx;
 }
+
 .challenge-card {
-  background: #fff;
-  border-radius: 16px;
+  background: #ffffff;
+  border-radius: 24rpx;
   overflow: hidden;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
 }
+
 .card-cover {
   position: relative;
-  height: 160px;
+  height: 320rpx;
 }
+
 .cover-img {
   width: 100%;
   height: 100%;
 }
+
 .cover-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #ff6a3d, #ff8f6b);
+  background: linear-gradient(135deg, #ff7a3d, #ff5a3d);
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .cover-icon {
-  font-size: 48px;
+  font-size: 80rpx;
 }
+
 .card-badge {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  background: rgba(0, 0, 0, 0.5);
+  top: 16rpx;
+  left: 16rpx;
+  padding: 6rpx 20rpx;
+  border-radius: 999rpx;
 }
-.badge-type-1 { background: rgba(255, 106, 61, 0.85); }
-.badge-type-2 { background: rgba(64, 158, 255, 0.85); }
-.badge-type-3 { background: rgba(82, 196, 26, 0.85); }
+
+.badge-type-1 { background: rgba(255, 106, 61, 0.9); }
+.badge-type-2 { background: rgba(64, 158, 255, 0.9); }
+.badge-type-3 { background: rgba(82, 196, 26, 0.9); }
+
 .badge-text {
-  font-size: 12px;
-  color: #fff;
+  font-size: 24rpx;
+  color: #ffffff;
+  font-weight: 500;
 }
+
 .card-body {
-  padding: 16px;
+  padding: 24rpx;
 }
+
 .card-title {
-  font-size: 17px;
+  font-size: 30rpx;
   font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 6px;
+  color: #111827;
+  margin-bottom: 10rpx;
 }
+
 .card-desc {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 10px;
+  font-size: 26rpx;
+  color: #6b7280;
+  margin-bottom: 16rpx;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  line-height: 1.5;
 }
+
 .card-meta {
   display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
+  gap: 24rpx;
+  margin-bottom: 16rpx;
 }
+
 .meta-item {
-  font-size: 13px;
-  color: #999;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
 }
+
+.meta-icon {
+  font-size: 26rpx;
+}
+
+.meta-text {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
 .card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+
 .time-text {
-  font-size: 13px;
-  color: #999;
+  font-size: 24rpx;
+  color: #9ca3af;
 }
+
 .join-btn {
-  padding: 8px 20px;
-  background: linear-gradient(135deg, #ff6a3d, #ff8f6b);
-  border-radius: 20px;
+  padding: 14rpx 36rpx;
+  background: linear-gradient(135deg, #ff7a3d, #ff5a3d);
+  border-radius: 999rpx;
 }
+
 .join-btn-text {
-  font-size: 14px;
-  color: #fff;
+  font-size: 26rpx;
+  color: #ffffff;
   font-weight: 500;
 }
+
 .empty-tip {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 60px 0;
+  padding: 120rpx 0;
 }
+
 .empty-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
+  font-size: 80rpx;
+  margin-bottom: 24rpx;
 }
+
 .empty-text {
-  font-size: 16px;
-  color: #999;
+  font-size: 28rpx;
+  color: #9ca3af;
 }
+
 .loading-tip {
   text-align: center;
-  padding: 20px 0;
+  padding: 40rpx 0;
 }
+
 .loading-text {
-  font-size: 14px;
-  color: #999;
+  font-size: 26rpx;
+  color: #9ca3af;
 }
 </style>

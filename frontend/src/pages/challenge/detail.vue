@@ -3,7 +3,7 @@
     <view class="header" :style="{ paddingTop: statusBarHeight + 'px' }">
       <view class="header-inner">
         <view class="back-btn" @tap="goBack">
-          <text class="back-icon">‹</text>
+          <text class="back-icon">&#8249;</text>
         </view>
         <text class="header-title">挑战详情</text>
         <view class="header-right"></view>
@@ -28,19 +28,19 @@
         <view class="info-card">
           <view class="info-row">
             <view class="info-item">
-              <text class="info-icon">👥</text>
+              <text class="info-icon">&#128101;</text>
               <text class="info-value">{{ challenge.participantCount || 0 }}</text>
               <text class="info-label">参与人数</text>
             </view>
             <view class="info-divider"></view>
             <view class="info-item">
-              <text class="info-icon">📅</text>
+              <text class="info-icon">&#128197;</text>
               <text class="info-value">{{ formatRemaining() }}</text>
               <text class="info-label">剩余时间</text>
             </view>
             <view class="info-divider"></view>
             <view class="info-item">
-              <text class="info-icon">🎯</text>
+              <text class="info-icon">&#127919;</text>
               <text class="info-value">{{ challenge.conditionValue || 0 }}</text>
               <text class="info-label">目标次数</text>
             </view>
@@ -53,7 +53,7 @@
         </view>
 
         <view class="section-card" v-if="challenge.rewardDescription">
-          <text class="section-title">🎁 奖励</text>
+          <text class="section-title">&#127873; 奖励</text>
           <text class="reward-text">{{ challenge.rewardDescription }}</text>
         </view>
 
@@ -66,8 +66,8 @@
             <text class="progress-text">{{ myProgress.progress || 0 }} / {{ challenge.conditionValue || 0 }}</text>
           </view>
           <view class="progress-status">
-            <text v-if="myProgress.completed" class="status-completed">✅ 已完成</text>
-            <text v-else class="status-ongoing">💪 进行中</text>
+            <text v-if="myProgress.completed" class="status-completed">&#9989; 已完成</text>
+            <text v-else class="status-ongoing">&#128170; 进行中</text>
           </view>
           <view class="update-btn" v-if="!myProgress.completed" @tap="onUpdateProgress">
             <text class="update-btn-text">更新进度</text>
@@ -76,7 +76,7 @@
 
         <view class="section-card">
           <view class="section-header">
-            <text class="section-title">🏆 排行榜</text>
+            <text class="section-title">&#127942; 排行榜</text>
             <text class="section-sub">TOP {{ leaderboard.length }}</text>
           </view>
           <view class="leaderboard-list" v-if="leaderboard.length > 0">
@@ -87,17 +87,17 @@
               :class="{ 'is-me': item.userId === currentUserId }"
             >
               <view class="rank-wrap">
-                <text v-if="index === 0" class="rank-medal">🥇</text>
-                <text v-else-if="index === 1" class="rank-medal">🥈</text>
-                <text v-else-if="index === 2" class="rank-medal">🥉</text>
+                <text v-if="index === 0" class="rank-medal">&#129351;</text>
+                <text v-else-if="index === 1" class="rank-medal">&#129352;</text>
+                <text v-else-if="index === 2" class="rank-medal">&#129353;</text>
                 <text v-else class="rank-num">{{ index + 1 }}</text>
               </view>
               <view class="rank-info">
-                <text class="rank-name">用户{{ item.userId }}</text>
+                <text class="rank-name">{{ item.nickname || '用户' + item.userId }}</text>
                 <text class="rank-progress">{{ item.progress }}次</text>
               </view>
               <view class="rank-status" v-if="item.completed">
-                <text class="rank-done">✅</text>
+                <text class="rank-done">&#9989;</text>
               </view>
             </view>
           </view>
@@ -219,8 +219,8 @@ export default {
       uni.navigateBack()
     },
     getTypeIcon(type) {
-      const icons = { 1: '✅', 2: '📱', 3: '💪' }
-      return icons[type] || '🏆'
+      const icons = { 1: '&#9989;', 2: '&#128241;', 3: '&#128170;' }
+      return icons[type] || '&#127942;'
     },
     getTypeName(type) {
       const names = { 1: '打卡', 2: '社交', 3: '健康' }
@@ -243,20 +243,18 @@ export default {
 </script>
 
 <style scoped>
-/* ========== 页面基础 ========== */
 .detail-page {
   min-height: 100vh;
-  background: var(--pt-bg);
+  background: #f9fafb;
 }
 
-/* ========== 顶部导航 ========== */
 .header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  background: linear-gradient(180deg, var(--pt-primary-2) 0%, var(--pt-primary) 100%);
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
 }
 
 .header-inner {
@@ -264,33 +262,33 @@ export default {
   align-items: center;
   justify-content: space-between;
   height: 54px;
-  padding: 0 32rpx;
+  padding: 0 24rpx;
 }
 
 .back-btn {
-  width: 36px;
-  height: 36px;
+  width: 72rpx;
+  height: 72rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .back-icon {
-  font-size: 28px;
+  font-size: 40rpx;
   color: #ffffff;
+  font-weight: 300;
 }
 
 .header-title {
-  font-size: 18px;
+  font-size: 32rpx;
   font-weight: 600;
   color: #ffffff;
 }
 
 .header-right {
-  width: 36px;
+  width: 72rpx;
 }
 
-/* ========== 滚动区域 ========== */
 .detail-scroll {
   position: fixed;
   left: 0;
@@ -302,7 +300,6 @@ export default {
   padding: 0 0 32rpx 0;
 }
 
-/* ========== 封面区 ========== */
 .cover-section {
   position: relative;
   height: 440rpx;
@@ -316,7 +313,7 @@ export default {
 .cover-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(180deg, var(--pt-primary-2) 0%, var(--pt-primary) 100%);
+  background: linear-gradient(135deg, #ff7a3d, #ff5a3d);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -342,7 +339,7 @@ export default {
   margin-bottom: 16rpx;
 }
 
-.badge-type-1 { background: rgba(255, 90, 61, 0.9); }
+.badge-type-1 { background: rgba(255, 106, 61, 0.9); }
 .badge-type-2 { background: rgba(64, 158, 255, 0.9); }
 .badge-type-3 { background: rgba(82, 196, 26, 0.9); }
 
@@ -358,13 +355,12 @@ export default {
   color: #ffffff;
 }
 
-/* ========== 信息卡 ========== */
 .info-card {
-  margin: -40rpx 32rpx 24rpx 32rpx;
-  background: var(--pt-card);
-  border-radius: var(--pt-radius);
-  padding: 40rpx 32rpx;
-  box-shadow: var(--pt-shadow-soft);
+  margin: -40rpx 20rpx 20rpx 20rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
   position: relative;
   z-index: 1;
 }
@@ -389,41 +385,40 @@ export default {
 .info-value {
   font-size: 36rpx;
   font-weight: 700;
-  color: var(--pt-text);
+  color: #111827;
 }
 
 .info-label {
   font-size: 24rpx;
-  color: var(--pt-muted);
+  color: #9ca3af;
 }
 
 .info-divider {
-  width: 1px;
+  width: 1rpx;
   height: 80rpx;
-  background: var(--pt-border);
+  background: #f3f4f6;
 }
 
-/* ========== 通用卡片 ========== */
 .section-card {
-  margin: 24rpx 32rpx;
-  background: var(--pt-card);
-  border-radius: var(--pt-radius);
-  padding: 32rpx;
-  box-shadow: var(--pt-shadow-soft);
+  margin: 20rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
 }
 
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24rpx;
+  margin-bottom: 20rpx;
 }
 
 .section-title {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 600;
-  color: var(--pt-text);
-  margin-bottom: 20rpx;
+  color: #111827;
+  margin-bottom: 16rpx;
 }
 
 .section-header .section-title {
@@ -431,82 +426,78 @@ export default {
 }
 
 .section-sub {
-  font-size: 26rpx;
-  color: var(--pt-muted);
+  font-size: 24rpx;
+  color: #9ca3af;
 }
 
-/* ========== 文本样式 ========== */
 .desc-text {
   font-size: 28rpx;
-  color: var(--pt-secondary);
+  color: #374151;
   line-height: 1.7;
 }
 
 .reward-text {
   font-size: 28rpx;
-  color: var(--pt-primary);
+  color: #ff6a3d;
   font-weight: 500;
 }
 
-/* ========== 进度条 ========== */
 .progress-bar-wrap {
   display: flex;
   align-items: center;
-  gap: 24rpx;
-  margin-bottom: 20rpx;
+  gap: 20rpx;
+  margin-bottom: 16rpx;
 }
 
 .progress-bar {
   flex: 1;
-  height: 20rpx;
-  background: var(--pt-input-bg);
+  height: 16rpx;
+  background: #f3f4f6;
   border-radius: 999rpx;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(180deg, var(--pt-primary-2) 0%, var(--pt-primary) 100%);
+  background: linear-gradient(90deg, #ff7a3d, #ff5a3d);
   border-radius: 999rpx;
   transition: width 0.3s ease;
 }
 
 .progress-text {
-  font-size: 28rpx;
-  color: var(--pt-secondary);
+  font-size: 26rpx;
+  color: #6b7280;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .progress-status {
-  margin-bottom: 24rpx;
+  margin-bottom: 20rpx;
 }
 
 .status-completed {
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: #52c41a;
 }
 
 .status-ongoing {
-  font-size: 28rpx;
-  color: var(--pt-primary);
+  font-size: 26rpx;
+  color: #ff6a3d;
 }
 
-/* ========== 按钮 ========== */
 .update-btn {
   display: inline-block;
-  padding: 20rpx 48rpx;
-  background: linear-gradient(180deg, var(--pt-primary-2) 0%, var(--pt-primary) 100%);
+  padding: 16rpx 40rpx;
+  background: linear-gradient(135deg, #ff7a3d, #ff5a3d);
   border-radius: 999rpx;
 }
 
 .update-btn-text {
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: #ffffff;
   font-weight: 500;
 }
 
-/* ========== 排行榜 ========== */
 .leaderboard-list {
   margin-top: 8rpx;
 }
@@ -514,8 +505,8 @@ export default {
 .leaderboard-item {
   display: flex;
   align-items: center;
-  padding: 20rpx 0;
-  border-bottom: 1px solid var(--pt-border);
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f3f4f6;
 }
 
 .leaderboard-item:last-child {
@@ -523,28 +514,28 @@ export default {
 }
 
 .leaderboard-item.is-me {
-  background: rgba(255, 90, 61, 0.06);
+  background: rgba(255, 106, 61, 0.06);
   border-radius: 16rpx;
-  padding: 20rpx 16rpx;
-  margin: 0 -16rpx;
+  padding: 16rpx;
+  margin: 0 -8rpx;
   border-bottom: none;
 }
 
 .rank-wrap {
-  width: 72rpx;
+  width: 64rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .rank-medal {
-  font-size: 40rpx;
+  font-size: 36rpx;
 }
 
 .rank-num {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 600;
-  color: var(--pt-muted);
+  color: #9ca3af;
 }
 
 .rank-info {
@@ -557,12 +548,12 @@ export default {
 
 .rank-name {
   font-size: 28rpx;
-  color: var(--pt-text);
+  color: #111827;
 }
 
 .rank-progress {
-  font-size: 28rpx;
-  color: var(--pt-primary);
+  font-size: 26rpx;
+  color: #ff6a3d;
   font-weight: 500;
 }
 
@@ -574,20 +565,18 @@ export default {
   font-size: 28rpx;
 }
 
-/* ========== 空状态 ========== */
 .empty-leaderboard {
   padding: 60rpx 0;
   text-align: center;
 }
 
 .empty-text {
-  font-size: 28rpx;
-  color: var(--pt-muted);
+  font-size: 26rpx;
+  color: #9ca3af;
 }
 
-/* ========== 底部栏 ========== */
 .bottom-spacer {
-  height: 200rpx;
+  height: 160rpx;
 }
 
 .bottom-bar {
@@ -595,34 +584,33 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 24rpx 32rpx;
-  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
-  background: var(--pt-card);
-  box-shadow: var(--pt-shadow-soft);
+  padding: 20rpx 24rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background: #ffffff;
+  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.05);
   z-index: 100;
 }
 
 .join-btn {
-  padding: 28rpx 0;
-  background: linear-gradient(180deg, var(--pt-primary-2) 0%, var(--pt-primary) 100%);
+  padding: 24rpx 0;
+  background: linear-gradient(135deg, #ff7a3d, #ff5a3d);
   border-radius: 999rpx;
   text-align: center;
 }
 
 .join-btn-text {
-  font-size: 32rpx;
+  font-size: 30rpx;
   color: #ffffff;
   font-weight: 600;
 }
 
-/* ========== 加载中 ========== */
 .loading-wrap {
   padding: 80rpx 0;
   text-align: center;
 }
 
 .loading-text {
-  font-size: 28rpx;
-  color: var(--pt-muted);
+  font-size: 26rpx;
+  color: #9ca3af;
 }
 </style>
