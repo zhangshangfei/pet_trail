@@ -253,4 +253,47 @@ public class AdminService {
         admin.setUpdatedAt(LocalDateTime.now());
         adminMapper.updateById(admin);
     }
+
+    public boolean hasButtonPermission(Long adminId, String buttonCode) {
+        Admin admin = adminMapper.selectById(adminId);
+        if (admin == null || admin.getRoleId() == null) {
+            return false;
+        }
+        List<SysRoleMenu> roleMenus = sysRoleMenuMapper.selectList(
+                new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, admin.getRoleId()));
+        for (SysRoleMenu rm : roleMenus) {
+            if (rm.getButtons() != null && !rm.getButtons().isEmpty()) {
+                for (String b : rm.getButtons().split(",")) {
+                    if (b.trim().equals(buttonCode)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean hasExportPermission(Long adminId) {
+        return hasButtonPermission(adminId, "export");
+    }
+
+    public boolean hasExportPermission(Long adminId, Long menuId) {
+        Admin admin = adminMapper.selectById(adminId);
+        if (admin == null || admin.getRoleId() == null) {
+            return false;
+        }
+        SysRoleMenu roleMenu = sysRoleMenuMapper.selectOne(
+                new LambdaQueryWrapper<SysRoleMenu>()
+                        .eq(SysRoleMenu::getRoleId, admin.getRoleId())
+                        .eq(SysRoleMenu::getMenuId, menuId));
+        if (roleMenu == null || roleMenu.getButtons() == null || roleMenu.getButtons().isEmpty()) {
+            return false;
+        }
+        for (String b : roleMenu.getButtons().split(",")) {
+            if ("export".equals(b.trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

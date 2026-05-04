@@ -122,4 +122,30 @@ public class ReminderService {
 
         log.info("清理过期提醒完成：疫苗提醒={}条，驱虫提醒={}条", vaccineCount, parasiteCount);
     }
+
+    public List<VaccineReminder> getVaccineReminders(Long userId, Long petId, Integer status) {
+        LambdaQueryWrapper<VaccineReminder> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(VaccineReminder::getUserId, userId);
+        if (petId != null) {
+            wrapper.eq(VaccineReminder::getPetId, petId);
+        }
+        if (status != null) {
+            wrapper.eq(VaccineReminder::getStatus, status);
+        }
+        wrapper.orderByAsc(VaccineReminder::getNextDate);
+        return vaccineReminderMapper.selectList(wrapper);
+    }
+
+    public List<ParasiteReminder> getParasiteReminders(Long userId, Long petId, Integer status) {
+        LambdaQueryWrapper<ParasiteReminder> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ParasiteReminder::getUserId, userId);
+        if (petId != null) {
+            wrapper.eq(ParasiteReminder::getPetId, petId);
+        }
+        if (status != null) {
+            wrapper.eq(ParasiteReminder::getStatus, status);
+        }
+        wrapper.orderByAsc(ParasiteReminder::getNextDate);
+        return parasiteReminderMapper.selectList(wrapper);
+    }
 }

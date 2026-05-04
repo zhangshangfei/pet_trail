@@ -5,6 +5,7 @@ import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.dto.UserUpdateDTO;
 import com.pettrail.pettrailbackend.dto.WxLoginDTO;
 import com.pettrail.pettrailbackend.entity.User;
+import com.pettrail.pettrailbackend.security.JwtAuthenticationFilter;
 import com.pettrail.pettrailbackend.service.UserService;
 import com.pettrail.pettrailbackend.service.FollowService;
 import com.pettrail.pettrailbackend.service.PostService;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -173,11 +175,36 @@ public class UserController extends BaseController {
     }
 
     @DeleteMapping("/account")
-    public Result<?> deactivateAccount() {
+    public Result<?> deactivateAccount(HttpServletRequest request) {
         Long userId = requireLogin();
+        blacklistCurrentToken(request);
         userService.deactivateUser(userId);
-        redisTemplate.delete("wechat:login:token:" + userId);
         return Result.success("账号已注销");
+    }
+
+    @PostMapping("/logout")
+    public Result<?> logout(HttpServletRequest request) {
+        blacklistCurrentToken(request);
+        return Result.success("已退出登录");
+    }
+
+    private void blacklistCurrentToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            String token = bearerToken.substring(7);
+            long remainingSeconds = jwtUtil.getRemainingTimeInSeconds(token);
+            if (remainingSeconds > 0) {
+                String tokenHash = JwtAuthenticationFilter.hashToken(token);
+                Long currentUserId = UserContext.getCurrentUserId();
+                redisTemplate.opsForValue().set(
+                        "jwt:blacklist:" + tokenHash,
+                        currentUserId != null ? String.valueOf(currentUserId) : "",
+                        remainingSeconds,
+                        TimeUnit.SECONDS
+                );
+                log.info("Token已加入黑名单, 剩余有效期: {}秒", remainingSeconds);
+            }
+        }
     }
 
     public static class LoginResponse {

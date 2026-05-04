@@ -3,16 +3,22 @@ package com.pettrail.pettrailbackend.controller.admin;
 import com.pettrail.pettrailbackend.dto.AdminLoginDTO;
 import com.pettrail.pettrailbackend.dto.AdminVO;
 import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.security.JwtAuthenticationFilter;
 import com.pettrail.pettrailbackend.service.AdminService;
 import com.pettrail.pettrailbackend.service.SysMenuService;
+import com.pettrail.pettrailbackend.util.JwtUtil;
+import com.pettrail.pettrailbackend.util.UserContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/admin/auth")
@@ -22,6 +28,9 @@ public class AdminAuthController extends BaseAdminController {
 
     private final AdminService adminService;
     private final SysMenuService sysMenuService;
+    private final JwtUtil jwtUtil;
+    private final StringRedisTemplate redisTemplate;
+
     @PostMapping("/login")
     @Operation(summary = "管理员登录")
     public Result<Map<String, Object>> login(@RequestBody AdminLoginDTO dto) {
@@ -29,6 +38,27 @@ public class AdminAuthController extends BaseAdminController {
         AdminVO admin = (AdminVO) result.get("admin");
         result.put("menus", sysMenuService.getUserMenuTree(admin.getRoleId()));
         return Result.success(result);
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "管理员退出登录")
+    public Result<?> logout(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            String token = bearerToken.substring(7);
+            long remainingSeconds = jwtUtil.getRemainingTimeInSeconds(token);
+            if (remainingSeconds > 0) {
+                String tokenHash = JwtAuthenticationFilter.hashToken(token);
+                Long adminId = UserContext.getCurrentUserId();
+                redisTemplate.opsForValue().set(
+                        "jwt:blacklist:" + tokenHash,
+                        adminId != null ? String.valueOf(adminId) : "",
+                        remainingSeconds,
+                        TimeUnit.SECONDS
+                );
+            }
+        }
+        return Result.success("已退出登录");
     }
 
     @GetMapping("/profile")

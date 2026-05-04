@@ -6,7 +6,7 @@ import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.dto.TagVO;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.entity.Tag;
-import com.pettrail.pettrailbackend.mapper.PostMapper;
+import com.pettrail.pettrailbackend.service.PostService;
 import com.pettrail.pettrailbackend.service.TagService;
 import com.pettrail.pettrailbackend.util.UserContext;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class TagController extends BaseController {
 
     private final TagService tagService;
-    private final PostMapper postMapper;
+    private final PostService postService;
     private final PostConverter postConverter;
 
     @GetMapping("/hot")
@@ -52,7 +52,7 @@ public class TagController extends BaseController {
         if (postIds.isEmpty()) {
             return Result.success(Collections.emptyList());
         }
-        List<Post> posts = postMapper.selectBatchIds(postIds);
+        List<Post> posts = postService.getPostsByIds(postIds);
         Long currentUserId = UserContext.getCurrentUserId();
         return Result.success(postConverter.convertToPostVOList(posts, currentUserId));
     }
@@ -70,7 +70,7 @@ public class TagController extends BaseController {
         if (postIds.isEmpty()) {
             return Result.success(Collections.emptyList());
         }
-        List<Post> posts = postMapper.selectBatchIds(postIds);
+        List<Post> posts = postService.getPostsByIds(postIds);
         Long currentUserId = UserContext.getCurrentUserId();
         return Result.success(postConverter.convertToPostVOList(posts, currentUserId));
     }

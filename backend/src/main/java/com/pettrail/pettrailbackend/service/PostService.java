@@ -453,4 +453,11 @@ public class PostService {
             }
         }
     }
+
+    public List<Post> getPostsByIds(List<Long> postIds) {
+        if (postIds == null || postIds.isEmpty()) {
+            return List.of();
+        }
+        return postMapper.selectBatchIds(postIds);
+    }
 }

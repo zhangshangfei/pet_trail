@@ -69,15 +69,15 @@ public class ReminderController extends BaseController {
     public Result<List<VaccineReminder>> getVaccineReminders(
             @RequestParam(required = false) Long petId,
             @RequestParam(required = false) Integer status) {
-        requireLogin();
-        return Result.success(null);
+        Long userId = requireLogin();
+        return Result.success(reminderService.getVaccineReminders(userId, petId, status));
     }
 
     @GetMapping("/parasite")
     public Result<List<ParasiteReminder>> getParasiteReminders(
             @RequestParam(required = false) Long petId,
             @RequestParam(required = false) Integer status) {
-        requireLogin();
-        return Result.success(null);
+        Long userId = requireLogin();
+        return Result.success(reminderService.getParasiteReminders(userId, petId, status));
     }
 }

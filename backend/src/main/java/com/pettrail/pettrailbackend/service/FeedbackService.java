@@ -5,15 +5,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.dto.FeedbackAdminVO;
 import com.pettrail.pettrailbackend.entity.Feedback;
 import com.pettrail.pettrailbackend.entity.User;
+import com.pettrail.pettrailbackend.dto.FeedbackCreateDTO;
 import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.mapper.FeedbackMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
+import com.alibaba.fastjson2.JSON;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -137,5 +140,34 @@ public class FeedbackService {
             throw new BusinessException(404, "反馈不存在");
         }
         feedbackMapper.deleteById(id);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void submitFeedback(Long userId, FeedbackCreateDTO dto) {
+        String type = dto.getType() != null ? dto.getType() : "other";
+        String content = dto.getContent() != null ? dto.getContent() : "";
+
+        if (content.trim().isEmpty()) {
+            throw new BusinessException(400, "反馈内容不能为空");
+        }
+
+        Feedback feedback = new Feedback();
+        feedback.setUserId(userId);
+        feedback.setType(type);
+        feedback.setContent(content.trim());
+        feedback.setContact(dto.getContact());
+        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
+            feedback.setImages(JSON.toJSONString(dto.getImages()));
+        }
+        feedback.setStatus(0);
+        feedback.setCreatedAt(LocalDateTime.now());
+        feedback.setUpdatedAt(LocalDateTime.now());
+        feedbackMapper.insert(feedback);
+    }
+
+    public List<Feedback> getMyFeedbackList(Long userId) {
+        LambdaQueryWrapper<Feedback> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Feedback::getUserId, userId).orderByDesc(Feedback::getCreatedAt);
+        return feedbackMapper.selectList(wrapper);
     }
 }

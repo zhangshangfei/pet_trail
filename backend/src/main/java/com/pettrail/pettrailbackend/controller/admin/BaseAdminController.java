@@ -1,11 +1,7 @@
 package com.pettrail.pettrailbackend.controller.admin;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.pettrail.pettrailbackend.entity.Admin;
-import com.pettrail.pettrailbackend.entity.SysRoleMenu;
 import com.pettrail.pettrailbackend.exception.ForbiddenException;
-import com.pettrail.pettrailbackend.mapper.AdminMapper;
-import com.pettrail.pettrailbackend.mapper.SysRoleMenuMapper;
+import com.pettrail.pettrailbackend.service.AdminService;
 import com.pettrail.pettrailbackend.util.UserContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -16,10 +12,7 @@ import org.springframework.stereotype.Component;
 public class BaseAdminController {
 
     @Autowired
-    protected AdminMapper adminMapper;
-
-    @Autowired
-    protected SysRoleMenuMapper sysRoleMenuMapper;
+    private AdminService adminService;
 
     protected Long requireLogin() {
         Long userId = UserContext.getCurrentUserId();
@@ -46,29 +39,7 @@ public class BaseAdminController {
             throw new ForbiddenException("未登录");
         }
 
-        Admin admin = adminMapper.selectById(adminId);
-        if (admin == null || admin.getRoleId() == null) {
-            throw new ForbiddenException("权限不足");
-        }
-
-        SysRoleMenu roleMenu = sysRoleMenuMapper.selectOne(
-                new LambdaQueryWrapper<SysRoleMenu>()
-                        .eq(SysRoleMenu::getRoleId, admin.getRoleId())
-                        .eq(SysRoleMenu::getMenuId, menuId));
-
-        if (roleMenu == null || roleMenu.getButtons() == null || roleMenu.getButtons().isEmpty()) {
-            throw new ForbiddenException("权限不足，需要导出权限");
-        }
-
-        boolean hasExport = false;
-        for (String b : roleMenu.getButtons().split(",")) {
-            if ("export".equals(b.trim())) {
-                hasExport = true;
-                break;
-            }
-        }
-
-        if (!hasExport) {
+        if (!adminService.hasExportPermission(adminId, menuId)) {
             throw new ForbiddenException("权限不足，需要导出权限");
         }
     }
