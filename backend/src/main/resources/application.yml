@@ -66,6 +66,10 @@ wechat:
   miniapp:
     app-id: ${WECHAT_MINIAPP_APP_ID:}
     app-secret: ${WECHAT_MINIAPP_APP_SECRET:}
+  pay:
+    mch-id: ${WECHAT_PAY_MCH_ID:}
+    api-key: ${WECHAT_PAY_API_KEY:}
+    notify-url: ${WECHAT_PAY_NOTIFY_URL:}
 
 ai:
   enabled: ${AI_ENABLED:true}

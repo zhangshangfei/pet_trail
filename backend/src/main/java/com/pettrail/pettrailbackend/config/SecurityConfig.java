@@ -51,6 +51,7 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/posts/feed",
                                 "/api/admin/auth/login",
+                                "/api/pay/wechat/callback",
                                 "/health",
                                 "/ws/**",
                                 "/swagger-ui/**",

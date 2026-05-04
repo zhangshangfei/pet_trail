@@ -36,10 +36,10 @@ public class OrderService {
     @Value("${wechat.miniapp.app-id:}")
     private String appId;
 
-    @Value("${wechat.miniapp.mch-id:}")
+    @Value("${wechat.pay.mch-id:}")
     private String mchId;
 
-    @Value("${wechat.miniapp.api-key:}")
+    @Value("${wechat.pay.api-key:}")
     private String apiKey;
 
     @Transactional(rollbackFor = Exception.class)
