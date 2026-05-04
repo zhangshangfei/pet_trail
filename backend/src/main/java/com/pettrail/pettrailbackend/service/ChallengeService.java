@@ -97,8 +97,10 @@ public class ChallengeService {
         participant.setCreatedAt(LocalDateTime.now());
         participantMapper.insert(participant);
 
-        challenge.setParticipantCount(challenge.getParticipantCount() + 1);
+        int currentCount = challenge.getParticipantCount() != null ? challenge.getParticipantCount() : 0;
+        challenge.setParticipantCount(currentCount + 1);
         challengeMapper.updateById(challenge);
+        clearActiveCache();
 
         log.info("用户参与挑战赛: userId={}, challengeId={}", userId, challengeId);
         return participant;
