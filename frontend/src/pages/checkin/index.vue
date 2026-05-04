@@ -463,7 +463,7 @@ export default {
       if (!loggedIn) return
 
       try {
-        const res = await checkinApi.checkin({ petId: this.petId, itemIds: this.selectedItems, date: this.today })
+        const res = await checkinApi.checkin({ petId: this.petId, itemIds: [item.id], date: this.getISODate() })
         if (!res || res.success !== true) {
           uni.showToast({ title: (res && res.message) || '打卡失败', icon: 'none' })
           return
@@ -549,6 +549,13 @@ export default {
       const now = new Date()
       const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
       return `${now.getMonth() + 1}月${now.getDate()}日 ${weekDays[now.getDay()]}`
+    },
+    getISODate() {
+      const now = new Date()
+      const y = now.getFullYear()
+      const m = String(now.getMonth() + 1).padStart(2, '0')
+      const d = String(now.getDate()).padStart(2, '0')
+      return `${y}-${m}-${d}`
     },
     getAgeText(birthday) {
       const date = this.normalizeDate(birthday)
