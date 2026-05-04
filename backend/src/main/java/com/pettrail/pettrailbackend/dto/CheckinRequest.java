@@ -6,6 +6,7 @@ import lombok.Data;
 public class CheckinRequest {
 
     private Long itemId;
+    private java.util.List<Long> itemIds;
     private Long petId;
     private String note;
     private java.util.List<String> images;

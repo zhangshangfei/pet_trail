@@ -67,13 +67,22 @@ public class CheckinController extends BaseController {
     }
 
     @PostMapping
-    public Result<CheckinRecord> checkin(@RequestBody CheckinRequest request) {
+    public Result<List<CheckinRecord>> checkin(@RequestBody CheckinRequest request) {
         Long userId = requireLogin();
-        if (request.getItemId() == null) {
+        java.util.List<Long> itemIds = new java.util.ArrayList<>();
+        if (request.getItemIds() != null && !request.getItemIds().isEmpty()) {
+            itemIds.addAll(request.getItemIds());
+        } else if (request.getItemId() != null) {
+            itemIds.add(request.getItemId());
+        } else {
             return Result.error(400, "打卡项ID不能为空");
         }
-        return Result.success(checkinService.checkin(userId, request.getPetId(),
-                request.getItemId(), request.getNote(), request.getImages(), request.getDate()));
+        java.util.List<CheckinRecord> results = new java.util.ArrayList<>();
+        for (Long itemId : itemIds) {
+            results.add(checkinService.checkin(userId, request.getPetId(),
+                    itemId, request.getNote(), request.getImages(), request.getDate()));
+        }
+        return Result.success(results);
     }
 
     @GetMapping("/calendar")
