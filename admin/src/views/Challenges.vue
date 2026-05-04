@@ -96,7 +96,19 @@
       <el-form :model="form" label-width="100px">
         <el-form-item label="标题" required><el-input v-model="form.title" placeholder="请输入挑战赛标题" /></el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入挑战赛描述" /></el-form-item>
-        <el-form-item label="封面图"><el-input v-model="form.coverImage" placeholder="图片URL" /></el-form-item>
+        <el-form-item label="封面图">
+          <el-upload
+            class="cover-uploader"
+            :action="uploadUrl"
+            :headers="uploadHeaders"
+            :show-file-list="false"
+            :on-success="handleCoverSuccess"
+            :before-upload="beforeCoverUpload"
+          >
+            <img v-if="form.coverImage" :src="form.coverImage" class="cover-preview" />
+            <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
+          </el-upload>
+        </el-form-item>
         <el-form-item label="类型" required>
           <el-select v-model="form.type" placeholder="请选择类型">
             <el-option label="打卡" :value="1" /><el-option label="社交" :value="2" /><el-option label="健康" :value="3" />
@@ -187,6 +199,9 @@ import { Search, Plus, Download, Edit, Delete, CircleCheck, CircleClose, TrendCh
 const adminStore = useAdminStore()
 const canManage = computed(() => adminStore.hasButton('challenge:manage'))
 const canExport = computed(() => adminStore.hasButton('export'))
+
+const uploadUrl = (import.meta.env.VITE_API_BASE_URL || '') + '/api/upload'
+const uploadHeaders = computed(() => ({ Authorization: 'Bearer ' + (adminStore.token || '') }))
 
 const loading = ref(false)
 const tableData = ref([])
@@ -305,6 +320,22 @@ async function handleExport() {
   } catch (e) {}
 }
 
+function handleCoverSuccess(res) {
+  if (res.success && res.data) {
+    form.value.coverImage = res.data
+  } else {
+    ElMessage.error('上传失败')
+  }
+}
+
+function beforeCoverUpload(file) {
+  const isImage = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)
+  const isLt10M = file.size / 1024 / 1024 < 10
+  if (!isImage) { ElMessage.error('只能上传图片文件'); return false }
+  if (!isLt10M) { ElMessage.error('图片大小不能超过10MB'); return false }
+  return true
+}
+
 onMounted(() => { loadData() })
 </script>
 
@@ -398,4 +429,10 @@ onMounted(() => { loadData() })
   padding-left: 10px;
   border-left: 3px solid #409eff;
 }
+
+/* 封面上传 */
+.cover-uploader :deep(.el-upload) { border: 1px dashed #d9d9d9; border-radius: 6px; cursor: pointer; position: relative; overflow: hidden; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; }
+.cover-uploader :deep(.el-upload:hover) { border-color: #409eff; }
+.cover-preview { width: 120px; height: 120px; object-fit: cover; display: block; }
+.cover-uploader-icon { font-size: 28px; color: #8c939d; }
 </style>
