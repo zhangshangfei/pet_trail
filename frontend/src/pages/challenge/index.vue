@@ -14,6 +14,19 @@
 
     <scroll-view scroll-y class="challenge-scroll" :style="{ top: headerHeight + 'px' }" @scrolltolower="loadMore">
       <view class="challenge-content">
+        <!-- 空状态 -->
+        <view class="empty-tip" v-if="!loading && challenges.length === 0">
+          <view class="empty-icon">&#127942;</view>
+          <text class="empty-text">暂无进行中的挑战赛</text>
+        </view>
+
+        <!-- 加载中 -->
+        <view class="loading-tip" v-if="loading && challenges.length === 0">
+          <view class="loading-spinner"></view>
+          <text class="loading-text">加载中...</text>
+        </view>
+
+        <!-- 挑战列表 -->
         <view class="challenge-list" v-if="challenges.length > 0">
           <view
             v-for="item in challenges"
@@ -29,9 +42,11 @@
               <view class="card-badge" :class="'badge-type-' + item.type">
                 <text class="badge-text">{{ getTypeName(item.type) }}</text>
               </view>
+              <view class="card-overlay">
+                <text class="overlay-title">{{ item.title }}</text>
+              </view>
             </view>
             <view class="card-body">
-              <text class="card-title">{{ item.title }}</text>
               <text class="card-desc">{{ item.description }}</text>
               <view class="card-meta">
                 <view class="meta-item">
@@ -51,15 +66,6 @@
               </view>
             </view>
           </view>
-        </view>
-
-        <view class="empty-tip" v-if="!loading && challenges.length === 0">
-          <text class="empty-icon">&#127942;</text>
-          <text class="empty-text">暂无进行中的挑战赛</text>
-        </view>
-
-        <view class="loading-tip" v-if="loading">
-          <text class="loading-text">加载中...</text>
         </view>
       </view>
     </scroll-view>
@@ -148,6 +154,7 @@ export default {
   background: #f9fafb;
 }
 
+/* 头部 - 与首页 UserTopBar 一致 */
 .header {
   position: fixed;
   top: 0;
@@ -195,6 +202,7 @@ export default {
   font-weight: 500;
 }
 
+/* 滚动区域 */
 .challenge-scroll {
   position: fixed;
   left: 0;
@@ -206,8 +214,57 @@ export default {
   padding: 20rpx;
 }
 
+/* 空状态 - 与首页 empty-follow-state 风格一致 */
+.empty-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 160rpx 60rpx;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+  margin-bottom: 32rpx;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* 加载中 */
+.loading-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 160rpx 0;
+}
+
+.loading-spinner {
+  width: 48rpx;
+  height: 48rpx;
+  border: 4rpx solid #f3f4f6;
+  border-top-color: #ff6a3d;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 20rpx;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 26rpx;
+  color: #9ca3af;
+}
+
+/* 挑战卡片 - 与首页 post-card 风格一致 */
 .challenge-card {
-  background: #ffffff;
+  background: #fff;
   border-radius: 24rpx;
   overflow: hidden;
   margin-bottom: 20rpx;
@@ -237,6 +294,7 @@ export default {
   font-size: 80rpx;
 }
 
+/* 类型标签 */
 .card-badge {
   position: absolute;
   top: 16rpx;
@@ -255,26 +313,36 @@ export default {
   font-weight: 500;
 }
 
+/* 封面底部渐变遮罩 + 标题 */
+.card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 60rpx 24rpx 16rpx 24rpx;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+}
+
+.overlay-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* 卡片内容区 */
 .card-body {
   padding: 24rpx;
 }
 
-.card-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 10rpx;
-}
-
 .card-desc {
-  font-size: 26rpx;
-  color: #6b7280;
+  font-size: 28rpx;
+  color: #374151;
+  line-height: 1.6;
   margin-bottom: 16rpx;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.5;
 }
 
 .card-meta {
@@ -295,13 +363,16 @@ export default {
 
 .meta-text {
   font-size: 24rpx;
-  color: #9ca3af;
+  color: #6b7280;
 }
 
+/* 卡片底部 - 与首页 post-actions 风格一致 */
 .card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #f3f4f6;
 }
 
 .time-text {
@@ -319,32 +390,5 @@ export default {
   font-size: 26rpx;
   color: #ffffff;
   font-weight: 500;
-}
-
-.empty-tip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 120rpx 0;
-}
-
-.empty-icon {
-  font-size: 80rpx;
-  margin-bottom: 24rpx;
-}
-
-.empty-text {
-  font-size: 28rpx;
-  color: #9ca3af;
-}
-
-.loading-tip {
-  text-align: center;
-  padding: 40rpx 0;
-}
-
-.loading-text {
-  font-size: 26rpx;
-  color: #9ca3af;
 }
 </style>

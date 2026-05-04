@@ -12,6 +12,7 @@
 
     <scroll-view scroll-y class="detail-scroll" :style="{ top: headerHeight + 'px' }">
       <view class="detail-content" v-if="challenge">
+        <!-- 封面大图 -->
         <view class="cover-section">
           <image v-if="challenge.coverImage" :src="challenge.coverImage" class="cover-img" mode="aspectFill" />
           <view v-else class="cover-placeholder">
@@ -25,6 +26,7 @@
           </view>
         </view>
 
+        <!-- 信息统计卡 - 悬浮在封面下方 -->
         <view class="info-card">
           <view class="info-row">
             <view class="info-item">
@@ -47,33 +49,43 @@
           </view>
         </view>
 
+        <!-- 挑战说明 -->
         <view class="section-card" v-if="challenge.description">
-          <text class="section-title">挑战说明</text>
+          <view class="section-header">
+            <text class="section-title">挑战说明</text>
+          </view>
           <text class="desc-text">{{ challenge.description }}</text>
         </view>
 
-        <view class="section-card" v-if="challenge.rewardDescription">
-          <text class="section-title">&#127873; 奖励</text>
-          <text class="reward-text">{{ challenge.rewardDescription }}</text>
+        <!-- 奖励 -->
+        <view class="section-card reward-card" v-if="challenge.rewardDescription">
+          <view class="section-header">
+            <text class="section-title">&#127873; 奖励</text>
+          </view>
+          <view class="reward-content">
+            <text class="reward-text">{{ challenge.rewardDescription }}</text>
+          </view>
         </view>
 
-        <view class="section-card" v-if="myProgress">
-          <text class="section-title">我的进度</text>
+        <!-- 我的进度 -->
+        <view class="section-card progress-card" v-if="myProgress">
+          <view class="section-header">
+            <text class="section-title">我的进度</text>
+            <text class="progress-badge" v-if="myProgress.completed">已完成</text>
+            <text class="progress-badge ongoing" v-else>进行中</text>
+          </view>
           <view class="progress-bar-wrap">
             <view class="progress-bar">
               <view class="progress-fill" :style="{ width: progressPercent + '%' }"></view>
             </view>
             <text class="progress-text">{{ myProgress.progress || 0 }} / {{ challenge.conditionValue || 0 }}</text>
           </view>
-          <view class="progress-status">
-            <text v-if="myProgress.completed" class="status-completed">&#9989; 已完成</text>
-            <text v-else class="status-ongoing">&#128170; 进行中</text>
-          </view>
           <view class="update-btn" v-if="!myProgress.completed" @tap="onUpdateProgress">
             <text class="update-btn-text">更新进度</text>
           </view>
         </view>
 
+        <!-- 排行榜 -->
         <view class="section-card">
           <view class="section-header">
             <text class="section-title">&#127942; 排行榜</text>
@@ -110,10 +122,12 @@
       </view>
 
       <view class="loading-wrap" v-if="loading">
+        <view class="loading-spinner"></view>
         <text class="loading-text">加载中...</text>
       </view>
     </scroll-view>
 
+    <!-- 底部参加按钮 -->
     <view class="bottom-bar" v-if="challenge && !myProgress">
       <view class="join-btn" @tap="onJoin">
         <text class="join-btn-text">参加挑战</text>
@@ -248,6 +262,7 @@ export default {
   background: #f9fafb;
 }
 
+/* 头部 - 与首页 UserTopBar 一致 */
 .header {
   position: fixed;
   top: 0;
@@ -289,6 +304,7 @@ export default {
   width: 72rpx;
 }
 
+/* 滚动区域 */
 .detail-scroll {
   position: fixed;
   left: 0;
@@ -300,9 +316,10 @@ export default {
   padding: 0 0 32rpx 0;
 }
 
+/* 封面大图 */
 .cover-section {
   position: relative;
-  height: 440rpx;
+  height: 480rpx;
 }
 
 .cover-img {
@@ -320,7 +337,7 @@ export default {
 }
 
 .cover-icon {
-  font-size: 128rpx;
+  font-size: 140rpx;
 }
 
 .cover-overlay {
@@ -328,15 +345,15 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 32rpx;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+  padding: 80rpx 32rpx 24rpx 32rpx;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.65));
 }
 
 .badge {
   display: inline-block;
   padding: 6rpx 20rpx;
   border-radius: 999rpx;
-  margin-bottom: 16rpx;
+  margin-bottom: 12rpx;
 }
 
 .badge-type-1 { background: rgba(255, 106, 61, 0.9); }
@@ -355,12 +372,13 @@ export default {
   color: #ffffff;
 }
 
+/* 信息统计卡 - 悬浮效果 */
 .info-card {
-  margin: -40rpx 20rpx 20rpx 20rpx;
+  margin: -48rpx 20rpx 20rpx 20rpx;
   background: #ffffff;
   border-radius: 24rpx;
   padding: 32rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
   position: relative;
   z-index: 1;
 }
@@ -399,6 +417,7 @@ export default {
   background: #f3f4f6;
 }
 
+/* 通用卡片 - 与首页 post-card 一致 */
 .section-card {
   margin: 20rpx;
   background: #ffffff;
@@ -418,11 +437,6 @@ export default {
   font-size: 30rpx;
   font-weight: 600;
   color: #111827;
-  margin-bottom: 16rpx;
-}
-
-.section-header .section-title {
-  margin-bottom: 0;
 }
 
 .section-sub {
@@ -436,17 +450,47 @@ export default {
   line-height: 1.7;
 }
 
+/* 奖励卡片 */
+.reward-card {
+  background: linear-gradient(135deg, #fff7ed 0%, #fff1f2 100%);
+  border: 1rpx solid rgba(255, 122, 61, 0.12);
+}
+
+.reward-content {
+  padding: 16rpx 20rpx;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 16rpx;
+}
+
 .reward-text {
   font-size: 28rpx;
   color: #ff6a3d;
   font-weight: 500;
 }
 
+/* 进度卡片 */
+.progress-card .section-header {
+  margin-bottom: 24rpx;
+}
+
+.progress-badge {
+  padding: 4rpx 16rpx;
+  background: #52c41a;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.progress-badge.ongoing {
+  background: #ff6a3d;
+}
+
 .progress-bar-wrap {
   display: flex;
   align-items: center;
   gap: 20rpx;
-  margin-bottom: 16rpx;
+  margin-bottom: 24rpx;
 }
 
 .progress-bar {
@@ -461,7 +505,7 @@ export default {
   height: 100%;
   background: linear-gradient(90deg, #ff7a3d, #ff5a3d);
   border-radius: 999rpx;
-  transition: width 0.3s ease;
+  transition: width 0.5s ease;
 }
 
 .progress-text {
@@ -471,33 +515,20 @@ export default {
   white-space: nowrap;
 }
 
-.progress-status {
-  margin-bottom: 20rpx;
-}
-
-.status-completed {
-  font-size: 26rpx;
-  color: #52c41a;
-}
-
-.status-ongoing {
-  font-size: 26rpx;
-  color: #ff6a3d;
-}
-
 .update-btn {
   display: inline-block;
-  padding: 16rpx 40rpx;
+  padding: 18rpx 48rpx;
   background: linear-gradient(135deg, #ff7a3d, #ff5a3d);
   border-radius: 999rpx;
 }
 
 .update-btn-text {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #ffffff;
   font-weight: 500;
 }
 
+/* 排行榜 */
 .leaderboard-list {
   margin-top: 8rpx;
 }
@@ -505,7 +536,7 @@ export default {
 .leaderboard-item {
   display: flex;
   align-items: center;
-  padding: 16rpx 0;
+  padding: 18rpx 0;
   border-bottom: 1rpx solid #f3f4f6;
 }
 
@@ -516,7 +547,7 @@ export default {
 .leaderboard-item.is-me {
   background: rgba(255, 106, 61, 0.06);
   border-radius: 16rpx;
-  padding: 16rpx;
+  padding: 18rpx 16rpx;
   margin: 0 -8rpx;
   border-bottom: none;
 }
@@ -575,10 +606,12 @@ export default {
   color: #9ca3af;
 }
 
+/* 底部间距 */
 .bottom-spacer {
   height: 160rpx;
 }
 
+/* 底部操作栏 */
 .bottom-bar {
   position: fixed;
   bottom: 0;
@@ -591,22 +624,39 @@ export default {
   z-index: 100;
 }
 
-.join-btn {
+.bottom-bar .join-btn {
   padding: 24rpx 0;
   background: linear-gradient(135deg, #ff7a3d, #ff5a3d);
   border-radius: 999rpx;
   text-align: center;
 }
 
-.join-btn-text {
+.bottom-bar .join-btn-text {
   font-size: 30rpx;
   color: #ffffff;
   font-weight: 600;
 }
 
+/* 加载中 */
 .loading-wrap {
-  padding: 80rpx 0;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 160rpx 0;
+}
+
+.loading-spinner {
+  width: 48rpx;
+  height: 48rpx;
+  border: 4rpx solid #f3f4f6;
+  border-top-color: #ff6a3d;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 20rpx;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .loading-text {
