@@ -479,6 +479,7 @@ CREATE TABLE `challenges` (
   `reward_description` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '奖励描述',
   `status` tinyint(4) NULL DEFAULT 1 COMMENT '状态：0-下线 1-进行中 2-已结束',
   `participant_count` int(11) NULL DEFAULT 0 COMMENT '参与人数',
+  `sort_order` int(11) NULL DEFAULT 0 COMMENT '排序',
   `created_at` datetime NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`) USING BTREE,

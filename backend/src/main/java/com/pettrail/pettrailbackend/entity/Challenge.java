@@ -23,6 +23,7 @@ public class Challenge {
     private String rewardDescription;
     private Integer status;
     private Integer participantCount;
+    private Integer sortOrder;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

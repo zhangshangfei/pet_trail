@@ -322,7 +322,7 @@ async function handleExport() {
 
 function handleCoverSuccess(res) {
   if (res.success && res.data) {
-    form.value.coverImage = res.data
+    form.value.coverImage = res.data.url
   } else {
     ElMessage.error('上传失败')
   }
