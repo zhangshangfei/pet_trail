@@ -156,12 +156,21 @@ public class ChallengeService {
         return challengeMapper.selectPage(pageParam, wrapper);
     }
 
+    private void clearActiveCache() {
+        try {
+            redisTemplate.delete(CHALLENGE_CACHE_PREFIX + "active");
+        } catch (Exception e) {
+            log.warn("挑战赛缓存清除异常: {}", e.getMessage());
+        }
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public Challenge adminCreateChallenge(Challenge challenge) {
         challenge.setCreatedAt(LocalDateTime.now());
         challenge.setUpdatedAt(LocalDateTime.now());
         challenge.setParticipantCount(0);
         challengeMapper.insert(challenge);
+        clearActiveCache();
         return challenge;
     }
 
@@ -172,12 +181,14 @@ public class ChallengeService {
         challenge.setId(id);
         challenge.setUpdatedAt(LocalDateTime.now());
         challengeMapper.updateById(challenge);
+        clearActiveCache();
         return challenge;
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void adminDeleteChallenge(Long id) {
         challengeMapper.deleteById(id);
+        clearActiveCache();
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -187,6 +198,7 @@ public class ChallengeService {
         challenge.setStatus(status);
         challenge.setUpdatedAt(LocalDateTime.now());
         challengeMapper.updateById(challenge);
+        clearActiveCache();
     }
 
     public Map<String, Object> adminGetChallengeStats(Long id) {
