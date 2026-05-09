@@ -9,7 +9,7 @@
 // 获取 API 基础地址
 const getApiBaseUrl = () => {
   // #ifdef MP-WEIXIN
-  return 'http://124.222.51.71:8080'
+  return 'https://aipetfamily.cn'
   // #endif
 
   // #ifdef H5
