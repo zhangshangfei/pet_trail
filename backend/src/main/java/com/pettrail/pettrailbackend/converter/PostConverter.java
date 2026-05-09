@@ -33,6 +33,7 @@ public class PostConverter {
         Map<Long, Pet> petMap = batchLoadPets(posts);
 
         return posts.stream()
+                .filter(post -> post.getDeleted() == null || post.getDeleted() == 0)
                 .map(post -> convertToPostVO(post, currentUserId, userMap, petMap))
                 .collect(Collectors.toList());
     }

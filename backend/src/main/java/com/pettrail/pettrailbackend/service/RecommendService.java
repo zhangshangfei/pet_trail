@@ -314,7 +314,10 @@ public class RecommendService {
                 if (start < cachedIds.size()) {
                     List<Long> pageIds = cachedIds.subList(start, end);
                     return postMapper.selectBatchIds(pageIds)
-                        .stream().filter(Objects::nonNull).collect(Collectors.toList());
+                        .stream()
+                        .filter(Objects::nonNull)
+                        .filter(p -> p.getDeleted() == null || p.getDeleted() == 0)
+                        .collect(Collectors.toList());
                 }
                 return Collections.emptyList();
             }
@@ -335,7 +338,10 @@ public class RecommendService {
         if (start < sortedIds.size()) {
             List<Long> pageIds = sortedIds.subList(start, end);
             return postMapper.selectBatchIds(pageIds)
-                .stream().filter(Objects::nonNull).collect(Collectors.toList());
+                .stream()
+                .filter(Objects::nonNull)
+                .filter(p -> p.getDeleted() == null || p.getDeleted() == 0)
+                .collect(Collectors.toList());
         }
         return Collections.emptyList();
     }

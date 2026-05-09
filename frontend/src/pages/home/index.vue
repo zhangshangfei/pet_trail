@@ -291,11 +291,7 @@ export default {
 
     this.checkLoginStatus();
     this.fetchUnreadCount();
-    // this.connectWebSocket();
-    this.page = 1;
-    this.postList = [];
-    this.hasMore = true;
-    this.loadPosts();
+    this.refreshFeed();
   },
   onLoad() {
     try {
@@ -319,6 +315,11 @@ export default {
     })
 
     uni.$on('postDeleted', () => {
+      try {
+        ['all', 'collect', 'follow', 'recommend'].forEach(tab => {
+          uni.removeStorageSync('home:posts:' + tab)
+        })
+      } catch (e) { /* ignore */ }
       this.refreshFeed()
     })
   },
@@ -335,14 +336,8 @@ export default {
     uni.$off('postDeleted')
   },
   onPullDownRefresh() {
-    this.page = 1
-    this.postList = []
-    this.hasMore = true
-    this.checkLoginStatus()
-    this.fetchUnreadCount()
-    this.loadPosts().finally(() => {
-      uni.stopPullDownRefresh()
-    })
+    this.refreshFeed()
+    setTimeout(() => { uni.stopPullDownRefresh() }, 800)
   },
   onReachBottom() {
     this.loadMore()
@@ -784,6 +779,10 @@ export default {
       this.page = 1
       this.postList = []
       this.hasMore = true
+      try {
+        const cacheKey = 'home:posts:' + this.currentTab
+        uni.removeStorageSync(cacheKey)
+      } catch (e) { /* ignore */ }
       this.loadPosts(true)
     },
 
