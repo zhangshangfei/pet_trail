@@ -80,19 +80,19 @@
               <view class="feature-icon-wrap feature-icon-orange"><text class="feature-emoji">🎯</text></view>
               <text class="feature-text">挑战赛</text>
             </view>
-            <view class="feature-item" @tap="goToShop">
+            <view v-if="false" class="feature-item" @tap="goToShop">
               <view class="feature-icon-wrap feature-icon-red"><text class="feature-emoji">🛒</text></view>
               <text class="feature-text">宠物商城</text>
             </view>
-            <view class="feature-item" @tap="goToVet">
+            <view v-if="false" class="feature-item" @tap="goToVet">
               <view class="feature-icon-wrap feature-icon-green"><text class="feature-emoji">🏥</text></view>
               <text class="feature-text">宠物医院</text>
             </view>
-            <view class="feature-item" @tap="goToMyAppointments">
+            <view v-if="false" class="feature-item" @tap="goToMyAppointments">
               <view class="feature-icon-wrap feature-icon-blue"><text class="feature-emoji">📋</text></view>
               <text class="feature-text">我的预约</text>
             </view>
-            <view class="feature-item" @tap="goToMembership">
+            <view v-if="false" class="feature-item" @tap="goToMembership">
               <view class="feature-icon-wrap feature-icon-blue"><text class="feature-emoji">👑</text></view>
               <text class="feature-text">宠迹Pro</text>
             </view>
