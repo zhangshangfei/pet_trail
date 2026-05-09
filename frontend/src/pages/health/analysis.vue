@@ -193,9 +193,16 @@
           <view v-if="analysis.aiAnalysis" class="ai-section">
             <view class="section-header">
               <text class="ai-section-title">🤖 大模型快速分析</text>
+              <view class="ai-generated-badge">
+                <text class="ai-generated-icon">✨</text>
+                <text class="ai-generated-text">AI生成</text>
+              </view>
             </view>
             <view class="ai-card">
               <text class="ai-text">{{ analysis.aiAnalysis }}</text>
+              <view class="ai-disclaimer">
+                <text class="ai-disclaimer-text">以上内容由AI大模型生成，仅供参考，不构成专业医疗建议。如有疑问请咨询宠物医生。</text>
+              </view>
             </view>
           </view>
 
@@ -489,9 +496,15 @@ $red: #ff3b30;
 
 /* ===== AI 快速分析 ===== */
 .ai-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.ai-section .section-header { justify-content: space-between; }
 .ai-section-title { font-size: 30rpx; font-weight: 700; color: #fff; }
+.ai-generated-badge { display: flex; align-items: center; gap: 6rpx; background: rgba(255,255,255,0.25); border: 1rpx solid rgba(255,255,255,0.5); border-radius: 20rpx; padding: 6rpx 18rpx; }
+.ai-generated-icon { font-size: 22rpx; }
+.ai-generated-text { font-size: 22rpx; font-weight: 700; color: #fff; letter-spacing: 1rpx; }
 .ai-card { background: rgba(255,255,255,0.12); border-radius: 16rpx; padding: 24rpx; margin-top: 8rpx; }
 .ai-text { font-size: 26rpx; color: #fff; line-height: 1.8; }
+.ai-disclaimer { margin-top: 20rpx; padding-top: 16rpx; border-top: 1rpx solid rgba(255,255,255,0.2); }
+.ai-disclaimer-text { font-size: 22rpx; color: rgba(255,255,255,0.7); line-height: 1.6; }
 
 /* ===== 底部按钮 ===== */
 .action-section { margin-top: 8rpx; padding-bottom: 40rpx; }
