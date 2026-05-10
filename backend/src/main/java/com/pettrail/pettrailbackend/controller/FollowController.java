@@ -53,9 +53,12 @@ public class FollowController extends BaseController {
 
     @GetMapping("/followees")
     public Result<List<Map<String, Object>>> getFolloweeList(
-            @RequestParam Long userId,
+            @RequestParam(required = false) Long userId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
+        if (userId == null) {
+            userId = requireLogin();
+        }
         List<Long> followeeIds = followService.getFolloweeIds(userId);
         Long currentUserId = UserContext.getCurrentUserId();
         List<Long> currentFolloweeIds = currentUserId != null ? followService.getFolloweeIds(currentUserId) : new ArrayList<>();
@@ -64,9 +67,12 @@ public class FollowController extends BaseController {
 
     @GetMapping("/followers")
     public Result<List<Map<String, Object>>> getFollowerList(
-            @RequestParam Long userId,
+            @RequestParam(required = false) Long userId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
+        if (userId == null) {
+            userId = requireLogin();
+        }
         List<Long> followerIds = followService.getFollowerIds(userId);
         Long currentUserId = UserContext.getCurrentUserId();
         List<Long> currentFolloweeIds = currentUserId != null ? followService.getFolloweeIds(currentUserId) : new ArrayList<>();
