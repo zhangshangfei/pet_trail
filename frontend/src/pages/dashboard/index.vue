@@ -49,7 +49,13 @@
           <view class="ai-entry-left">
             <text class="ai-entry-icon">🤖</text>
             <view class="ai-entry-text">
-              <text class="ai-entry-title">AI 健康分析</text>
+              <view class="ai-entry-title-row">
+                <text class="ai-entry-title">AI 健康分析</text>
+                <view class="ai-generated-tag">
+                  <text class="ai-generated-tag-icon">✨</text>
+                  <text class="ai-generated-tag-text">AI生成</text>
+                </view>
+              </view>
               <text v-if="aiSummary" class="ai-entry-desc">综合评分 {{ aiSummary.score }} · {{ aiSummary.level }}</text>
               <text v-else class="ai-entry-desc">智能评估宠物健康状况</text>
             </view>
@@ -841,7 +847,11 @@ export default {
 .ai-entry-left { display: flex; align-items: center; gap: 16rpx; }
 .ai-entry-icon { font-size: 44rpx; }
 .ai-entry-text { display: flex; flex-direction: column; }
+.ai-entry-title-row { display: flex; align-items: center; gap: 10rpx; }
 .ai-entry-title { font-size: 30rpx; font-weight: 600; color: #fff; }
+.ai-generated-tag { display: flex; align-items: center; gap: 4rpx; background: rgba(255,255,255,0.15); border: 1rpx solid rgba(255,255,255,0.25); border-radius: 12rpx; padding: 4rpx 10rpx; }
+.ai-generated-tag-icon { font-size: 18rpx; }
+.ai-generated-tag-text { font-size: 18rpx; font-weight: 600; color: rgba(255,255,255,0.9); }
 .ai-entry-desc { font-size: 22rpx; color: rgba(255,255,255,0.8); margin-top: 4rpx; }
 .ai-entry-badge { width: 36rpx; height: 36rpx; border-radius: 18rpx; background: #ff3b30; display: flex; align-items: center; justify-content: center; margin-right: 8rpx; }
 .ai-entry-badge-text { font-size: 20rpx; font-weight: 700; color: #fff; }
