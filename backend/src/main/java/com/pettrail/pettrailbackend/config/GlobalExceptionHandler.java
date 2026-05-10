@@ -6,12 +6,14 @@ import com.pettrail.pettrailbackend.exception.ForbiddenException;
 import com.pettrail.pettrailbackend.exception.NotFoundException;
 import com.pettrail.pettrailbackend.exception.UnauthorizedException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -142,12 +144,28 @@ public class GlobalExceptionHandler {
         return Result.error(400, "参数 " + paramName + " 格式不正确");
     }
 
+    @ExceptionHandler(ClientAbortException.class)
+    public void handleClientAbortException(ClientAbortException e) {
+        log.debug("客户端断开连接：{}", e.getMessage());
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<?> handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
+        log.warn("缺少请求参数：{}", e.getMessage());
+        return Result.error(400, "缺少必要参数：" + e.getParameterName());
+    }
+
     /**
      * 其他未知异常
      */
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<?> handleException(Exception e) {
+        if (e.getCause() instanceof java.io.IOException) {
+            log.debug("IO异常（客户端断开）：{}", e.getMessage());
+            return null;
+        }
         log.error("系统内部异常：{}", e.getMessage(), e);
         return Result.error(500, "系统内部错误，请稍后重试");
     }
