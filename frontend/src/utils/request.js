@@ -10,6 +10,87 @@ const CACHE_TTL = 3000
 const CACHE_MAX_SIZE = 100
 const DEDUP_TTL = 500
 
+let isShowingLoginModal = false
+const loginWaitingQueue = []
+
+const showLoginModal = () => {
+  return new Promise((resolve) => {
+    if (!isShowingLoginModal) {
+      isShowingLoginModal = true
+      uni.showModal({
+        title: '提示',
+        content: '请先登录后再操作',
+        showCancel: true,
+        confirmText: '去登录',
+        success: async (res) => {
+          if (res.confirm) {
+            try {
+              const loginResult = await silentLogin()
+              isShowingLoginModal = false
+              const results = loginWaitingQueue.splice(0)
+              results.forEach(cb => cb(loginResult))
+              resolve(loginResult)
+            } catch (e) {
+              isShowingLoginModal = false
+              const results = loginWaitingQueue.splice(0)
+              results.forEach(cb => cb(false))
+              resolve(false)
+            }
+          } else {
+            isShowingLoginModal = false
+            const results = loginWaitingQueue.splice(0)
+            results.forEach(cb => cb(false))
+            resolve(false)
+          }
+        }
+      })
+    } else {
+      loginWaitingQueue.push(resolve)
+    }
+  })
+}
+
+const silentLogin = () => {
+  return new Promise((resolve, reject) => {
+    uni.showLoading({ title: '登录中...', mask: true })
+    wx.login({
+      success: async (res) => {
+        if (res.code) {
+          try {
+            const { default: authApi } = await import('@/api/auth')
+            const loginRes = await authApi.loginByCode(res.code)
+            uni.hideLoading()
+            if (loginRes.success) {
+              uni.setStorageSync('token', loginRes.data.token)
+              uni.setStorageSync('tokenExpireTime', Date.now() + 7 * 24 * 60 * 60 * 1000)
+              uni.setStorageSync('userInfo', loginRes.data.user)
+              uni.showToast({ title: '登录成功', icon: 'success' })
+              uni.$emit('loginSuccess')
+              resolve(true)
+            } else {
+              uni.showToast({ title: loginRes.message || '登录失败', icon: 'none' })
+              resolve(false)
+            }
+          } catch (err) {
+            uni.hideLoading()
+            uni.showToast({ title: '登录失败', icon: 'none' })
+            reject(err)
+          }
+        } else {
+          uni.hideLoading()
+          uni.showToast({ title: '获取登录凭证失败', icon: 'none' })
+          resolve(false)
+        }
+      },
+      fail: () => {
+        uni.hideLoading()
+        uni.showToast({ title: '登录失败，请重试', icon: 'none' })
+        resolve(false)
+      }
+    })
+  })
+}
+
 // 将对象编码为 application/x-www-form-urlencoded 格式
 const encodeFormData = (data) => {
   if (!data) return ''
@@ -69,7 +150,7 @@ const cloudRequest = (options = {}) => {
       method: options.method || 'GET',
       data: requestData,
       timeout: options.timeout || 20000,
-      success: (res) => {
+      success: async (res) => {
         // 检查 HTTP 状态码
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const data = res.data
@@ -88,25 +169,15 @@ const cloudRequest = (options = {}) => {
             reject(data)
           }
         } else if (res.statusCode === 401) {
-          // Token 无效或过期
-          console.warn('Token 无效或已过期，清除本地存储')
           uni.removeStorageSync('token')
           uni.removeStorageSync('tokenExpireTime')
           uni.removeStorageSync('userInfo')
-
-          uni.showToast({
-            title: '登录已过期，请重新登录',
-            icon: 'none',
-            duration: 2000
-          })
-
-          // 延迟跳转到登录页
-          setTimeout(() => {
-            uni.reLaunch({
-              url: '/pages/login/index'
-            })
-          }, 1500)
-
+          const loginResult = await showLoginModal()
+          if (loginResult) {
+            const retryOptions = { ...options }
+            resolve(cloudRequest(retryOptions))
+            return
+          }
           reject(res)
         } else if (res.statusCode === 403) {
           reject(res)
@@ -182,7 +253,7 @@ const httpRequest = (options = {}) => {
       data: requestData,
       header: header,
       timeout: options.timeout || 20000,
-      success: (res) => {
+      success: async (res) => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const data = res.data
           if (data.success) {
@@ -191,25 +262,15 @@ const httpRequest = (options = {}) => {
             reject(data)
           }
         } else if (res.statusCode === 401) {
-          // Token 无效或过期 - 由后端校验
-          console.warn('Token 无效或已过期，清除本地存储')
           uni.removeStorageSync('token')
           uni.removeStorageSync('tokenExpireTime')
           uni.removeStorageSync('userInfo')
-
-          uni.showToast({
-            title: '登录已过期，请重新登录',
-            icon: 'none',
-            duration: 2000
-          })
-
-          // 延迟跳转到登录页
-          setTimeout(() => {
-            uni.reLaunch({
-              url: '/pages/login/index'
-            })
-          }, 1500)
-
+          const loginResult = await showLoginModal()
+          if (loginResult) {
+            const retryOptions = { ...options }
+            resolve(httpRequest(retryOptions))
+            return
+          }
           reject(res)
         } else if (res.statusCode === 403) {
           reject(res)
