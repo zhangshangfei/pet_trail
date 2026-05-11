@@ -76,6 +76,9 @@ public class AdminAdminController extends BaseAdminController {
         if (admin == null) {
             return Result.error(404, "管理员不存在");
         }
+        if (admin.getTotpSecret() != null && !admin.getTotpSecret().isEmpty()) {
+            return Result.error(400, "该管理员已绑定2FA，请先解绑后再重新绑定");
+        }
         Map<String, String> totpData = totpService.generateSecret(admin.getUsername());
         adminService.updateTotpSecret(id, totpData.get("secret"));
         return Result.success(totpData);

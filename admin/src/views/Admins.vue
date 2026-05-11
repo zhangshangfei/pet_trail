@@ -49,6 +49,12 @@
             <el-tag :type="row.status === 1 ? 'success' : 'danger'" effect="light" size="small">{{ row.status === 1 ? '正常' : '禁用' }}</el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="2FA" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag v-if="row.totpBound" type="success" effect="dark" size="small" round>已绑定</el-tag>
+            <el-tag v-else type="info" effect="light" size="small" round>未绑定</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="最后登录" width="170">
           <template #default="{ row }">
             <div class="time-cell">
@@ -64,7 +70,8 @@
               <el-button size="small" :type="row.status === 1 ? 'warning' : 'success'" text :icon="row.status === 1 ? CircleClose : CircleCheck" @click="toggleStatus(row)">{{ row.status === 1 ? '禁用' : '启用' }}</el-button>
               <el-button size="small" type="info" text :icon="Key" @click="handleResetPwd(row)">重置密码</el-button>
               <el-button size="small" type="warning" text :icon="Lock" @click="openChangePwd(row)">改密码</el-button>
-              <el-button size="small" :type="row.totpBound ? 'danger' : 'success'" text :icon="CircleCheck" @click="handleTotp(row)">{{ row.totpBound ? '解绑2FA' : '绑定2FA' }}</el-button>
+              <el-button v-if="row.totpBound" size="small" type="danger" text :icon="CircleClose" @click="handleTotp(row)">解绑2FA</el-button>
+              <el-button v-else size="small" type="success" text :icon="CircleCheck" @click="handleTotp(row)">绑定2FA</el-button>
             </div>
           </template>
         </el-table-column>
