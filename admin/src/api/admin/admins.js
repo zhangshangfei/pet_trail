@@ -8,5 +8,5 @@ export const updateAdminStatus = (id, status) => request.put(`/api/admin/admins/
 export const resetAdminPassword = (id, password) => request.put(`/api/admin/admins/${id}/reset-password`, { password })
 export const changeAdminPassword = (id, oldPassword, newPassword) => request.put(`/api/admin/admins/${id}/change-password`, { oldPassword, newPassword })
 export const bindTotp = (id) => request.post(`/api/admin/admins/${id}/totp/bind`)
-export const unbindTotp = (id) => request.put(`/api/admin/admins/${id}/totp/unbind`)
+export const unbindTotp = (id, code) => request.put(`/api/admin/admins/${id}/totp/unbind`, { code })
 export const verifyTotp = (id, code) => request.post(`/api/admin/admins/${id}/totp/verify`, { code })
