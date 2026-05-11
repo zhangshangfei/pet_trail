@@ -34,7 +34,7 @@ public class AdminService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public Map<String, Object> login(String username, String password) {
+    public Map<String, Object> login(String username, String password, Integer totpCode) {
         Admin admin = adminMapper.selectOne(
                 new LambdaQueryWrapper<Admin>()
                         .eq(Admin::getUsername, username)
@@ -43,6 +43,22 @@ public class AdminService {
 
         if (admin == null || !passwordEncoder.matches(password, admin.getPassword())) {
             throw new BusinessException(401, "用户名或密码错误");
+        }
+
+        if (admin.getTotpSecret() != null && !admin.getTotpSecret().isEmpty()) {
+            if (totpCode == null) {
+                Map<String, Object> result = new HashMap<>();
+                result.put("requireTotp", true);
+                result.put("adminId", admin.getId());
+                return result;
+            }
+        }
+
+        if (totpCode != null && admin.getTotpSecret() != null && !admin.getTotpSecret().isEmpty()) {
+            com.warrenstrange.googleauth.GoogleAuthenticator gauth = new com.warrenstrange.googleauth.GoogleAuthenticator();
+            if (!gauth.authorize(admin.getTotpSecret(), totpCode)) {
+                throw new BusinessException(400, "验证码错误");
+            }
         }
 
         admin.setLastLoginAt(LocalDateTime.now());
@@ -55,6 +71,7 @@ public class AdminService {
         Map<String, Object> result = new HashMap<>();
         result.put("token", token);
         result.put("admin", convertToVO(admin));
+        result.put("requireTotp", false);
         return result;
     }
 
@@ -64,6 +81,21 @@ public class AdminService {
             throw new BusinessException(404, "管理员不存在");
         }
         return convertToVO(admin);
+    }
+
+    public Admin getById(Long id) {
+        return adminMapper.selectById(id);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateTotpSecret(Long id, String totpSecret) {
+        Admin admin = adminMapper.selectById(id);
+        if (admin == null) {
+            throw new BusinessException(404, "管理员不存在");
+        }
+        admin.setTotpSecret(totpSecret);
+        admin.setUpdatedAt(LocalDateTime.now());
+        adminMapper.updateById(admin);
     }
 
     public void initDefaultAdmin() {
@@ -93,6 +125,7 @@ public class AdminService {
         vo.setRoleId(admin.getRoleId());
         vo.setMerchantId(admin.getMerchantId());
         vo.setStatus(admin.getStatus());
+        vo.setTotpBound(admin.getTotpSecret() != null && !admin.getTotpSecret().isEmpty());
         vo.setLastLoginAt(admin.getLastLoginAt());
         vo.setCreatedAt(admin.getCreatedAt());
 
@@ -166,6 +199,7 @@ public class AdminService {
         vo.setRoleId(admin.getRoleId());
         vo.setMerchantId(admin.getMerchantId());
         vo.setStatus(admin.getStatus());
+        vo.setTotpBound(admin.getTotpSecret() != null && !admin.getTotpSecret().isEmpty());
         vo.setLastLoginAt(admin.getLastLoginAt());
         vo.setCreatedAt(admin.getCreatedAt());
 

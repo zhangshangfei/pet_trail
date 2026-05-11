@@ -20,6 +20,7 @@ public class Admin {
     private Long roleId;
     private Long merchantId;
     private Integer status;
+    private String totpSecret;
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

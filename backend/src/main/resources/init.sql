@@ -697,6 +697,7 @@ CREATE TABLE `admins` (
   `role_id` bigint(20) NULL DEFAULT NULL COMMENT '角色ID, 关联sys_role表',
   `merchant_id` bigint(20) NULL DEFAULT NULL COMMENT '所属商户ID',
   `status` tinyint(4) NULL DEFAULT 1 COMMENT '状态: 1-正常 0-禁用',
+  `totp_secret` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT 'TOTP密钥(用于2FA双因素认证)',
   `last_login_at` datetime NULL DEFAULT NULL COMMENT '最后登录时间',
   `created_at` datetime NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

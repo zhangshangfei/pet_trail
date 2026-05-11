@@ -57,12 +57,14 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="320" fixed="right" align="center">
+        <el-table-column label="操作" width="480" fixed="right" align="center">
           <template #default="{ row }">
             <div class="action-btns">
               <el-button size="small" text type="primary" :icon="EditPen" @click="openEdit(row)">编辑</el-button>
               <el-button size="small" :type="row.status === 1 ? 'warning' : 'success'" text :icon="row.status === 1 ? CircleClose : CircleCheck" @click="toggleStatus(row)">{{ row.status === 1 ? '禁用' : '启用' }}</el-button>
               <el-button size="small" type="info" text :icon="Key" @click="handleResetPwd(row)">重置密码</el-button>
+              <el-button size="small" type="warning" text :icon="Lock" @click="openChangePwd(row)">改密码</el-button>
+              <el-button size="small" :type="row.totpBound ? 'danger' : 'success'" text :icon="CircleCheck" @click="handleTotp(row)">{{ row.totpBound ? '解绑2FA' : '绑定2FA' }}</el-button>
             </div>
           </template>
         </el-table-column>
@@ -107,14 +109,50 @@
         <el-button type="primary" @click="submitForm">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 修改密码弹窗 -->
+    <el-dialog v-model="showChangePwd" title="修改密码" width="420px" destroy-on-close>
+      <el-form :model="changePwdForm" label-width="90px">
+        <el-form-item label="管理员">{{ changePwdUsername }}</el-form-item>
+        <el-form-item label="原密码" required><el-input v-model="changePwdForm.oldPassword" type="password" show-password placeholder="请输入原密码" /></el-form-item>
+        <el-form-item label="新密码" required><el-input v-model="changePwdForm.newPassword" type="password" show-password placeholder="请输入新密码" /></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showChangePwd = false">取消</el-button>
+        <el-button type="primary" @click="submitChangePwd">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 2FA绑定弹窗 -->
+    <el-dialog v-model="showTotp" :title="totpBound ? '解绑2FA' : '绑定2FA'" width="420px" destroy-on-close>
+      <div v-if="!totpBound && totpQrCode" style="text-align: center;">
+        <p style="margin-bottom: 12px; color: #606266;">请使用 Google Authenticator 扫描二维码</p>
+        <img :src="totpQrCode" style="width: 200px; height: 200px; border-radius: 8px;" />
+        <p style="margin-top: 12px; font-size: 12px; color: #909399; word-break: break-all;">密钥：{{ totpSecret }}</p>
+        <el-form :model="totpForm" label-width="90px" style="margin-top: 16px;">
+          <el-form-item label="验证码" required><el-input v-model="totpForm.code" placeholder="输入6位验证码" maxlength="6" /></el-form-item>
+        </el-form>
+      </div>
+      <div v-if="totpBound" style="text-align: center;">
+        <p style="margin-bottom: 16px; color: #606266;">解绑后登录将不再需要验证码，确认解绑？</p>
+        <el-form :model="totpForm" label-width="90px">
+          <el-form-item label="验证码" required><el-input v-model="totpForm.code" placeholder="输入6位验证码" maxlength="6" /></el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="showTotp = false">取消</el-button>
+        <el-button v-if="!totpBound" type="primary" @click="submitBindTotp">确认绑定</el-button>
+        <el-button v-if="totpBound" type="danger" @click="submitUnbindTotp">确认解绑</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, EditPen, CircleCheck, CircleClose, Clock, Key, UserFilled } from '@element-plus/icons-vue'
-import { getAdminList, getAdminDetail, createAdmin, updateAdmin, updateAdminStatus, resetAdminPassword, getMerchantList, getAllRoles } from '@/api/admin'
+import { Plus, EditPen, CircleCheck, CircleClose, Clock, Key, UserFilled, Lock } from '@element-plus/icons-vue'
+import { getAdminList, getAdminDetail, createAdmin, updateAdmin, updateAdminStatus, resetAdminPassword, changeAdminPassword, bindTotp, unbindTotp, verifyTotp, getMerchantList, getAllRoles } from '@/api/admin'
 
 const roleTagMap = { SUPER_ADMIN: 'danger', ADMIN: '', MERCHANT_ADMIN: 'warning', MERCHANT_STAFF: 'info' }
 
@@ -129,6 +167,18 @@ const editId = ref(null)
 const form = ref({})
 const roleList = ref([])
 const merchantList = ref([])
+
+const showChangePwd = ref(false)
+const changePwdId = ref(null)
+const changePwdUsername = ref('')
+const changePwdForm = ref({ oldPassword: '', newPassword: '' })
+
+const showTotp = ref(false)
+const totpId = ref(null)
+const totpBound = ref(false)
+const totpQrCode = ref('')
+const totpSecret = ref('')
+const totpForm = ref({ code: '' })
 
 const isMerchantRole = computed(() => {
   const role = roleList.value.find(r => r.id === form.value.roleId)
@@ -210,6 +260,74 @@ async function handleResetPwd(row) {
     await ElMessageBox.confirm(`确定重置"${row.username}"的密码？`, '确认')
     await resetAdminPassword(row.id); ElMessage.success('密码已重置为 admin123')
   } catch (e) {}
+}
+
+function openChangePwd(row) {
+  changePwdId.value = row.id
+  changePwdUsername.value = row.username
+  changePwdForm.value = { oldPassword: '', newPassword: '' }
+  showChangePwd.value = true
+}
+
+async function submitChangePwd() {
+  if (!changePwdForm.value.oldPassword || !changePwdForm.value.newPassword) {
+    ElMessage.warning('请填写完整'); return
+  }
+  try {
+    await changeAdminPassword(changePwdId.value, changePwdForm.value.oldPassword, changePwdForm.value.newPassword)
+    ElMessage.success('密码修改成功')
+    showChangePwd.value = false
+  } catch (e) {
+    ElMessage.error(e.response?.data?.message || '修改失败')
+  }
+}
+
+async function handleTotp(row) {
+  totpId.value = row.id
+  totpBound.value = row.totpBound
+  totpForm.value = { code: '' }
+  totpQrCode.value = ''
+  totpSecret.value = ''
+  if (!row.totpBound) {
+    try {
+      const res = await bindTotp(row.id)
+      if (res.success && res.data) {
+        totpQrCode.value = res.data.qrCode || ''
+        totpSecret.value = res.data.secret || ''
+      }
+    } catch (e) {
+      ElMessage.error('生成2FA失败'); return
+    }
+  }
+  showTotp.value = true
+}
+
+async function submitBindTotp() {
+  if (!totpForm.value.code) { ElMessage.warning('请输入验证码'); return }
+  try {
+    const res = await verifyTotp(totpId.value, Number(totpForm.value.code))
+    if (res.success && res.data === true) {
+      ElMessage.success('2FA绑定成功')
+      showTotp.value = false
+      loadData()
+    } else {
+      ElMessage.error('验证码错误')
+    }
+  } catch (e) {
+    ElMessage.error('验证失败')
+  }
+}
+
+async function submitUnbindTotp() {
+  if (!totpForm.value.code) { ElMessage.warning('请输入验证码'); return }
+  try {
+    await unbindTotp(totpId.value, Number(totpForm.value.code))
+    ElMessage.success('2FA已解绑')
+    showTotp.value = false
+    loadData()
+  } catch (e) {
+    ElMessage.error(e.response?.data?.message || '解绑失败')
+  }
 }
 
 onMounted(() => loadData())

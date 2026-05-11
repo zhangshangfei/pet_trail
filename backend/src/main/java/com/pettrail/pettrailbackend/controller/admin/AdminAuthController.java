@@ -34,7 +34,10 @@ public class AdminAuthController extends BaseAdminController {
     @PostMapping("/login")
     @Operation(summary = "管理员登录")
     public Result<Map<String, Object>> login(@RequestBody AdminLoginDTO dto) {
-        Map<String, Object> result = adminService.login(dto.getUsername(), dto.getPassword());
+        Map<String, Object> result = adminService.login(dto.getUsername(), dto.getPassword(), dto.getTotpCode());
+        if (Boolean.TRUE.equals(result.get("requireTotp"))) {
+            return Result.success(result);
+        }
         AdminVO admin = (AdminVO) result.get("admin");
         result.put("menus", sysMenuService.getUserMenuTree(admin.getRoleId()));
         return Result.success(result);

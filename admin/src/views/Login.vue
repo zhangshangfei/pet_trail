@@ -13,8 +13,11 @@
         <el-form-item prop="password">
           <el-input v-model="form.password" type="password" placeholder="请输入密码" prefix-icon="Lock" size="large" show-password @keyup.enter="handleLogin" />
         </el-form-item>
+        <el-form-item v-if="requireTotp" prop="totpCode">
+          <el-input v-model="form.totpCode" placeholder="请输入2FA验证码" prefix-icon="Key" size="large" maxlength="6" @keyup.enter="handleLogin" />
+        </el-form-item>
         <el-form-item>
-          <el-button type="primary" size="large" :loading="loading" style="width: 100%" @click="handleLogin">登 录</el-button>
+          <el-button type="primary" size="large" :loading="loading" style="width: 100%" @click="handleLogin">{{ requireTotp ? '验证并登录' : '登 录' }}</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -32,8 +35,9 @@ const router = useRouter()
 const adminStore = useAdminStore()
 const formRef = ref(null)
 const loading = ref(false)
+const requireTotp = ref(false)
 
-const form = reactive({ username: '', password: '' })
+const form = reactive({ username: '', password: '', totpCode: '' })
 const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
@@ -42,15 +46,31 @@ const rules = {
 const handleLogin = async () => {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
+  if (requireTotp.value && !form.totpCode) {
+    ElMessage.warning('请输入2FA验证码'); return
+  }
   loading.value = true
   try {
-    const res = await login(form)
+    const data = { username: form.username, password: form.password }
+    if (requireTotp.value) {
+      data.totpCode = Number(form.totpCode)
+    }
+    const res = await login(data)
     if (res.success && res.data) {
+      if (res.data.requireTotp) {
+        requireTotp.value = true
+        ElMessage.info('该账号已开启2FA，请输入验证码')
+        loading.value = false
+        return
+      }
       adminStore.setLoginInfo(res.data.token, res.data.admin, res.data.menus)
       ElMessage.success('登录成功')
       router.push('/dashboard')
     }
   } catch (e) {
+    if (e.response?.data?.message) {
+      ElMessage.error(e.response.data.message)
+    }
   } finally {
     loading.value = false
   }

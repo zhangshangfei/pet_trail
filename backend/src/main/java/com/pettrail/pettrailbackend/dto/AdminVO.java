@@ -17,6 +17,7 @@ public class AdminVO {
     private Long merchantId;
     private String merchantName;
     private Integer status;
+    private Boolean totpBound;
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;
     private List<String> permissions;
