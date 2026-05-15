@@ -38,7 +38,7 @@
           <!-- 分项评分 -->
           <view class="detail-section">
             <view class="section-header">
-              <image class="section-icon" src="/static/icons/chart.png" mode="aspectFit" />
+              <text class="section-emoji">📊</text>
               <text class="section-title">分项评分</text>
             </view>
             <view class="detail-list">
@@ -96,7 +96,7 @@
           <!-- 健康趋势 -->
           <view v-if="analysis.trends && Object.keys(analysis.trends).length" class="trends-section">
             <view class="section-header">
-              <image class="section-icon" src="/static/icons/trend.png" mode="aspectFit" />
+              <text class="section-emoji">📈</text>
               <text class="section-title">健康趋势</text>
             </view>
             <view class="trends-list">
@@ -110,7 +110,7 @@
           <!-- 健康预警 -->
           <view v-if="analysis.warnings && analysis.warnings.length" class="warnings-section">
             <view class="section-header">
-              <image class="section-icon" src="/static/icons/warning.png" mode="aspectFit" />
+              <text class="section-emoji">⚠️</text>
               <text class="section-title">健康预警</text>
             </view>
             <view class="warnings-list">
@@ -126,7 +126,7 @@
           <!-- 健康建议 -->
           <view v-if="analysis.suggestions && analysis.suggestions.length" class="suggestions-section">
             <view class="section-header">
-              <image class="section-icon" src="/static/icons/lightbulb.png" mode="aspectFit" />
+              <text class="section-emoji">💡</text>
               <text class="section-title">健康建议</text>
             </view>
             <view class="suggestions-list">
@@ -140,7 +140,7 @@
           <!-- 体重分析 -->
           <view v-if="analysis.detail && analysis.detail.weightAnalysis" class="weight-section">
             <view class="section-header">
-              <image class="section-icon" src="/static/icons/weight.png" mode="aspectFit" />
+              <text class="section-emoji">⚖️</text>
               <text class="section-title">体重分析</text>
             </view>
             <view class="weight-grid">
@@ -166,7 +166,7 @@
           <!-- 疫苗分析 -->
           <view v-if="analysis.detail && analysis.detail.vaccineAnalysis" class="vaccine-section">
             <view class="section-header">
-              <image class="section-icon" src="/static/icons/vaccine.png" mode="aspectFit" />
+              <text class="section-emoji">💉</text>
               <text class="section-title">疫苗分析</text>
             </view>
             <view class="vaccine-grid">
@@ -428,7 +428,7 @@ $red: #ff3b30;
   background: $card-bg; border-radius: 24rpx; padding: 28rpx; margin-bottom: 20rpx; box-shadow: 0 2rpx 16rpx rgba(0,0,0,0.04);
 }
 .section-header { display: flex; align-items: center; gap: 10rpx; margin-bottom: 20rpx; }
-.section-icon { width: 36rpx; height: 36rpx; }
+.section-emoji { font-size: 36rpx; line-height: 1; }
 .section-title { font-size: 30rpx; font-weight: 700; color: $text-primary; }
 
 /* ===== 分项评分 ===== */
