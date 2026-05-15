@@ -120,4 +120,11 @@
         LIMIT #{limit}
     </select>
 
+    <select id="selectDeletedPage" resultMap="BaseResultMap">
+        SELECT p.* FROM posts p
+        INNER JOIN users u ON p.user_id = u.id
+        WHERE p.deleted = 1
+        ORDER BY p.created_at DESC
+    </select>
+
 </mapper>

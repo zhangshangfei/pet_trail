@@ -314,12 +314,15 @@ export default {
       this.fetchUnreadCount()
     })
 
-    uni.$on('postDeleted', () => {
+    uni.$on('postDeleted', (data) => {
       try {
         ['all', 'collect', 'follow', 'recommend'].forEach(tab => {
           uni.removeStorageSync('home:posts:' + tab)
         })
       } catch (e) { /* ignore */ }
+      if (data && data.postId) {
+        this.postList = this.postList.filter(p => p.id !== data.postId)
+      }
       this.refreshFeed()
     })
   },

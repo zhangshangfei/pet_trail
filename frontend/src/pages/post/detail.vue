@@ -323,10 +323,32 @@ export default {
           }
           this.totalCommentCount = post.commentCount || 0
           this.loadComments()
+        } else if (res.code === 404) {
+          uni.showToast({ title: '该动态已被删除', icon: 'none' })
+          setTimeout(() => {
+            const pages = getCurrentPages()
+            if (pages.length > 1) {
+              uni.navigateBack()
+            } else {
+              uni.switchTab({ url: '/pages/home/index' })
+            }
+          }, 1500)
         }
       } catch (error) {
         console.error('加载动态详情失败:', error)
-        uni.showToast({ title: '加载失败', icon: 'none' })
+        if (error.statusCode === 404) {
+          uni.showToast({ title: '该动态已被删除', icon: 'none' })
+          setTimeout(() => {
+            const pages = getCurrentPages()
+            if (pages.length > 1) {
+              uni.navigateBack()
+            } else {
+              uni.switchTab({ url: '/pages/home/index' })
+            }
+          }, 1500)
+        } else {
+          uni.showToast({ title: '加载失败', icon: 'none' })
+        }
       } finally {
         this.loading = false
       }

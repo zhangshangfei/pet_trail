@@ -73,6 +73,7 @@ public class PostService {
         post.setLocation(location);
         post.setStatus(1);
         post.setAuditStatus(0);
+        post.setDeleted(0);
         post.setLikeCount(0);
         post.setCommentCount(0);
         post.setShareCount(0);
@@ -92,20 +93,22 @@ public class PostService {
      * 获取动态详情
      */
     public Post getPostDetail(Long postId) {
-        // 从缓存读取
         String cacheKey = "post:detail:" + postId;
         Object cached = redisTemplate.opsForValue().get(cacheKey);
         if (cached != null) {
-            return (Post) cached;
+            Post cachedPost = (Post) cached;
+            if (cachedPost.getDeleted() != null && cachedPost.getDeleted() == 1) {
+                redisTemplate.delete(cacheKey);
+                throw new NotFoundException("动态不存在");
+            }
+            return cachedPost;
         }
 
-        // 从数据库查询
         Post post = postMapper.selectById(postId);
         if (post == null) {
             throw new NotFoundException("动态不存在");
         }
 
-        // 写入缓存（30 分钟过期）
         redisTemplate.opsForValue().set(cacheKey, post, 30, TimeUnit.MINUTES);
         return post;
     }
@@ -348,8 +351,7 @@ public class PostService {
         if (!post.getUserId().equals(userId)) {
             throw new ForbiddenException("无权删除他人动态");
         }
-        post.setDeleted(1);
-        postMapper.updateById(post);
+        postMapper.deleteById(postId);
 
         String cacheKey = "post:detail:" + postId;
         redisTemplate.delete(cacheKey);
@@ -370,7 +372,6 @@ public class PostService {
     public Page<Post> adminListPosts(int page, int size, Long userId, Integer auditStatus) {
         Page<Post> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Post::getDeleted, 0);
         if (userId != null) wrapper.eq(Post::getUserId, userId);
         if (auditStatus != null) wrapper.eq(Post::getAuditStatus, auditStatus);
         wrapper.orderByDesc(Post::getCreatedAt);
@@ -380,7 +381,7 @@ public class PostService {
     }
 
     public Post adminGetPostDetail(Long id) {
-        Post post = postMapper.selectById(id);
+        Post post = postMapper.selectByIdIgnoreDeleted(id);
         if (post == null) throw new BusinessException(404, "动态不存在");
         if (post.getUserId() != null) {
             User user = userMapper.selectById(post.getUserId());
@@ -402,8 +403,7 @@ public class PostService {
     public void adminDeletePost(Long id) {
         Post post = postMapper.selectById(id);
         if (post == null) throw new BusinessException(404, "动态不存在");
-        post.setDeleted(1);
-        postMapper.updateById(post);
+        postMapper.deleteById(id);
 
         String cacheKey = "post:detail:" + id;
         redisTemplate.delete(cacheKey);
@@ -432,23 +432,19 @@ public class PostService {
 
     public Page<Post> adminListDeletedPosts(int page, int size) {
         Page<Post> pageParam = new Page<>(page, size);
-        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Post::getDeleted, 1);
-        wrapper.orderByDesc(Post::getCreatedAt);
-        Page<Post> result = postMapper.selectPage(pageParam, wrapper);
+        Page<Post> result = (Page<Post>) postMapper.selectDeletedPage(pageParam);
         fillPostUserNickname(result);
         return result;
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void adminRestorePost(Long id) {
-        Post post = postMapper.selectById(id);
+        Post post = postMapper.selectByIdIgnoreDeleted(id);
         if (post == null) throw new BusinessException(404, "动态不存在");
-        post.setDeleted(0);
-        if (post.getStatus() == null || post.getStatus() == 0) {
-            post.setStatus(1);
+        if (post.getDeleted() == null || post.getDeleted() != 1) {
+            throw new BusinessException(400, "动态未被删除，无需恢复");
         }
-        postMapper.updateById(post);
+        postMapper.restoreById(id);
 
         String cacheKey = "post:detail:" + id;
         redisTemplate.delete(cacheKey);
