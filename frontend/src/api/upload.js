@@ -112,8 +112,10 @@ async function doUploadBase64(filePath) {
     uploadPath = await ensureCompressed(filePath, 2048)
   }
   const fileSize = await getFileInfo(uploadPath)
-  if (fileSize > 2 * 1024 * 1024) {
-    throw new Error('文件过大，请选择更小的图片')
+  const isVideo = contentType.startsWith('video/')
+  const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024
+  if (fileSize > maxSize) {
+    throw new Error(isVideo ? '视频文件过大，请选择更小的视频' : '图片文件过大，请选择更小的图片')
   }
   const base64Data = await readFileAsBase64(uploadPath)
   const result = await request.post('/api/upload/base64', {

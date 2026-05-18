@@ -483,8 +483,16 @@ export default {
           })
 
           try {
-            const compressedPath = await petApi.compressImage(media.path, 80)
-            const uploadRes = await petApi.uploadFile(compressedPath)
+            let uploadPath = media.path
+            try {
+              const compressedPath = await petApi.compressImage(media.path, 80)
+              if (compressedPath && compressedPath !== media.path) {
+                uploadPath = compressedPath
+              }
+            } catch (compressErr) {
+              console.warn('图片压缩失败，使用原图上传:', compressErr)
+            }
+            const uploadRes = await petApi.uploadFile(uploadPath)
             if (uploadRes.success && uploadRes.data && uploadRes.data.url) {
               uploadedImageUrls.push(uploadRes.data.url)
             } else {
@@ -504,7 +512,7 @@ export default {
           const media = videoFiles[i]
           uploadedCount++
           uni.showLoading({
-            title: `上传视频 ${uploadedCount}/${totalFiles}...`,
+            title: `上传中 ${uploadedCount}/${totalFiles}...`,
             mask: true
           })
 
@@ -593,7 +601,7 @@ export default {
         count: remaining,
         mediaType: ['image', 'video'],
         sourceType: ['album', 'camera'],
-        sizeType: ['compressed'],
+        sizeType: ['original'],
         success: (res) => {
           res.tempFiles.forEach(file => {
             const item = {

@@ -42,6 +42,16 @@ public class PostController extends BaseController {
         Map<String, String> bubble = dto.getBubble();
         String location = dto.getLocation();
         List<String> tagNames = dto.getTags();
+        String challengeTag = dto.getChallengeTag();
+
+        if (challengeTag != null && !challengeTag.trim().isEmpty()) {
+            if (tagNames == null) {
+                tagNames = new java.util.ArrayList<>();
+            }
+            if (!tagNames.contains(challengeTag)) {
+                tagNames.add(challengeTag);
+            }
+        }
 
         Post post = postService.createPost(userId, petId, content, images, videos, stickers, bubble, location);
 

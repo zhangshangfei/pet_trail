@@ -15,4 +15,5 @@ public class PostCreateDTO {
     private Map<String, String> bubble;
     private String location;
     private List<String> tags;
+    private String challengeTag;
 }
