@@ -50,7 +50,7 @@
           class="user-card"
           @tap="goUserDetail(user)"
         >
-          <image class="user-avatar" :src="getUserAvatar(user.id, user.avatar)" mode="aspectFill" />
+          <avatar-view :src="user.avatar" :name="user.nickname || '萌宠主人'" :id="user.id" :size="96" />
           <view class="user-info">
             <view class="user-name-row">
               <text class="user-nickname">{{ user.nickname || '萌宠主人' }}</text>
@@ -86,9 +86,11 @@
 
 <script>
 import { getFolloweeList, getFollowerList, toggleFollow } from '@/api/post'
-import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
+import { checkLogin } from '@/utils/index'
+import AvatarView from '@/components/AvatarView.vue'
 
 export default {
+  components: { AvatarView },
   data() {
     return {
       userId: null,
@@ -128,7 +130,6 @@ export default {
     })
   },
   methods: {
-    getUserAvatar,
     goBack() {
       uni.navigateBack({ delta: 1 })
     },

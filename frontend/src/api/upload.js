@@ -35,6 +35,7 @@ function guessContentType(fileName) {
   const map = {
     jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
     gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp',
+    heic: 'image/heic', heif: 'image/heif',
     mp4: 'video/mp4', mov: 'video/quicktime', avi: 'video/x-msvideo'
   }
   return map[ext] || 'application/octet-stream'
@@ -51,6 +52,9 @@ function getFileInfo(filePath) {
 }
 
 async function ensureCompressed(filePath, maxSizeKB = 2048) {
+  const fileName = getFileName(filePath)
+  const ext = (fileName.split('.').pop() || '').toLowerCase()
+  if (['heic', 'heif'].includes(ext)) return filePath
   const size = await getFileInfo(filePath)
   if (size <= maxSizeKB * 1024) return filePath
   let quality = 50

@@ -597,22 +597,72 @@ export default {
         return
       }
 
-      uni.chooseMedia({
-        count: remaining,
-        mediaType: ['image', 'video'],
-        sourceType: ['album', 'camera'],
+      uni.showActionSheet({
+        itemList: ['拍照', '从相册选择图片', '选择视频'],
+        success: (res) => {
+          if (res.tapIndex === 0) {
+            this.chooseFromCamera()
+          } else if (res.tapIndex === 1) {
+            this.chooseImage()
+          } else if (res.tapIndex === 2) {
+            this.chooseVideo()
+          }
+        }
+      })
+    },
+
+    chooseFromCamera() {
+      uni.chooseImage({
+        count: 1,
+        sourceType: ['camera'],
         sizeType: ['original'],
         success: (res) => {
           res.tempFiles.forEach(file => {
-            const item = {
-              type: file.fileType,
-              path: file.tempFilePath
-            }
-            if (file.fileType === 'video' && file.thumbTempFilePath) {
-              item.thumb = file.thumbTempFilePath
-            }
-            this.mediaList.push(item)
+            if (this.mediaList.length >= 9) return
+            this.mediaList.push({
+              type: 'image',
+              path: file.path
+            })
           })
+        }
+      })
+    },
+
+    chooseImage() {
+      const remaining = 9 - this.mediaList.length
+      if (remaining <= 0) return
+      uni.chooseImage({
+        count: remaining,
+        sourceType: ['album'],
+        sizeType: ['original'],
+        success: (res) => {
+          res.tempFiles.forEach(file => {
+            if (this.mediaList.length >= 9) return
+            this.mediaList.push({
+              type: 'image',
+              path: file.path
+            })
+          })
+        }
+      })
+    },
+
+    chooseVideo() {
+      const remaining = 9 - this.mediaList.length
+      if (remaining <= 0) return
+      uni.chooseVideo({
+        sourceType: ['album', 'camera'],
+        maxDuration: 60,
+        success: (res) => {
+          if (this.mediaList.length >= 9) return
+          const item = {
+            type: 'video',
+            path: res.tempFilePath
+          }
+          if (res.thumbTempFilePath) {
+            item.thumb = res.thumbTempFilePath
+          }
+          this.mediaList.push(item)
         }
       })
     },
