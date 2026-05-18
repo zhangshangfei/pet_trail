@@ -54,7 +54,17 @@ function getFileInfo(filePath) {
 async function ensureCompressed(filePath, maxSizeKB = 2048) {
   const fileName = getFileName(filePath)
   const ext = (fileName.split('.').pop() || '').toLowerCase()
-  if (['heic', 'heif'].includes(ext)) return filePath
+  if (['heic', 'heif'].includes(ext)) {
+    try {
+      const converted = await convertImageViaCanvas(filePath)
+      if (converted && converted !== filePath) return converted
+    } catch (e) { /* ignore */ }
+    try {
+      const compressed = await compressImage(filePath, 80)
+      if (compressed && compressed !== filePath) return compressed
+    } catch (e) { /* ignore */ }
+    return filePath
+  }
   const size = await getFileInfo(filePath)
   if (size <= maxSizeKB * 1024) return filePath
   let quality = 50
@@ -67,7 +77,24 @@ async function ensureCompressed(filePath, maxSizeKB = 2048) {
   }
 }
 
-function doUploadHttp(filePath) {
+async function doUploadHttp(filePath) {
+  let uploadFilePath = filePath
+  const fileName = getFileName(filePath)
+  const ext = (fileName.split('.').pop() || '').toLowerCase()
+  if (!['mp4', 'mov', 'avi'].includes(ext)) {
+    try {
+      const compressed = await compressImage(filePath, 80)
+      if (compressed && compressed !== filePath) {
+        uploadFilePath = compressed
+      } else {
+        const converted = await convertImageViaCanvas(filePath)
+        if (converted && converted !== filePath) {
+          uploadFilePath = converted
+        }
+      }
+    } catch (e) { /* ignore, use original */ }
+  }
+
   return new Promise((resolve, reject) => {
     const uploadUrl = resolveUploadUrl()
     const token = uni.getStorageSync('token') || ''
@@ -78,9 +105,10 @@ function doUploadHttp(filePath) {
 
     uni.uploadFile({
       url: uploadUrl,
-      filePath,
+      filePath: uploadFilePath,
       name: 'file',
       header,
+      timeout: 120000,
       success: (res) => {
         if (res.statusCode < 200 || res.statusCode >= 300) {
           reject(new Error(`上传失败：HTTP ${res.statusCode}`))
@@ -117,16 +145,19 @@ async function doUploadBase64(filePath) {
   }
   const fileSize = await getFileInfo(uploadPath)
   const isVideo = contentType.startsWith('video/')
-  const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024
+  if (isVideo) {
+    throw new Error('视频文件过大，请选择更小的视频（建议30秒以内）')
+  }
+  const maxSize = 10 * 1024 * 1024
   if (fileSize > maxSize) {
-    throw new Error(isVideo ? '视频文件过大，请选择更小的视频' : '图片文件过大，请选择更小的图片')
+    throw new Error('图片文件过大，请选择更小的图片')
   }
   const base64Data = await readFileAsBase64(uploadPath)
   const result = await request.post('/api/upload/base64', {
     fileBase64: base64Data,
     fileName,
     contentType
-  })
+  }, {}, 60000)
   return result
 }
 
@@ -135,15 +166,12 @@ async function doUpload(filePath) {
     return await doUploadHttp(filePath)
   } catch (httpError) {
     console.warn('HTTP上传失败，尝试base64方式:', httpError.message)
-    if (BASE_URL === 'cloud') {
-      try {
-        return await doUploadBase64(filePath)
-      } catch (base64Error) {
-        console.error('base64上传也失败:', base64Error.message)
-        throw base64Error
-      }
+    try {
+      return await doUploadBase64(filePath)
+    } catch (base64Error) {
+      console.error('base64上传也失败:', base64Error.message)
+      throw base64Error
     }
-    throw httpError
   }
 }
 
@@ -166,6 +194,36 @@ export const compressImage = (filePath, quality = 80) => {
       fail: () => {
         resolve(filePath)
       }
+    })
+  })
+}
+
+function convertImageViaCanvas(filePath) {
+  return new Promise((resolve) => {
+    uni.getImageInfo({
+      src: filePath,
+      success: (info) => {
+        const canvas = uni.createOffscreenCanvas({
+          type: '2d',
+          width: info.width,
+          height: info.height
+        })
+        const ctx = canvas.getContext('2d')
+        const img = canvas.createImage()
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, info.width, info.height)
+          uni.canvasToTempFilePath({
+            canvas,
+            fileType: 'jpg',
+            quality: 0.8,
+            success: (res) => resolve(res.tempFilePath),
+            fail: () => resolve(filePath)
+          })
+        }
+        img.onerror = () => resolve(filePath)
+        img.src = filePath
+      },
+      fail: () => resolve(filePath)
     })
   })
 }

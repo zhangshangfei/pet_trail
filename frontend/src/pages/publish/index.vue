@@ -483,16 +483,7 @@ export default {
           })
 
           try {
-            let uploadPath = media.path
-            try {
-              const compressedPath = await petApi.compressImage(media.path, 80)
-              if (compressedPath && compressedPath !== media.path) {
-                uploadPath = compressedPath
-              }
-            } catch (compressErr) {
-              console.warn('图片压缩失败，使用原图上传:', compressErr)
-            }
-            const uploadRes = await petApi.uploadFile(uploadPath)
+            const uploadRes = await petApi.uploadFile(media.path)
             if (uploadRes.success && uploadRes.data && uploadRes.data.url) {
               uploadedImageUrls.push(uploadRes.data.url)
             } else {
@@ -615,13 +606,13 @@ export default {
       uni.chooseImage({
         count: 1,
         sourceType: ['camera'],
-        sizeType: ['original'],
+        sizeType: ['compressed'],
         success: (res) => {
-          res.tempFiles.forEach(file => {
+          res.tempFilePaths.forEach(path => {
             if (this.mediaList.length >= 9) return
             this.mediaList.push({
               type: 'image',
-              path: file.path
+              path
             })
           })
         }
@@ -634,13 +625,13 @@ export default {
       uni.chooseImage({
         count: remaining,
         sourceType: ['album'],
-        sizeType: ['original'],
+        sizeType: ['compressed'],
         success: (res) => {
-          res.tempFiles.forEach(file => {
+          res.tempFilePaths.forEach(path => {
             if (this.mediaList.length >= 9) return
             this.mediaList.push({
               type: 'image',
-              path: file.path
+              path
             })
           })
         }

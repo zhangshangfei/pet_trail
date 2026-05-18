@@ -2,6 +2,8 @@
  * 通用工具函数
  */
 
+import { loginByCode } from '@/api/auth'
+
 /**
  * 格式化日期
  * @param {string|Date} date - 日期字符串或 Date 对象
@@ -278,27 +280,29 @@ const reportAuthorization = async (templateType, count) => {
 export const wechatLogin = () => {
   return new Promise((resolve) => {
     uni.showLoading({ title: '登录中...', mask: true })
-    wx.login({
+    uni.login({
+      provider: 'weixin',
       success: async (res) => {
         if (res.code) {
           try {
-            const loginRes = await authApi.loginByCode(res.code)
+            const loginRes = await loginByCode(res.code)
             uni.hideLoading()
-            if (loginRes.success) {
+            if (loginRes && loginRes.success && loginRes.data) {
               uni.setStorageSync('token', loginRes.data.token)
               uni.setStorageSync('tokenExpireTime', Date.now() + 7 * 24 * 60 * 60 * 1000)
-              uni.setStorageSync('userInfo', loginRes.data.user)
+              uni.setStorageSync('userInfo', loginRes.data.user || {})
               uni.showToast({ title: '登录成功', icon: 'success' })
               uni.$emit('loginSuccess')
               loadWxSubscribeTemplates()
               resolve(true)
             } else {
-              uni.showToast({ title: loginRes.message || '登录失败', icon: 'none' })
+              uni.showToast({ title: (loginRes && loginRes.message) || '登录失败', icon: 'none' })
               resolve(false)
             }
           } catch (err) {
             uni.hideLoading()
-            uni.showToast({ title: '网络错误', icon: 'none' })
+            console.error('登录请求失败:', err)
+            uni.showToast({ title: '登录失败，请重试', icon: 'none' })
             resolve(false)
           }
         } else {

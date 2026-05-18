@@ -53,28 +53,30 @@ const showLoginModal = () => {
 const silentLogin = () => {
   return new Promise((resolve, reject) => {
     uni.showLoading({ title: '登录中...', mask: true })
-    wx.login({
+    uni.login({
+      provider: 'weixin',
       success: async (res) => {
         if (res.code) {
           try {
             const { default: authApi } = await import('@/api/auth')
             const loginRes = await authApi.loginByCode(res.code)
             uni.hideLoading()
-            if (loginRes.success) {
+            if (loginRes && loginRes.success && loginRes.data) {
               uni.setStorageSync('token', loginRes.data.token)
               uni.setStorageSync('tokenExpireTime', Date.now() + 7 * 24 * 60 * 60 * 1000)
-              uni.setStorageSync('userInfo', loginRes.data.user)
+              uni.setStorageSync('userInfo', loginRes.data.user || {})
               uni.showToast({ title: '登录成功', icon: 'success' })
               uni.$emit('loginSuccess')
               resolve(true)
             } else {
-              uni.showToast({ title: loginRes.message || '登录失败', icon: 'none' })
+              uni.showToast({ title: (loginRes && loginRes.message) || '登录失败', icon: 'none' })
               resolve(false)
             }
           } catch (err) {
             uni.hideLoading()
-            uni.showToast({ title: '登录失败', icon: 'none' })
-            reject(err)
+            console.error('静默登录失败:', err)
+            uni.showToast({ title: '登录失败，请重试', icon: 'none' })
+            resolve(false)
           }
         } else {
           uni.hideLoading()
@@ -159,13 +161,15 @@ const cloudRequest = (options = {}) => {
           if (data.success) {
             resolve(data)
           } else {
-            // 业务失败
-            const message = data.message || '请求失败'
-            uni.showToast({
-              title: message,
-              icon: 'none',
-              duration: 2000
-            })
+            const isLoginReq = options.url && options.url.includes('/users/login')
+            if (!isLoginReq) {
+              const message = data.message || '请求失败'
+              uni.showToast({
+                title: message,
+                icon: 'none',
+                duration: 2000
+              })
+            }
             reject(data)
           }
         } else if (res.statusCode === 401) {

@@ -507,17 +507,18 @@ export default {
       const self = this;
       uni.showLoading({ title: '登录中...', mask: true });
 
-      wx.login({
+      uni.login({
+        provider: 'weixin',
         success: async (res) => {
           if (res.code) {
             try {
               const loginRes = await authApi.loginByCode(res.code);
               uni.hideLoading();
 
-              if (loginRes.success) {
+              if (loginRes && loginRes.success && loginRes.data) {
                 const responseData = loginRes.data;
                 const token = responseData.token;
-                const userInfo = responseData.user;
+                const userInfo = responseData.user || {};
 
                 uni.setStorageSync('token', token);
                 uni.setStorageSync('tokenExpireTime', Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -536,11 +537,12 @@ export default {
                   self.loadPosts();
                 }, 1500);
               } else {
-                uni.showToast({ title: loginRes.message || '登录失败', icon: 'none', duration: 2000 });
+                uni.showToast({ title: (loginRes && loginRes.message) || '登录失败', icon: 'none', duration: 2000 });
               }
             } catch (err) {
               uni.hideLoading();
-              uni.showToast({ title: '网络错误，请重试', icon: 'none', duration: 2000 });
+              console.error('登录失败:', err);
+              uni.showToast({ title: '登录失败，请重试', icon: 'none', duration: 2000 });
             }
           } else {
             uni.hideLoading();
