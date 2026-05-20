@@ -80,7 +80,7 @@
         >
           <!-- 用户信息头部 -->
           <view class="post-header">
-            <image class="post-avatar" :src="post.avatar" mode="aspectFill" @tap="goUserProfile(post)" />
+            <AvatarView :src="post.avatar" :name="post.userName" :id="post.userId" :size="64" @tap="goUserProfile(post)" />
             <view class="post-info" @tap="goUserProfile(post)">
               <text class="post-name">{{ post.userName }}</text>
               <view class="post-pet-info">
@@ -241,6 +241,7 @@
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
 import VideoCard from '@/components/VideoCard.vue'
+import AvatarView from '@/components/AvatarView.vue'
 import * as postApi from '@/api/post'
 import * as notificationApi from '@/api/notification'
 import * as behaviorApi from '@/api/behavior'
@@ -251,7 +252,8 @@ import * as authApi from '@/api/auth'
 export default {
   components: {
     UserTopBar,
-    VideoCard
+    VideoCard,
+    AvatarView
   },
   data() {
     return {

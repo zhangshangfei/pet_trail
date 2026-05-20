@@ -128,7 +128,7 @@ export default {
       return map[type] || '其他'
     },
     getStatusLabel(status) {
-      const map = { 0: '待处理', 1: '处理中', 2: '已回复' }
+      const map = { 0: '待处理', 1: '处理中', 2: '已修复' }
       return map[status] || '待处理'
     },
     formatTime(dateStr) {

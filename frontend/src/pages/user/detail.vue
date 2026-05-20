@@ -6,15 +6,12 @@
         <view class="back-btn" @tap="goBack">
           <view class="back-arrow"></view>
         </view>
-        <view class="header-placeholder" v-if="isSelf"></view>
-        <view v-else class="header-report" @tap="onReportUser">
-          <text class="header-report-text">举报</text>
-        </view>
+        <view class="capsule-placeholder"></view>
       </view>
 
       <view class="user-info-section">
         <view class="avatar-wrap" @tap="isSelf && goEditProfile()">
-          <image class="user-avatar" :src="getUserAvatar(userId, userInfo.avatar)" mode="aspectFill" />
+          <AvatarView :src="getUserAvatar(userId, userInfo.avatar)" :name="userInfo.nickname || '萌宠主人'" :id="userId" :size="128" />
           <view v-if="isSelf" class="avatar-edit-badge">
             <text class="avatar-edit-icon">✎</text>
           </view>
@@ -49,6 +46,10 @@
           >
             {{ userInfo.isFollowing ? '已关注' : '+ 关注' }}
           </button>
+          <view class="report-btn" @tap="onReportUser">
+            <text class="report-icon">&#9888;</text>
+            <text class="report-text">举报</text>
+          </view>
         </view>
       </view>
     </view>
@@ -82,7 +83,7 @@
           class="post-card"
         >
           <view class="post-header">
-            <image class="post-avatar" :src="post.avatar" mode="aspectFill" />
+            <AvatarView :src="post.avatar" :name="post.userName" :id="post.userId" :size="64" />
             <view class="post-info">
               <text class="post-name">{{ post.userName }}</text>
               <view class="post-pet-info" v-if="post.petName">
@@ -192,11 +193,12 @@ import * as reportApi from '@/api/report'
 import { getUserById } from '@/api/auth'
 import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
 import VideoCard from '@/components/VideoCard.vue'
+import AvatarView from '@/components/AvatarView.vue'
 
 const defaultAvatar = DEFAULT_USER_AVATAR
 
 export default {
-  components: { VideoCard },
+  components: { VideoCard, AvatarView },
   data() {
     return {
       userId: null,
@@ -546,32 +548,9 @@ export default {
   transform: rotate(45deg) translate(2rpx, -2rpx);
 }
 
-.header-placeholder {
-  width: 64rpx;
-}
-
-.header-report {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 32rpx;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s, transform 0.15s;
-}
-
-.header-report:active {
-  background: rgba(255, 255, 255, 0.35);
-  transform: scale(0.92);
-}
-
-.header-report-text {
-  font-size: 22rpx;
-  color: #fff;
-  font-weight: 600;
+.capsule-placeholder {
+  width: 200rpx;
+  flex-shrink: 0;
 }
 
 .avatar-wrap {
@@ -671,12 +650,14 @@ export default {
   margin-top: 24rpx;
   width: 100%;
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 20rpx;
   padding: 0 80rpx;
 }
 
 .follow-btn {
-  width: 100%;
+  flex: 1;
   height: 76rpx;
   border-radius: 999rpx;
   font-size: 28rpx;
@@ -692,6 +673,32 @@ export default {
     background: #f3f4f6;
     color: #6b7280;
   }
+}
+
+.report-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.report-btn:active {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0.92);
+}
+.report-icon {
+  font-size: 28rpx;
+}
+.report-text {
+  font-size: 20rpx;
+  color: #fff;
+  font-weight: 500;
 }
 
 .tab-bar {

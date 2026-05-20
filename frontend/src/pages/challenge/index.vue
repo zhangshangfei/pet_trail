@@ -6,14 +6,24 @@
           <text class="back-icon">&#8249;</text>
         </view>
         <text class="header-title">挑战赛</text>
-        <view class="header-right" @tap="goMyChallenges">
-          <text class="my-btn">我的挑战</text>
-        </view>
+        <view class="capsule-placeholder"></view>
       </view>
     </view>
 
     <scroll-view scroll-y class="challenge-scroll" :style="{ top: headerHeight + 'px' }" @scrolltolower="loadMore">
       <view class="challenge-content">
+        <!-- 我的挑战入口 -->
+        <view class="my-challenge-entry" @tap="goMyChallenges">
+          <view class="entry-left">
+            <view class="entry-icon">&#127942;</view>
+            <view class="entry-text">
+              <text class="entry-title">我的挑战</text>
+              <text class="entry-desc">查看已参与和已完成的挑战</text>
+            </view>
+          </view>
+          <text class="entry-arrow">&#8250;</text>
+        </view>
+
         <!-- 空状态 -->
         <view class="empty-tip" v-if="!loading && challenges.length === 0">
           <view class="empty-icon">&#127942;</view>
@@ -88,10 +98,17 @@ export default {
     try {
       const sys = uni.getSystemInfoSync()
       this.statusBarHeight = (sys && sys.statusBarHeight) || 20
+      // 获取胶囊按钮位置，计算右侧可用空间
+      const menuBtn = uni.getMenuButtonBoundingClientRect()
+      if (menuBtn) {
+        this.headerHeight = menuBtn.bottom + 8
+      } else {
+        this.headerHeight = this.statusBarHeight + 54
+      }
     } catch (e) {
       this.statusBarHeight = 20
+      this.headerHeight = 74
     }
-    this.headerHeight = this.statusBarHeight + 54
   },
   onShow() {
     this.loadChallenges()
@@ -192,14 +209,58 @@ export default {
   color: #ffffff;
 }
 
-.header-right {
-  padding: 8rpx 20rpx;
+.capsule-placeholder {
+  width: 200rpx;
+  flex-shrink: 0;
 }
 
-.my-btn {
-  font-size: 26rpx;
-  color: #ffffff;
-  font-weight: 500;
+/* 我的挑战入口 */
+.my-challenge-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 28rpx 32rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+.my-challenge-entry:active {
+  background: #f9fafb;
+}
+.entry-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+.entry-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 36rpx;
+  background: linear-gradient(135deg, #ff7a3d, #ff5a3d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+}
+.entry-text {
+  display: flex;
+  flex-direction: column;
+}
+.entry-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+}
+.entry-desc {
+  font-size: 24rpx;
+  color: #9ca3af;
+  margin-top: 4rpx;
+}
+.entry-arrow {
+  font-size: 36rpx;
+  color: #d1d5db;
 }
 
 /* 滚动区域 */
