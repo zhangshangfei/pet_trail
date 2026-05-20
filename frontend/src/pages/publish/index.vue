@@ -603,16 +603,17 @@ export default {
     },
 
     chooseFromCamera() {
-      uni.chooseImage({
+      uni.chooseMedia({
         count: 1,
+        mediaType: ['image'],
         sourceType: ['camera'],
         sizeType: ['compressed'],
         success: (res) => {
-          res.tempFilePaths.forEach(path => {
+          res.tempFiles.forEach(file => {
             if (this.mediaList.length >= 9) return
             this.mediaList.push({
               type: 'image',
-              path
+              path: file.tempFilePath
             })
           })
         }
@@ -622,16 +623,17 @@ export default {
     chooseImage() {
       const remaining = 9 - this.mediaList.length
       if (remaining <= 0) return
-      uni.chooseImage({
+      uni.chooseMedia({
         count: remaining,
+        mediaType: ['image'],
         sourceType: ['album'],
         sizeType: ['compressed'],
         success: (res) => {
-          res.tempFilePaths.forEach(path => {
+          res.tempFiles.forEach(file => {
             if (this.mediaList.length >= 9) return
             this.mediaList.push({
               type: 'image',
-              path
+              path: file.tempFilePath
             })
           })
         }
@@ -643,6 +645,7 @@ export default {
       if (remaining <= 0) return
       uni.chooseVideo({
         sourceType: ['album', 'camera'],
+        compressed: false,
         maxDuration: 60,
         success: (res) => {
           if (this.mediaList.length >= 9) return

@@ -51,47 +51,73 @@ function getFileInfo(filePath) {
   })
 }
 
-async function ensureCompressed(filePath, maxSizeKB = 2048) {
-  const fileName = getFileName(filePath)
-  const ext = (fileName.split('.').pop() || '').toLowerCase()
-  if (['heic', 'heif'].includes(ext)) {
-    try {
-      const converted = await convertImageViaCanvas(filePath)
-      if (converted && converted !== filePath) return converted
-    } catch (e) { /* ignore */ }
-    try {
-      const compressed = await compressImage(filePath, 80)
-      if (compressed && compressed !== filePath) return compressed
-    } catch (e) { /* ignore */ }
-    return filePath
-  }
-  const size = await getFileInfo(filePath)
-  if (size <= maxSizeKB * 1024) return filePath
-  let quality = 50
-  if (size > maxSizeKB * 1024 * 2) quality = 30
-  try {
-    const compressed = await compressImage(filePath, quality)
-    return compressed
-  } catch (e) {
-    return filePath
-  }
+export const compressImage = (filePath, quality = 80) => {
+  return new Promise((resolve) => {
+    uni.compressImage({
+      src: filePath,
+      quality,
+      success: (res) => {
+        resolve(res.tempFilePath)
+      },
+      fail: () => {
+        resolve(filePath)
+      }
+    })
+  })
+}
+
+/**
+ * 根据文件大小动态计算压缩质量
+ * 目标：压缩后文件不超过 targetSizeKB
+ * nginx 默认 client_max_body_size 通常为 1MB
+ * uni.uploadFile 走 multipart，额外开销小
+ * base64 编码增加约 33%，需更激进压缩
+ */
+function calcQuality(fileSize, targetSizeKB) {
+  const targetBytes = targetSizeKB * 1024
+  if (fileSize <= targetBytes) return 80
+  const ratio = targetBytes / fileSize
+  // 质量与文件大小大致成正比，但需要留余量
+  let quality = Math.floor(ratio * 90)
+  return Math.max(10, Math.min(80, quality))
+}
+
+/**
+ * 多轮压缩确保文件不超过目标大小
+ */
+async function compressToSize(filePath, targetSizeKB) {
+  let currentPath = filePath
+  let currentSize = await getFileInfo(currentPath)
+
+  if (currentSize <= targetSizeKB * 1024) return currentPath
+
+  // 第一轮：根据大小计算质量
+  let quality = calcQuality(currentSize, targetSizeKB)
+  currentPath = await compressImage(currentPath, quality)
+  currentSize = await getFileInfo(currentPath)
+
+  if (currentSize <= targetSizeKB * 1024) return currentPath
+
+  // 第二轮：更激进压缩
+  quality = Math.max(10, Math.floor(quality * 0.5))
+  currentPath = await compressImage(currentPath, quality)
+  currentSize = await getFileInfo(currentPath)
+
+  if (currentSize <= targetSizeKB * 1024) return currentPath
+
+  // 第三轮：最低质量
+  currentPath = await compressImage(currentPath, 10)
+  return currentPath
 }
 
 async function doUploadHttp(filePath) {
   let uploadFilePath = filePath
   const fileName = getFileName(filePath)
   const ext = (fileName.split('.').pop() || '').toLowerCase()
+  // 非视频文件先压缩（确保格式正确且体积合理）
   if (!['mp4', 'mov', 'avi'].includes(ext)) {
     try {
-      const compressed = await compressImage(filePath, 80)
-      if (compressed && compressed !== filePath) {
-        uploadFilePath = compressed
-      } else {
-        const converted = await convertImageViaCanvas(filePath)
-        if (converted && converted !== filePath) {
-          uploadFilePath = converted
-        }
-      }
+      uploadFilePath = await compressToSize(filePath, 5120)
     } catch (e) { /* ignore, use original */ }
   }
 
@@ -108,8 +134,12 @@ async function doUploadHttp(filePath) {
       filePath: uploadFilePath,
       name: 'file',
       header,
-      timeout: 120000,
+      timeout: 180000,
       success: (res) => {
+        if (res.statusCode === 413) {
+          reject(new Error('图片过大，请选择更小的图片'))
+          return
+        }
         if (res.statusCode < 200 || res.statusCode >= 300) {
           reject(new Error(`上传失败：HTTP ${res.statusCode}`))
           return
@@ -139,17 +169,14 @@ async function doUploadHttp(filePath) {
 async function doUploadBase64(filePath) {
   const fileName = getFileName(filePath)
   const contentType = guessContentType(fileName)
-  let uploadPath = filePath
-  if (contentType.startsWith('image/')) {
-    uploadPath = await ensureCompressed(filePath, 2048)
-  }
-  const fileSize = await getFileInfo(uploadPath)
   const isVideo = contentType.startsWith('video/')
   if (isVideo) {
-    throw new Error('视频文件过大，请选择更小的视频（建议30秒以内）')
+    throw new Error('视频文件过大，请选择更短的视频（建议30秒以内）')
   }
-  const maxSize = 10 * 1024 * 1024
-  if (fileSize > maxSize) {
+  // base64 编码增加约 33%，目标 3MB 原图 → 编码后约 4MB
+  const uploadPath = await compressToSize(filePath, 3072)
+  const fileSize = await getFileInfo(uploadPath)
+  if (fileSize > 10 * 1024 * 1024) {
     throw new Error('图片文件过大，请选择更小的图片')
   }
   const base64Data = await readFileAsBase64(uploadPath)
@@ -165,6 +192,10 @@ async function doUpload(filePath) {
   try {
     return await doUploadHttp(filePath)
   } catch (httpError) {
+    // 413 不再重试 base64（同样会 413）
+    if (httpError.message && httpError.message.includes('图片过大')) {
+      throw httpError
+    }
     console.warn('HTTP上传失败，尝试base64方式:', httpError.message)
     try {
       return await doUploadBase64(filePath)
@@ -181,49 +212,4 @@ export const uploadImage = (filePath) => {
 
 export const uploadFile = (filePath) => {
   return doUpload(filePath)
-}
-
-export const compressImage = (filePath, quality = 80) => {
-  return new Promise((resolve) => {
-    uni.compressImage({
-      src: filePath,
-      quality,
-      success: (res) => {
-        resolve(res.tempFilePath)
-      },
-      fail: () => {
-        resolve(filePath)
-      }
-    })
-  })
-}
-
-function convertImageViaCanvas(filePath) {
-  return new Promise((resolve) => {
-    uni.getImageInfo({
-      src: filePath,
-      success: (info) => {
-        const canvas = uni.createOffscreenCanvas({
-          type: '2d',
-          width: info.width,
-          height: info.height
-        })
-        const ctx = canvas.getContext('2d')
-        const img = canvas.createImage()
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0, info.width, info.height)
-          uni.canvasToTempFilePath({
-            canvas,
-            fileType: 'jpg',
-            quality: 0.8,
-            success: (res) => resolve(res.tempFilePath),
-            fail: () => resolve(filePath)
-          })
-        }
-        img.onerror = () => resolve(filePath)
-        img.src = filePath
-      },
-      fail: () => resolve(filePath)
-    })
-  })
 }
