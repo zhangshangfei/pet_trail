@@ -39,7 +39,7 @@ public class AdminFeedbackController extends BaseAdminController {
     @com.pettrail.pettrailbackend.annotation.OperationLog(module = "feedback", action = "reply", detail = "回复反馈")
     @Operation(summary = "回复反馈")
     public Result<Void> reply(@PathVariable Long id, @RequestBody FeedbackReplyDTO dto) {
-        feedbackService.adminReplyFeedback(id, dto.getReply());
+        feedbackService.adminReplyFeedback(id, dto.getReply(), dto.getStatus());
         return Result.success(null);
     }
 

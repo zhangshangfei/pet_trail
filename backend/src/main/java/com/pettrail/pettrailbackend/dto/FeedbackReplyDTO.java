@@ -5,4 +5,5 @@ import lombok.Data;
 @Data
 public class FeedbackReplyDTO {
     private String reply;
+    private Integer status;
 }

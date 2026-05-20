@@ -102,7 +102,7 @@ public class FeedbackService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void adminReplyFeedback(Long id, String replyContent) {
+    public void adminReplyFeedback(Long id, String replyContent, Integer targetStatus) {
         Feedback feedback = feedbackMapper.selectById(id);
         if (feedback == null) {
             throw new BusinessException(404, "反馈不存在");
@@ -111,7 +111,12 @@ public class FeedbackService {
             throw new BusinessException(400, "回复内容不能为空");
         }
         feedback.setReply(replyContent.trim());
-        feedback.setStatus(2);
+        // 状态：1-处理中 2-已回复，默认处理中
+        if (targetStatus != null && (targetStatus == 1 || targetStatus == 2)) {
+            feedback.setStatus(targetStatus);
+        } else {
+            feedback.setStatus(1);
+        }
         feedback.setUpdatedAt(LocalDateTime.now());
         feedbackMapper.updateById(feedback);
     }
@@ -124,6 +129,9 @@ public class FeedbackService {
         }
         if (newStatus == null) {
             throw new BusinessException(400, "状态不能为空");
+        }
+        if (newStatus < 0 || newStatus > 2) {
+            throw new BusinessException(400, "无效的状态值，允许值：0-待处理 1-处理中 2-已回复");
         }
         feedback.setStatus(newStatus);
         if (reply != null && !reply.trim().isEmpty()) {

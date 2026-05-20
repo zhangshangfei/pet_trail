@@ -29,7 +29,7 @@
             <el-select v-model="statusFilter" placeholder="状态筛选" clearable style="width: 120px" @change="loadData">
               <el-option label="待处理" :value="0" />
               <el-option label="处理中" :value="1" />
-              <el-option label="已发布" :value="2" />
+              <el-option label="已回复" :value="2" />
             </el-select>
             <el-select v-model="typeFilter" placeholder="类型筛选" clearable style="width: 120px" @change="loadData">
               <el-option label="Bug反馈" value="bug" />
@@ -92,7 +92,8 @@
             <div class="action-btns">
               <el-button size="small" text type="primary" :icon="View" @click="showDetail(row)">详情</el-button>
               <el-button size="small" text type="warning" :icon="ChatDotRound" @click="openReplyDialog(row)">回复</el-button>
-              <el-button size="small" text type="success" :icon="CircleCheck" @click="openStatusDialog(row, 2)" :disabled="row.status === 2">已发布</el-button>
+              <el-button size="small" text type="primary" @click="openStatusDialog(row, 1)" :disabled="row.status === 1 || row.status === 2">处理中</el-button>
+              <el-button size="small" text type="success" :icon="CircleCheck" @click="openStatusDialog(row, 2)" :disabled="row.status === 2">已回复</el-button>
               <el-button size="small" text type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
             </div>
           </template>
@@ -187,7 +188,7 @@
       <template #footer>
         <el-button @click="detailDialogVisible = false">关闭</el-button>
         <el-button type="warning" :icon="ChatDotRound" @click="openReplyDialog(detail); detailDialogVisible = false;">回复</el-button>
-        <el-button type="success" :icon="CircleCheck" @click="openStatusDialog(detail, 2); detailDialogVisible = false;" :disabled="detail.status === 2">标记已发布</el-button>
+        <el-button type="success" :icon="CircleCheck" @click="openStatusDialog(detail, 2); detailDialogVisible = false;" :disabled="detail.status === 2">标记已回复</el-button>
       </template>
     </el-dialog>
 
@@ -222,10 +223,16 @@
         <el-form-item label="回复内容" required>
           <el-input v-model="replyForm.reply" type="textarea" :rows="4" placeholder="请输入回复内容" />
         </el-form-item>
+        <el-form-item label="回复状态" required>
+          <el-radio-group v-model="replyForm.status">
+            <el-radio :value="1">处理中</el-radio>
+            <el-radio :value="2">已回复</el-radio>
+          </el-radio-group>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="replyDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitReply" :loading="submitting">回复并标记处理中</el-button>
+        <el-button type="primary" @click="submitReply" :loading="submitting">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -254,20 +261,20 @@ const detail = ref({})
 
 const typeLabelMap = { bug: 'Bug反馈', feature: '功能建议', experience: '体验优化', other: '其他' }
 const typeTagMap = { bug: 'danger', feature: '', experience: 'warning', other: 'info' }
-const statusLabelMap = { 0: '待处理', 1: '处理中', 2: '已发布' }
+const statusLabelMap = { 0: '待处理', 1: '处理中', 2: '已回复' }
 const statusTagMap = { 0: 'warning', 1: 'primary', 2: 'success' }
 
 const statusDialogTitle = ref('')
 
 const replyDialogVisible = ref(false)
-const replyForm = ref({ id: null, content: '', reply: '' })
+const replyForm = ref({ id: null, content: '', reply: '', status: 1 })
 
 // 顶部概览数据
 const overviewCards = computed(() => [
   { key: 'total', label: '总反馈数', value: total.value, icon: 'MessageBox', color: '#409eff', bg: '#ecf5ff' },
   { key: 'pending', label: '待处理', value: feedbackList.value.filter(f => f.status === 0).length, icon: 'Clock', color: '#e6a23c', bg: '#fdf6ec' },
   { key: 'processing', label: '处理中', value: feedbackList.value.filter(f => f.status === 1).length, icon: 'Loading', color: '#409eff', bg: '#ecf5ff' },
-  { key: 'published', label: '已发布', value: feedbackList.value.filter(f => f.status === 2).length, icon: 'CircleCheck', color: '#67c23a', bg: '#f0f9eb' }
+  { key: 'published', label: '已回复', value: feedbackList.value.filter(f => f.status === 2).length, icon: 'CircleCheck', color: '#67c23a', bg: '#f0f9eb' }
 ])
 
 const loadData = async () => {
@@ -290,7 +297,7 @@ const loadData = async () => {
 
 const openStatusDialog = (row, targetStatus) => {
   statusForm.value = { id: row.id, content: row.content, reply: row.reply || '', targetStatus }
-  statusDialogTitle.value = targetStatus === 1 ? '标记为处理中' : '标记为已发布'
+  statusDialogTitle.value = targetStatus === 1 ? '标记为处理中' : '标记为已回复'
   statusDialogVisible.value = true
 }
 
@@ -312,7 +319,7 @@ const submitStatus = async () => {
 }
 
 const openReplyDialog = (row) => {
-  replyForm.value = { id: row.id, content: row.content, reply: row.reply || '' }
+  replyForm.value = { id: row.id, content: row.content, reply: row.reply || '', status: 1 }
   replyDialogVisible.value = true
 }
 
@@ -323,7 +330,7 @@ const submitReply = async () => {
   }
   submitting.value = true
   try {
-    await replyFeedback(replyForm.value.id, { reply: replyForm.value.reply.trim() })
+    await replyFeedback(replyForm.value.id, { reply: replyForm.value.reply.trim(), status: replyForm.value.status })
     ElMessage.success('回复成功')
     replyDialogVisible.value = false
     loadData()
