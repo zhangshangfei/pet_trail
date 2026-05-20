@@ -19,7 +19,7 @@
           <view class="pet-card-bg"></view>
           <view class="pet-card-content">
             <view class="pet-main">
-              <image class="pet-avatar" :src="petAvatar" mode="aspectFill" />
+              <image class="pet-avatar" :src="petAvatar" mode="aspectFill" @error="onPetAvatarError" />
               <view class="pet-info">
                 <text class="pet-name">{{ pet.name || '我的宠物' }}</text>
                 <text class="pet-breed">{{ petDetail }}</text>
@@ -566,6 +566,9 @@ export default {
     },
     goAddPet() {
       uni.navigateTo({ url: '/pages/pet/edit' })
+    },
+    onPetAvatarError() {
+      this.petAvatar = DEFAULT_PET_AVATAR
     },
     initNavMetrics() {
       try {

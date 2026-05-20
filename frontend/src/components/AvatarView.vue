@@ -1,6 +1,6 @@
 <template>
   <view class="avatar-wrapper" :style="wrapperStyle">
-    <image v-if="src && src.startsWith('http')" class="avatar-image" :src="src" mode="aspectFill" :style="wrapperStyle" />
+    <image v-if="src && src.startsWith('http') && !loadFailed" class="avatar-image" :src="src" mode="aspectFill" :style="wrapperStyle" @error="onImageError" />
     <view v-else-if="defaultIcon && !name" class="avatar-icon" :style="iconStyle">
       <text class="icon-person" :style="iconTextStyle">👤</text>
     </view>
@@ -21,6 +21,16 @@ export default {
     id: { type: [String, Number], default: '' },
     size: { type: Number, default: 72 },
     defaultIcon: { type: Boolean, default: false }
+  },
+  data() {
+    return {
+      loadFailed: false
+    }
+  },
+  watch: {
+    src() {
+      this.loadFailed = false
+    }
   },
   computed: {
     displayChar() {
@@ -77,6 +87,11 @@ export default {
         fontWeight: '600',
         lineHeight: '1'
       }
+    }
+  },
+  methods: {
+    onImageError() {
+      this.loadFailed = true
     }
   }
 }

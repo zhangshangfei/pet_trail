@@ -366,6 +366,7 @@ export const DEFAULT_PET_AVATAR_URL = ''
 
 export function getUserAvatar(userId, avatarUrl) {
   if (avatarUrl && avatarUrl.startsWith('http')) {
+    if (avatarUrl.includes('tcb.qcloud.la')) return ''
     return avatarUrl
   }
   return ''
@@ -373,6 +374,7 @@ export function getUserAvatar(userId, avatarUrl) {
 
 export function getPetAvatar(petId, avatarUrl) {
   if (avatarUrl && avatarUrl.startsWith('http')) {
+    if (avatarUrl.includes('tcb.qcloud.la')) return ''
     return avatarUrl
   }
   return ''
