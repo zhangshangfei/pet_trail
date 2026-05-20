@@ -644,7 +644,7 @@ export default {
       }
 
       if (this.vaccineCardsLimited.length > 0 || this.parasiteCardsLimited.length > 0) {
-        requestWxSubscribe(['vaccine', 'parasite']);
+        loadWxSubscribeTemplates();
       }
     },
     async onMarkVaccineDone(item) {
@@ -664,6 +664,7 @@ export default {
               const result = await petApi.updateVaccineReminderStatus(this.selectedPet.id, item.id, { status: 1 });
               if (result.success) {
                 uni.showToast({ title: "已标记完成", icon: "success" });
+                requestWxSubscribe(['vaccine']);
                 this.loadDashboardData();
               }
             } catch (e) {
@@ -676,7 +677,7 @@ export default {
     },
     async onMarkParasiteDone(item) {
       if (!item || item.isCompleted || !this.selectedPet) return;
-      
+
       const loggedIn = await checkLogin('请先登录后再操作')
       if (!loggedIn) return
 
@@ -691,6 +692,7 @@ export default {
               const result = await petApi.updateParasiteReminderStatus(this.selectedPet.id, item.id, { status: 1 });
               if (result.success) {
                 uni.showToast({ title: "已标记完成", icon: "success" });
+                requestWxSubscribe(['parasite']);
                 this.loadDashboardData();
               }
             } catch (e) {
