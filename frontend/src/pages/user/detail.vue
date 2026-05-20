@@ -46,10 +46,9 @@
           >
             {{ userInfo.isFollowing ? '已关注' : '+ 关注' }}
           </button>
-          <view class="report-btn" @tap="onReportUser">
-            <text class="report-icon">&#9888;</text>
-            <text class="report-text">举报</text>
-          </view>
+        </view>
+        <view v-if="!isSelf" class="report-link" @tap="onReportUser">
+          <text class="report-link-text">举报该用户</text>
         </view>
       </view>
     </view>
@@ -650,14 +649,12 @@ export default {
   margin-top: 24rpx;
   width: 100%;
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 20rpx;
   padding: 0 80rpx;
 }
 
 .follow-btn {
-  flex: 1;
+  width: 100%;
   height: 76rpx;
   border-radius: 999rpx;
   font-size: 28rpx;
@@ -675,30 +672,19 @@ export default {
   }
 }
 
-.report-btn {
+.report-link {
+  margin-top: 16rpx;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  gap: 4rpx;
-  width: 76rpx;
-  height: 76rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
-.report-btn:active {
-  background: rgba(255, 255, 255, 0.35);
-  transform: scale(0.92);
+.report-link:active .report-link-text {
+  color: #9ca3af;
 }
-.report-icon {
-  font-size: 28rpx;
-}
-.report-text {
-  font-size: 20rpx;
-  color: #fff;
-  font-weight: 500;
+.report-link-text {
+  font-size: 24rpx;
+  color: #d1d5db;
+  text-decoration: underline;
+  text-underline-offset: 4rpx;
 }
 
 .tab-bar {
