@@ -87,7 +87,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="340" fixed="right" align="center">
+        <el-table-column label="操作" width="240" fixed="right" align="center">
           <template #default="{ row }">
             <div class="action-btns">
               <el-button size="small" text type="primary" :icon="View" @click="showDetail(row)">详情</el-button>
@@ -422,7 +422,7 @@ onMounted(() => loadData())
   display: flex;
   justify-content: center;
   gap: 4px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 /* 分页 */
