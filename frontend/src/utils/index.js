@@ -3,6 +3,7 @@
  */
 
 import { loginByCode } from '@/api/auth'
+import * as subscribeApi from '@/api/subscribe'
 
 /**
  * 格式化日期

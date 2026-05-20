@@ -157,6 +157,15 @@
             <text class="empty-records-icon">📝</text>
             <text class="empty-records-text">暂无打卡记录</text>
           </view>
+
+          <view v-if="recentRecords.length && !showAllRecords" class="view-all-btn" @tap="onViewAll">
+            <text class="view-all-text">查看全部</text>
+            <text class="view-all-arrow">›</text>
+          </view>
+
+          <view v-if="showAllRecords && hasMoreMonths" class="load-more-btn" @tap="onLoadMore">
+            <text class="load-more-text">{{ loadingMore ? '加载中...' : '加载更多' }}</text>
+          </view>
         </view>
 
         <view class="page-bottom-safe"></view>
@@ -202,6 +211,9 @@ export default {
       allRecords: [],
       recentRecords: [],
       recordGroups: [],
+      showAllRecords: false,
+      loadedMonths: 3,
+      loadingMore: false,
       showSuccessAnimation: false,
       animationTimer: null,
     }
@@ -223,6 +235,12 @@ export default {
     },
     todayCompleted() {
       return this.visibleItems.filter((item) => item.checked).length
+    },
+    hasMoreMonths() {
+      const now = new Date()
+      const earliest = new Date(now.getFullYear(), now.getMonth() - this.loadedMonths + 1, 1)
+      const limit = new Date(now.getFullYear() - 2, 0, 1)
+      return earliest > limit
     }
   },
   onLoad(options) {
@@ -398,7 +416,7 @@ export default {
             if (!right) return -1
             return right.getTime() - left.getTime()
           })
-          .slice(0, 7)
+          .slice(0, this.showAllRecords ? 9999 : 7)
           .map((date) => {
             const records = groupedRecords[date]
             const items = this.visibleItems.map((item) => ({
@@ -498,6 +516,32 @@ export default {
     },
     goReminder() {
       uni.navigateTo({ url: '/pages/checkin/reminder' })
+    },
+    onViewAll() {
+      this.showAllRecords = true
+      this.buildRecordGroups()
+    },
+    async onLoadMore() {
+      if (this.loadingMore) return
+      this.loadingMore = true
+      this.loadedMonths += 1
+      try {
+        const date = new Date()
+        const target = new Date(date.getFullYear(), date.getMonth() - this.loadedMonths + 1, 1)
+        const year = target.getFullYear()
+        const month = target.getMonth() + 1
+        const res = await checkinApi.getCalendar(year, month)
+        if (res && res.success && Array.isArray(res.data)) {
+          const newRecords = this.filterPetRecords(res.data)
+          this.allRecords = [...this.allRecords, ...newRecords]
+          this.syncPageState()
+        }
+      } catch (error) {
+        console.error('加载更多记录失败:', error)
+        this.loadedMonths -= 1
+      } finally {
+        this.loadingMore = false
+      }
     },
     showSuccessFeedback() {
       this.showSuccessAnimation = true
@@ -610,6 +654,37 @@ export default {
     },
     buildRecordGroups() {
       if (!this.recentRecords.length) { this.recordGroups = []; return }
+
+      if (this.showAllRecords) {
+        // 查看全部模式：按月份分组
+        const monthMap = new Map()
+        for (const record of this.recentRecords) {
+          const d = this.normalizeDate(record.date)
+          if (!d) continue
+          const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+          if (!monthMap.has(monthKey)) monthMap.set(monthKey, [])
+          monthMap.get(monthKey).push(record)
+        }
+        const groups = []
+        const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+        for (const [monthKey, records] of monthMap) {
+          const [yearStr, monthStr] = monthKey.split('-')
+          const year = parseInt(yearStr, 10)
+          const month = parseInt(monthStr, 10)
+          const now = new Date()
+          let label = `${year}年${monthNames[month - 1]}`
+          if (year === now.getFullYear() && month === now.getMonth() + 1) {
+            label = '本月'
+          }
+          const sorted = records.slice().sort((a, b) => (a.date > b.date ? -1 : 1))
+          const range = this.formatDateRange(this.normalizeDate(sorted[0].date), this.normalizeDate(sorted[sorted.length - 1].date))
+          groups.push({ label, dateRange: range, records })
+        }
+        this.recordGroups = groups
+        return
+      }
+
+      // 默认模式：本周 + 更早
       const now = new Date()
       const dayOfWeek = now.getDay() || 7
       const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1)
@@ -824,7 +899,24 @@ $radius: 24rpx;
 }
 .empty-records-icon { font-size: 64rpx; margin-bottom: 16rpx; }
 .empty-records-text { font-size: 28rpx; color: $text-light; }
-.page-bottom-safe { height: calc(24rpx + env(safe-area-inset-bottom)); }
+
+.view-all-btn {
+  display: flex; align-items: center; justify-content: center;
+  height: 88rpx; border-radius: 44rpx; background: $card-bg;
+  margin-top: 16rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.view-all-btn:active { background: #f9fafb; }
+.view-all-text { font-size: 28rpx; font-weight: 500; color: $primary; }
+.view-all-arrow { font-size: 32rpx; color: $primary; margin-left: 6rpx; }
+
+.load-more-btn {
+  display: flex; align-items: center; justify-content: center;
+  height: 88rpx; border-radius: 44rpx; background: $card-bg;
+  margin-top: 16rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.load-more-btn:active { background: #f9fafb; }
+.load-more-text { font-size: 28rpx; font-weight: 500; color: $text-secondary; }
+.page-bottom-safe { height: calc(120rpx + env(safe-area-inset-bottom)); }
 
 .checkin-animation {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
