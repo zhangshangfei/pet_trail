@@ -133,7 +133,7 @@ export default {
     },
     formatTime(dateStr) {
       if (!dateStr) return ''
-      const d = new Date(dateStr)
+      const d = new Date(typeof dateStr === 'string' ? dateStr.replace(/-/g, '/') : dateStr)
       if (Number.isNaN(d.getTime())) return ''
       const now = new Date()
       const diff = now - d

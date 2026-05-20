@@ -460,13 +460,13 @@ export default {
     },
     formatTime(dateStr) {
       if (!dateStr) return ''
-      const d = new Date(dateStr)
+      const d = new Date(typeof dateStr === 'string' ? dateStr.replace(/-/g, '/') : dateStr)
       return `${d.getMonth() + 1}-${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
     },
     getRelativeTime(dateStr) {
       if (!dateStr) return ''
       const now = Date.now()
-      const then = new Date(dateStr).getTime()
+      const then = new Date(typeof dateStr === 'string' ? dateStr.replace(/-/g, '/') : dateStr).getTime()
       const diff = now - then
       if (diff < 60000) return '刚刚'
       if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'

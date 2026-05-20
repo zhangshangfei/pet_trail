@@ -1,7 +1,7 @@
 export function normalizeDate(input) {
   if (!input) return null
   if (input instanceof Date) return input
-  const normalized = typeof input === 'string' ? input.replace(' ', 'T') : input
+  const normalized = typeof input === 'string' ? input.replace(/-/g, '/') : input
   const date = new Date(normalized)
   return Number.isNaN(date.getTime()) ? null : date
 }

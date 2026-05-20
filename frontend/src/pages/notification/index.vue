@@ -249,7 +249,7 @@ export default {
     },
     formatTime(timeStr) {
       if (!timeStr) return ''
-      var date = new Date(timeStr)
+      var date = new Date(typeof timeStr === 'string' ? timeStr.replace(/-/g, '/') : timeStr)
       var now = new Date()
       var diff = now - date
       var minute = 60 * 1000

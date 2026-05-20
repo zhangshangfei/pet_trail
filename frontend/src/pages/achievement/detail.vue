@@ -196,7 +196,7 @@ export default {
     },
     formatTime(timestamp) {
       if (!timestamp) return ''
-      const d = new Date(timestamp)
+      const d = new Date(typeof timestamp === 'string' ? timestamp.replace(/-/g, '/') : timestamp)
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
     }
   }

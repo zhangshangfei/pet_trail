@@ -151,7 +151,7 @@ const cloudRequest = (options = {}) => {
       header: header,
       method: options.method || 'GET',
       data: requestData,
-      timeout: options.timeout || 20000,
+      timeout: options.timeout || config.REQUEST_TIMEOUT || 30000,
       success: async (res) => {
         // 检查 HTTP 状态码
         if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -256,7 +256,7 @@ const httpRequest = (options = {}) => {
       method: options.method || 'GET',
       data: requestData,
       header: header,
-      timeout: options.timeout || 20000,
+      timeout: options.timeout || config.REQUEST_TIMEOUT || 30000,
       success: async (res) => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const data = res.data

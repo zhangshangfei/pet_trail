@@ -792,15 +792,23 @@ export default {
 
     formatTime(timestamp) {
       if (!timestamp) return '';
+      let timeMs = 0;
+      if (typeof timestamp === 'number') {
+        timeMs = timestamp;
+      } else if (typeof timestamp === 'string') {
+        timeMs = new Date(timestamp.replace(/-/g, '/')).getTime();
+      }
+      if (isNaN(timeMs) || timeMs === 0) return '';
+
       const now = Date.now();
-      const diff = now - timestamp;
+      const diff = now - timeMs;
 
       if (diff < 60000) return '刚刚';
       if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
       if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
       if (diff < 604800000) return Math.floor(diff / 86400000) + '天前';
 
-      const date = new Date(timestamp);
+      const date = new Date(timeMs);
       return `${date.getMonth() + 1}/${date.getDate()}`;
     },
 
@@ -811,8 +819,7 @@ export default {
       if (typeof timestamp === 'number') {
         timeMs = timestamp;
       } else if (typeof timestamp === 'string') {
-        const dateStr = timestamp.replace(' ', 'T');
-        timeMs = new Date(dateStr).getTime();
+        timeMs = new Date(timestamp.replace(/-/g, '/')).getTime();
       }
       
       if (isNaN(timeMs) || timeMs === 0) return '';
