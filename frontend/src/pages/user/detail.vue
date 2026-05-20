@@ -129,16 +129,13 @@
               v-for="(vid, vidx) in post.videoList"
               :key="'v' + vidx"
               class="post-video-item"
-              @click="playVideo(vid)"
             >
-              <video
-                class="post-video"
+              <video-card
                 :src="vid"
                 :autoplay="false"
-                :show-play-btn="true"
-                :show-center-play-btn="true"
-                :enable-progress-gesture="false"
+                :muted="true"
                 object-fit="cover"
+                :height="420"
               />
             </view>
           </view>
@@ -186,22 +183,6 @@
       </view>
     </scroll-view>
 
-    <!-- 视频播放弹窗 -->
-    <view v-if="showVideoPlayer" class="video-player-mask" @click="closeVideoPlayer">
-      <view class="video-player-container" @click.stop>
-        <view class="video-player-close" @click="closeVideoPlayer">✕</view>
-        <video
-          class="video-player-video"
-          :src="currentVideoUrl"
-          :autoplay="true"
-          :show-play-btn="true"
-          :show-center-play-btn="true"
-          :enable-progress-gesture="true"
-          :show-fullscreen-btn="true"
-          object-fit="contain"
-        />
-      </view>
-    </view>
   </view>
 </template>
 
@@ -210,10 +191,12 @@ import * as postApi from '@/api/post'
 import * as reportApi from '@/api/report'
 import { getUserById } from '@/api/auth'
 import { checkLogin, getUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
+import VideoCard from '@/components/VideoCard.vue'
 
 const defaultAvatar = DEFAULT_USER_AVATAR
 
 export default {
+  components: { VideoCard },
   data() {
     return {
       userId: null,
@@ -227,8 +210,6 @@ export default {
       hasMore: true,
       followLoading: false,
       expandedPosts: {},
-      showVideoPlayer: false,
-      currentVideoUrl: ''
     }
   },
   computed: {
@@ -466,14 +447,6 @@ export default {
         urls: images,
         current: index
       })
-    },
-    playVideo(url) {
-      this.currentVideoUrl = url
-      this.showVideoPlayer = true
-    },
-    closeVideoPlayer() {
-      this.showVideoPlayer = false
-      this.currentVideoUrl = ''
     },
     getPetIcon(type) {
       const map = { 1: '🐱', 2: '🐶' }

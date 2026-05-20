@@ -67,6 +67,8 @@
           <text class="empty-text">暂无反馈记录</text>
           <text class="empty-hint">提交反馈后可在此查看处理进度</text>
         </view>
+
+
       </view>
     </scroll-view>
   </view>
@@ -99,6 +101,7 @@ export default {
     goBack() {
       uni.navigateBack({ delta: 1 })
     },
+
     async loadFeedbackList() {
       const loggedIn = await checkLogin('')
       if (!loggedIn) {
@@ -241,4 +244,6 @@ $text-light: #999999;
 .empty-emoji { font-size: 80rpx; margin-bottom: 24rpx; }
 .empty-text { font-size: 30rpx; font-weight: 600; color: #6b7280; margin-bottom: 12rpx; }
 .empty-hint { font-size: 24rpx; color: #9ca3af; }
+
+
 </style>

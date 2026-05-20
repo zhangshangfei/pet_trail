@@ -153,18 +153,13 @@
               :key="'v' + vidx"
               class="post-video-item"
             >
-              <video
-                class="post-video"
+              <video-card
                 :src="vid"
+                :poster="post.videoPosters && post.videoPosters[vidx] || ''"
                 :autoplay="false"
-                :show-play-btn="true"
-                :show-center-play-btn="true"
-                :enable-progress-gesture="true"
-                :show-fullscreen-btn="true"
-                :enable-play-gesture="true"
-                :page-gesture="false"
+                :muted="true"
                 object-fit="cover"
-                poster=""
+                :height="420"
               />
             </view>
           </view>
@@ -245,6 +240,7 @@
 
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
+import VideoCard from '@/components/VideoCard.vue'
 import * as postApi from '@/api/post'
 import * as notificationApi from '@/api/notification'
 import * as behaviorApi from '@/api/behavior'
@@ -254,7 +250,8 @@ import * as authApi from '@/api/auth'
 
 export default {
   components: {
-    UserTopBar
+    UserTopBar,
+    VideoCard
   },
   data() {
     return {

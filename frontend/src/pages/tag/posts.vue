@@ -69,6 +69,22 @@
             />
           </view>
 
+          <view v-if="post.videos && post.videos.length" class="post-video-wrap">
+            <view
+              v-for="(vid, vidx) in post.videos"
+              :key="'v' + vidx"
+              class="post-video-item"
+            >
+              <video-card
+                :src="vid"
+                :autoplay="false"
+                :muted="true"
+                object-fit="cover"
+                :height="420"
+              />
+            </view>
+          </view>
+
           <view v-if="post.stickers && post.stickers.length" class="post-stickers">
             <text v-for="(s, i) in post.stickers" :key="i" class="post-sticker">{{ s }}</text>
           </view>
@@ -129,8 +145,10 @@ import * as tagApi from '@/api/tag'
 import * as postApi from '@/api/post'
 import { checkLogin } from '@/utils/index'
 import { getUserAvatar } from '@/utils/index'
+import VideoCard from '@/components/VideoCard.vue'
 
 export default {
+  components: { VideoCard },
   data() {
     return {
       statusBarHeight: 0,

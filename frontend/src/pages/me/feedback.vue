@@ -164,7 +164,9 @@ export default {
         })
         if (res && res.success) {
           uni.showToast({ title: '提交成功', icon: 'success' })
-          setTimeout(() => { uni.navigateBack() }, 1500)
+          setTimeout(() => {
+            uni.redirectTo({ url: '/pages/me/feedback-list' })
+          }, 1500)
         } else {
           uni.showToast({ title: (res && res.message) || '提交失败', icon: 'none' })
         }

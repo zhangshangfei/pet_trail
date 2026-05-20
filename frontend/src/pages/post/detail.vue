@@ -50,6 +50,22 @@
             />
           </view>
 
+          <view v-if="post.videos && post.videos.length" class="post-video-wrap">
+            <view
+              v-for="(vid, vidx) in post.videos"
+              :key="'v' + vidx"
+              class="post-video-item"
+            >
+              <video-card
+                :src="vid"
+                :autoplay="false"
+                :muted="true"
+                object-fit="contain"
+                :height="450"
+              />
+            </view>
+          </view>
+
           <view v-if="post.stickers && post.stickers.length" class="post-stickers">
             <text v-for="(s, i) in post.stickers" :key="i" class="post-sticker">{{ s }}</text>
           </view>
@@ -216,8 +232,10 @@
 import * as postApi from '@/api/post'
 import * as reportApi from '@/api/report'
 import { checkLogin, getUserAvatar as resolveUserAvatar, DEFAULT_USER_AVATAR } from '@/utils/index'
+import VideoCard from '@/components/VideoCard.vue'
 
 export default {
+  components: { VideoCard },
   data() {
     return {
       postId: null,
@@ -305,6 +323,7 @@ export default {
             petId: post.petId,
             content: post.content,
             images: post.imageList || [],
+            videos: post.videoList || [],
             likes: post.likeCount || 0,
             comments: post.commentCount || 0,
             eeCount: post.eeCount || 0,
