@@ -11,68 +11,111 @@
 
     <scroll-view scroll-y class="page-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px' }">
       <view class="page-content">
-        <view class="app-header">
-          <view class="app-logo-wrap">
-            <text class="app-logo">🐾</text>
+        <!-- 品牌展示区 -->
+        <view class="brand-section">
+          <view class="logo-container">
+            <view class="logo-ring">
+              <text class="logo-icon">🐾</text>
+            </view>
           </view>
           <text class="app-name">宠迹</text>
-          <text class="app-slogan">记录宠物的每一天</text>
-          <text class="app-version">v1.0.0</text>
+          <view class="slogan-box">
+            <text class="app-slogan">记录宠物的每一天</text>
+          </view>
+          <view class="version-badge">
+            <text class="version-text">v1.0.0</text>
+          </view>
         </view>
 
+        <!-- 联系信息卡片 -->
         <view class="info-card">
-          <view class="info-item" @tap="copyText('pettrail@openclaw.com')">
-            <text class="info-icon">📧</text>
-            <view class="info-content">
-              <text class="info-label">联系邮箱</text>
-              <text class="info-value">pettrail@openclaw.com</text>
+          <view class="card-header">
+            <view class="card-icon-wrap">
+              <text class="card-icon">📬</text>
             </view>
-            <text class="info-arrow">复制</text>
+            <text class="card-title">联系我们</text>
           </view>
-          <view class="info-item" @tap="copyText('https://pettrail.openclaw.com')">
-            <text class="info-icon">🌐</text>
-            <view class="info-content">
-              <text class="info-label">官方网站</text>
-              <text class="info-value">pettrail.openclaw.com</text>
+
+          <view class="contact-list">
+            <view class="contact-item" @tap="copyText('pettrail@openclaw.com')">
+              <view class="contact-icon-wrap contact-email">
+                <text class="contact-icon">📧</text>
+              </view>
+              <view class="contact-info">
+                <text class="contact-label">联系邮箱</text>
+                <text class="contact-value">pettrail@openclaw.com</text>
+              </view>
+              <view class="contact-action">
+                <text class="action-text">复制</text>
+              </view>
             </view>
-            <text class="info-arrow">复制</text>
+
+            <view class="contact-item" @tap="copyText('https://pettrail.openclaw.com')">
+              <view class="contact-icon-wrap contact-web">
+                <text class="contact-icon">🌐</text>
+              </view>
+              <view class="contact-info">
+                <text class="contact-label">官方网站</text>
+                <text class="contact-value">pettrail.openclaw.com</text>
+              </view>
+              <view class="contact-action">
+                <text class="action-text">复制</text>
+              </view>
+            </view>
           </view>
         </view>
 
+        <!-- 关于宠迹卡片 -->
         <view class="desc-card">
-          <text class="desc-title">关于宠迹</text>
-          <text class="desc-text">宠迹是一款专为宠物主人打造的记录管理工具，帮助您轻松记录宠物的日常生活、健康状况、疫苗接种等重要信息，让每一只宠物都能得到更好的关爱。</text>
+          <view class="desc-header">
+            <view class="desc-icon-wrap">
+              <text class="desc-icon">💝</text>
+            </view>
+            <text class="desc-title">关于宠迹</text>
+          </view>
+          <view class="desc-content">
+            <text class="desc-text">宠迹是一款专为宠物主人打造的记录管理工具，帮助您轻松记录宠物的日常生活、健康状况、疫苗接种等重要信息，让每一只宠物都能得到更好的关爱。</text>
+          </view>
         </view>
 
+        <!-- 核心功能卡片 -->
         <view class="feature-card">
-          <text class="desc-title">核心功能</text>
-          <view class="feature-list">
-            <view class="feature-row">
-              <text class="feature-dot">📸</text>
+          <view class="feature-header">
+            <view class="feature-icon-wrap">
+              <text class="feature-icon">✨</text>
+            </view>
+            <text class="feature-title">核心功能</text>
+          </view>
+
+          <view class="feature-grid">
+            <view class="feature-item">
+              <view class="feature-dot feature-photo"></view>
               <text class="feature-text">发布动态，记录宠物精彩瞬间</text>
             </view>
-            <view class="feature-row">
-              <text class="feature-dot">📋</text>
+            <view class="feature-item">
+              <view class="feature-dot feature-checkin"></view>
               <text class="feature-text">每日打卡，养成养宠好习惯</text>
             </view>
-            <view class="feature-row">
-              <text class="feature-dot">💉</text>
+            <view class="feature-item">
+              <view class="feature-dot feature-vaccine"></view>
               <text class="feature-text">疫苗驱虫提醒，守护宠物健康</text>
             </view>
-            <view class="feature-row">
-              <text class="feature-dot">🔔</text>
+            <view class="feature-item">
+              <view class="feature-dot feature-feed"></view>
               <text class="feature-text">喂食提醒，科学喂养不遗忘</text>
             </view>
-            <view class="feature-row">
-              <text class="feature-dot">👥</text>
+            <view class="feature-item">
+              <view class="feature-dot feature-social"></view>
               <text class="feature-text">发现宠友，分享养宠经验</text>
             </view>
           </view>
         </view>
 
-        <view class="footer">
-          <text class="footer-text">© 2026 宠迹 PetTrail</text>
-          <text class="footer-text">Made with ❤️ for pets</text>
+        <!-- 页脚 -->
+        <view class="footer-section">
+          <view class="footer-divider"></view>
+          <text class="footer-line1">© 2026 宠迹 PetTrail</text>
+          <text class="footer-line2">Made with ❤️ for pets</text>
         </view>
       </view>
     </scroll-view>
@@ -111,68 +154,247 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-$primary: #ff6a3d;
-$bg: #f5f5f5;
-$card-bg: #ffffff;
-$text-primary: #1a1a1a;
-$text-secondary: #666666;
-$text-light: #999999;
+/* ============================================
+   关于我们 - 统一设计系统 v2.0
+   与 me/index.vue 风格完全一致
+   ============================================ */
 
-.about-page { min-height: 100vh; background: $bg; }
-.nav-fixed { position: fixed; top: 0; left: 0; right: 0; z-index: 30; background: #fff; }
+/* 设计变量 */
+$primary: #ff6b35;
+$primary-light: #ff8c5a;
+$bg-color: #f2f2f7;
+$white: #ffffff;
+$gray-50: #fafafa;
+$gray-100: #f5f5f7;
+$gray-200: #e5e5ea;
+$gray-300: #d1d1d6;
+$gray-500: #8e8e93;
+$gray-800: #1c1c1e;
+
+$radius-sm: 12rpx;
+$radius-md: 20rpx;
+$radius-lg: 28rpx;
+
+/* ========== 页面基础 ========== */
+.about-page { min-height: 100vh; background: $bg-color; }
+
+.nav-fixed { position: fixed; top: 0; left: 0; right: 0; z-index: 30; background: $white; }
 .status-bar { width: 100%; }
-.nav-bar { height: 92rpx; display: flex; align-items: center; justify-content: space-between; padding: 0 28rpx; border-bottom: 1rpx solid #f0f0f0; }
-.nav-back { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; }
-.nav-back-arrow { width: 20rpx; height: 20rpx; border-left: 4rpx solid $text-primary; border-bottom: 4rpx solid $text-primary; transform: rotate(45deg); }
-.nav-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
-.nav-placeholder { width: 60rpx; }
-.page-scroll { height: 100vh; }
-.page-content { padding: 24rpx; }
 
-.app-header {
-  display: flex; flex-direction: column; align-items: center;
-  padding: 48rpx 0 32rpx;
+.nav-bar { 
+  height: 92rpx; 
+  display: flex; align-items: center; justify-content: space-between; 
+  padding: 0 32rpx; 
+  border-bottom: 1rpx solid $gray-100;
 }
-.app-logo-wrap {
-  width: 140rpx; height: 140rpx; border-radius: 36rpx;
-  background: linear-gradient(135deg, #ffe8d6, #ffecd2);
+
+.nav-back { 
+  width: 64rpx; height: 64rpx; 
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 20rpx; box-shadow: 0 8rpx 24rpx rgba(255,106,61,0.2);
+  border-radius: 32rpx;
+  background: $gray-50;
+  
+  &:active { background: $gray-200; transform: scale(0.92); }
 }
-.app-logo { font-size: 72rpx; }
-.app-name { font-size: 40rpx; font-weight: 700; color: $text-primary; margin-bottom: 8rpx; }
-.app-slogan { font-size: 28rpx; color: $text-secondary; margin-bottom: 8rpx; }
-.app-version { font-size: 24rpx; color: $text-light; }
 
-.info-card {
-  background: $card-bg; border-radius: 24rpx; margin-bottom: 20rpx;
+.nav-back-arrow { 
+  width: 18rpx; height: 18rpx; 
+  border-left: 3rpx solid $gray-800; border-bottom: 3rpx solid $gray-800; 
+  transform: rotate(45deg); margin-left: -4rpx;
+}
+
+.nav-title { font-size: 34rpx; font-weight: 700; color: $gray-800; letter-spacing: 0.5rpx; }
+.nav-placeholder { width: 64rpx; }
+
+.page-scroll { height: 100vh; }
+.page-content { padding: 24rpx 28rpx; }
+
+/* ========== 品牌展示区 ========== */
+.brand-section {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 48rpx 0 40rpx;
+}
+
+.logo-container {
+  margin-bottom: 24rpx;
+  
+  &:active { transform: scale(0.96); }
+}
+
+.logo-ring {
+  width: 160rpx; height: 160rpx; border-radius: 80rpx;
+  padding: 4rpx;
+  background: linear-gradient(135deg, $primary, $primary-light, #ffb347);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 12rpx 32rpx rgba(255, 107, 53, 0.25);
+}
+
+.logo-icon { font-size: 72rpx; }
+
+.app-name { 
+  font-size: 42rpx; font-weight: 700; color: $gray-800; 
+  margin-bottom: 16rpx; letter-spacing: 2rpx;
+}
+
+.slogan-box {
+  padding: 10rpx 28rpx;
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.08), rgba(255, 107, 53, 0.03));
+  border-radius: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.app-slogan { 
+  font-size: 26rpx; color: $primary; font-weight: 600;
+  letter-spacing: 1rpx;
+}
+
+.version-badge {
+  padding: 6rpx 24rpx;
+  background: $gray-50;
+  border-radius: 16rpx;
+  border: 1rpx solid $gray-200;
+}
+
+.version-text { font-size: 24rpx; color: $gray-500; font-weight: 500; }
+
+/* ========== 卡片容器通用 ========== */
+.info-card, .desc-card, .feature-card {
+  background: $white; border-radius: $radius-md; margin-bottom: 24rpx;
   overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
-.info-item {
-  display: flex; align-items: center; padding: 28rpx 24rpx;
-  border-bottom: 1rpx solid #f5f5f5;
+
+/* ========== 联系信息卡片 ========== */
+.card-header {
+  display: flex; align-items: center; gap: 16rpx;
+  padding: 28rpx 28rpx 20rpx;
+  background: linear-gradient(180deg, $white 0%, #fff9f5 100%);
+  border-bottom: 1rpx solid rgba(255, 107, 53, 0.08);
 }
-.info-item:last-child { border-bottom: none; }
-.info-icon { font-size: 36rpx; margin-right: 20rpx; flex-shrink: 0; }
-.info-content { flex: 1; }
-.info-label { display: block; font-size: 24rpx; color: $text-light; margin-bottom: 4rpx; }
-.info-value { display: block; font-size: 28rpx; color: $text-primary; }
-.info-arrow { font-size: 24rpx; color: $primary; font-weight: 500; }
 
-.desc-card, .feature-card {
-  background: $card-bg; border-radius: 24rpx; padding: 28rpx; margin-bottom: 20rpx;
+.card-icon-wrap {
+  width: 44rpx; height: 44rpx; border-radius: 12rpx;
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 107, 53, 0.05));
+  display: flex; align-items: center; justify-content: center;
 }
-.desc-title { display: block; font-size: 30rpx; font-weight: 700; color: $text-primary; margin-bottom: 16rpx; }
-.desc-text { font-size: 28rpx; color: $text-secondary; line-height: 1.8; }
 
-.feature-list { display: flex; flex-direction: column; gap: 20rpx; }
-.feature-row { display: flex; align-items: center; }
-.feature-dot { font-size: 28rpx; margin-right: 16rpx; flex-shrink: 0; }
-.feature-text { font-size: 28rpx; color: $text-secondary; }
+.card-icon { font-size: 24rpx; }
 
-.footer {
+.card-title { font-size: 28rpx; font-weight: 600; color: $gray-800; letter-spacing: 0.3rpx; }
+
+.contact-list { padding: 8rpx 20rpx 24rpx; }
+
+.contact-item {
+  display: flex; align-items: center; padding: 24rpx 8rpx;
+  transition: all 0.25s ease;
+
+  &:active { background: $gray-50; border-radius: $radius-sm; }
+}
+
+.contact-icon-wrap {
+  width: 56rpx; height: 56rpx; border-radius: 14rpx;
+  display: flex; align-items: center; justify-content: center;
+  margin-right: 16rpx; flex-shrink: 0;
+
+  &.contact-email { background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
+  &.contact-web { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+}
+
+.contact-icon { font-size: 28rpx; }
+
+.contact-info { flex: 1; }
+
+.contact-label { display: block; font-size: 24rpx; color: $gray-500; margin-bottom: 6rpx; }
+.contact-value { display: block; font-size: 28rpx; color: $gray-800; font-weight: 500; }
+
+.contact-action {
+  padding: 8rpx 20rpx;
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.08), rgba(255, 107, 53, 0.03));
+  border-radius: 16rpx;
+  border: 1rpx solid rgba(255, 107, 53, 0.15);
+}
+
+.action-text { font-size: 24rpx; color: $primary; font-weight: 600; }
+
+/* ========== 关于描述卡片 ========== */
+.desc-header {
+  display: flex; align-items: center; gap: 16rpx;
+  padding: 28rpx 28rpx 20rpx;
+}
+
+.desc-icon-wrap {
+  width: 44rpx; height: 44rpx; border-radius: 12rpx;
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(236, 72, 153, 0.05));
+  display: flex; align-items: center; justify-content: center;
+}
+
+.desc-icon { font-size: 24rpx; }
+
+.desc-title { font-size: 28rpx; font-weight: 600; color: $gray-800; letter-spacing: 0.3rpx; }
+
+.desc-content { padding: 0 28rpx 28rpx; }
+
+.desc-text { 
+  font-size: 28rpx; color: $gray-500; line-height: 1.8; 
+  font-weight: 400;
+}
+
+/* ========== 核心功能卡片 ========== */
+.feature-header {
+  display: flex; align-items: center; gap: 16rpx;
+  padding: 28rpx 28rpx 20rpx;
+}
+
+.feature-icon-wrap {
+  width: 44rpx; height: 44rpx; border-radius: 12rpx;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+  display: flex; align-items: center; justify-content: center;
+}
+
+.feature-icon { font-size: 24rpx; }
+
+.feature-title { font-size: 28rpx; font-weight: 600; color: $gray-800; letter-spacing: 0.3rpx; }
+
+.feature-grid { padding: 8rpx 28rpx 28rpx; display: flex; flex-direction: column; gap: 20rpx; }
+
+.feature-item {
+  display: flex; align-items: center;
+  padding: 16rpx;
+  border-radius: $radius-sm;
+  background: $gray-50;
+  transition: all 0.25s ease;
+
+  &:active { background: $gray-100; transform: translateX(4rpx); }
+}
+
+.feature-dot {
+  width: 36rpx; height: 36rpx; border-radius: 10rpx;
+  display: flex; align-items: center; justify-content: center;
+  margin-right: 14rpx; flex-shrink: 0;
+  font-size: 20rpx;
+
+  &.feature-photo { background: linear-gradient(135deg, #fce7f3, #fbcfe8); }
+  &.feature-checkin { background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
+  &.feature-vaccine { background: linear-gradient(135deg, #dcfce7, #bbf7d0); }
+  &.feature-feed { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+  &.feature-social { background: linear-gradient(135deg, #f3e8ff, #e9d5ff); }
+}
+
+.feature-text { font-size: 27rpx; color: $gray-800; font-weight: 500; line-height: 1.4; }
+
+/* ========== 页脚 ========== */
+.footer-section {
   display: flex; flex-direction: column; align-items: center;
   padding: 40rpx 0 80rpx;
 }
-.footer-text { font-size: 24rpx; color: $text-light; margin-bottom: 8rpx; }
+
+.footer-divider {
+  width: 120rpx; height: 3rpx;
+  background: linear-gradient(90deg, transparent, $gray-300, transparent);
+  margin-bottom: 24rpx;
+  border-radius: 2rpx;
+}
+
+.footer-line1 { font-size: 26rpx; color: $gray-500; margin-bottom: 8rpx; font-weight: 500; }
+.footer-line2 { font-size: 24rpx; color: $gray-300; font-weight: 400; }
 </style>

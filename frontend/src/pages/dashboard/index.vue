@@ -14,44 +14,58 @@
 
     <scroll-view scroll-y class="board-scroll" :style="{ paddingTop: (statusBarHeight + 54) + 'px' }">
       <view class="board-content">
-        <view class="pet-selector">
-          <view class="pet-selector-card" @touchstart.stop="togglePetSelector">
-            <view class="pet-selector-left">
-              <avatar-view :src="selectedPet && selectedPet.avatar ? selectedPet.avatar : ''" :name="selectedPet ? selectedPet.name : ''" :id="selectedPet ? selectedPet.id : ''" :size="72" />
-              <view class="pet-selector-meta">
-                <text class="pet-selector-name">{{ selectedPet ? selectedPet.name : "请选择宠物" }}</text>
-                <text class="pet-selector-breed">{{ selectedPet ? (selectedPet.breed || "") : "" }}</text>
-              </view>
+        <!-- 宠物选择器 - 与体重记录页完全一致的玻璃拟态设计 -->
+        <view v-if="selectedPet" class="pet-info-card glass-card pet-selector-enhanced">
+          <view class="pet-selector-main" @click="showPetSelector = true">
+            <image class="pet-info-avatar glass-avatar-pet" :src="selectedPet.avatar || ''" mode="aspectFill" />
+            <view class="pet-info-meta">
+              <text class="pet-info-name">{{ selectedPet.name }}</text>
+              <text class="pet-info-breed">{{ selectedPet.breed || '未设置品种' }}</text>
             </view>
-            <text class="pet-selector-arrow">{{ petSelectorOpen ? "⌃" : "⌄" }}</text>
-          </view>
-
-          <view v-show="petSelectorOpen" class="pet-selector-pop" @touchstart.stop="closePetSelector">
-            <scroll-view scroll-y class="pet-selector-list">
-              <view
-                v-for="pet in pets"
-                :key="pet.id"
-                class="pet-selector-item"
-                @touchstart.stop="selectPet(pet)"
-              >
-                <avatar-view :src="pet.avatar || ''" :name="pet.name || ''" :id="pet.id" :size="56" />
-                <view class="pet-selector-item-meta">
-                  <text class="pet-selector-item-name">{{ pet.name }}</text>
-                  <text class="pet-selector-item-breed">{{ pet.breed || "" }}</text>
-                </view>
+            <view class="pet-switch-area glass-pet-switcher">
+              <view class="switch-indicator">
+                <text class="switch-icon">🔄</text>
+                <text class="switch-text">切换</text>
               </view>
-            </scroll-view>
+              <text class="switch-arrow">›</text>
+            </view>
           </view>
         </view>
 
-        <!-- AI 健康分析入口 -->
-        <view class="ai-entry" @tap="goAiAnalysis">
+        <!-- 宠物选择弹窗 - 与体重记录页完全一致 -->
+        <view v-if="showPetSelector" class="modal-mask glass-modal-mask" @click="showPetSelector = false">
+          <view class="modal-content pet-select-modal glass-modal-card" @click.stop>
+            <view class="modal-header glass-modal-header">
+              <text class="modal-title">选择宠物</text>
+              <text class="modal-close glass-modal-close" @click="showPetSelector = false">✕</text>
+            </view>
+            <view class="pet-list-container glass-list-container">
+              <view
+                v-for="(petItem, idx) in pets"
+                :key="petItem.id"
+                class="pet-option-item glass-pet-option"
+                :class="{ active: selectedPet && selectedPet.id === petItem.id }"
+                @click="selectPetDirectly(petItem)"
+              >
+                <image class="option-avatar glass-option-avatar" :src="petItem.avatar || ''" mode="aspectFill" />
+                <view class="option-info">
+                  <text class="option-name">{{ petItem.name }}</text>
+                  <text class="option-breed">{{ petItem.breed || '未设置品种' }}</text>
+                </view>
+                <view v-if="selectedPet && selectedPet.id === petItem.id" class="option-check">✓</view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- AI 健康分析入口 - 玻璃渐变增强 -->
+        <view class="ai-entry glass-ai-card" @tap="goAiAnalysis">
           <view class="ai-entry-left">
             <text class="ai-entry-icon">🤖</text>
             <view class="ai-entry-text">
               <view class="ai-entry-title-row">
                 <text class="ai-entry-title">AI 健康分析</text>
-                <view class="ai-generated-tag">
+                <view class="ai-generated-tag glass-ai-badge">
                   <text class="ai-generated-tag-icon">✨</text>
                   <text class="ai-generated-tag-text">AI生成</text>
                 </view>
@@ -60,38 +74,38 @@
               <text v-else class="ai-entry-desc">智能评估宠物健康状况</text>
             </view>
           </view>
-          <view v-if="aiSummary && aiSummary.warningCount > 0" class="ai-entry-badge">
+          <view v-if="aiSummary && aiSummary.warningCount > 0" class="ai-entry-badge glass-warning-badge">
             <text class="ai-entry-badge-text">{{ aiSummary.warningCount }}</text>
           </view>
           <text class="ai-entry-arrow">›</text>
         </view>
 
-        <!-- 体重趋势（对齐 pages/test/health 布局） -->
+        <!-- 体重趋势 - 玻璃卡片 -->
         <view class="dash-section">
           <view class="section-header">
             <text class="section-title">⚖️ 体重趋势</text>
-            <view class="chart-switch">
+            <view class="chart-switch glass-chip-group">
               <view
                 v-for="opt in chartRangeOptions"
                 :key="opt.value"
-                class="switch-chip"
+                class="switch-chip glass-chip"
                 :class="{ active: chartRange === opt.value }"
                 @tap="onChartRangeChange(opt.value)"
               >
                 <text class="switch-chip-text">{{ opt.label }}</text>
               </view>
-              <view class="switch-chip" @tap="goRecordList">
+              <view class="switch-chip glass-chip" @tap="goRecordList">
                 <text class="switch-chip-text">记录</text>
               </view>
             </view>
           </view>
 
-          <view class="dash-card chart-card-inner">
+          <view class="dash-card chart-card-inner glass-chart-card">
             <view v-if="weightChartHasData" class="chart-wrap chart-wrap--weight">
               <view class="y-axis">
                 <text v-for="(t, i) in weightYLabels" :key="'y'+i" class="y-tick">{{ t }}</text>
               </view>
-              <view class="chart-plot">
+              <view class="chart-plot glass-chart-plot">
                 <view class="grid-lines">
                   <view v-for="n in 5" :key="n" class="grid-line"></view>
                 </view>
@@ -104,7 +118,7 @@
                 <view
                   v-for="(pt, idx) in weightChartPoints"
                   :key="'p'+idx"
-                  class="line-dot line-dot--hollow"
+                  class="line-dot line-dot--hollow glass-chart-dot"
                   :style="pt"
                 ></view>
                 <view class="x-axis">
@@ -112,11 +126,11 @@
                 </view>
               </view>
             </view>
-            <view v-else class="chart-empty">
+            <view v-else class="chart-empty glass-chart-empty">
               <text class="chart-empty-text">近{{ chartRange }}天暂无体重记录</text>
             </view>
 
-            <view class="chart-stats">
+            <view class="chart-stats glass-stats-bar">
               <view class="stat-item">
                 <text class="stat-label">当前体重</text>
                 <text class="stat-value">{{ weightStats.current }}</text>
@@ -138,11 +152,11 @@
           </view>
         </view>
 
-        <!-- 驱虫提醒（对齐 pages/test/health 布局） -->
+        <!-- 驱虫提醒 - 玻璃卡片列表 -->
         <view class="dash-section">
           <view class="section-header">
             <text class="section-title">💊 驱虫提醒</text>
-            <view v-if="parasiteCards.length > parasiteCardsLimited.length" class="view-all-btn" @tap="goParasiteList">
+            <view v-if="parasiteCards.length > parasiteCardsLimited.length" class="view-all-btn glass-view-all-btn" @tap="goParasiteList">
               <text class="view-all-text">查看全部</text>
               <text class="view-all-arrow">›</text>
             </view>
@@ -152,7 +166,7 @@
             <view
               v-for="item in parasiteCardsLimited"
               :key="item.id"
-              class="dash-card vaccine-card"
+              class="dash-card vaccine-card glass-reminder-card"
               :class="{ urgent: item.isUrgent }"
             >
               <view class="vaccine-header">
@@ -160,22 +174,22 @@
                   <text class="vaccine-name">{{ item.name }}</text>
                   <text class="vaccine-date">计划日期: {{ item.date }}</text>
                 </view>
-                <view class="vaccine-countdown">
+                <view class="vaccine-countdown glass-countdown-badge" :class="{ countdownUrgent: item.isUrgent }">
                   <text class="countdown-number">{{ item.daysLeft }}</text>
                   <text class="countdown-unit">天</text>
                 </view>
               </view>
 
               <view class="vaccine-progress">
-                <view class="progress-bar">
-                  <view class="progress-fill" :style="{ width: item.progressPercent + '%' }"></view>
+                <view class="progress-bar glass-progress-track">
+                  <view class="progress-fill glass-progress-fill" :style="{ width: item.progressPercent + '%' }"></view>
                 </view>
                 <text class="progress-text">{{ item.progressPercent }}%</text>
               </view>
 
               <view class="vaccine-actions">
                 <button
-                  class="btn-vaccine"
+                  class="btn-vaccine glass-action-btn"
                   :class="{ completed: item.isCompleted }"
                   :disabled="item.isCompleted"
                   @tap="onMarkParasiteDone(item)"
@@ -185,18 +199,18 @@
               </view>
             </view>
           </view>
-          <view v-else class="dash-card vaccine-empty">
+          <view v-else class="dash-card vaccine-empty glass-empty-state">
             <text class="vaccine-empty-icon">💊</text>
             <text class="vaccine-empty-text">暂无驱虫提醒</text>
             <text class="vaccine-empty-hint">点击右下角 + 添加驱虫记录</text>
           </view>
         </view>
 
-        <!-- 疫苗提醒（对齐 pages/test/health 布局） -->
+        <!-- 疫苗提醒 - 玻璃卡片列表 -->
         <view class="dash-section">
           <view class="section-header">
             <text class="section-title">💉 疫苗提醒</text>
-            <view v-if="vaccineCards.length > vaccineCardsLimited.length" class="view-all-btn" @tap="goVaccineList">
+            <view v-if="vaccineCards.length > vaccineCardsLimited.length" class="view-all-btn glass-view-all-btn" @tap="goVaccineList">
               <text class="view-all-text">查看全部</text>
               <text class="view-all-arrow">›</text>
             </view>
@@ -206,7 +220,7 @@
             <view
               v-for="item in vaccineCardsLimited"
               :key="item.id"
-              class="dash-card vaccine-card"
+              class="dash-card vaccine-card glass-reminder-card"
               :class="{ urgent: item.isUrgent }"
             >
               <view class="vaccine-header">
@@ -214,22 +228,22 @@
                   <text class="vaccine-name">{{ item.name }}</text>
                   <text class="vaccine-date">计划日期: {{ item.date }}</text>
                 </view>
-                <view class="vaccine-countdown">
+                <view class="vaccine-countdown glass-countdown-badge" :class="{ countdownUrgent: item.isUrgent }">
                   <text class="countdown-number">{{ item.daysLeft }}</text>
                   <text class="countdown-unit">天</text>
                 </view>
               </view>
 
               <view class="vaccine-progress">
-                <view class="progress-bar">
-                  <view class="progress-fill" :style="{ width: item.progressPercent + '%' }"></view>
+                <view class="progress-bar glass-progress-track">
+                  <view class="progress-fill glass-progress-fill" :style="{ width: item.progressPercent + '%' }"></view>
                 </view>
                 <text class="progress-text">{{ item.progressPercent }}%</text>
               </view>
 
               <view class="vaccine-actions">
                 <button
-                  class="btn-vaccine"
+                  class="btn-vaccine glass-action-btn"
                   :class="{ completed: item.isCompleted }"
                   :disabled="item.isCompleted"
                   @tap="onMarkVaccineDone(item)"
@@ -239,7 +253,7 @@
               </view>
             </view>
           </view>
-          <view v-else class="dash-card vaccine-empty">
+          <view v-else class="dash-card vaccine-empty glass-empty-state">
             <text class="vaccine-empty-icon">💉</text>
             <text class="vaccine-empty-text">暂无疫苗提醒</text>
             <text class="vaccine-empty-hint">点击右下角 + 添加疫苗记录</text>
@@ -248,8 +262,9 @@
       </view>
     </scroll-view>
 
-    <view class="fab" @tap="addRecord">
-      <view class="fab-inner">
+    <!-- FAB悬浮按钮 - 玻璃增强 -->
+    <view class="fab glass-fab" @tap="addRecord">
+      <view class="fab-inner glass-fab-inner">
         <view class="fab-icon-wrapper">
           <view class="fab-hbar"></view>
           <view class="fab-vbar"></view>
@@ -257,8 +272,9 @@
       </view>
     </view>
 
+    <!-- 底部TabBar - 玻璃拟态 -->
     <view class="board-tabbar-safe">
-      <view class="board-tabbar">
+      <view class="board-tabbar glass-tabbar">
         <view class="board-tab-item" @tap="goTab('/pages/home/index', true)">
           <text class="board-tab-icon">⌂</text>
           <text class="board-tab-text">首页</text>
@@ -295,6 +311,7 @@ export default {
       pets: [],
       selectedPet: null,
       petSelectorOpen: false,
+      showPetSelector: false,
       searchQuery: "",
       chartDates: [],
       weightSeriesRaw: [],
@@ -709,6 +726,12 @@ export default {
       this.searchQuery = "";
       this.loadDashboardData();
     },
+    selectPetDirectly(petItem) {
+      if (!petItem || !petItem.id) return;
+      this.selectedPet = petItem;
+      this.showPetSelector = false;
+      this.loadDashboardData();
+    },
     togglePetSelector() {
       this.petSelectorOpen = !this.petSelectorOpen;
     },
@@ -785,138 +808,580 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* ============================================
+   健康看板页面 - 玻璃拟态风格 (Glassmorphism)
+   保持原逻辑不变，全面升级视觉体验
+   ============================================ */
+
 .board-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: transparent;
 }
 
+/* ====== 滚动区域 ====== */
 .board-scroll {
   height: 100vh;
   box-sizing: border-box;
 }
+
 .board-content {
-  padding: 20rpx 20rpx 220rpx;
+  padding: 20rpx 24rpx 240rpx;
 }
 
-.pet-selector {
+/* ====== 宠物选择器 - 玻璃卡片（最高层级） ====== */
+.glass-section {
   position: relative;
   margin-bottom: 24rpx;
+  animation: sectionFadeIn 0.45s ease-out both;
+  z-index: 100; /* 确保选择器在最上层 */
 }
-.pet-selector-card {
-  background: #fff;
-  border-radius: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
-  padding: 22rpx 20rpx;
+
+@keyframes sectionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ====== 宠物选择器 - 与体重记录页完全一致的玻璃拟态设计 ====== */
+.glass-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.86);
+  border-radius: 26rpx;
+  padding: 26rpx;
+  margin-bottom: 22rpx;
+  box-shadow:
+    0 6rpx 24rpx rgba(31, 38, 135, 0.08),
+    0 2rpx 8rpx rgba(0, 0, 0, 0.03),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1rpx 0 rgba(0, 0, 0, 0.02);
+  backdrop-filter: blur(20px);
+  border: 1rpx solid rgba(200, 210, 220, 0.45);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1rpx;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.88), transparent);
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 5%;
+    right: 5%;
+    height: 2rpx;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 122, 61, 0.35) 30%,
+      rgba(255, 122, 61, 0.5) 50%,
+      rgba(255, 122, 61, 0.35) 70%,
+      transparent 100%
+    );
+    border-radius: 0 0 4rpx 4rpx;
+    pointer-events: none;
+  }
+}
+
+.pet-info-card {
+  display: flex;
+  align-items: center;
+}
+
+.pet-selector-enhanced {
+  cursor: pointer;
+  transition: all 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow:
+      0 8rpx 28rpx rgba(31, 38, 135, 0.12),
+      0 3rpx 10rpx rgba(0, 0, 0, 0.04),
+      inset 0 1rpx 0 rgba(255, 255, 255, 0.92);
+  }
+}
+
+.pet-selector-main {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.glass-avatar-pet {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  margin-right: 22rpx;
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  flex-shrink: 0;
+  box-shadow:
+    0 8rpx 24rpx rgba(255, 122, 61, 0.15),
+    0 4rpx 12rpx rgba(0, 0, 0, 0.06),
+    inset 0 2rpx 4rpx rgba(255, 255, 255, 0.5);
+  border: 3rpx solid rgba(255, 255, 255, 0.8);
+  transition: all 0.3s ease;
+
+  .pet-selector-enhanced:active & {
+    transform: scale(0.95) rotate(-3deg);
+    box-shadow:
+      0 6rpx 18rpx rgba(255, 122, 61, 0.2),
+      0 2rpx 8rpx rgba(0, 0, 0, 0.08),
+      inset 0 1rpx 2rpx rgba(255, 255, 255, 0.6);
+  }
+}
+
+.pet-info-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.pet-info-name {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: var(--pt-text, #111827);
+  display: block;
+  letter-spacing: 0.8rpx;
+  margin-bottom: 6rpx;
+}
+
+.pet-info-breed {
+  font-size: 25rpx;
+  color: var(--pt-muted, #9ca3af);
+  display: block;
+  font-weight: 500;
+}
+
+.glass-pet-switcher {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 14rpx 24rpx;
+  background: linear-gradient(135deg, rgba(255, 245, 240, 0.85) 0%, rgba(255, 250, 247, 0.78) 100%);
+  border-radius: 999rpx;
+  backdrop-filter: blur(10px);
+  border: 1.5rpx solid rgba(255, 122, 61, 0.2);
+  box-shadow:
+    0 4rpx 14rpx rgba(255, 106, 61, 0.1),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+
+  &:active {
+    transform: scale(0.94);
+    background: linear-gradient(135deg, rgba(255, 235, 230, 0.92) 0%, rgba(255, 245, 240, 0.88) 100%);
+    box-shadow:
+      0 6rpx 18rpx rgba(255, 106, 61, 0.18),
+      inset 0 1rpx 2rpx rgba(255, 122, 61, 0.15);
+    border-color: rgba(255, 122, 61, 0.35);
+  }
+}
+
+.switch-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.switch-icon {
+  font-size: 26rpx;
+  animation: switchRotate 2s linear infinite;
+}
+
+@keyframes switchRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.switch-text {
+  font-size: 25rpx;
+  color: var(--pt-primary, #ff7a3d);
+  font-weight: 700;
+  letter-spacing: 1rpx;
+}
+
+.switch-arrow {
+  font-size: 32rpx;
+  color: var(--pt-primary, #ff7a3d);
+  font-weight: 600;
+  transition: transform 0.28s ease;
+
+  .glass-pet-switcher:active & {
+    transform: translateX(4rpx);
+  }
+}
+
+/* ====== 宠物选择弹窗 - 与体重记录页完全一致 ====== */
+.glass-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+  animation: modalFadeIn 0.25s ease-out both;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.glass-modal-card {
+  width: 80%;
+  max-height: 80vh;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(252, 250, 250, 0.96) 100%);
+  border-radius: 32rpx;
+  overflow: hidden;
+  backdrop-filter: blur(28px);
+  border: 2rpx solid rgba(200, 210, 220, 0.45);
+  box-shadow:
+    0 28rpx 68rpx rgba(31, 38, 135, 0.22),
+    0 12rpx 32rpx rgba(0, 0, 0, 0.12),
+    0 4rpx 12rpx rgba(0, 0, 0, 0.06),
+    inset 0 2rpx 0 rgba(255, 255, 255, 1),
+    inset 0 -1rpx 0 rgba(180, 190, 200, 0.15);
+  animation: modalSlideUpEnhanced 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 5%;
+    right: 5%;
+    height: 3rpx;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 122, 61, 0.6) 20%,
+      rgba(255, 122, 61, 0.8) 50%,
+      rgba(255, 122, 61, 0.6) 80%,
+      transparent 100%
+    );
+    border-radius: 0 0 6rpx 6rpx;
+    pointer-events: none;
+    z-index: 10;
+  }
+}
+
+@keyframes modalSlideUpEnhanced {
+  from {
+    opacity: 0;
+    transform: translateY(50rpx) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pet-select-modal {
+  max-height: 70vh;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40rpx) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.glass-list-container {
+  padding: 20rpx;
+  max-height: 55vh;
+  overflow-y: auto;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.5) 0%, transparent 100%);
+}
+
+.glass-pet-option {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 20rpx;
+  border-radius: 22rpx;
+  margin-bottom: 14rpx;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  border: 1.5rpx solid rgba(210, 220, 230, 0.35);
+  box-shadow:
+    0 2rpx 8rpx rgba(31, 38, 135, 0.04),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.9);
+  transition: all 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:active {
+    transform: scale(0.97);
+    background: rgba(255, 245, 240, 0.85);
+    border-color: rgba(255, 122, 61, 0.3);
+  }
+
+  &.active {
+    background: linear-gradient(135deg, rgba(255, 250, 245, 0.98) 0%, rgba(255, 248, 245, 0.95) 100%);
+    border: 2rpx solid var(--pt-primary, #ff7a3d);
+    box-shadow:
+      0 6rpx 22rpx rgba(255, 106, 61, 0.18),
+      0 2rpx 8rpx rgba(255, 106, 61, 0.08),
+      inset 0 1rpx 0 rgba(255, 255, 255, 1),
+      inset 0 -1rpx 0 rgba(255, 122, 61, 0.08);
+
+    .option-name {
+      color: var(--pt-primary, #ff7a3d);
+      font-weight: 800;
+    }
+
+    .option-check {
+      display: flex;
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.glass-option-avatar {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  margin-right: 18rpx;
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  flex-shrink: 0;
+  box-shadow: 0 4rpx 12rpx rgba(255, 122, 61, 0.12);
+  border: 2rpx solid rgba(255, 255, 255, 0.8);
+}
+
+.option-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.option-name {
+  font-size: 29rpx;
+  font-weight: 700;
+  color: var(--pt-text, #374151);
+  display: block;
+  margin-bottom: 4rpx;
+  transition: all 0.28s ease;
+}
+
+.option-breed {
+  font-size: 24rpx;
+  color: var(--pt-muted, #9ca3af);
+  display: block;
+  font-weight: 500;
+}
+
+.option-check {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 14rpx rgba(255, 90, 61, 0.3);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.glass-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32rpx 28rpx;
+  background: linear-gradient(180deg, rgba(255, 248, 245, 0.8) 0%, rgba(255, 255, 255, 0.4) 100%);
+  border-bottom: 1.5rpx solid rgba(210, 220, 230, 0.35);
+  backdrop-filter: blur(10px);
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1rpx;
+    left: 15%;
+    right: 15%;
+    height: 2rpx;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 122, 61, 0.25),
+      transparent
+    );
+    pointer-events: none;
+  }
+}
+
+.modal-title {
+  font-size: 33rpx;
+  font-weight: 800;
+  color: var(--pt-text, #111827);
+  letter-spacing: 0.5rpx;
+}
+
+.glass-modal-close {
+  font-size: 34rpx;
+  color: var(--pt-muted, #9ca3af);
+  padding: 10rpx;
+  border-radius: 50%;
+  transition: all 0.25s ease;
+
+  &:active {
+    background: rgba(255, 77, 79, 0.1);
+    color: #ff4d4f;
+    transform: rotate(90deg);
+  }
+}
+
+/* ====== AI入口卡片 - 渐变玻璃增强 ====== */
+.glass-ai-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-.pet-selector-left {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-}
-.pet-selector-avatar {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 36rpx;
-  background: #e5e7eb;
-}
-.pet-selector-meta {
-  display: flex;
-  flex-direction: column;
-}
-.pet-selector-name {
-  font-size: 30rpx;
-  font-weight: 900;
-  color: #111827;
-}
-.pet-selector-breed {
-  margin-top: 6rpx;
-  font-size: 22rpx;
-  color: #6b7280;
-}
-.pet-selector-arrow {
-  font-size: 30rpx;
-  color: #6b7280;
-}
-
-.ai-entry {
-  display: flex; align-items: center; justify-content: space-between;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20rpx; padding: 24rpx 28rpx; margin-bottom: 24rpx;
-}
-.ai-entry-left { display: flex; align-items: center; gap: 16rpx; }
-.ai-entry-icon { font-size: 44rpx; }
-.ai-entry-text { display: flex; flex-direction: column; }
-.ai-entry-title-row { display: flex; align-items: center; gap: 10rpx; }
-.ai-entry-title { font-size: 30rpx; font-weight: 600; color: #fff; }
-.ai-generated-tag { display: flex; align-items: center; gap: 4rpx; background: rgba(255,255,255,0.15); border: 1rpx solid rgba(255,255,255,0.25); border-radius: 12rpx; padding: 4rpx 10rpx; }
-.ai-generated-tag-icon { font-size: 18rpx; }
-.ai-generated-tag-text { font-size: 18rpx; font-weight: 600; color: rgba(255,255,255,0.9); }
-.ai-entry-desc { font-size: 22rpx; color: rgba(255,255,255,0.8); margin-top: 4rpx; }
-.ai-entry-badge { width: 36rpx; height: 36rpx; border-radius: 18rpx; background: #ff3b30; display: flex; align-items: center; justify-content: center; margin-right: 8rpx; }
-.ai-entry-badge-text { font-size: 20rpx; font-weight: 700; color: #fff; }
-.ai-entry-arrow { font-size: 40rpx; color: rgba(255,255,255,0.8); }
-
-.pet-selector-pop {
-  position: absolute;
-  top: calc(100% + 12rpx);
-  left: 0;
-  right: 0;
-  background: #fff;
-  border-radius: 24rpx;
-  box-shadow: 0 18rpx 44rpx rgba(0, 0, 0, 0.12);
-  z-index: 50;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.92) 0%, rgba(118, 75, 162, 0.92) 100%);
+  border-radius: 26rpx;
+  padding: 26rpx 28rpx;
+  margin-bottom: 24rpx;
+  backdrop-filter: blur(24px);
+  border: 1rpx solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 10rpx 40rpx rgba(102, 126, 234, 0.3),
+    0 4rpx 16rpx rgba(118, 75, 162, 0.2),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1rpx 0 rgba(0, 0, 0, 0.15);
+  position: relative;
   overflow: hidden;
-  animation: slideDown 0.2s ease-out;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.08), transparent 70%);
+    pointer-events: none;
+    animation: aiCardGlow 8s ease-in-out infinite alternate;
+  }
+
+  &:active {
+    transform: scale(0.97);
+    opacity: 0.95;
+  }
 }
 
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10rpx); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes aiCardGlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
-.pet-selector-search {
-  padding: 16rpx;
-  border-bottom: 1rpx solid rgba(17, 24, 39, 0.08);
-}
-.pet-selector-input {
-  background: #f9fafb;
-  border-radius: 16rpx;
-  padding: 18rpx 16rpx;
-  font-size: 26rpx;
-}
-.pet-selector-list {
-  max-height: 360rpx;
-}
-.pet-selector-item {
+
+.ai-entry-left {
   display: flex;
   align-items: center;
-  gap: 14rpx;
-  padding: 16rpx;
+  gap: 18rpx;
+  position: relative;
+  z-index: 1;
 }
-.pet-selector-item-avatar {
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 28rpx;
-  background: #e5e7eb;
+
+.ai-entry-icon {
+  font-size: 46rpx;
 }
-.pet-selector-item-meta {
+
+.ai-entry-text {
   display: flex;
   flex-direction: column;
 }
-.pet-selector-item-name {
-  font-size: 28rpx;
-  font-weight: 800;
-  color: #111827;
-}
-.pet-selector-item-breed {
-  margin-top: 4rpx;
-  font-size: 22rpx;
-  color: #6b7280;
+
+.ai-entry-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
 }
 
-/* —— pages/test/health 风格区块 —— */
+.ai-entry-title {
+  font-size: 31rpx;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
+}
+
+.glass-ai-badge {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1rpx solid rgba(255, 255, 255, 0.45);
+  border-radius: 18rpx;
+  padding: 6rpx 16rpx;
+  backdrop-filter: blur(8px);
+}
+
+.ai-generated-tag-icon {
+  font-size: 22rpx;
+}
+
+.ai-generated-tag-text {
+  font-size: 21rpx;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 1rpx;
+}
+
+.ai-entry-desc {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.82);
+  margin-top: 6rpx;
+  font-weight: 500;
+}
+
+.glass-warning-badge {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #ff3b30 0%, #ff5544 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10rpx;
+  box-shadow: 0 4rpx 14rpx rgba(255, 59, 48, 0.4);
+  position: relative;
+  z-index: 1;
+}
+
+.ai-entry-badge-text {
+  font-size: 22rpx;
+  font-weight: 800;
+  color: #fff;
+}
+
+.ai-entry-arrow {
+  font-size: 42rpx;
+  color: rgba(255, 255, 255, 0.85);
+  position: relative;
+  z-index: 1;
+}
+
+/* ====== 区块头部 ====== */
 .dash-section {
   margin-bottom: 32rpx;
 }
@@ -926,179 +1391,240 @@ export default {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20rpx;
+  margin-bottom: 22rpx;
   padding: 0 8rpx;
 }
 
 .section-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #111827;
+  font-size: 33rpx;
+  font-weight: 700;
+  color: var(--pt-text, #111827);
+  letter-spacing: 0.5rpx;
 }
 
-.view-all-btn {
+/* ====== 查看全部按钮 - 玻璃标签 ====== */
+.glass-view-all-btn {
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 8rpx 20rpx;
-  background: rgba(255, 122, 61, 0.08);
+  padding: 10rpx 24rpx;
+  background: linear-gradient(135deg, rgba(255, 122, 61, 0.1) 0%, rgba(255, 77, 79, 0.08) 100%);
   border-radius: 30rpx;
+  backdrop-filter: blur(8px);
+  border: 1rpx solid rgba(255, 122, 61, 0.15);
+  transition: all 0.3s ease;
+
+  &:active {
+    transform: scale(0.95);
+    background: linear-gradient(135deg, rgba(255, 122, 61, 0.15) 0%, rgba(255, 77, 79, 0.12) 100%);
+  }
 }
 
 .view-all-text {
-  font-size: 24rpx;
-  color: #ff7a3d;
-  font-weight: 500;
+  font-size: 25rpx;
+  color: var(--pt-primary, #ff7a3d);
+  font-weight: 600;
 }
 
 .view-all-arrow {
-  font-size: 28rpx;
-  color: #ff7a3d;
-  margin-left: 4rpx;
-  font-weight: 600;
+  font-size: 29rpx;
+  color: var(--pt-primary, #ff7a3d);
+  margin-left: 6rpx;
+  font-weight: 700;
 }
 
-.chart-switch {
+/* ====== 图表切换器 - 玻璃芯片组 ====== */
+.glass-chip-group {
   display: flex;
   gap: 8rpx;
-  background: rgba(255, 122, 61, 0.08);
-  padding: 6rpx 12rpx;
+  background: rgba(249, 250, 251, 0.65);
+  padding: 8rpx 12rpx;
   border-radius: 30rpx;
+  backdrop-filter: blur(10px);
+  border: 1rpx solid rgba(209, 213, 219, 0.25);
 }
 
-.switch-chip {
-  padding: 6rpx 16rpx;
-  border-radius: 20rpx;
-  transition: all 0.2s;
-}
+.glass-chip {
+  padding: 8rpx 20rpx;
+  border-radius: 22rpx;
+  transition: all 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(6px);
 
-.switch-chip.active {
-  background: #ff7a3d;
+  &.active {
+    background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+    box-shadow:
+      0 4rpx 14rpx rgba(255, 106, 61, 0.3),
+      inset 0 1rpx 0 rgba(255, 255, 255, 0.3);
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 }
 
 .switch-chip-text {
-  font-size: 22rpx;
-  color: #ff7a3d;
-  font-weight: 500;
-}
-
-.switch-chip.active .switch-chip-text {
-  color: #fff;
+  font-size: 23rpx;
+  color: var(--pt-primary, #ff7a3d);
   font-weight: 600;
 }
 
-.dash-card {
-  background: #fff;
-  border-radius: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+.switch-chip.active .switch-chip-text {
+  color: #ffffff;
+  font-weight: 700;
+  text-shadow: 0 1rpx 4rpx rgba(180, 30, 10, 0.3);
+}
+
+/* ====== 图表卡片 - 玻璃容器 ====== */
+.glass-chart-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.84);
+  border-radius: 28rpx;
+  box-shadow:
+    0 8rpx 32rpx rgba(31, 38, 135, 0.08),
+    0 2rpx 8rpx rgba(0, 0, 0, 0.03),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1rpx 0 rgba(0, 0, 0, 0.02);
+  backdrop-filter: blur(22px);
+  border: 1rpx solid rgba(255, 255, 255, 0.62);
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1rpx;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+    pointer-events: none;
+  }
 }
 
 .chart-card-inner {
-  padding: 24rpx;
+  padding: 26rpx;
 }
 
+/* 图表包装 */
 .chart-wrap--weight {
   display: flex;
   flex-direction: row;
-  gap: 12rpx;
-  margin-bottom: 24rpx;
+  gap: 14rpx;
+  margin-bottom: 26rpx;
 }
 
 .y-axis {
-  width: 56rpx;
+  width: 58rpx;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 16rpx 0 38rpx;
+  padding: 18rpx 0 40rpx;
 }
 
 .y-tick {
-  font-size: 18rpx;
-  color: #9ca3af;
+  font-size: 20rpx;
+  color: var(--pt-muted, #9ca3af);
   text-align: right;
+  font-weight: 500;
 }
 
-.chart-plot {
+/* 图表绘图区 - 玻璃背景 */
+.glass-chart-plot {
   position: relative;
   flex: 1;
   height: 280rpx;
-  border-radius: 12rpx;
-  padding: 16rpx 8rpx 38rpx;
+  border-radius: 16rpx;
+  padding: 18rpx 10rpx 40rpx;
   overflow: hidden;
-  background: #fafafa;
-}
-
-.chart-empty {
-  height: 280rpx;
-  border-radius: 12rpx;
-  background: #fafafa;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 24rpx;
-}
-
-.chart-empty-text {
-  font-size: 26rpx;
-  color: #9ca3af;
+  background: linear-gradient(180deg, rgba(249, 250, 251, 0.5) 0%, rgba(255, 255, 255, 0.3) 100%);
+  backdrop-filter: blur(8px);
+  border: 1rpx solid rgba(209, 213, 219, 0.2);
 }
 
 .grid-lines {
   position: absolute;
-  left: 8rpx;
-  right: 8rpx;
-  top: 16rpx;
-  bottom: 38rpx;
+  left: 10rpx;
+  right: 10rpx;
+  top: 18rpx;
+  bottom: 40rpx;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
+
 .grid-line {
   height: 1rpx;
-  background: rgba(209, 213, 219, 0.65);
+  background: linear-gradient(90deg, transparent, rgba(209, 213, 219, 0.5), transparent);
 }
 
 .line-seg {
   position: absolute;
-  height: 4rpx;
-  border-radius: 4rpx;
+  height: 5rpx;
+  border-radius: 5rpx;
   transform-origin: left center;
+  filter: drop-shadow(0 2rpx 4rpx rgba(16, 185, 129, 0.3));
 }
 
 .line-dot {
   position: absolute;
-  width: 14rpx;
-  height: 14rpx;
-  border-radius: 7rpx;
-  transform: translate(-7rpx, -7rpx);
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  transform: translate(-8rpx, -8rpx);
   box-sizing: border-box;
+  box-shadow: 0 2rpx 8rpx rgba(16, 185, 129, 0.3);
 }
 
 .line-dot--hollow {
-  border-width: 3rpx;
+  border-width: 4rpx;
   border-style: solid;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
 }
 
 .x-axis {
   position: absolute;
-  left: 8rpx;
-  right: 8rpx;
-  bottom: 8rpx;
+  left: 10rpx;
+  right: 10rpx;
+  bottom: 10rpx;
   display: flex;
   justify-content: space-between;
 }
+
 .x-item {
-  font-size: 20rpx;
-  color: #6b7280;
+  font-size: 21rpx;
+  color: var(--pt-secondary, #6b7280);
+  font-weight: 500;
 }
 
-.chart-stats {
+/* 空状态 - 玻璃提示 */
+.glass-chart-empty {
+  height: 280rpx;
+  border-radius: 16rpx;
+  background: linear-gradient(135deg, rgba(249, 250, 251, 0.6) 0%, rgba(255, 255, 255, 0.4) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 26rpx;
+  backdrop-filter: blur(8px);
+  border: 1rpx dashed rgba(209, 213, 219, 0.4);
+}
+
+.chart-empty-text {
+  font-size: 27rpx;
+  color: var(--pt-muted, #9ca3af);
+  font-weight: 500;
+}
+
+/* 统计栏 - 玻璃分割条 */
+.glass-stats-bar {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-around;
-  padding-top: 24rpx;
-  border-top: 1rpx solid rgba(17, 24, 39, 0.08);
+  padding-top: 26rpx;
+  border-top: 1rpx solid rgba(17, 24, 39, 0.06);
+  backdrop-filter: blur(4px);
 }
 
 .stat-item {
@@ -1109,44 +1635,86 @@ export default {
 }
 
 .stat-label {
-  font-size: 22rpx;
-  color: #6b7280;
-  margin-bottom: 8rpx;
+  font-size: 23rpx;
+  color: var(--pt-secondary, #6b7280);
+  margin-bottom: 10rpx;
+  font-weight: 600;
 }
 
 .stat-value {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #111827;
+  font-size: 33rpx;
+  font-weight: 800;
+  color: var(--pt-text, #111827);
+  letter-spacing: -0.5rpx;
 }
 
 .stat-value.up {
   color: #10b981;
+  text-shadow: 0 2rpx 8rpx rgba(16, 185, 129, 0.2);
 }
 
 .stat-value.down {
   color: #ff4d4f;
+  text-shadow: 0 2rpx 8rpx rgba(255, 77, 79, 0.2);
 }
 
 .stat-divider {
   width: 1rpx;
-  height: 60rpx;
-  background: rgba(17, 24, 39, 0.08);
+  height: 64rpx;
+  background: linear-gradient(180deg, transparent, rgba(17, 24, 39, 0.08), transparent);
 }
 
+/* ====== 提醒卡片列表 ====== */
 .vaccine-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 22rpx;
 }
 
-.vaccine-card {
-  padding: 24rpx;
-}
+/* 提醒卡片 - 玻璃拟态 */
+.glass-reminder-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.84);
+  border-radius: 26rpx;
+  box-shadow:
+    0 6rpx 24rpx rgba(31, 38, 135, 0.08),
+    0 2rpx 8rpx rgba(0, 0, 0, 0.03),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.92);
+  padding: 26rpx;
+  backdrop-filter: blur(20px);
+  border: 1rpx solid rgba(255, 255, 255, 0.62);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 
-.vaccine-card.urgent {
-  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
-  border: 2rpx solid rgba(255, 77, 79, 0.2);
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1rpx;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.88), transparent);
+    pointer-events: none;
+  }
+
+  &:hover,
+  &:active {
+    transform: translateY(-4rpx);
+    box-shadow:
+      0 14rpx 36rpx rgba(31, 38, 135, 0.15),
+      inset 0 1rpx 0 rgba(255, 255, 255, 1);
+  }
+
+  &.urgent {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 245, 245, 0.88) 0%,
+      rgba(255, 232, 232, 0.82) 100%
+    );
+    border-color: rgba(255, 77, 79, 0.25);
+    box-shadow:
+      0 6rpx 24rpx rgba(255, 77, 79, 0.12),
+      inset 0 1rpx 0 rgba(255, 255, 255, 0.92);
+  }
 }
 
 .vaccine-header {
@@ -1154,193 +1722,272 @@ export default {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20rpx;
+  margin-bottom: 22rpx;
 }
 
 .vaccine-info {
   flex: 1;
-  padding-right: 16rpx;
+  padding-right: 18rpx;
 }
 
 .vaccine-name {
   display: block;
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #111827;
+  font-size: 31rpx;
+  font-weight: 700;
+  color: var(--pt-text, #111827);
   margin-bottom: 8rpx;
+  letter-spacing: 0.3rpx;
 }
 
 .vaccine-date {
   display: block;
-  font-size: 22rpx;
-  color: #6b7280;
+  font-size: 23rpx;
+  color: var(--pt-secondary, #6b7280);
+  font-weight: 500;
 }
 
-.vaccine-countdown {
+/* 倒计时徽章 - 玻璃样式 */
+.glass-countdown-badge {
   display: flex;
   flex-direction: row;
   align-items: baseline;
-  background: #d1fae5;
-  padding: 12rpx 20rpx;
-  border-radius: 30rpx;
+  background: linear-gradient(135deg, rgba(209, 250, 229, 0.9) 0%, rgba(167, 243, 208, 0.85) 100%);
+  padding: 14rpx 24rpx;
+  border-radius: 32rpx;
   flex-shrink: 0;
-}
+  backdrop-filter: blur(8px);
+  border: 1rpx solid rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4rpx 12rpx rgba(16, 185, 129, 0.15);
+  transition: all 0.3s ease;
 
-.vaccine-card.urgent .vaccine-countdown {
-  background: #ff4d4f;
+  &.countdownUrgent {
+    background: linear-gradient(135deg, #ff4d4f 0%, #ff6b6b 100%);
+    border-color: rgba(255, 77, 79, 0.4);
+    box-shadow: 0 6rpx 20rpx rgba(255, 77, 79, 0.35);
+  }
 }
 
 .countdown-number {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #111827;
+  font-size: 38rpx;
+  font-weight: 800;
+  color: var(--pt-text, #111827);
   margin-right: 4rpx;
+  letter-spacing: -0.5rpx;
 }
 
-.vaccine-card.urgent .countdown-number,
-.vaccine-card.urgent .countdown-unit {
+.countdownUrgent .countdown-number,
+.countdownUrgent .countdown-unit {
   color: #ffffff;
+  text-shadow: 0 2rpx 6rpx rgba(180, 30, 10, 0.3);
 }
 
 .countdown-unit {
-  font-size: 22rpx;
-  color: #6b7280;
+  font-size: 23rpx;
+  color: var(--pt-secondary, #6b7280);
+  font-weight: 600;
 }
 
+/* 进度条 - 玻璃轨道 */
 .vaccine-progress {
-  margin-bottom: 20rpx;
+  margin-bottom: 22rpx;
 }
 
-.progress-bar {
-  height: 12rpx;
-  background: #fff4e6;
-  border-radius: 6rpx;
+.glass-progress-track {
+  height: 14rpx;
+  background: rgba(255, 244, 230, 0.6);
+  border-radius: 7rpx;
   overflow: hidden;
-  margin-bottom: 8rpx;
+  margin-bottom: 10rpx;
+  backdrop-filter: blur(4px);
+  border: 1rpx solid rgba(255, 183, 77, 0.15);
+  box-shadow: inset 0 1rpx 3rpx rgba(0, 0, 0, 0.05);
 }
 
-.progress-fill {
+.glass-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #d1fae5 0%, #10b981 100%);
-  border-radius: 6rpx;
+  background: linear-gradient(90deg, #34c759 0%, #5dd87a 100%);
+  border-radius: 7rpx;
+  position: relative;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2rpx 8rpx rgba(52, 199, 89, 0.3);
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent);
+    border-radius: 7rpx 7rpx 0 0;
+  }
 }
 
 .progress-text {
-  font-size: 20rpx;
-  color: #9ca3af;
+  font-size: 22rpx;
+  color: var(--pt-muted, #9ca3af);
   text-align: right;
   display: block;
+  font-weight: 600;
 }
 
+/* 操作按钮 - 玻璃样式 */
 .vaccine-actions {
   display: flex;
   justify-content: center;
 }
 
-.btn-vaccine {
+.glass-action-btn {
   background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
   color: #ffffff;
   border: none;
-  border-radius: 999rpx;
-  padding: 16rpx 48rpx;
-  font-size: 26rpx;
-  font-weight: 500;
+  border-radius: 48rpx;
+  padding: 18rpx 56rpx;
+  font-size: 27rpx;
+  font-weight: 700;
   line-height: 1.2;
-  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
-}
+  box-shadow:
+    0 8rpx 24rpx rgba(255, 106, 61, 0.35),
+    0 2rpx 8rpx rgba(255, 106, 61, 0.2),
+    inset 0 2rpx 0 rgba(255, 255, 255, 0.3),
+    inset 0 -2rpx 0 rgba(180, 50, 20, 0.2);
+  transition: all 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
 
-.btn-vaccine.completed {
-  background: #d1fae5;
-  box-shadow: none;
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    transition: left 0.55s ease;
+  }
+
+  &:active {
+    transform: scale(0.96);
+    box-shadow:
+      0 4rpx 14rpx rgba(255, 106, 61, 0.25),
+      inset 0 4rpx 12rpx rgba(140, 30, 10, 0.2);
+  }
+
+  &:active::after {
+    left: 100%;
+  }
+
+  &.completed {
+    background: linear-gradient(135deg, rgba(209, 250, 229, 0.9) 0%, rgba(167, 243, 208, 0.85) 100%);
+    box-shadow: 0 4rpx 12rpx rgba(16, 185, 129, 0.15);
+  }
 }
 
 .btn-text {
   color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 1rpx;
 }
 
-.btn-vaccine.completed .btn-text {
+.glass-action-btn.completed .btn-text {
   color: #047857;
+  text-shadow: none;
 }
 
-.vaccine-empty {
-  padding: 48rpx 24rpx;
+/* 空状态 - 玻璃容器 */
+.glass-empty-state {
+  padding: 52rpx 28rpx;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8rpx;
+  gap: 12rpx;
+  background: rgba(249, 250, 251, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1rpx dashed rgba(209, 213, 219, 0.4);
 }
 
 .vaccine-empty-icon {
-  font-size: 56rpx;
-  margin-bottom: 8rpx;
+  font-size: 60rpx;
+  margin-bottom: 10rpx;
 }
 
 .vaccine-empty-text {
-  font-size: 28rpx;
-  color: #6b7280;
-  font-weight: 500;
+  font-size: 29rpx;
+  color: var(--pt-secondary, #6b7280);
+  font-weight: 600;
 }
 
 .vaccine-empty-hint {
-  font-size: 22rpx;
-  color: #9ca3af;
+  font-size: 24rpx;
+  color: var(--pt-muted, #9ca3af);
+  font-weight: 500;
 }
 
-.fab {
+/* ====== FAB悬浮按钮 - 与首页一致 ====== */
+.glass-fab {
   position: fixed;
   right: 28rpx;
-  bottom: calc(env(safe-area-inset-bottom) + 250rpx);
+  bottom: calc(env(safe-area-inset-bottom) + 260rpx);
   z-index: 45;
 }
 
-.fab-inner {
-  width: 104rpx;
-  height: 104rpx;
-  border-radius: 30rpx;
+.glass-fab-inner {
+  width: 108rpx; /* 与首页一致 */
+  height: 108rpx;
+  border-radius: 32rpx; /* 与首页一致 */
   background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 32rpx rgba(255, 77, 79, 0.4), 0 2rpx 8rpx rgba(255, 77, 79, 0.2);
-  backdrop-filter: blur(12px);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+  box-shadow:
+    0 12rpx 40rpx rgba(255, 77, 79, 0.45),
+    0 4rpx 12rpx rgba(255, 77, 79, 0.25),
+    inset 0 2rpx 0 rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(16px);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* 与首页一致的缓动函数 */
+  border: 1rpx solid rgba(255, 255, 255, 0.2); /* 与首页一致的边框 */
 
-.fab:active .fab-inner {
-  transform: scale(0.92);
-  box-shadow: 0 4rpx 16rpx rgba(255, 77, 79, 0.3);
+  &:active {
+    transform: scale(0.9) rotate(-5deg); /* ✨ 与首页一致：缩放+轻微旋转 */
+    box-shadow:
+      0 6rpx 20rpx rgba(255, 77, 79, 0.35), /* 与首页一致的阴影 */
+      inset 0 2rpx 8rpx rgba(0, 0, 0, 0.15); /* 与首页一致的内阴影 */
+  }
 }
 
 .fab-icon-wrapper {
   position: relative;
-  width: 38rpx;
-  height: 38rpx;
+  width: 40rpx;
+  height: 40rpx;
+  z-index: 1;
 }
 
 .fab-hbar,
 .fab-vbar {
   position: absolute;
-  background: #fff;
-  border-radius: 4rpx;
+  background: #ffffff;
+  border-radius: 5rpx;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.15);
 }
 
 .fab-hbar {
   top: 50%;
   left: 0;
-  width: 38rpx;
-  height: 5rpx;
+  width: 40rpx;
+  height: 6rpx;
   transform: translateY(-50%);
 }
 
 .fab-vbar {
   left: 50%;
   top: 0;
-  width: 5rpx;
-  height: 38rpx;
+  width: 6rpx;
+  height: 40rpx;
   transform: translateX(-50%);
 }
 
+/* ====== 底部TabBar - 玻璃拟态 ====== */
 .board-tabbar-safe {
   position: fixed;
   left: 0;
@@ -1349,37 +1996,298 @@ export default {
   padding-bottom: env(safe-area-inset-bottom);
   z-index: 42;
 }
-.board-tabbar {
-  margin: 0 24rpx 18rpx;
-  height: 124rpx;
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: 64rpx;
-  box-shadow: 0 18rpx 40rpx rgba(0, 0, 0, 0.12);
-  padding: 0 26rpx;
+
+.glass-tabbar {
+  margin: 0 28rpx 20rpx;
+  height: 130rpx;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 68rpx;
+  box-shadow:
+    0 20rpx 48rpx rgba(0, 0, 0, 0.12),
+    0 6rpx 16rpx rgba(0, 0, 0, 0.06),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1rpx 0 rgba(0, 0, 0, 0.03);
+  padding: 0 28rpx;
   display: flex;
   align-items: center;
   justify-content: space-around;
-  backdrop-filter: blur(16rpx);
+  backdrop-filter: blur(24px);
+  border: 1rpx solid rgba(255, 255, 255, 0.65);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 1rpx;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+    pointer-events: none;
+  }
 }
+
 .board-tab-item {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #8b93a6;
+  color: var(--pt-muted, #8b93a6);
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  &:active {
+    transform: scale(0.93);
+  }
 }
+
 .board-tab-item.active {
-  color: #ff7a3d;
+  color: var(--pt-primary, #ff7a3d);
 }
+
 .board-tab-icon {
-  font-size: 40rpx;
-  line-height: 40rpx;
-  margin-bottom: 10rpx;
+  font-size: 44rpx;
+  line-height: 44rpx;
+  margin-bottom: 12rpx;
+  filter: grayscale(100%);
+  transition: all 0.3s ease;
 }
+
+.board-tab-item.active .board-tab-icon {
+  filter: grayscale(0%);
+  transform: scale(1.1);
+}
+
 .board-tab-text {
-  font-size: 24rpx;
-  line-height: 24rpx;
-  font-weight: 600;
+  font-size: 25rpx;
+  line-height: 25rpx;
+  font-weight: 700;
+  letter-spacing: 0.5rpx;
+}
+
+/* ====== 暗色模式适配 - 宠物选择器与体重记录页完全一致 ====== */
+page.dark .glass-card {
+  background: rgba(40, 40, 55, 0.84);
+  border: 1rpx solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 6rpx 24rpx rgba(0, 0, 0, 0.3),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.1);
+
+  &::before {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  }
+
+  &::after {
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 122, 61, 0.25) 30%,
+      rgba(255, 122, 61, 0.4) 50%,
+      rgba(255, 122, 61, 0.25) 70%,
+      transparent 100%
+    );
+  }
+}
+
+page.dark .glass-avatar-pet {
+  background: linear-gradient(135deg, rgba(255, 150, 100, 0.3) 0%, rgba(255, 120, 80, 0.2) 100%);
+  border-color: rgba(255, 122, 61, 0.3);
+  box-shadow:
+    0 8rpx 24rpx rgba(255, 106, 61, 0.1),
+    inset 0 2rpx 4rpx rgba(255, 255, 255, 0.08);
+
+  .pet-selector-enhanced:active & {
+    transform: scale(0.95) rotate(-3deg);
+    box-shadow:
+      0 6rpx 18rpx rgba(255, 122, 61, 0.15),
+      inset 0 1rpx 2rpx rgba(255, 255, 255, 0.1);
+  }
+}
+
+page.dark .glass-switcher {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+
+  &:active {
+    background: rgba(255, 106, 61, 0.12);
+  }
+}
+
+page.dark .glass-pet-switcher {
+  background: linear-gradient(135deg, rgba(255, 120, 80, 0.12) 0%, rgba(255, 100, 80, 0.08) 100%);
+  border-color: rgba(255, 122, 61, 0.25);
+  box-shadow:
+    0 4rpx 14rpx rgba(255, 106, 61, 0.08),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.05);
+
+  &:active {
+    background: linear-gradient(135deg, rgba(255, 120, 80, 0.18) 0%, rgba(255, 100, 80, 0.14) 100%);
+    border-color: rgba(255, 122, 61, 0.4);
+    box-shadow:
+      0 6rpx 18rpx rgba(255, 106, 61, 0.15),
+      inset 0 1rpx 2rpx rgba(255, 122, 61, 0.12);
+  }
+}
+
+page.dark .pet-info-name {
+  color: #e5e5e5;
+}
+
+page.dark .pet-info-breed {
+  color: #888888;
+}
+
+page.dark .glass-modal-card {
+  background: linear-gradient(145deg, rgba(50, 50, 68, 0.98) 0%, rgba(45, 45, 60, 0.96) 100%);
+  border: 2rpx solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 28rpx 68rpx rgba(0, 0, 0, 0.5),
+    0 12rpx 32rpx rgba(0, 0, 0, 0.3),
+    inset 0 2rpx 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1rpx 0 rgba(255, 122, 61, 0.08);
+
+  &::before {
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 122, 61, 0.4) 20%,
+      rgba(255, 122, 61, 0.6) 50%,
+      rgba(255, 122, 61, 0.4) 80%,
+      transparent 100%
+    );
+  }
+}
+
+page.dark .glass-pet-option {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 2rpx 8rpx rgba(0, 0, 0, 0.15),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.05);
+
+  &:active {
+    background: rgba(255, 120, 80, 0.12);
+    border-color: rgba(255, 122, 61, 0.25);
+  }
+
+  &.active {
+    background: linear-gradient(135deg, rgba(255, 120, 80, 0.25) 0%, rgba(255, 100, 80, 0.2) 100%);
+    border: 2rpx solid rgba(255, 122, 61, 0.5);
+    box-shadow:
+      0 6rpx 22rpx rgba(255, 106, 61, 0.2),
+      0 2rpx 8rpx rgba(255, 106, 61, 0.1),
+      inset 0 1rpx 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1rpx 0 rgba(255, 122, 61, 0.15);
+
+    .option-name {
+      color: #ff9966;
+    }
+  }
+}
+
+page.dark .glass-option-avatar {
+  background: linear-gradient(135deg, rgba(255, 150, 100, 0.25) 0%, rgba(255, 120, 80, 0.15) 100%);
+  border-color: rgba(255, 122, 61, 0.3);
+}
+
+page.dark .glass-modal-header,
+page.dark .glass-modal-footer {
+  background: linear-gradient(180deg, rgba(255, 120, 80, 0.12) 0%, rgba(255, 100, 80, 0.06) 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.15);
+  border-top-color: rgba(255, 255, 255, 0.15);
+
+  &::after {
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 122, 61, 0.3),
+      transparent
+    );
+  }
+}
+
+page.dark .modal-title {
+  color: #e5e5e5;
+}
+
+page.dark .glass-ai-card {
+  background: linear-gradient(135deg, rgba(80, 100, 180, 0.88) 0%, rgba(90, 60, 130, 0.88) 100%);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+page.dark .glass-chart-card {
+  background: rgba(40, 40, 55, 0.78);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8rpx 32rpx rgba(0, 0, 0, 0.3),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.1);
+}
+
+page.dark .glass-chart-plot {
+  background: linear-gradient(180deg, rgba(60, 60, 75, 0.4) 0%, rgba(50, 50, 65, 0.3) 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+page.dark .glass-chart-empty {
+  background: linear-gradient(135deg, rgba(60, 60, 75, 0.5) 0%, rgba(50, 50, 65, 0.4) 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+page.dark .glass-reminder-card {
+  background: rgba(40, 40, 55, 0.78);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 6rpx 24rpx rgba(0, 0, 0, 0.25),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.1);
+}
+
+page.dark .glass-reminder-card.urgent {
+  background: linear-gradient(135deg, rgba(255, 80, 60, 0.2) 0%, rgba(255, 100, 80, 0.15) 100%);
+  border-color: rgba(255, 77, 79, 0.25);
+}
+
+page.dark .glass-countdown-badge:not(.countdownUrgent) {
+  background: linear-gradient(135deg, rgba(80, 180, 100, 0.25) 0%, rgba(60, 160, 80, 0.2) 100%);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+page.dark .countdown-number {
+  color: #e5e5e5;
+}
+
+page.dark .glass-progress-track {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 183, 77, 0.1);
+}
+
+page.dark .glass-action-btn.completed {
+  background: linear-gradient(135deg, rgba(80, 180, 100, 0.3) 0%, rgba(60, 160, 80, 0.25) 100%);
+  box-shadow: 0 4rpx 12rpx rgba(16, 185, 129, 0.15);
+}
+
+page.dark .glass-empty-state {
+  background: rgba(60, 60, 75, 0.3);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+page.dark .glass-tabbar {
+  background: rgba(30, 30, 42, 0.9);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 20rpx 48rpx rgba(0, 0, 0, 0.4),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.12);
+}
+
+page.dark .section-title {
+  color: #e5e5e5;
+}
+
+page.dark .vaccine-name {
+  color: #e5e5e5;
+}
+
+page.dark .stat-value:not(.up):not(.down) {
+  color: #e5e5e5;
+}
+
+page.dark .view-all-text {
+  color: #ff9966;
 }
 </style>
