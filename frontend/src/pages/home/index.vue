@@ -902,7 +902,7 @@ export default {
 <style lang="scss" scoped>
 .home-page {
   min-height: 100vh;
-  background: #f9fafb;
+  background: transparent;
 }
 
 .segment-bar {
@@ -910,10 +910,15 @@ export default {
   left: 0;
   right: 0;
   z-index: 90;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, 0.75) 0%,
+    rgba(255, 255, 255, 0.45) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
   padding-bottom: 24rpx;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.3);
 }
 
 .sys-notice-bar {
@@ -921,11 +926,15 @@ export default {
   left: 24rpx;
   right: 24rpx;
   z-index: 89;
-  background: linear-gradient(135deg, #fff7ed 0%, #fff1f2 100%);
-  border-radius: 16rpx;
-  box-shadow: 0 4rpx 16rpx rgba(255, 122, 61, 0.15);
-  border: 1rpx solid rgba(255, 122, 61, 0.15);
+  background: rgba(255, 247, 237, 0.85);
+  border-radius: 20rpx;
+  box-shadow:
+    0 8rpx 32rpx rgba(255, 122, 61, 0.15),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.8);
+  border: 1rpx solid rgba(255, 122, 61, 0.2);
   overflow: hidden;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .sys-notice-inner {
@@ -994,9 +1003,15 @@ export default {
 .segmented-control {
   display: flex;
   margin: 4rpx 24rpx 8rpx;
-  background: rgba(243, 244, 246, 0.6);
+  background: rgba(255, 255, 255, 0.5);
   border-radius: 999rpx;
   padding: 6rpx;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1rpx solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 4rpx 16rpx rgba(0, 0, 0, 0.05),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.8);
 }
 
 .segment-item {
@@ -1006,17 +1021,23 @@ export default {
   justify-content: center;
   padding: 10rpx 0;
   border-radius: 999rpx;
-  transition: all 0.3s;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .segment-item.active {
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 4rpx 16rpx rgba(0, 0, 0, 0.08),
+    inset 0 1rpx 0 rgba(255, 255, 255, 1);
 
   .segment-text {
     color: #111827;
     font-weight: 700;
   }
+}
+
+.segment-item:active:not(.active) {
+  transform: scale(0.96);
 }
 
 .segment-text {
@@ -1034,11 +1055,52 @@ export default {
 }
 
 .post-card {
-  background: #fff;
-  border-radius: 24rpx;
-  padding: 24rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 28rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  box-shadow:
+    0 8rpx 32rpx rgba(31, 38, 135, 0.1),
+    0 2rpx 8rpx rgba(0, 0, 0, 0.04),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1rpx solid rgba(255, 255, 255, 0.6);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 卡片顶部高光线 */
+.post-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1rpx;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 1),
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* Hover效果 */
+.post-card:hover,
+.post-card:active {
+  box-shadow:
+    0 16rpx 48rpx rgba(31, 38, 135, 0.18),
+    0 4rpx 16rpx rgba(0, 0, 0, 0.06),
+    inset 0 1rpx 0 rgba(255, 255, 255, 1);
+  transform: translateY(-4rpx);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.post-card:active {
+  transform: translateY(-2rpx) scale(0.99);
+  transition-duration: 0.15s;
 }
 
 .post-header {
@@ -1227,17 +1289,30 @@ export default {
   font-size: 22rpx;
   color: #ff6a3d;
   font-weight: 500;
-  padding: 4rpx 12rpx;
-  background: #fff0ea;
-  border-radius: 12rpx;
+  padding: 8rpx 20rpx;
+  background: rgba(255, 106, 61, 0.1);
+  border-radius: 999rpx;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1rpx solid rgba(255, 106, 61, 0.15);
+  transition: all 0.25s ease;
+}
+
+.post-tag:hover {
+  background: rgba(255, 106, 61, 0.18);
+  transform: translateY(-2rpx);
+}
+
+.post-tag:active {
+  transform: scale(0.95);
 }
 
 .post-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 16rpx;
-  border-top: 1rpx solid #f3f4f6;
+  padding-top: 20rpx;
+  border-top: 1rpx solid rgba(0, 0, 0, 0.06);
 }
 
 .actions-left {
@@ -1249,6 +1324,18 @@ export default {
   display: flex;
   align-items: center;
   color: #6b7280;
+  transition: all 0.25s ease;
+  padding: 8rpx 12rpx;
+  border-radius: 16rpx;
+}
+
+.action-item:hover {
+  background: rgba(255, 106, 61, 0.08);
+  color: #ff6a3d;
+}
+
+.action-item:active {
+  transform: scale(0.92);
 }
 
 .share-btn-wrap {
@@ -1405,21 +1492,28 @@ export default {
 }
 
 .fab-inner {
-  width: 104rpx;
-  height: 104rpx;
-  border-radius: 30rpx;
+  width: 108rpx;
+  height: 108rpx;
+  border-radius: 32rpx;
   background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 32rpx rgba(255, 77, 79, 0.4), 0 2rpx 8rpx rgba(255, 77, 79, 0.2);
-  backdrop-filter: blur(12px);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow:
+    0 12rpx 40rpx rgba(255, 77, 79, 0.45),
+    0 4rpx 12rpx rgba(255, 77, 79, 0.25),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1rpx solid rgba(255, 255, 255, 0.2);
 }
 
 .fab-button:active .fab-inner {
-  transform: scale(0.92);
-  box-shadow: 0 4rpx 16rpx rgba(255, 77, 79, 0.3);
+  transform: scale(0.9) rotate(-5deg);
+  box-shadow:
+    0 6rpx 20rpx rgba(255, 77, 79, 0.35),
+    inset 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
 }
 
 .fab-icon-wrapper {

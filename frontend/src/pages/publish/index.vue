@@ -48,7 +48,7 @@
         <view v-if="mediaList.length > 0" class="card">
           <view class="card-label">
             <text class="card-label-icon">📷</text>
-            <text class="card-label-text">图片/视频</text>
+            <text class="card-label-text">图片</text>
           </view>
           <view class="media-grid">
             <view
@@ -81,7 +81,7 @@
         <view v-if="mediaList.length === 0" class="card">
           <view class="add-media-area" @click="chooseMedia">
             <text class="add-media-emoji">📷</text>
-            <text class="add-media-text">添加图片/视频</text>
+            <text class="add-media-text">添加图片</text>
             <text class="add-media-hint">最多9个媒体文件</text>
           </view>
         </view>
@@ -589,14 +589,12 @@ export default {
       }
 
       uni.showActionSheet({
-        itemList: ['拍照', '从相册选择图片', '选择视频'],
+        itemList: ['拍照', '从相册选择图片'],
         success: (res) => {
           if (res.tapIndex === 0) {
             this.chooseFromCamera()
           } else if (res.tapIndex === 1) {
             this.chooseImage()
-          } else if (res.tapIndex === 2) {
-            this.chooseVideo()
           }
         }
       })
