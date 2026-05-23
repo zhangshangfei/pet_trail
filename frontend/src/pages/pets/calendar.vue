@@ -67,10 +67,10 @@
         </view>
 
         <view class="legend">
-          <view class="legend-item"><view class="dot dot-checkin"></view><text class="legend-text">打卡</text></view>
-          <view class="legend-item"><view class="dot dot-weight"></view><text class="legend-text">体重</text></view>
-          <view class="legend-item"><view class="dot dot-vaccine"></view><text class="legend-text">疫苗</text></view>
-          <view class="legend-item"><view class="dot dot-parasite"></view><text class="legend-text">驱虫</text></view>
+          <view class="legend-item"><view class="legend-dot legend-dot--checkin"></view><text class="legend-text">打卡</text></view>
+          <view class="legend-item"><view class="legend-dot legend-dot--weight"></view><text class="legend-text">体重</text></view>
+          <view class="legend-item"><view class="legend-dot legend-dot--vaccine"></view><text class="legend-text">疫苗</text></view>
+          <view class="legend-item"><view class="legend-dot legend-dot--parasite"></view><text class="legend-text">驱虫</text></view>
         </view>
 
         <view v-if="selectedDate" class="day-detail">
@@ -104,7 +104,7 @@
             <text class="detail-section-title">🐛 驱虫提醒</text>
             <view class="detail-list">
               <view v-for="item in dayParasites" :key="item.id" class="detail-item">
-                <text class="detail-item-name">{{ item.productName || item.type }}</text>
+                <text class="detail-item-name">{{ item.productName || item.typeName || '驱虫' }}</text>
               </view>
             </view>
           </view>
@@ -312,77 +312,363 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-$primary: #ff6a3d;
-$bg: #f5f5f5;
-$card-bg: #ffffff;
-$text-primary: #1a1a1a;
-$text-secondary: #666666;
-$text-light: #999999;
+/* ============================================
+   宠物日历 - 高饱和活力设计 v6.0
+   与挑战赛/设置/相册风格统一
+   ============================================ */
 
-.calendar-page { min-height: 100vh; background: $bg; }
-.nav-fixed { position: fixed; top: 0; left: 0; right: 0; z-index: 30; background: #fff; }
-.status-bar { width: 100%; }
-.nav-bar { height: 92rpx; display: flex; align-items: center; justify-content: space-between; padding: 0 28rpx; border-bottom: 1rpx solid #f0f0f0; }
-.nav-back { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; }
-.nav-back-arrow { width: 20rpx; height: 20rpx; border-left: 4rpx solid $text-primary; border-bottom: 4rpx solid $text-primary; transform: rotate(45deg); }
-.nav-title { font-size: 32rpx; font-weight: 700; color: $text-primary; }
-.nav-placeholder { width: 60rpx; }
-.page-scroll { height: 100vh; }
-.page-content { padding: 24rpx; }
+/* ========== 设计变量 ========== */
+$primary: #ff5500;
+$primary-soft: #ff7a3d;
 
-.pet-tabs { margin-bottom: 20rpx; }
-.pet-tabs-scroll { white-space: nowrap; }
-.pet-tab { display: inline-flex; flex-direction: column; align-items: center; margin-right: 24rpx; padding: 12rpx; }
-.pet-tab-avatar { width: 72rpx; height: 72rpx; border-radius: 50%; border: 3rpx solid #e5e7eb; margin-bottom: 6rpx; overflow: hidden; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
-.pet-tab-avatar.active { border-color: $primary; }
-.pet-tab-name { font-size: 22rpx; color: $text-secondary; }
-.pet-tab.active .pet-tab-name { color: $primary; font-weight: 600; }
+$checkin: #16a34a;
+$checkin-bg: #dcfce7;
+$weight: #2563eb;
+$weight-bg: #dbeafe;
+$vaccine: #d97706;
+$vaccine-bg: #fef3c7;
+$parasite: #9333ea;
+$parasite-bg: #f3e8ff;
 
-.calendar-card { background: $card-bg; border-radius: 24rpx; padding: 24rpx; margin-bottom: 20rpx; }
-.calendar-header { display: flex; align-items: center; justify-content: center; margin-bottom: 20rpx; gap: 32rpx; }
-.month-arrow { width: 56rpx; height: 56rpx; display: flex; align-items: center; justify-content: center; border-radius: 28rpx; background: #f5f5f5; }
-.arrow-icon { font-size: 36rpx; color: $primary; font-weight: 700; }
-.month-text { font-size: 30rpx; font-weight: 600; color: $text-primary; }
+$bg: #fff5f0;
+$white: #ffffff;
+$text-dark: #1c1917;
+$text-mid: #44403c;
+$text-light: #a8a29e;
 
-.weekday-row { display: flex; margin-bottom: 12rpx; }
-.weekday-text { flex: 1; text-align: center; font-size: 24rpx; color: $text-light; font-weight: 500; }
-
-.days-grid { display: flex; flex-wrap: wrap; }
-.day-cell {
-  width: calc(100% / 7); aspect-ratio: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; border-radius: 12rpx;
-  position: relative; transition: background 0.2s;
+/* ========== 页面基础 ========== */
+.calendar-page {
+  min-height: 100vh;
+  background: $bg;
 }
-.day-cell:active { background: #f5f5f5; }
+
+/* ========== 导航栏 ========== */
+.nav-fixed { position: fixed; top: 0; left: 0; right: 0; z-index: 30; background: $white; }
+.status-bar { width: 100%; }
+
+.nav-bar {
+  height: 92rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32rpx;
+  border-bottom: 2rpx solid #f5ebe5;
+}
+
+.nav-back {
+  width: 64rpx; height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 32rpx;
+  background: #f5f5f4;
+
+  &:active { transform: scale(0.9); background: #e7e5e4; }
+}
+
+.nav-back-arrow {
+  width: 18rpx; height: 18rpx;
+  border-left: 3rpx solid $text-dark;
+  border-bottom: 3rpx solid $text-dark;
+  transform: rotate(45deg);
+  margin-left: -3rpx;
+}
+
+.nav-title { font-size: 36rpx; font-weight: 900; color: $text-dark; letter-spacing: 0.5rpx; }
+.nav-placeholder { width: 64rpx; }
+
+.page-scroll { height: 100vh; }
+.page-content { padding: 24rpx 28rpx 120rpx; }
+
+/* ========== 宠物切换标签 ========== */
+.pet-tabs { margin-bottom: 28rpx; }
+.pet-tabs-scroll { white-space: nowrap; }
+
+.pet-tab {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 20rpx;
+  padding: 14rpx 18rpx;
+  border-radius: 22rpx;
+  background: $white;
+  border: 2rpx solid transparent;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2rpx 12rpx rgba(255, 85, 0, 0.06);
+
+  &.active {
+    background: linear-gradient(135deg, #fff7f2, #fff);
+    border-color: $primary-soft;
+    box-shadow: 0 4rpx 20rpx rgba(255, 85, 0, 0.15);
+  }
+}
+
+.pet-tab-avatar {
+  width: 76rpx; height: 76rpx;
+  border-radius: 50%;
+  border: 3rpx solid #e7e5e4;
+  margin-bottom: 8rpx;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: border-color 0.25s ease;
+
+  .pet-tab.active & { border-color: $primary; box-shadow: 0 0 0 3rpx rgba(255, 85, 0, 0.12); }
+}
+
+.pet-tab-name { font-size: 23rpx; color: $text-light; font-weight: 500; }
+.pet-tab.active .pet-tab-name { color: $primary; font-weight: 800; }
+
+/* ========== 日历卡片 ========== */
+.calendar-card {
+  background: $white;
+  border-radius: 28rpx;
+  padding: 28rpx 24rpx 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow:
+    0 4rpx 24rpx rgba(255, 85, 0, 0.08),
+    0 1rpx 4rpx rgba(255, 85, 0, 0.03);
+  border: 1.5rpx solid rgba(255, 122, 61, 0.08);
+}
+
+/* 日历头部：月份切换 */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 26rpx;
+  gap: 36rpx;
+}
+
+.month-arrow {
+  width: 60rpx; height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 30rpx;
+  background: linear-gradient(135deg, #fff5f2, #fff);
+  border: 1.5rpx solid #ffe8dd;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:active {
+    transform: scale(0.88);
+    background: linear-gradient(135deg, #ffe8dd, #fff5f2);
+    box-shadow: 0 2rpx 10rpx rgba(255, 85, 0, 0.15);
+  }
+}
+
+.arrow-icon { font-size: 38rpx; color: $primary; font-weight: 900; line-height: 1; }
+
+.month-text {
+  font-size: 34rpx;
+  font-weight: 900;
+  color: $text-dark;
+  letter-spacing: 1rpx;
+  min-width: 200rpx;
+  text-align: center;
+}
+
+/* 星期行 */
+.weekday-row { display: flex; margin-bottom: 14rpx; padding: 0 4rpx; }
+
+.weekday-text {
+  flex: 1;
+  text-align: center;
+  font-size: 24rpx;
+  color: $text-light;
+  font-weight: 700;
+  letter-spacing: 0.5rpx;
+}
+
+/* 日期网格 */
+.days-grid { display: flex; flex-wrap: wrap; gap: 2rpx; }
+
+.day-cell {
+  width: calc((100% - 12rpx) / 7);
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: transparent;
+
+  &:active:not(.day-empty) {
+    transform: scale(0.92);
+    background: #fef3e8;
+  }
+}
+
 .day-empty { pointer-events: none; }
-.day-today .day-number { color: $primary; font-weight: 700; }
-.day-selected { background: $primary !important; }
-.day-selected .day-number { color: #fff !important; }
-.day-number { font-size: 26rpx; color: $text-primary; }
-.day-dots { display: flex; gap: 4rpx; margin-top: 4rpx; height: 10rpx; }
-.dot { width: 8rpx; height: 8rpx; border-radius: 4rpx; }
-.dot-checkin { background: #52c41a; }
-.dot-weight { background: #1890ff; }
-.dot-vaccine { background: #faad14; }
-.dot-parasite { background: #722ed1; }
-.day-selected .dot-checkin { background: #b7eb8f; }
-.day-selected .dot-weight { background: #91d5ff; }
-.day-selected .dot-vaccine { background: #ffe58f; }
-.day-selected .dot-parasite { background: #d3adf7; }
 
-.legend { display: flex; gap: 24rpx; justify-content: center; margin-bottom: 24rpx; }
-.legend-item { display: flex; align-items: center; gap: 6rpx; }
-.legend-text { font-size: 22rpx; color: $text-light; }
+.day-today {
+  .day-number {
+    color: $primary;
+    font-weight: 900;
+    position: relative;
 
-.day-detail { background: $card-bg; border-radius: 24rpx; padding: 24rpx; margin-bottom: 24rpx; }
-.detail-title { display: block; font-size: 28rpx; font-weight: 600; color: $text-primary; margin-bottom: 20rpx; }
-.detail-section { margin-bottom: 20rpx; }
-.detail-section-title { display: block; font-size: 26rpx; font-weight: 500; color: $text-secondary; margin-bottom: 12rpx; }
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -2rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 28rpx;
+      height: 4rpx;
+      border-radius: 2rpx;
+      background: $primary;
+    }
+  }
+}
+
+.day-selected {
+  background: $primary !important;
+  box-shadow: 0 4rpx 16rpx rgba(255, 85, 0, 0.35);
+
+  .day-number { color: #fff !important; font-weight: 900; }
+}
+
+.day-number {
+  font-size: 28rpx;
+  color: $text-dark;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: all 0.2s ease;
+}
+
+/* 日期底部圆点标记 */
+.day-dots {
+  display: flex;
+  gap: 4rpx;
+  margin-top: 5rpx;
+  height: 11rpx;
+  align-items: center;
+  justify-content: center;
+}
+
+.dot {
+  width: 9rpx; height: 9rpx;
+  border-radius: 5rpx;
+  box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.15);
+}
+
+.dot-checkin { background: $checkin; box-shadow: 0 1rpx 4rpx rgba(22, 163, 74, 0.35); }
+.dot-weight { background: $weight; box-shadow: 0 1rpx 4rpx rgba(37, 99, 235, 0.35); }
+.dot-vaccine { background: $vaccine; box-shadow: 0 1rpx 4rpx rgba(217, 119, 6, 0.35); }
+.dot-parasite { background: $parasite; box-shadow: 0 1rpx 4rpx rgba(147, 51, 234, 0.35); }
+
+.day-selected {
+  .dot-checkin { background: #bbf7d0; box-shadow: none; }
+  .dot-weight { background: #bfdbfe; box-shadow: none; }
+  .dot-vaccine { background: #fde68a; box-shadow: none; }
+  .dot-parasite { background: #e9d5ff; box-shadow: none; }
+}
+
+/* ========== 图例 ========== */
+.legend {
+  display: flex;
+  gap: 20rpx;
+  justify-content: center;
+  margin-bottom: 28rpx;
+  padding: 18rpx 24rpx;
+  background: $white;
+  border-radius: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(255, 85, 0, 0.05);
+  border: 1.5rpx solid rgba(255, 122, 61, 0.06);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.legend-dot {
+  width: 14rpx; height: 14rpx;
+  border-radius: 7rpx;
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.12);
+
+  &--checkin { background: $checkin; }
+  &--weight { background: $weight; }
+  &--vaccine { background: $vaccine; }
+  &--parasite { background: $parasite; }
+}
+
+.legend-text { font-size: 23rpx; color: $text-mid; font-weight: 600; }
+
+/* ========== 当日详情面板 ========== */
+.day-detail {
+  background: $white;
+  border-radius: 28rpx;
+  padding: 28rpx 26rpx 26rpx;
+  margin-bottom: 24rpx;
+  box-shadow:
+    0 4rpx 24rpx rgba(255, 85, 0, 0.08),
+    0 1rpx 4rpx rgba(255, 85, 0, 0.03);
+  border: 1.5rpx solid rgba(255, 122, 61, 0.08);
+  animation: detailSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes detailSlideUp {
+  from { opacity: 0; transform: translateY(16rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.detail-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 900;
+  color: $text-dark;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f5ebe5;
+  letter-spacing: 0.5rpx;
+}
+
+.detail-section { margin-bottom: 22rpx; }
+
+.detail-section-title {
+  display: block;
+  font-size: 27rpx;
+  font-weight: 800;
+  color: $text-mid;
+  margin-bottom: 14rpx;
+  letter-spacing: 0.3rpx;
+}
+
 .detail-list { display: flex; flex-wrap: wrap; gap: 12rpx; }
-.detail-item { display: flex; align-items: center; gap: 8rpx; padding: 8rpx 16rpx; background: #f5f5f5; border-radius: 12rpx; }
-.detail-item-icon { font-size: 24rpx; }
-.detail-item-name { font-size: 24rpx; color: $text-primary; }
-.detail-value { font-size: 28rpx; color: $primary; font-weight: 600; }
-.detail-empty { padding: 24rpx 0; text-align: center; }
-.detail-empty-text { font-size: 26rpx; color: $text-light; }
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 12rpx 20rpx;
+  background: $checkin-bg;
+  border-radius: 16rpx;
+  border: 1.5rpx solid rgba(22, 163, 74, 0.12);
+  transition: all 0.2s ease;
+
+  &:active { transform: scale(0.96); }
+}
+
+.detail-item-icon { font-size: 28rpx; }
+.detail-item-name { font-size: 26rpx; color: $text-dark; font-weight: 700; }
+
+.detail-value {
+  display: block;
+  font-size: 32rpx;
+  color: $weight;
+  font-weight: 900;
+  letter-spacing: 0.5rpx;
+}
+
+.detail-empty {
+  padding: 40rpx 0;
+  text-align: center;
+}
+.detail-empty-text { font-size: 27rpx; color: $text-light; font-weight: 500; }
 </style>

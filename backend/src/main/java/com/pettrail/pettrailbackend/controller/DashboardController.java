@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.ParasiteReminderVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.*;
 import com.pettrail.pettrailbackend.service.*;
@@ -67,12 +68,12 @@ public class DashboardController extends BaseController {
                 item.put("daysUntil", getDaysUntil(r.getNextDate()));
                 reminders.add(item);
             }
-            for (ParasiteReminder r : parasiteReminderService.listUpcoming(pet.getId())) {
+            for (ParasiteReminderVO r : parasiteReminderService.listUpcoming(pet.getId())) {
                 Map<String, Object> item = new HashMap<>();
                 item.put("type", "parasite");
                 item.put("petId", pet.getId());
                 item.put("petName", pet.getName());
-                item.put("name", r.getType());
+                item.put("name", r.getTypeName());
                 item.put("date", r.getNextDate());
                 item.put("daysUntil", getDaysUntil(r.getNextDate()));
                 reminders.add(item);

@@ -2,6 +2,7 @@ package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.pettrail.pettrailbackend.dto.ParasiteReminderVO;
 import com.pettrail.pettrailbackend.entity.ParasiteReminder;
 import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.mapper.ParasiteReminderMapper;
@@ -13,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -21,20 +24,26 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
 
     private final HealthAnalysisCacheService healthAnalysisCacheService;
 
-    public List<ParasiteReminder> listByPetId(Long petId) {
+    private static final Map<Integer, String> TYPE_NAME_MAP = Map.of(
+            1, "体内驱虫",
+            2, "体外驱虫",
+            3, "体内外驱虫"
+    );
+
+    public List<ParasiteReminderVO> listByPetId(Long petId) {
         LambdaQueryWrapper<ParasiteReminder> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ParasiteReminder::getPetId, petId);
         queryWrapper.orderByAsc(ParasiteReminder::getNextDate);
-        return this.list(queryWrapper);
+        return this.list(queryWrapper).stream().map(this::toVO).collect(Collectors.toList());
     }
 
-    public List<ParasiteReminder> listUpcoming(Long petId) {
+    public List<ParasiteReminderVO> listUpcoming(Long petId) {
         LambdaQueryWrapper<ParasiteReminder> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ParasiteReminder::getPetId, petId);
         queryWrapper.eq(ParasiteReminder::getStatus, 0);
         queryWrapper.le(ParasiteReminder::getNextDate, LocalDate.now().plusDays(7));
         queryWrapper.orderByAsc(ParasiteReminder::getNextDate);
-        return this.list(queryWrapper);
+        return this.list(queryWrapper).stream().map(this::toVO).collect(Collectors.toList());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -124,5 +133,20 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
         }
         this.removeById(reminderId);
         log.info("删除提醒成功: reminderId={}", reminderId);
+    }
+
+    private ParasiteReminderVO toVO(ParasiteReminder reminder) {
+        ParasiteReminderVO vo = new ParasiteReminderVO();
+        vo.setId(reminder.getId());
+        vo.setPetId(reminder.getPetId());
+        vo.setType(reminder.getType());
+        vo.setTypeName(TYPE_NAME_MAP.getOrDefault(reminder.getType(), "驱虫"));
+        vo.setProductName(reminder.getProductName());
+        vo.setNextDate(reminder.getNextDate());
+        vo.setIntervalDays(reminder.getIntervalDays());
+        vo.setStatus(reminder.getStatus());
+        vo.setNote(reminder.getNote());
+        vo.setCreatedAt(reminder.getCreatedAt());
+        return vo;
     }
 }

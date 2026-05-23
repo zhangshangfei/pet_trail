@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.pettrail.pettrailbackend.dto.ParasiteReminderDTO;
+import com.pettrail.pettrailbackend.dto.ParasiteReminderVO;
 import com.pettrail.pettrailbackend.dto.ReminderNextDateDTO;
 import com.pettrail.pettrailbackend.dto.ReminderStatusDTO;
 import com.pettrail.pettrailbackend.dto.Result;
@@ -22,12 +23,12 @@ public class ParasiteReminderController extends BaseController {
     private final ParasiteReminderService parasiteReminderService;
 
     @GetMapping
-    public Result<List<ParasiteReminder>> listReminders(@PathVariable Long petId) {
+    public Result<List<ParasiteReminderVO>> listReminders(@PathVariable Long petId) {
         return Result.success(parasiteReminderService.listByPetId(petId));
     }
 
     @GetMapping("/upcoming")
-    public Result<List<ParasiteReminder>> listUpcoming(@PathVariable Long petId) {
+    public Result<List<ParasiteReminderVO>> listUpcoming(@PathVariable Long petId) {
         return Result.success(parasiteReminderService.listUpcoming(petId));
     }
 
