@@ -120,6 +120,9 @@
 
 <script>
 import { DEFAULT_PET_AVATAR_URL } from '@/utils/index'
+import * as petApi from '@/api/pet'
+import * as checkinApi from '@/api/checkin'
+import * as healthApi from '@/api/health'
 import AvatarView from '@/components/AvatarView.vue'
 
 export default {
@@ -206,7 +209,7 @@ export default {
 
       try {
         const [checkinRes, weightRes, vaccineRes, parasiteRes] = await Promise.all([
-          checkinApi.getCalendar(this.currentYear, this.currentMonth),
+          checkinApi.getCalendar(this.currentYear, this.currentMonth, this.currentPetId),
           healthApi.getWeightRecordsByRange(this.currentPetId,
             `${this.currentYear}-${String(this.currentMonth).padStart(2, '0')}-01`,
             this.getLastDayStr()

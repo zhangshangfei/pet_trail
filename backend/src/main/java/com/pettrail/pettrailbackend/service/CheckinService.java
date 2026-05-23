@@ -243,10 +243,16 @@ public class CheckinService {
     /**
      * 获取打卡日历
      */
-    public List<CheckinRecord> getCalendar(Long userId, int year, int month) {
+    public List<CheckinRecord> getCalendar(Long userId, int year, int month, Long petId) {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
-        return checkinRecordMapper.selectByUserIdAndDateRange(userId, startDate, endDate);
+        List<CheckinRecord> records = checkinRecordMapper.selectByUserIdAndDateRange(userId, startDate, endDate);
+        if (petId != null) {
+            records = records.stream()
+                    .filter(r -> petId.equals(r.getPetId()))
+                    .collect(Collectors.toList());
+        }
+        return records;
     }
 
     /**

@@ -287,7 +287,7 @@ class CheckinServiceTest {
         when(checkinRecordMapper.selectByUserIdAndDateRange(eq(100L), any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(Arrays.asList(r1));
 
-        List<CheckinRecord> result = checkinService.getCalendar(100L, 2026, 4);
+        List<CheckinRecord> result = checkinService.getCalendar(100L, 2026, 4, null);
         assertEquals(1, result.size());
     }
 

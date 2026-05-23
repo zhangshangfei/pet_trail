@@ -86,9 +86,12 @@ public class CheckinController extends BaseController {
     }
 
     @GetMapping("/calendar")
-    public Result<List<CheckinRecord>> getCalendar(@RequestParam int year, @RequestParam int month) {
+    public Result<List<CheckinRecord>> getCalendar(
+            @RequestParam int year,
+            @RequestParam int month,
+            @RequestParam(required = false) Long petId) {
         Long userId = requireLogin();
-        return Result.success(checkinService.getCalendar(userId, year, month));
+        return Result.success(checkinService.getCalendar(userId, year, month, petId));
     }
 
     @PostMapping("/{id}/cancel")
