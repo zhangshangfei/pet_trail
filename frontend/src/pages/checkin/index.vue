@@ -597,7 +597,9 @@ export default {
       this.refreshPageData()
     },
     goProfile() {
-      uni.navigateTo({ url: '/pages/user/profile' })
+      const userInfo = uni.getStorageSync('userInfo')
+      const userId = userInfo ? userInfo.id : ''
+      uni.navigateTo({ url: `/pages/user/detail?id=${userId}` })
     },
     goNotifications() {
       uni.navigateTo({ url: '/pages/notification/index' })
