@@ -92,19 +92,46 @@
           </view>
 
           <view v-if="dayVaccines.length" class="detail-section">
-            <text class="detail-section-title">💉 疫苗提醒</text>
-            <view class="detail-list">
-              <view v-for="item in dayVaccines" :key="item.id" class="detail-item">
-                <text class="detail-item-name">{{ item.vaccineName }}</text>
+            <view class="detail-section-header detail-section-header--vaccine">
+              <view class="section-badge section-badge--vaccine">
+                <text class="section-badge-icon">💉</text>
+                <text class="section-badge-text">疫苗提醒</text>
+              </view>
+              <text class="section-count">{{ dayVaccines.length }}项</text>
+            </view>
+            <view class="vaccine-list">
+              <view v-for="item in dayVaccines" :key="item.id" class="vaccine-card">
+                <view class="vaccine-card-bar"></view>
+                <view class="vaccine-card-body">
+                  <text class="vaccine-card-name">{{ item.vaccineName || '疫苗' }}</text>
+                  <view v-if="item.note" class="vaccine-card-note">
+                    <text class="vaccine-card-note-text">{{ item.note }}</text>
+                  </view>
+                </view>
               </view>
             </view>
           </view>
 
           <view v-if="dayParasites.length" class="detail-section">
-            <text class="detail-section-title">🐛 驱虫提醒</text>
-            <view class="detail-list">
-              <view v-for="item in dayParasites" :key="item.id" class="detail-item">
-                <text class="detail-item-name">{{ item.productName || item.typeName || '驱虫' }}</text>
+            <view class="detail-section-header detail-section-header--parasite">
+              <view class="section-badge section-badge--parasite">
+                <text class="section-badge-icon">🐛</text>
+                <text class="section-badge-text">驱虫提醒</text>
+              </view>
+              <text class="section-count">{{ dayParasites.length }}项</text>
+            </view>
+            <view class="parasite-list">
+              <view v-for="item in dayParasites" :key="item.id" class="parasite-card">
+                <view class="parasite-card-bar"></view>
+                <view class="parasite-card-body">
+                  <view class="parasite-card-top">
+                    <text class="parasite-card-type">{{ item.typeName || '驱虫' }}</text>
+                    <text v-if="item.productName" class="parasite-card-product">{{ item.productName }}</text>
+                  </view>
+                  <view v-if="item.note" class="parasite-card-note">
+                    <text class="parasite-card-note-text">{{ item.note }}</text>
+                  </view>
+                </view>
               </view>
             </view>
           </view>
@@ -664,6 +691,181 @@ $text-light: #a8a29e;
   color: $weight;
   font-weight: 900;
   letter-spacing: 0.5rpx;
+}
+
+/* ========== 疫苗 / 驱虫 区域头部 ========== */
+.detail-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.section-badge {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 18rpx;
+  border-radius: 12rpx;
+}
+
+.section-badge--vaccine {
+  background: linear-gradient(135deg, $vaccine-bg, #fef9e7);
+  border: 1.5rpx solid rgba(217, 119, 6, 0.15);
+}
+.section-badge--parasite {
+  background: linear-gradient(135deg, $parasite-bg, #f5eeff);
+  border: 1.5rpx solid rgba(147, 51, 234, 0.15);
+}
+
+.section-badge-icon { font-size: 26rpx; }
+.section-badge-text {
+  font-size: 25rpx;
+  font-weight: 800;
+  letter-spacing: 0.3rpx;
+}
+.section-badge--vaccine .section-badge-text { color: $vaccine; }
+.section-badge--parasite .section-badge-text { color: $parasite; }
+
+.section-count {
+  font-size: 23rpx;
+  color: $text-light;
+  font-weight: 600;
+  padding: 6rpx 14rpx;
+  background: #f5f5f4;
+  border-radius: 20rpx;
+}
+
+/* ========== 疫苗卡片 ========== */
+.vaccine-list { display: flex; flex-direction: column; gap: 12rpx; }
+
+.vaccine-card {
+  display: flex;
+  align-items: stretch;
+  background: linear-gradient(135deg, #fffbf5, #fff);
+  border-radius: 16rpx;
+  overflow: hidden;
+  border: 1.5rpx solid rgba(217, 119, 6, 0.1);
+  box-shadow: 0 2rpx 10rpx rgba(217, 119, 6, 0.06);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 4rpx 16rpx rgba(217, 119, 6, 0.14);
+  }
+}
+
+.vaccine-card-bar {
+  width: 6rpx;
+  background: linear-gradient(180deg, $vaccine, #f59e0b);
+  border-radius: 3rpx;
+  flex-shrink: 0;
+}
+
+.vaccine-card-body {
+  flex: 1;
+  padding: 16rpx 18rpx 14rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.vaccine-card-name {
+  font-size: 27rpx;
+  font-weight: 800;
+  color: $text-dark;
+  letter-spacing: 0.3rpx;
+  line-height: 1.3;
+}
+
+.vaccine-card-note {
+  margin-top: 4rpx;
+  padding: 6rpx 12rpx;
+  background: #fefce8;
+  border-radius: 8rpx;
+  border: 1rpx solid rgba(217, 119, 6, 0.08);
+}
+
+.vaccine-card-note-text {
+  font-size: 23rpx;
+  color: #a16207;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ========== 驱虫卡片 ========== */
+.parasite-list { display: flex; flex-direction: column; gap: 12rpx; }
+
+.parasite-card {
+  display: flex;
+  align-items: stretch;
+  background: linear-gradient(135deg, #faf5ff, #fff);
+  border-radius: 16rpx;
+  overflow: hidden;
+  border: 1.5rpx solid rgba(147, 51, 234, 0.1);
+  box-shadow: 0 2rpx 10rpx rgba(147, 51, 234, 0.06);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 4rpx 16rpx rgba(147, 51, 234, 0.14);
+  }
+}
+
+.parasite-card-bar {
+  width: 6rpx;
+  background: linear-gradient(180deg, $parasite, #a855f7);
+  border-radius: 3rpx;
+  flex-shrink: 0;
+}
+
+.parasite-card-body {
+  flex: 1;
+  padding: 16rpx 18rpx 14rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.parasite-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-wrap: wrap;
+}
+
+.parasite-card-type {
+  font-size: 26rpx;
+  font-weight: 800;
+  color: $parasite;
+  letter-spacing: 0.3rpx;
+  padding: 4rpx 14rpx;
+  background: linear-gradient(135deg, $parasite-bg, #ede9fe);
+  border-radius: 8rpx;
+  border: 1rpx solid rgba(147, 51, 234, 0.12);
+  line-height: 1.4;
+}
+
+.parasite-card-product {
+  font-size: 25rpx;
+  font-weight: 700;
+  color: $text-mid;
+  line-height: 1.4;
+}
+
+.parasite-card-note {
+  margin-top: 4rpx;
+  padding: 6rpx 12rpx;
+  background: #f5f3ff;
+  border-radius: 8rpx;
+  border: 1rpx solid rgba(147, 51, 234, 0.08);
+}
+
+.parasite-card-note-text {
+  font-size: 23rpx;
+  color: #7c3aed;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .detail-empty {

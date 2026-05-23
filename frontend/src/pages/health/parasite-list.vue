@@ -303,18 +303,40 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* ============================================
+   驱虫记录列表 - 紫色主题设计 v2.0
+   与日历/相册/挑战赛风格统一
+   ============================================ */
+
+/* ========== 设计变量 ========== */
+$primary: #ff5500;
+$primary-soft: #ff7a3d;
+$parasite: #9333ea;
+$parasite-soft: #a855f7;
+$parasite-bg: #f3e8ff;
+$parasite-light: #ede9fe;
+
+$bg: #fff5f0;
+$white: #ffffff;
+$text-dark: #1c1917;
+$text-mid: #44403c;
+$text-light: #a8a29e;
+
+/* ========== 页面基础 ========== */
 .list-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: $bg;
 }
 
+/* ========== 导航栏 - 白底 + CSS箭头 ========== */
 .nav-fixed {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 30;
-  background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 100%);
+  background: $white;
+  border-bottom: 2rpx solid #f5ebe5;
 }
 
 .status-bar {
@@ -326,83 +348,111 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 28rpx;
+  padding: 0 32rpx;
 }
 
 .nav-back {
   width: 64rpx;
   height: 64rpx;
-  border-radius: 32rpx;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
-  transition: background 0.2s, transform 0.15s;
-}
+  border-radius: 32rpx;
+  background: #f5f5f4;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-.nav-back:active {
-  background: rgba(255, 255, 255, 0.35);
-  transform: scale(0.92);
+  &:active {
+    transform: scale(0.9);
+    background: #e7e5e4;
+  }
 }
 
 .nav-back-arrow {
   width: 18rpx;
   height: 18rpx;
-  border-left: 4rpx solid #fff;
-  border-bottom: 4rpx solid #fff;
-  transform: rotate(45deg) translate(2rpx, -2rpx);
+  border-left: 3rpx solid $text-dark;
+  border-bottom: 3rpx solid $text-dark;
+  transform: rotate(45deg);
+  margin-left: -3rpx;
 }
 
 .nav-title {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: #fff;
+  font-size: 36rpx;
+  font-weight: 900;
+  color: $text-dark;
+  letter-spacing: 0.5rpx;
 }
 
 .nav-placeholder {
   width: 64rpx;
 }
 
+/* ========== 滚动区域 ========== */
 .list-scroll {
   height: 100vh;
-  box-sizing: border-box;
 }
 
 .list-content {
-  padding: 20rpx 24rpx 200rpx;
+  padding: 24rpx 28rpx 200rpx;
 }
 
 .record-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 24rpx;
 }
 
+/* ========== 记录卡片 - 白底 + 左侧紫色竖条 + 橙色阴影 ========== */
 .record-card {
-  background: #fff;
+  position: relative;
+  background: $white;
   border-radius: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
-  padding: 28rpx 24rpx;
+  box-shadow:
+    0 4rpx 24rpx rgba(255, 85, 0, 0.08),
+    0 1rpx 4rpx rgba(255, 85, 0, 0.03);
+  border: 1.5rpx solid rgba(255, 122, 61, 0.08);
+  padding: 28rpx 24rpx 28rpx 30rpx;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20rpx;
+    bottom: 20rpx;
+    width: 6rpx;
+    background: linear-gradient(180deg, $parasite 0%, $parasite-soft 100%);
+    border-radius: 0 3rpx 3rpx 0;
+  }
+
+  /* 紧急状态：淡紫渐变背景 + 紫色边框 */
+  &.urgent {
+    background: linear-gradient(135deg, #faf5ff 0%, $parasite-light 100%);
+    border-color: rgba($parasite, 0.25);
+    box-shadow:
+      0 4rpx 24rpx rgba($parasite, 0.12),
+      0 1rpx 4rpx rgba($parasite, 0.05);
+
+    &::before {
+      background: linear-gradient(180deg, $parasite 0%, #c026d3 100%);
+      box-shadow: 0 0 10rpx rgba($parasite, 0.4);
+    }
+  }
+
+  /* 完成状态：降低透明度 */
+  &.completed {
+    opacity: 0.65;
+  }
 }
 
-.record-card.urgent {
-  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
-  border: 2rpx solid rgba(255, 77, 79, 0.2);
-}
-
-.record-card.completed {
-  opacity: 0.75;
-}
-
+/* ========== 卡片头部 ========== */
 .record-header {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 20rpx;
+  margin-bottom: 22rpx;
 }
 
 .record-info {
@@ -414,45 +464,51 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8rpx;
-  margin-bottom: 10rpx;
+  gap: 10rpx;
+  margin-bottom: 12rpx;
+  flex-wrap: wrap;
 }
 
 .record-emoji {
-  font-size: 30rpx;
+  font-size: 32rpx;
+  line-height: 1;
 }
 
 .record-name {
   font-size: 30rpx;
-  font-weight: 600;
-  color: #111827;
+  font-weight: 800;
+  color: $text-dark;
+  letter-spacing: 0.3rpx;
 }
 
+/* ========== 状态标签 - 药丸形 ========== */
 .status-tag {
-  padding: 4rpx 14rpx;
-  border-radius: 20rpx;
-  margin-left: 8rpx;
+  padding: 5rpx 16rpx;
+  border-radius: 999rpx;
+  margin-left: 6rpx;
 }
 
 .status-tag--done {
-  background: #d1fae5;
+  background: #dcfce7;
 }
 
 .status-tag--urgent {
-  background: #ff4d4f;
+  background: linear-gradient(135deg, $parasite 0%, #c026d3 100%);
+  animation: urgentPulse 2s ease-in-out infinite;
 }
 
 .status-tag--pending {
-  background: #e0e7ff;
+  background: $parasite-light;
 }
 
 .status-tag-text {
   font-size: 20rpx;
-  font-weight: 500;
+  font-weight: 700;
+  letter-spacing: 0.5rpx;
 }
 
 .status-tag--done .status-tag-text {
-  color: #047857;
+  color: #15803d;
 }
 
 .status-tag--urgent .status-tag-text {
@@ -460,61 +516,80 @@ export default {
 }
 
 .status-tag--pending .status-tag-text {
-  color: #4f46e5;
+  color: $parasite;
 }
 
+@keyframes urgentPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+
+/* ========== 日期与备注 ========== */
 .record-date {
   display: block;
-  font-size: 24rpx;
-  color: #6b7280;
-  margin-bottom: 6rpx;
+  font-size: 25rpx;
+  color: $text-light;
+  margin-bottom: 8rpx;
+  font-weight: 500;
 }
 
 .record-note {
   display: block;
-  font-size: 22rpx;
-  color: #9ca3af;
-  line-height: 1.5;
+  font-size: 23rpx;
+  color: $text-light;
+  line-height: 1.55;
+  padding: 10rpx 14rpx;
+  background: #fafaf9;
+  border-radius: 12rpx;
+  margin-top: 8rpx;
 }
 
+/* ========== 倒计时 - 紫色药丸标签 ========== */
 .record-countdown {
   display: flex;
   flex-direction: row;
   align-items: baseline;
-  background: #d1fae5;
-  padding: 12rpx 20rpx;
-  border-radius: 30rpx;
+  background: linear-gradient(135deg, $parasite-bg 0%, $parasite-light 100%);
+  padding: 14rpx 22rpx;
+  border-radius: 999rpx;
   flex-shrink: 0;
+  border: 1.5rpx solid rgba($parasite, 0.15);
+  box-shadow: 0 2rpx 10rpx rgba($parasite, 0.1);
 }
 
 .record-card.urgent .record-countdown {
-  background: #ff4d4f;
+  background: linear-gradient(135deg, $parasite 0%, #c026d3 100%);
+  border-color: transparent;
+  box-shadow: 0 4rpx 16rpx rgba($parasite, 0.35);
 }
 
 .countdown-number {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #111827;
+  font-size: 38rpx;
+  font-weight: 900;
+  color: $parasite;
   margin-right: 4rpx;
-}
-
-.record-card.urgent .countdown-number,
-.record-card.urgent .countdown-unit {
-  color: #ffffff;
+  line-height: 1;
 }
 
 .countdown-unit {
   font-size: 22rpx;
-  color: #6b7280;
+  color: $parasite;
+  font-weight: 600;
 }
 
+.record-card.urgent .countdown-number,
+.record-card.urgent .countdown-unit {
+  color: #fff;
+}
+
+/* ========== 进度条 ========== */
 .record-progress {
-  margin-bottom: 20rpx;
+  margin-bottom: 22rpx;
 }
 
 .progress-bar {
   height: 12rpx;
-  background: #fff4e6;
+  background: #fef3e8;
   border-radius: 6rpx;
   overflow: hidden;
   margin-bottom: 8rpx;
@@ -522,95 +597,129 @@ export default {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #d1fae5 0%, #10b981 100%);
+  background: linear-gradient(90deg, $parasite 0%, $parasite-soft 100%);
   border-radius: 6rpx;
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .progress-text {
-  font-size: 20rpx;
-  color: #9ca3af;
+  font-size: 21rpx;
+  color: $text-light;
   text-align: right;
   display: block;
+  font-weight: 500;
 }
 
+/* ========== 操作按钮区 ========== */
 .record-actions {
   display: flex;
   justify-content: center;
-  gap: 12rpx;
+  gap: 14rpx;
+  flex-wrap: wrap;
 }
 
+/* 主操作按钮 - 橙色渐变胶囊形 */
 .btn-action {
-  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, $primary 0%, $primary-soft 100%);
+  color: $white;
   border: none;
   border-radius: 999rpx;
-  padding: 16rpx 48rpx;
+  padding: 18rpx 52rpx;
   font-size: 26rpx;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1.2;
-  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
-}
+  box-shadow: 0 4rpx 16rpx rgba($primary, 0.35);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-.btn-action.completed {
-  background: #d1fae5;
-  box-shadow: none;
-}
+  &::after { border: none; }
 
-.btn-action::after {
-  border: none;
+  &:active {
+    transform: scale(0.95);
+    box-shadow: 0 2rpx 8rpx rgba($primary, 0.25);
+  }
+
+  /* 已完成态 */
+  &.completed {
+    background: #dcfce7;
+    box-shadow: none;
+  }
 }
 
 .btn-action-text {
-  color: #ffffff;
+  color: $white;
+  font-weight: 700;
+  letter-spacing: 0.5rpx;
 }
 
 .btn-action.completed .btn-action-text {
-  color: #047857;
+  color: #15803d;
 }
 
+/* 编辑按钮 - 淡紫底紫色文字 */
 .btn-edit {
-  background: #e0e7ff !important;
-  box-shadow: none !important;
+  background: $parasite-bg !important;
+  box-shadow: 0 2rpx 10rpx rgba($parasite, 0.12) !important;
+
+  &:active {
+    transform: scale(0.95);
+    background: #eadaff !important;
+  }
 }
 
 .btn-edit .btn-action-text {
-  color: #4f46e5 !important;
+  color: $parasite !important;
 }
 
+/* 删除按钮 - 淡红底红色文字 */
 .btn-delete {
-  background: #fff5f5 !important;
-  box-shadow: none !important;
+  background: #fef2f2 !important;
+  box-shadow: 0 2rpx 10rpx rgba(239, 68, 68, 0.1) !important;
+
+  &:active {
+    transform: scale(0.95);
+    background: #fde5e5 !important;
+  }
 }
 
 .btn-delete .btn-action-text {
-  color: #ff4d4f !important;
+  color: #ef4444 !important;
 }
 
+/* ========== 空状态 ========== */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 120rpx 40rpx;
+  padding: 140rpx 40rpx;
 }
 
 .empty-emoji {
-  font-size: 80rpx;
-  margin-bottom: 24rpx;
+  font-size: 96rpx;
+  margin-bottom: 28rpx;
+  animation: floatEmoji 3s ease-in-out infinite;
 }
 
 .empty-text {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 12rpx;
+  font-size: 32rpx;
+  font-weight: 800;
+  color: $text-mid;
+  margin-bottom: 14rpx;
+  letter-spacing: 0.5rpx;
 }
 
 .empty-hint {
-  font-size: 24rpx;
-  color: #9ca3af;
+  font-size: 25rpx;
+  color: $text-light;
+  font-weight: 500;
 }
 
+@keyframes floatEmoji {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10rpx); }
+}
+
+/* ========== FAB - 圆角方形 + 橙色渐变 ========== */
 .fab {
   position: fixed;
   right: 28rpx;
@@ -619,21 +728,22 @@ export default {
 }
 
 .fab-inner {
-  width: 104rpx;
-  height: 104rpx;
-  border-radius: 30rpx;
-  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  width: 108rpx;
+  height: 108rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(135deg, $primary 0%, $primary-soft 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 32rpx rgba(255, 77, 79, 0.4), 0 2rpx 8rpx rgba(255, 77, 79, 0.2);
-  backdrop-filter: blur(12px);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow:
+    0 8rpx 32rpx rgba($primary, 0.4),
+    0 2rpx 8rpx rgba($primary, 0.2);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .fab:active .fab-inner {
-  transform: scale(0.92);
-  box-shadow: 0 4rpx 16rpx rgba(255, 77, 79, 0.3);
+  transform: scale(0.9) rotate(90deg);
+  box-shadow: 0 4rpx 16rpx rgba($primary, 0.3);
 }
 
 .fab-icon-wrapper {
@@ -645,7 +755,7 @@ export default {
 .fab-hbar,
 .fab-vbar {
   position: absolute;
-  background: #fff;
+  background: $white;
   border-radius: 4rpx;
 }
 
@@ -665,57 +775,90 @@ export default {
   transform: translateX(-50%);
 }
 
+/* ========== 弹窗 - 圆角24rpx ========== */
 .modal-mask {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(28, 25, 23, 0.45);
+  backdrop-filter: blur(8rpx);
+  -webkit-backdrop-filter: blur(8rpx);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: fadeIn 0.2s ease;
 }
 
 .modal-content {
-  width: 80%;
+  width: 82%;
   max-height: 80vh;
-  background: #fff;
+  background: $white;
   border-radius: 24rpx;
   overflow: hidden;
+  box-shadow:
+    0 20rpx 60rpx rgba(0, 0, 0, 0.15),
+    0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  animation: modalSlideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40rpx) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 32rpx;
-  border-bottom: 1rpx solid #f3f4f6;
+  padding: 32rpx 28rpx;
+  border-bottom: 1.5rpx solid #f5ebe5;
 }
 
 .modal-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #111827;
+  font-size: 33rpx;
+  font-weight: 900;
+  color: $text-dark;
+  letter-spacing: 0.5rpx;
 }
 
 .modal-close {
   font-size: 36rpx;
-  color: #9ca3af;
-  width: 48rpx;
-  height: 48rpx;
+  color: $text-light;
+  width: 52rpx;
+  height: 52rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 26rpx;
+  background: #fafaf9;
+  transition: all 0.2s ease;
+
+  &:active {
+    background: #f5f5f4;
+    transform: scale(0.9);
+  }
 }
 
 .modal-body {
-  padding: 32rpx;
+  padding: 28rpx 28rpx 16rpx;
 }
 
 .form-group {
-  margin-bottom: 28rpx;
+  margin-bottom: 26rpx;
 }
 
 .form-group:last-child {
@@ -723,55 +866,70 @@ export default {
 }
 
 .form-label {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #111827;
+  font-size: 27rpx;
+  font-weight: 700;
+  color: $text-dark;
   margin-bottom: 14rpx;
   display: block;
+  letter-spacing: 0.3rpx;
 }
 
 .form-input {
   width: 100%;
   box-sizing: border-box;
-  background: #f9fafb;
-  border: none;
+  background: #fafaf9;
+  border: 1.5rpx solid #e7e5e4;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   min-height: 80rpx;
   font-size: 28rpx;
-  color: #374151;
+  color: $text-dark;
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    border-color: $parasite;
+    background: $white;
+  }
 }
 
 .picker-value {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f9fafb;
+  background: #fafaf9;
+  border: 1.5rpx solid #e7e5e4;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   min-height: 80rpx;
+  transition: border-color 0.2s ease;
+
+  &:active {
+    border-color: $parasite;
+  }
 }
 
 .value-text {
   font-size: 28rpx;
-  color: #374151;
+  color: $text-dark;
+  font-weight: 500;
 }
 
 .picker-placeholder {
   font-size: 28rpx;
-  color: #9ca3af;
+  color: $text-light;
 }
 
 .picker-arrow {
-  font-size: 20rpx;
-  color: #9ca3af;
+  font-size: 18rpx;
+  color: $text-light;
 }
 
+/* ========== 弹窗底部按钮 ========== */
 .modal-footer {
   display: flex;
   gap: 16rpx;
-  padding: 24rpx 32rpx;
-  border-top: 1rpx solid #f3f4f6;
+  padding: 24rpx 28rpx 28rpx;
+  border-top: 1.5rpx solid #f5ebe5;
 }
 
 .modal-btn {
@@ -781,26 +939,33 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:active {
+    transform: scale(0.96);
+  }
 }
 
 .modal-btn-cancel {
-  background: #f3f4f6;
+  background: #f5f5f4;
 }
 
 .modal-btn-text-cancel {
   font-size: 28rpx;
-  font-weight: 600;
-  color: #6b7280;
+  font-weight: 700;
+  color: $text-mid;
+  letter-spacing: 0.5rpx;
 }
 
 .modal-btn-confirm {
-  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
-  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
+  background: linear-gradient(135deg, $primary 0%, $primary-soft 100%);
+  box-shadow: 0 4rpx 14rpx rgba($primary, 0.3);
 }
 
 .modal-btn-text-confirm {
   font-size: 28rpx;
-  font-weight: 600;
+  font-weight: 800;
   color: #fff;
+  letter-spacing: 0.5rpx;
 }
 </style>

@@ -293,9 +293,19 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+$primary: #ff5500;
+$primary-soft: #ff7a3d;
+$vaccine: #d97706;
+$vaccine-light: #fbbf24;
+$vaccine-bg: #fef3c7;
+$text-dark: #1c1917;
+$text-mid: #44403c;
+$text-light: #a8a29e;
+$page-bg: #fff5f0;
+
 .list-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: $page-bg;
 }
 
 .nav-fixed {
@@ -304,7 +314,8 @@ export default {
   left: 0;
   right: 0;
   z-index: 30;
-  background: linear-gradient(180deg, #ff7a3d 0%, #ff4d4f 100%);
+  background: #ffffff;
+  box-shadow: 0 2rpx 16rpx rgba(255, 85, 0, 0.08);
 }
 
 .status-bar {
@@ -322,34 +333,32 @@ export default {
 .nav-back {
   width: 64rpx;
   height: 64rpx;
-  border-radius: 32rpx;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
-  transition: background 0.2s, transform 0.15s;
-}
+  border-radius: 32rpx;
+  background: #f5f5f4;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-.nav-back:active {
-  background: rgba(255, 255, 255, 0.35);
-  transform: scale(0.92);
+  &:active {
+    transform: scale(0.9);
+    background: #e7e5e4;
+  }
 }
 
 .nav-back-arrow {
   width: 18rpx;
   height: 18rpx;
-  border-left: 4rpx solid #fff;
-  border-bottom: 4rpx solid #fff;
-  transform: rotate(45deg) translate(2rpx, -2rpx);
+  border-left: 3rpx solid $text-dark;
+  border-bottom: 3rpx solid $text-dark;
+  transform: rotate(45deg);
+  margin-left: -3rpx;
 }
 
 .nav-title {
-  font-size: 34rpx;
+  font-size: 36rpx;
   font-weight: 700;
-  color: #fff;
+  color: $text-dark;
 }
 
 .nav-placeholder {
@@ -362,29 +371,54 @@ export default {
 }
 
 .list-content {
-  padding: 20rpx 24rpx 200rpx;
+  padding: 24rpx 28rpx 200rpx;
 }
 
 .record-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 24rpx;
 }
 
 .record-card {
-  background: #fff;
+  background: #ffffff;
   border-radius: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
-  padding: 28rpx 24rpx;
+  box-shadow: 0 6rpx 24rpx rgba(255, 85, 0, 0.10);
+  padding: 28rpx 24rpx 28rpx 30rpx;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20rpx;
+    bottom: 20rpx;
+    width: 6rpx;
+    background: linear-gradient(180deg, $vaccine 0%, $vaccine-light 100%);
+    border-radius: 0 6rpx 6rpx 0;
+  }
+
+  &:active {
+    transform: translateY(-2rpx);
+    box-shadow: 0 10rpx 32rpx rgba(255, 85, 0, 0.15);
+  }
 }
 
 .record-card.urgent {
-  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
-  border: 2rpx solid rgba(255, 77, 79, 0.2);
+  background: linear-gradient(135deg, #fefce8 0%, $vaccine-bg 100%);
+  border: 2rpx solid rgba($vaccine, 0.25);
+  box-shadow: 0 6rpx 24rpx rgba($vaccine, 0.18);
+
+  &::before {
+    background: linear-gradient(180deg, $vaccine-light 0%, #f59e0b 100%);
+    box-shadow: 0 0 12rpx rgba($vaccine, 0.4);
+  }
 }
 
 .record-card.completed {
-  opacity: 0.75;
+  opacity: 0.65;
 }
 
 .record-header {
@@ -392,7 +426,7 @@ export default {
   flex-direction: row;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 20rpx;
+  margin-bottom: 22rpx;
 }
 
 .record-info {
@@ -405,22 +439,23 @@ export default {
   flex-direction: row;
   align-items: center;
   gap: 8rpx;
-  margin-bottom: 10rpx;
+  margin-bottom: 12rpx;
+  flex-wrap: wrap;
 }
 
 .record-emoji {
-  font-size: 30rpx;
+  font-size: 32rpx;
 }
 
 .record-name {
   font-size: 30rpx;
-  font-weight: 600;
-  color: #111827;
+  font-weight: 700;
+  color: $text-dark;
 }
 
 .status-tag {
-  padding: 4rpx 14rpx;
-  border-radius: 20rpx;
+  padding: 5rpx 16rpx;
+  border-radius: 999rpx;
   margin-left: 8rpx;
 }
 
@@ -429,16 +464,17 @@ export default {
 }
 
 .status-tag--urgent {
-  background: #ff4d4f;
+  background: linear-gradient(135deg, $vaccine 0%, $vaccine-light 100%);
+  box-shadow: 0 2rpx 8rpx rgba($vaccine, 0.3);
 }
 
 .status-tag--pending {
-  background: #fff4e6;
+  background: $vaccine-bg;
 }
 
 .status-tag-text {
   font-size: 20rpx;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .status-tag--done .status-tag-text {
@@ -446,25 +482,25 @@ export default {
 }
 
 .status-tag--urgent .status-tag-text {
-  color: #fff;
+  color: #ffffff;
 }
 
 .status-tag--pending .status-tag-text {
-  color: #ff7a3d;
+  color: $vaccine;
 }
 
 .record-date {
   display: block;
   font-size: 24rpx;
-  color: #6b7280;
-  margin-bottom: 6rpx;
+  color: $text-mid;
+  margin-bottom: 8rpx;
 }
 
 .record-note {
   display: block;
   font-size: 22rpx;
-  color: #9ca3af;
-  line-height: 1.5;
+  color: $text-light;
+  line-height: 1.6;
 }
 
 .record-countdown {
@@ -472,19 +508,21 @@ export default {
   flex-direction: row;
   align-items: baseline;
   background: #d1fae5;
-  padding: 12rpx 20rpx;
-  border-radius: 30rpx;
+  padding: 14rpx 22rpx;
+  border-radius: 999rpx;
   flex-shrink: 0;
+  box-shadow: 0 2rpx 8rpx rgba(16, 185, 129, 0.15);
 }
 
 .record-card.urgent .record-countdown {
-  background: #ff4d4f;
+  background: linear-gradient(135deg, $vaccine 0%, $vaccine-light 100%);
+  box-shadow: 0 4rpx 14rpx rgba($vaccine, 0.35);
 }
 
 .countdown-number {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #111827;
+  font-size: 40rpx;
+  font-weight: 900;
+  color: $text-dark;
   margin-right: 4rpx;
 }
 
@@ -495,16 +533,17 @@ export default {
 
 .countdown-unit {
   font-size: 22rpx;
-  color: #6b7280;
+  font-weight: 500;
+  color: $text-mid;
 }
 
 .record-progress {
-  margin-bottom: 20rpx;
+  margin-bottom: 22rpx;
 }
 
 .progress-bar {
   height: 12rpx;
-  background: #fff4e6;
+  background: #fef3c7;
   border-radius: 6rpx;
   overflow: hidden;
   margin-bottom: 8rpx;
@@ -512,13 +551,14 @@ export default {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #d1fae5 0%, #10b981 100%);
+  background: linear-gradient(90deg, $vaccine 0%, $vaccine-light 100%);
   border-radius: 6rpx;
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .progress-text {
   font-size: 20rpx;
-  color: #9ca3af;
+  color: $text-light;
   text-align: right;
   display: block;
 }
@@ -526,19 +566,24 @@ export default {
 .record-actions {
   display: flex;
   justify-content: center;
-  gap: 12rpx;
+  gap: 14rpx;
 }
 
 .btn-action {
-  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  background: linear-gradient(135deg, $primary 0%, $primary-soft 100%);
   color: #ffffff;
   border: none;
   border-radius: 999rpx;
-  padding: 16rpx 48rpx;
+  padding: 17rpx 48rpx;
   font-size: 26rpx;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.2;
-  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba($primary, 0.35);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+
+  &:active {
+    transform: scale(0.95);
+  }
 }
 
 .btn-action.completed {
@@ -559,21 +604,21 @@ export default {
 }
 
 .btn-edit {
-  background: #e0e7ff !important;
+  background: $vaccine-bg !important;
   box-shadow: none !important;
 }
 
 .btn-edit .btn-action-text {
-  color: #4f46e5 !important;
+  color: $vaccine !important;
 }
 
 .btn-delete {
-  background: #fff5f5 !important;
+  background: #fef2f2 !important;
   box-shadow: none !important;
 }
 
 .btn-delete .btn-action-text {
-  color: #ff4d4f !important;
+  color: #ef4444 !important;
 }
 
 .empty-state {
@@ -581,24 +626,30 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 120rpx 40rpx;
+  padding: 140rpx 40rpx;
 }
 
 .empty-emoji {
-  font-size: 80rpx;
-  margin-bottom: 24rpx;
+  font-size: 96rpx;
+  margin-bottom: 28rpx;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12rpx); }
 }
 
 .empty-text {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 12rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: $text-mid;
+  margin-bottom: 14rpx;
 }
 
 .empty-hint {
-  font-size: 24rpx;
-  color: #9ca3af;
+  font-size: 26rpx;
+  color: $text-light;
 }
 
 .fab {
@@ -609,21 +660,20 @@ export default {
 }
 
 .fab-inner {
-  width: 104rpx;
-  height: 104rpx;
-  border-radius: 30rpx;
-  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  width: 108rpx;
+  height: 108rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(135deg, $primary 0%, $primary-soft 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 32rpx rgba(255, 77, 79, 0.4), 0 2rpx 8rpx rgba(255, 77, 79, 0.2);
-  backdrop-filter: blur(12px);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10rpx 36rpx rgba($primary, 0.4), 0 3rpx 10rpx rgba($primary, 0.2);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
 }
 
 .fab:active .fab-inner {
-  transform: scale(0.92);
-  box-shadow: 0 4rpx 16rpx rgba(255, 77, 79, 0.3);
+  transform: scale(0.90) rotate(90deg);
+  box-shadow: 0 6rpx 20rpx rgba($primary, 0.3);
 }
 
 .fab-icon-wrapper {
@@ -661,7 +711,9 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(28, 25, 23, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -669,35 +721,42 @@ export default {
 }
 
 .modal-content {
-  width: 80%;
+  width: 82%;
   max-height: 80vh;
-  background: #fff;
+  background: #ffffff;
   border-radius: 24rpx;
   overflow: hidden;
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.15);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 32rpx;
-  border-bottom: 1rpx solid #f3f4f6;
+  padding: 34rpx 32rpx;
+  border-bottom: 1rpx solid #f5f5f4;
 }
 
 .modal-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #111827;
+  font-size: 33rpx;
+  font-weight: 800;
+  color: $text-dark;
 }
 
 .modal-close {
   font-size: 36rpx;
-  color: #9ca3af;
-  width: 48rpx;
-  height: 48rpx;
+  color: $text-light;
+  width: 52rpx;
+  height: 52rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s ease;
+
+  &:active {
+    background: #f5f5f4;
+  }
 }
 
 .modal-body {
@@ -714,8 +773,8 @@ export default {
 
 .form-label {
   font-size: 28rpx;
-  font-weight: 600;
-  color: #111827;
+  font-weight: 700;
+  color: $text-dark;
   margin-bottom: 14rpx;
   display: block;
 }
@@ -723,45 +782,52 @@ export default {
 .form-input {
   width: 100%;
   box-sizing: border-box;
-  background: #f9fafb;
-  border: none;
+  background: #fafaf9;
+  border: 2rpx solid #e7e5e4;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   min-height: 80rpx;
   font-size: 28rpx;
-  color: #374151;
+  color: $text-dark;
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    border-color: $primary-soft;
+  }
 }
 
 .picker-value {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f9fafb;
+  background: #fafaf9;
+  border: 2rpx solid #e7e5e4;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   min-height: 80rpx;
+  transition: border-color 0.2s ease;
 }
 
 .value-text {
   font-size: 28rpx;
-  color: #374151;
+  color: $text-dark;
 }
 
 .picker-placeholder {
   font-size: 28rpx;
-  color: #9ca3af;
+  color: $text-light;
 }
 
 .picker-arrow {
   font-size: 20rpx;
-  color: #9ca3af;
+  color: $text-light;
 }
 
 .modal-footer {
   display: flex;
-  gap: 16rpx;
-  padding: 24rpx 32rpx;
-  border-top: 1rpx solid #f3f4f6;
+  gap: 18rpx;
+  padding: 26rpx 32rpx;
+  border-top: 1rpx solid #f5f5f4;
 }
 
 .modal-btn {
@@ -771,26 +837,31 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:active {
+    transform: scale(0.96);
+  }
 }
 
 .modal-btn-cancel {
-  background: #f3f4f6;
+  background: #f5f5f4;
 }
 
 .modal-btn-text-cancel {
   font-size: 28rpx;
-  font-weight: 600;
-  color: #6b7280;
+  font-weight: 700;
+  color: $text-mid;
 }
 
 .modal-btn-confirm {
-  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
-  box-shadow: 0 4rpx 12rpx rgba(255, 106, 61, 0.3);
+  background: linear-gradient(135deg, $primary 0%, $primary-soft 100%);
+  box-shadow: 0 4rpx 16rpx rgba($primary, 0.35);
 }
 
 .modal-btn-text-confirm {
   font-size: 28rpx;
-  font-weight: 600;
+  font-weight: 700;
   color: #fff;
 }
 </style>
