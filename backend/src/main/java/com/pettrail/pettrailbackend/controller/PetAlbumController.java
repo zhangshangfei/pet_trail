@@ -1,8 +1,8 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.pettrail.pettrailbackend.dto.PetAlbumDTO;
+import com.pettrail.pettrailbackend.dto.PetAlbumVO;
 import com.pettrail.pettrailbackend.dto.Result;
-import com.pettrail.pettrailbackend.entity.PetAlbum;
 import com.pettrail.pettrailbackend.service.PetAlbumService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ public class PetAlbumController extends BaseController {
     private final PetAlbumService petAlbumService;
 
     @GetMapping
-    public Result<List<PetAlbum>> getAlbum(
+    public Result<List<PetAlbumVO>> getAlbum(
             @PathVariable Long petId,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month) {
@@ -28,7 +28,7 @@ public class PetAlbumController extends BaseController {
     }
 
     @PostMapping
-    public Result<PetAlbum> addPhoto(@PathVariable Long petId, @RequestBody PetAlbumDTO dto) {
+    public Result<PetAlbumVO> addPhoto(@PathVariable Long petId, @RequestBody PetAlbumDTO dto) {
         Long userId = requireLogin();
         String imageUrl = dto.getImageUrl();
         String title = dto.getTitle();
@@ -44,7 +44,7 @@ public class PetAlbumController extends BaseController {
     }
 
     @PutMapping("/{id}")
-    public Result<PetAlbum> updatePhoto(@PathVariable Long petId, @PathVariable Long id, @RequestBody PetAlbumDTO dto) {
+    public Result<PetAlbumVO> updatePhoto(@PathVariable Long petId, @PathVariable Long id, @RequestBody PetAlbumDTO dto) {
         Long userId = requireLogin();
         String title = dto.getTitle();
         String note = dto.getNote();

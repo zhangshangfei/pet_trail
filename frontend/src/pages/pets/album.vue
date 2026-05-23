@@ -108,6 +108,7 @@
 
 <script>
 import { DEFAULT_PET_AVATAR_URL } from '@/utils/index'
+import * as petApi from '@/api/pet'
 import config from '@/config/env'
 
 export default {
@@ -165,7 +166,10 @@ export default {
     async loadPhotos() {
       if (!this.currentPetId) { this.photos = []; return }
       try {
-        const res = await petApi.getPetAlbum(this.currentPetId, { page: this.albumPage, size: 20 })
+        const res = await petApi.getPetAlbum(this.currentPetId, {
+          year: this.currentYear,
+          month: this.currentMonth
+        })
         if (res && res.success && Array.isArray(res.data)) {
           this.photos = res.data
         } else {
@@ -319,7 +323,13 @@ export default {
       this.saving = true
 
       try {
-        const res = await petApi.addPetAlbumPhoto(this.currentPetId, { url: uploadRes.data.url })
+        const data = {
+          imageUrl: this.form.imageUrl,
+          title: this.form.title || null,
+          note: this.form.note || null,
+          recordDate: this.form.recordDate || null
+        }
+        const res = await petApi.addPetAlbumPhoto(this.currentPetId, data)
         if (res && res.success) {
           uni.showToast({ title: '保存成功', icon: 'success' })
           this.closeModal()

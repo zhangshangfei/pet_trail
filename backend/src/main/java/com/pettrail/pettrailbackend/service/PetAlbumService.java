@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.pettrail.pettrailbackend.dto.PetAlbumVO;
 import com.pettrail.pettrailbackend.entity.PetAlbum;
 import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.mapper.PetAlbumMapper;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -20,7 +22,7 @@ public class PetAlbumService {
 
     private final PetAlbumMapper petAlbumMapper;
 
-    public List<PetAlbum> getPetAlbum(Long petId, Integer year, Integer month) {
+    public List<PetAlbumVO> getPetAlbum(Long petId, Integer year, Integer month) {
         LambdaQueryWrapper<PetAlbum> wrapper = new LambdaQueryWrapper<PetAlbum>()
                 .eq(PetAlbum::getPetId, petId);
         if (year != null && month != null) {
@@ -31,11 +33,13 @@ public class PetAlbumService {
         }
         wrapper.orderByDesc(PetAlbum::getRecordDate)
                 .orderByDesc(PetAlbum::getCreatedAt);
-        return petAlbumMapper.selectList(wrapper);
+        return petAlbumMapper.selectList(wrapper).stream()
+                .map(this::toVO)
+                .collect(Collectors.toList());
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public PetAlbum addPhoto(Long userId, Long petId, String imageUrl,
+    public PetAlbumVO addPhoto(Long userId, Long petId, String imageUrl,
                               String title, String note, LocalDate recordDate) {
         PetAlbum photo = new PetAlbum();
         photo.setUserId(userId);
@@ -46,11 +50,11 @@ public class PetAlbumService {
         photo.setRecordDate(recordDate != null ? recordDate : LocalDate.now());
         photo.setCreatedAt(LocalDateTime.now());
         petAlbumMapper.insert(photo);
-        return photo;
+        return toVO(photo);
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public PetAlbum updatePhoto(Long userId, Long photoId, String title, String note) {
+    public PetAlbumVO updatePhoto(Long userId, Long photoId, String title, String note) {
         PetAlbum photo = petAlbumMapper.selectById(photoId);
         if (photo == null || !photo.getUserId().equals(userId)) {
             throw new BusinessException("照片不存在或无权修改");
@@ -58,7 +62,7 @@ public class PetAlbumService {
         if (title != null) photo.setTitle(title);
         if (note != null) photo.setNote(note);
         petAlbumMapper.updateById(photo);
-        return photo;
+        return toVO(photo);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -68,5 +72,17 @@ public class PetAlbumService {
             throw new BusinessException("照片不存在或无权删除");
         }
         petAlbumMapper.deleteById(photoId);
+    }
+
+    private PetAlbumVO toVO(PetAlbum photo) {
+        PetAlbumVO vo = new PetAlbumVO();
+        vo.setId(photo.getId());
+        vo.setPetId(photo.getPetId());
+        vo.setImageUrl(photo.getImageUrl());
+        vo.setTitle(photo.getTitle());
+        vo.setNote(photo.getNote());
+        vo.setRecordDate(photo.getRecordDate());
+        vo.setCreatedAt(photo.getCreatedAt());
+        return vo;
     }
 }
