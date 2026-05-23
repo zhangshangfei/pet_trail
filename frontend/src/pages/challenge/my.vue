@@ -251,11 +251,9 @@ export default {
     },
 
     normalizeParticipant(p) {
-      const challenge = p.challenge || {}
-      const type = challenge.type || 0
+      const type = p.type || 0
       const now = new Date()
-      const endDate = challenge.endDate ? new Date(challenge.endDate) : null
-      const startDate = challenge.startDate ? new Date(challenge.startDate) : null
+      const endDate = p.endDate ? new Date(p.endDate) : null
 
       let status = STATUS_ONGOING
       if (p.completed) {
@@ -264,23 +262,23 @@ export default {
         status = STATUS_EXPIRED
       }
 
-      const conditionValue = challenge.conditionValue || 100
+      const conditionValue = p.conditionValue || 100
       const progress = p.progress || 0
       const progressPercent = Math.min(100, Math.round((progress / conditionValue) * 100))
 
       return {
         challengeId: p.challengeId,
-        title: challenge.title || '未知挑战',
-        description: challenge.description || '',
+        title: p.title || '未知挑战',
+        description: p.description || '',
         type,
         status,
         progress,
         progressPercent,
         completedAt: p.completedAt,
-        participantCount: challenge.participantCount || 0,
-        startDate: challenge.startDate,
-        endDate: challenge.endDate,
-        rewardDescription: challenge.rewardDescription || ''
+        participantCount: p.participantCount || 0,
+        startDate: p.startDate,
+        endDate: p.endDate,
+        rewardDescription: p.rewardDescription || ''
       }
     },
 

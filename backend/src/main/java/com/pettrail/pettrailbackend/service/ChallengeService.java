@@ -2,6 +2,7 @@ package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pettrail.pettrailbackend.dto.ChallengeParticipantVO;
 import com.pettrail.pettrailbackend.entity.Challenge;
 import com.pettrail.pettrailbackend.entity.ChallengeParticipant;
 import com.pettrail.pettrailbackend.exception.BusinessException;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,16 +108,41 @@ public class ChallengeService {
         return participant;
     }
 
-    public List<ChallengeParticipant> getUserParticipations(Long userId) {
+    public List<ChallengeParticipantVO> getUserParticipations(Long userId) {
         List<ChallengeParticipant> participants = participantMapper.selectList(
                 new LambdaQueryWrapper<ChallengeParticipant>()
                         .eq(ChallengeParticipant::getUserId, userId)
                         .orderByDesc(ChallengeParticipant::getCreatedAt));
+        List<ChallengeParticipantVO> voList = new ArrayList<>();
         for (ChallengeParticipant p : participants) {
             Challenge challenge = challengeMapper.selectById(p.getChallengeId());
-            p.setChallenge(challenge);
+            voList.add(toParticipantVO(p, challenge));
         }
-        return participants;
+        return voList;
+    }
+
+    private ChallengeParticipantVO toParticipantVO(ChallengeParticipant p, Challenge challenge) {
+        ChallengeParticipantVO vo = new ChallengeParticipantVO();
+        vo.setId(p.getId());
+        vo.setChallengeId(p.getChallengeId());
+        vo.setUserId(p.getUserId());
+        vo.setProgress(p.getProgress());
+        vo.setCompleted(p.getCompleted());
+        vo.setCompletedAt(p.getCompletedAt());
+        vo.setCreatedAt(p.getCreatedAt());
+        if (challenge != null) {
+            vo.setTitle(challenge.getTitle());
+            vo.setDescription(challenge.getDescription());
+            vo.setCoverImage(challenge.getCoverImage());
+            vo.setType(challenge.getType());
+            vo.setStartDate(challenge.getStartDate());
+            vo.setEndDate(challenge.getEndDate());
+            vo.setConditionType(challenge.getConditionType());
+            vo.setConditionValue(challenge.getConditionValue());
+            vo.setRewardDescription(challenge.getRewardDescription());
+            vo.setParticipantCount(challenge.getParticipantCount());
+        }
+        return vo;
     }
 
     @Transactional(rollbackFor = Exception.class)

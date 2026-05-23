@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.ChallengeParticipantVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Challenge;
 import com.pettrail.pettrailbackend.entity.ChallengeParticipant;
@@ -35,7 +36,7 @@ public class ChallengeController extends BaseController {
     }
 
     @GetMapping("/my")
-    public Result<List<ChallengeParticipant>> myChallenges() {
+    public Result<List<ChallengeParticipantVO>> myChallenges() {
         Long userId = requireLogin();
         return Result.success(challengeService.getUserParticipations(userId));
     }
