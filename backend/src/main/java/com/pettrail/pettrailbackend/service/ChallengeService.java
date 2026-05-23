@@ -107,10 +107,15 @@ public class ChallengeService {
     }
 
     public List<ChallengeParticipant> getUserParticipations(Long userId) {
-        return participantMapper.selectList(
+        List<ChallengeParticipant> participants = participantMapper.selectList(
                 new LambdaQueryWrapper<ChallengeParticipant>()
                         .eq(ChallengeParticipant::getUserId, userId)
                         .orderByDesc(ChallengeParticipant::getCreatedAt));
+        for (ChallengeParticipant p : participants) {
+            Challenge challenge = challengeMapper.selectById(p.getChallengeId());
+            p.setChallenge(challenge);
+        }
+        return participants;
     }
 
     @Transactional(rollbackFor = Exception.class)
