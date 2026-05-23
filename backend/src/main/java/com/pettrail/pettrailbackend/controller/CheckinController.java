@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.pettrail.pettrailbackend.dto.CheckinItemRequest;
+import com.pettrail.pettrailbackend.dto.CheckinRecordVO;
 import com.pettrail.pettrailbackend.dto.CheckinRequest;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.CheckinItem;
@@ -86,7 +87,7 @@ public class CheckinController extends BaseController {
     }
 
     @GetMapping("/calendar")
-    public Result<List<CheckinRecord>> getCalendar(
+    public Result<List<CheckinRecordVO>> getCalendar(
             @RequestParam int year,
             @RequestParam int month,
             @RequestParam(required = false) Long petId) {

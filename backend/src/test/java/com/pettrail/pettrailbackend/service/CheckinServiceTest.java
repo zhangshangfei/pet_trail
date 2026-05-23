@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.service;
 
+import com.pettrail.pettrailbackend.dto.CheckinRecordVO;
 import com.pettrail.pettrailbackend.entity.CheckinItem;
 import com.pettrail.pettrailbackend.entity.CheckinRecord;
 import com.pettrail.pettrailbackend.entity.CheckinStats;
@@ -287,7 +288,7 @@ class CheckinServiceTest {
         when(checkinRecordMapper.selectByUserIdAndDateRange(eq(100L), any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(Arrays.asList(r1));
 
-        List<CheckinRecord> result = checkinService.getCalendar(100L, 2026, 4, null);
+        List<CheckinRecordVO> result = checkinService.getCalendar(100L, 2026, 4, null);
         assertEquals(1, result.size());
     }
 

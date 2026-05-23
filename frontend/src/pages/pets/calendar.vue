@@ -80,7 +80,7 @@
             <text class="detail-section-title">✅ 打卡记录</text>
             <view class="detail-list">
               <view v-for="item in dayCheckins" :key="item.id" class="detail-item">
-                <text class="detail-item-icon">{{ item.icon || '📋' }}</text>
+                <text class="detail-item-icon">{{ item.itemIcon || '📋' }}</text>
                 <text class="detail-item-name">{{ item.itemName || '打卡' }}</text>
               </view>
             </view>

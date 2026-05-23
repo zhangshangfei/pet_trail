@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.alibaba.fastjson2.JSON;
+import com.pettrail.pettrailbackend.dto.CheckinRecordVO;
 import com.pettrail.pettrailbackend.entity.CheckinItem;
 import com.pettrail.pettrailbackend.entity.CheckinRecord;
 import com.pettrail.pettrailbackend.entity.CheckinStats;
@@ -243,7 +244,7 @@ public class CheckinService {
     /**
      * 获取打卡日历
      */
-    public List<CheckinRecord> getCalendar(Long userId, int year, int month, Long petId) {
+    public List<CheckinRecordVO> getCalendar(Long userId, int year, int month, Long petId) {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
         List<CheckinRecord> records = checkinRecordMapper.selectByUserIdAndDateRange(userId, startDate, endDate);
@@ -252,7 +253,33 @@ public class CheckinService {
                     .filter(r -> petId.equals(r.getPetId()))
                     .collect(Collectors.toList());
         }
-        return records;
+
+        Set<Long> itemIds = records.stream()
+                .map(CheckinRecord::getItemId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, CheckinItem> itemMap = new HashMap<>();
+        if (!itemIds.isEmpty()) {
+            checkinItemMapper.selectBatchIds(itemIds).forEach(item -> itemMap.put(item.getId(), item));
+        }
+
+        return records.stream().map(record -> {
+            CheckinRecordVO vo = new CheckinRecordVO();
+            vo.setId(record.getId());
+            vo.setPetId(record.getPetId());
+            vo.setItemId(record.getItemId());
+            vo.setRecordDate(record.getRecordDate());
+            vo.setStatus(record.getStatus());
+            vo.setNote(record.getNote());
+            vo.setImages(record.getImages());
+            vo.setCreatedAt(record.getCreatedAt());
+            CheckinItem item = itemMap.get(record.getItemId());
+            if (item != null) {
+                vo.setItemName(item.getName());
+                vo.setItemIcon(item.getIcon());
+            }
+            return vo;
+        }).collect(Collectors.toList());
     }
 
     /**
