@@ -278,6 +278,7 @@ public class RecommendService {
 
     private List<User> tryVectorRecallUsers(Long currentUserId, Set<Long> excludedIds) {
         if (!vectorEnabled || vectorService == null || !vectorService.isAvailable()) {
+            log.info("向量召回用户跳过: vectorEnabled={}, vectorService={}", vectorEnabled, vectorService != null ? "存在" : "不存在");
             return null;
         }
 
@@ -287,7 +288,7 @@ public class RecommendService {
                 queryVector, VECTOR_TOP_K, excludedIds);
 
             if (searchResults.isEmpty()) {
-                log.debug("向量召回用户结果为空，降级为全量计算");
+                log.info("向量召回用户结果为空，降级为全量计算");
                 return null;
             }
 
@@ -300,7 +301,7 @@ public class RecommendService {
                 .filter(u -> !excludedIds.contains(u.getId()))
                 .collect(Collectors.toList());
 
-            log.debug("向量召回用户: recall={}, afterFilter={}", searchResults.size(), candidates.size());
+            log.info("向量召回用户: recall={}, afterFilter={}", searchResults.size(), candidates.size());
             return candidates;
         } catch (Exception e) {
             log.warn("向量召回用户异常，降级为全量计算: {}", e.getMessage());
@@ -518,6 +519,7 @@ public class RecommendService {
 
     private List<Post> tryVectorRecallPosts(Long userId) {
         if (!vectorEnabled || vectorService == null || !vectorService.isAvailable()) {
+            log.info("向量召回动态跳过: vectorEnabled={}, vectorService={}", vectorEnabled, vectorService != null ? "存在" : "不存在");
             return null;
         }
 
@@ -528,7 +530,7 @@ public class RecommendService {
                 queryVector, VECTOR_TOP_K, new HashSet<>(myFolloweeIds));
 
             if (searchResults.isEmpty()) {
-                log.debug("向量召回动态结果为空，降级为全量计算");
+                log.info("向量召回动态结果为空，降级为全量计算");
                 return null;
             }
 
@@ -541,7 +543,7 @@ public class RecommendService {
                 .filter(p -> p.getDeleted() == null || p.getDeleted() == 0)
                 .collect(Collectors.toList());
 
-            log.debug("向量召回动态: recall={}, afterFilter={}", searchResults.size(), candidates.size());
+            log.info("向量召回动态: recall={}, afterFilter={}", searchResults.size(), candidates.size());
             return candidates;
         } catch (Exception e) {
             log.warn("向量召回动态异常，降级为全量计算: {}", e.getMessage());

@@ -9,14 +9,15 @@ import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -53,12 +54,16 @@ public class VectorSyncService {
             User user = userMapper.selectById(userId);
             if (user == null) return;
 
-            Map<String, Object> fields = new HashMap<>();
-            fields.put("user_id", userId);
-            fields.put("status", user.getStatus() != null ? user.getStatus() : 1);
-            fields.put("vector", floatArrayToBytes(vector));
+            String key = USER_KEY_PREFIX + userId;
+            byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
+            byte[] vectorBytes = floatArrayToBytes(vector);
 
-            redisTemplate.opsForHash().putAll(USER_KEY_PREFIX + userId, fields);
+            redisTemplate.execute((RedisCallback<Void>) connection -> {
+                connection.hashCommands().hSet(keyBytes, "user_id".getBytes(StandardCharsets.UTF_8), String.valueOf(userId).getBytes(StandardCharsets.UTF_8));
+                connection.hashCommands().hSet(keyBytes, "status".getBytes(StandardCharsets.UTF_8), String.valueOf(user.getStatus() != null ? user.getStatus() : 1).getBytes(StandardCharsets.UTF_8));
+                connection.hashCommands().hSet(keyBytes, "vector".getBytes(StandardCharsets.UTF_8), vectorBytes);
+                return null;
+            });
 
             redisTemplate.opsForValue().set(
                 SYNC_TRACK_PREFIX + "user:" + userId,
@@ -78,15 +83,20 @@ public class VectorSyncService {
             Post post = postMapper.selectById(postId);
             if (post == null) return;
 
-            Map<String, Object> fields = new HashMap<>();
-            fields.put("post_id", postId);
-            fields.put("author_id", post.getUserId());
-            fields.put("deleted", post.getDeleted() != null ? post.getDeleted() : 0);
-            fields.put("created_at", post.getCreatedAt() != null ?
-                post.getCreatedAt().toEpochSecond(java.time.ZoneOffset.of("+8")) : 0);
-            fields.put("vector", floatArrayToBytes(vector));
+            String key = POST_KEY_PREFIX + postId;
+            byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
+            byte[] vectorBytes = floatArrayToBytes(vector);
 
-            redisTemplate.opsForHash().putAll(POST_KEY_PREFIX + postId, fields);
+            redisTemplate.execute((RedisCallback<Void>) connection -> {
+                connection.hashCommands().hSet(keyBytes, "post_id".getBytes(StandardCharsets.UTF_8), String.valueOf(postId).getBytes(StandardCharsets.UTF_8));
+                connection.hashCommands().hSet(keyBytes, "author_id".getBytes(StandardCharsets.UTF_8), String.valueOf(post.getUserId()).getBytes(StandardCharsets.UTF_8));
+                connection.hashCommands().hSet(keyBytes, "deleted".getBytes(StandardCharsets.UTF_8), String.valueOf(post.getDeleted() != null ? post.getDeleted() : 0).getBytes(StandardCharsets.UTF_8));
+                long createdAt = post.getCreatedAt() != null ?
+                    post.getCreatedAt().toEpochSecond(java.time.ZoneOffset.of("+8")) : 0;
+                connection.hashCommands().hSet(keyBytes, "created_at".getBytes(StandardCharsets.UTF_8), String.valueOf(createdAt).getBytes(StandardCharsets.UTF_8));
+                connection.hashCommands().hSet(keyBytes, "vector".getBytes(StandardCharsets.UTF_8), vectorBytes);
+                return null;
+            });
 
             redisTemplate.opsForValue().set(
                 SYNC_TRACK_PREFIX + "post:" + postId,
@@ -123,11 +133,16 @@ public class VectorSyncService {
         for (User user : users) {
             try {
                 float[] vector = vectorService.buildUserVector(user.getId());
-                Map<String, Object> fields = new HashMap<>();
-                fields.put("user_id", user.getId());
-                fields.put("status", 1);
-                fields.put("vector", floatArrayToBytes(vector));
-                redisTemplate.opsForHash().putAll(USER_KEY_PREFIX + user.getId(), fields);
+                String key = USER_KEY_PREFIX + user.getId();
+                byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
+                byte[] vectorBytes = floatArrayToBytes(vector);
+
+                redisTemplate.execute((RedisCallback<Void>) connection -> {
+                    connection.hashCommands().hSet(keyBytes, "user_id".getBytes(StandardCharsets.UTF_8), String.valueOf(user.getId()).getBytes(StandardCharsets.UTF_8));
+                    connection.hashCommands().hSet(keyBytes, "status".getBytes(StandardCharsets.UTF_8), "1".getBytes(StandardCharsets.UTF_8));
+                    connection.hashCommands().hSet(keyBytes, "vector".getBytes(StandardCharsets.UTF_8), vectorBytes);
+                    return null;
+                });
                 count++;
             } catch (Exception e) {
                 log.warn("全量同步用户向量失败: userId={}", user.getId());
@@ -147,14 +162,21 @@ public class VectorSyncService {
         for (Post post : posts) {
             try {
                 float[] vector = vectorService.buildPostVector(post.getId());
-                Map<String, Object> fields = new HashMap<>();
-                fields.put("post_id", post.getId());
-                fields.put("author_id", post.getUserId());
-                fields.put("deleted", 0);
-                fields.put("created_at", post.getCreatedAt() != null ?
-                    post.getCreatedAt().toEpochSecond(java.time.ZoneOffset.of("+8")) : 0);
-                fields.put("vector", floatArrayToBytes(vector));
-                redisTemplate.opsForHash().putAll(POST_KEY_PREFIX + post.getId(), fields);
+                String key = POST_KEY_PREFIX + post.getId();
+                byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
+                byte[] vectorBytes = floatArrayToBytes(vector);
+
+                long createdAt = post.getCreatedAt() != null ?
+                    post.getCreatedAt().toEpochSecond(java.time.ZoneOffset.of("+8")) : 0;
+
+                redisTemplate.execute((RedisCallback<Void>) connection -> {
+                    connection.hashCommands().hSet(keyBytes, "post_id".getBytes(StandardCharsets.UTF_8), String.valueOf(post.getId()).getBytes(StandardCharsets.UTF_8));
+                    connection.hashCommands().hSet(keyBytes, "author_id".getBytes(StandardCharsets.UTF_8), String.valueOf(post.getUserId()).getBytes(StandardCharsets.UTF_8));
+                    connection.hashCommands().hSet(keyBytes, "deleted".getBytes(StandardCharsets.UTF_8), "0".getBytes(StandardCharsets.UTF_8));
+                    connection.hashCommands().hSet(keyBytes, "created_at".getBytes(StandardCharsets.UTF_8), String.valueOf(createdAt).getBytes(StandardCharsets.UTF_8));
+                    connection.hashCommands().hSet(keyBytes, "vector".getBytes(StandardCharsets.UTF_8), vectorBytes);
+                    return null;
+                });
                 count++;
             } catch (Exception e) {
                 log.warn("全量同步动态向量失败: postId={}", post.getId());
