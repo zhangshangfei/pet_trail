@@ -5,6 +5,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import java.util.List;
+
 @Slf4j
 @Configuration
 @ConditionalOnProperty(name = "vector.enabled", havingValue = "true")
@@ -31,16 +33,32 @@ public class RedisVectorConfig {
         }
     }
 
+    private boolean indexExists(String indexName) {
+        try {
+            Object result = redisTemplate.execute((connection) ->
+                    connection.execute("FT._LIST"), true);
+            if (result instanceof List<?> list) {
+                for (Object item : list) {
+                    String name = item instanceof byte[] ? new String((byte[]) item) : String.valueOf(item);
+                    if (indexName.equals(name)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private void createUserIndex() {
+        if (indexExists(USER_INDEX)) {
+            log.info("用户向量索引已存在: {}", USER_INDEX);
+            return;
+        }
+
         try {
             redisTemplate.execute((connection) -> {
-                try {
-                    connection.execute("FT.INFO", USER_INDEX.getBytes());
-                    log.info("用户向量索引已存在: {}", USER_INDEX);
-                    return null;
-                } catch (Exception ignored) {
-                }
-
                 connection.execute("FT.CREATE",
                         USER_INDEX.getBytes(),
                         "ON".getBytes(),
@@ -63,24 +81,22 @@ public class RedisVectorConfig {
                         "DISTANCE_METRIC".getBytes(),
                         "COSINE".getBytes()
                 );
-                log.info("用户向量索引创建成功: {}", USER_INDEX);
                 return null;
             }, true);
+            log.info("用户向量索引创建成功: {}", USER_INDEX);
         } catch (Exception e) {
             log.warn("创建用户向量索引异常: {}", e.getMessage());
         }
     }
 
     private void createPostIndex() {
+        if (indexExists(POST_INDEX)) {
+            log.info("动态向量索引已存在: {}", POST_INDEX);
+            return;
+        }
+
         try {
             redisTemplate.execute((connection) -> {
-                try {
-                    connection.execute("FT.INFO", POST_INDEX.getBytes());
-                    log.info("动态向量索引已存在: {}", POST_INDEX);
-                    return null;
-                } catch (Exception ignored) {
-                }
-
                 connection.execute("FT.CREATE",
                         POST_INDEX.getBytes(),
                         "ON".getBytes(),
@@ -112,9 +128,9 @@ public class RedisVectorConfig {
                         "DISTANCE_METRIC".getBytes(),
                         "COSINE".getBytes()
                 );
-                log.info("动态向量索引创建成功: {}", POST_INDEX);
                 return null;
             }, true);
+            log.info("动态向量索引创建成功: {}", POST_INDEX);
         } catch (Exception e) {
             log.warn("创建动态向量索引异常: {}", e.getMessage());
         }
