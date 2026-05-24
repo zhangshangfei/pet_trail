@@ -9,12 +9,17 @@ import com.pettrail.pettrailbackend.mapper.PetMapper;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.commands.ProtocolCommand;
+import redis.clients.jedis.util.SafeEncoder;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -57,9 +62,25 @@ public class VectorService {
     @Value("${vector.top-k:200}")
     private int topK;
 
+    @Value("${spring.data.redis.host:localhost}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port:6379}")
+    private int redisPort;
+
+    @Value("${spring.data.redis.password:}")
+    private String redisPassword;
+
+    @Value("${spring.data.redis.database:0}")
+    private int redisDatabase;
+
+    private static final ProtocolCommand FT_SEARCH = () -> SafeEncoder.encode("FT.SEARCH");
+
     private volatile boolean vectorAvailable = true;
     private volatile long lastFailureTime = 0;
     private static final long CIRCUIT_BREAKER_RESET_MS = 60_000;
+
+    private JedisPool jedisPool;
 
     public VectorService(UserMapper userMapper, PetMapper petMapper,
                          PostMapper postMapper, FollowService followService,
@@ -73,8 +94,27 @@ public class VectorService {
 
     @PostConstruct
     public void init() {
-        log.info("VectorService 初始化完成, dimensions={}, topK={}, userIndex={}, postIndex={}",
-                DIMENSIONS, topK, userIndex, postIndex);
+        JedisPoolConfig poolConfig = new JedisPoolConfig();
+        poolConfig.setMaxTotal(8);
+        poolConfig.setMaxIdle(4);
+        poolConfig.setMinIdle(1);
+        poolConfig.setTestOnBorrow(true);
+
+        if (redisPassword != null && !redisPassword.isEmpty()) {
+            jedisPool = new JedisPool(poolConfig, redisHost, redisPort, 3000, redisPassword, redisDatabase);
+        } else {
+            jedisPool = new JedisPool(poolConfig, redisHost, redisPort, 3000, null, redisDatabase);
+        }
+
+        log.info("VectorService 初始化完成, dimensions={}, topK={}, userIndex={}, postIndex={}, jedis={}",
+                DIMENSIONS, topK, userIndex, postIndex, jedisPool != null ? "OK" : "FAIL");
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (jedisPool != null && !jedisPool.isClosed()) {
+            jedisPool.close();
+        }
     }
 
     public boolean isAvailable() {
@@ -84,7 +124,7 @@ public class VectorService {
                 log.info("向量服务熔断恢复，重新尝试");
             }
         }
-        return vectorAvailable;
+        return vectorAvailable && jedisPool != null && !jedisPool.isClosed();
     }
 
     public float[] buildUserVector(Long userId) {
@@ -180,29 +220,28 @@ public class VectorService {
 
         try {
             byte[] vectorBytes = floatArrayToBytes(queryVector);
-            String baseQuery = "*=>[KNN " + topK + " @vector $vec AS score]";
+            String searchQuery = "*=>[KNN " + topK + " @vector $vec AS score]";
             if (!excludeIds.isEmpty()) {
                 String ids = excludeIds.stream()
                     .map(String::valueOf)
                     .collect(Collectors.joining("|"));
-                baseQuery = "(-@user_id:{" + ids + "})=>[KNN " + topK + " @vector $vec AS score]";
+                searchQuery = "(-@user_id:{" + ids + "})=>[KNN " + topK + " @vector $vec AS score]";
             }
-            final String searchQuery = baseQuery;
 
-            Object result = redisTemplate.execute((RedisCallback<Object>) connection -> {
-                return connection.execute("FT.SEARCH",
-                    userIndex.getBytes(StandardCharsets.UTF_8),
-                    searchQuery.getBytes(StandardCharsets.UTF_8),
-                    "PARAMS".getBytes(StandardCharsets.UTF_8),
-                    "2".getBytes(StandardCharsets.UTF_8),
-                    "vec".getBytes(StandardCharsets.UTF_8),
+            try (Jedis jedis = jedisPool.getResource()) {
+                Object result = jedis.sendCommand(
+                    FT_SEARCH,
+                    SafeEncoder.encode(userIndex),
+                    SafeEncoder.encode(searchQuery),
+                    SafeEncoder.encode("PARAMS"),
+                    SafeEncoder.encode("2"),
+                    SafeEncoder.encode("vec"),
                     vectorBytes,
-                    "DIALECT".getBytes(StandardCharsets.UTF_8),
-                    "2".getBytes(StandardCharsets.UTF_8)
+                    SafeEncoder.encode("DIALECT"),
+                    SafeEncoder.encode("2")
                 );
-            }, true);
-
-            return parseSearchResult(result);
+                return parseJedisResult(result);
+            }
         } catch (Exception e) {
             handleFailure(e);
             return Collections.emptyList();
@@ -214,50 +253,50 @@ public class VectorService {
 
         try {
             byte[] vectorBytes = floatArrayToBytes(queryVector);
-            String baseQuery = "*=>[KNN " + topK + " @vector $vec AS score]";
+            String searchQuery = "*=>[KNN " + topK + " @vector $vec AS score]";
             if (!excludeAuthorIds.isEmpty()) {
                 String ids = excludeAuthorIds.stream()
                     .map(String::valueOf)
                     .collect(Collectors.joining("|"));
-                baseQuery = "(-@author_id:{" + ids + "})=>[KNN " + topK + " @vector $vec AS score]";
+                searchQuery = "(-@author_id:{" + ids + "})=>[KNN " + topK + " @vector $vec AS score]";
             }
-            final String searchQuery = baseQuery;
 
-            Object result = redisTemplate.execute((RedisCallback<Object>) connection -> {
-                return connection.execute("FT.SEARCH",
-                    postIndex.getBytes(StandardCharsets.UTF_8),
-                    searchQuery.getBytes(StandardCharsets.UTF_8),
-                    "PARAMS".getBytes(StandardCharsets.UTF_8),
-                    "2".getBytes(StandardCharsets.UTF_8),
-                    "vec".getBytes(StandardCharsets.UTF_8),
+            try (Jedis jedis = jedisPool.getResource()) {
+                Object result = jedis.sendCommand(
+                    FT_SEARCH,
+                    SafeEncoder.encode(postIndex),
+                    SafeEncoder.encode(searchQuery),
+                    SafeEncoder.encode("PARAMS"),
+                    SafeEncoder.encode("2"),
+                    SafeEncoder.encode("vec"),
                     vectorBytes,
-                    "DIALECT".getBytes(StandardCharsets.UTF_8),
-                    "2".getBytes(StandardCharsets.UTF_8)
+                    SafeEncoder.encode("DIALECT"),
+                    SafeEncoder.encode("2")
                 );
-            }, true);
-
-            return parseSearchResult(result);
+                return parseJedisResult(result);
+            }
         } catch (Exception e) {
             handleFailure(e);
             return Collections.emptyList();
         }
     }
 
-    private List<VectorSearchResult> parseSearchResult(Object result) {
+    @SuppressWarnings("unchecked")
+    private List<VectorSearchResult> parseJedisResult(Object result) {
         List<VectorSearchResult> results = new ArrayList<>();
         if (!(result instanceof List)) return results;
 
-        List<?> list = (List<?>) result;
+        List<Object> list = (List<Object>) result;
         if (list.size() < 2) return results;
 
         for (int i = 1; i < list.size(); i++) {
             Object item = list.get(i);
             if (item instanceof byte[]) {
-                String key = new String((byte[]) item, StandardCharsets.UTF_8);
+                String key = SafeEncoder.encode((byte[]) item);
                 Long id = extractIdFromKey(key);
                 if (id != null && i + 1 < list.size() && list.get(i + 1) instanceof List) {
-                    List<?> fields = (List<?>) list.get(i + 1);
-                    Double score = extractScore(fields);
+                    List<Object> fields = (List<Object>) list.get(i + 1);
+                    Double score = extractJedisScore(fields);
                     results.add(VectorSearchResult.of(id, score));
                     i++;
                 }
@@ -267,6 +306,24 @@ public class VectorService {
         return results;
     }
 
+    @SuppressWarnings("unchecked")
+    private Double extractJedisScore(List<Object> fields) {
+        for (int i = 0; i < fields.size() - 1; i++) {
+            Object f = fields.get(i);
+            String fieldName = f instanceof byte[] ? SafeEncoder.encode((byte[]) f) : String.valueOf(f);
+            if ("score".equals(fieldName) || "__vector_score".equals(fieldName)) {
+                Object val = fields.get(i + 1);
+                String scoreStr = val instanceof byte[] ? SafeEncoder.encode((byte[]) val) : String.valueOf(val);
+                try {
+                    return Double.parseDouble(scoreStr);
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
     private Long extractIdFromKey(String key) {
         if (key == null) return null;
         if (key.startsWith("vector:user:")) {
@@ -274,23 +331,6 @@ public class VectorService {
         }
         if (key.startsWith("vector:post:")) {
             return Long.parseLong(key.substring("vector:post:".length()));
-        }
-        return null;
-    }
-
-    private Double extractScore(List<?> fields) {
-        for (int i = 0; i < fields.size() - 1; i++) {
-            Object f = fields.get(i);
-            String fieldName = f instanceof byte[] ? new String((byte[]) f, StandardCharsets.UTF_8) : String.valueOf(f);
-            if ("score".equals(fieldName) || "__vector_score".equals(fieldName)) {
-                Object val = fields.get(i + 1);
-                String scoreStr = val instanceof byte[] ? new String((byte[]) val, StandardCharsets.UTF_8) : String.valueOf(val);
-                try {
-                    return Double.parseDouble(scoreStr);
-                } catch (NumberFormatException e) {
-                    return null;
-                }
-            }
         }
         return null;
     }
@@ -319,14 +359,6 @@ public class VectorService {
             buffer.putFloat(f);
         }
         return buffer.array();
-    }
-
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
     }
 
     private void handleFailure(Exception e) {
