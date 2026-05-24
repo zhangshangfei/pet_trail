@@ -240,9 +240,7 @@ public class VectorService {
                     SafeEncoder.encode("DIALECT"),
                     SafeEncoder.encode("2")
                 );
-                log.info("向量搜索用户原始结果类型: {}, 内容: {}", result != null ? result.getClass().getSimpleName() : "null", result);
                 List<VectorSearchResult> parsed = parseJedisResult(result);
-                log.info("向量搜索用户解析结果数: {}", parsed.size());
                 return parsed;
             }
         } catch (Exception e) {
