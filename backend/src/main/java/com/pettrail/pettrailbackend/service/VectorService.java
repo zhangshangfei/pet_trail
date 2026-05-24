@@ -12,10 +12,12 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -187,17 +189,16 @@ public class VectorService {
             }
             final String searchQuery = baseQuery;
 
-            Object result = redisTemplate.execute((connection) -> {
-                return connection.execute(
-                    "FT.SEARCH",
-                    userIndex.getBytes(),
-                    searchQuery.getBytes(),
-                    "PARAMS".getBytes(),
-                    "2".getBytes(),
-                    "vec".getBytes(),
+            Object result = redisTemplate.execute((RedisCallback<Object>) connection -> {
+                return connection.execute("FT.SEARCH",
+                    userIndex.getBytes(StandardCharsets.UTF_8),
+                    searchQuery.getBytes(StandardCharsets.UTF_8),
+                    "PARAMS".getBytes(StandardCharsets.UTF_8),
+                    "2".getBytes(StandardCharsets.UTF_8),
+                    "vec".getBytes(StandardCharsets.UTF_8),
                     vectorBytes,
-                    "DIALECT".getBytes(),
-                    "2".getBytes()
+                    "DIALECT".getBytes(StandardCharsets.UTF_8),
+                    "2".getBytes(StandardCharsets.UTF_8)
                 );
             }, true);
 
@@ -213,7 +214,6 @@ public class VectorService {
 
         try {
             byte[] vectorBytes = floatArrayToBytes(queryVector);
-
             String baseQuery = "*=>[KNN " + topK + " @vector $vec AS score]";
             if (!excludeAuthorIds.isEmpty()) {
                 String ids = excludeAuthorIds.stream()
@@ -223,17 +223,16 @@ public class VectorService {
             }
             final String searchQuery = baseQuery;
 
-            Object result = redisTemplate.execute((connection) -> {
-                return connection.execute(
-                    "FT.SEARCH",
-                    postIndex.getBytes(),
-                    searchQuery.getBytes(),
-                    "PARAMS".getBytes(),
-                    "2".getBytes(),
-                    "vec".getBytes(),
+            Object result = redisTemplate.execute((RedisCallback<Object>) connection -> {
+                return connection.execute("FT.SEARCH",
+                    postIndex.getBytes(StandardCharsets.UTF_8),
+                    searchQuery.getBytes(StandardCharsets.UTF_8),
+                    "PARAMS".getBytes(StandardCharsets.UTF_8),
+                    "2".getBytes(StandardCharsets.UTF_8),
+                    "vec".getBytes(StandardCharsets.UTF_8),
                     vectorBytes,
-                    "DIALECT".getBytes(),
-                    "2".getBytes()
+                    "DIALECT".getBytes(StandardCharsets.UTF_8),
+                    "2".getBytes(StandardCharsets.UTF_8)
                 );
             }, true);
 
@@ -251,11 +250,10 @@ public class VectorService {
         List<?> list = (List<?>) result;
         if (list.size() < 2) return results;
 
-        long total = parseLong(list.get(0));
         for (int i = 1; i < list.size(); i++) {
             Object item = list.get(i);
             if (item instanceof byte[]) {
-                String key = new String((byte[]) item);
+                String key = new String((byte[]) item, StandardCharsets.UTF_8);
                 Long id = extractIdFromKey(key);
                 if (id != null && i + 1 < list.size() && list.get(i + 1) instanceof List) {
                     List<?> fields = (List<?>) list.get(i + 1);
@@ -283,10 +281,10 @@ public class VectorService {
     private Double extractScore(List<?> fields) {
         for (int i = 0; i < fields.size() - 1; i++) {
             Object f = fields.get(i);
-            String fieldName = f instanceof byte[] ? new String((byte[]) f) : String.valueOf(f);
+            String fieldName = f instanceof byte[] ? new String((byte[]) f, StandardCharsets.UTF_8) : String.valueOf(f);
             if ("score".equals(fieldName) || "__vector_score".equals(fieldName)) {
                 Object val = fields.get(i + 1);
-                String scoreStr = val instanceof byte[] ? new String((byte[]) val) : String.valueOf(val);
+                String scoreStr = val instanceof byte[] ? new String((byte[]) val, StandardCharsets.UTF_8) : String.valueOf(val);
                 try {
                     return Double.parseDouble(scoreStr);
                 } catch (NumberFormatException e) {
@@ -295,13 +293,6 @@ public class VectorService {
             }
         }
         return null;
-    }
-
-    private long parseLong(Object obj) {
-        if (obj instanceof Long) return (Long) obj;
-        if (obj instanceof Integer) return ((Integer) obj).longValue();
-        if (obj instanceof byte[]) return Long.parseLong(new String((byte[]) obj));
-        return 0;
     }
 
     private int[] encodeBreedSlots(List<Pet> pets) {
@@ -328,6 +319,14 @@ public class VectorService {
             buffer.putFloat(f);
         }
         return buffer.array();
+    }
+
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 
     private void handleFailure(Exception e) {
