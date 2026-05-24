@@ -183,7 +183,7 @@ public class VectorService {
                 String ids = excludeIds.stream()
                     .map(String::valueOf)
                     .collect(Collectors.joining("|"));
-                baseQuery = "(-@user_id:(" + ids + "))=>[KNN " + topK + " @vector $vec AS score]";
+                baseQuery = "(-@user_id:{" + ids + "})=>[KNN " + topK + " @vector $vec AS score]";
             }
             final String searchQuery = baseQuery;
 
@@ -219,7 +219,7 @@ public class VectorService {
                 String ids = excludeAuthorIds.stream()
                     .map(String::valueOf)
                     .collect(Collectors.joining("|"));
-                baseQuery = "(-@author_id:(" + ids + "))=>[KNN " + topK + " @vector $vec AS score]";
+                baseQuery = "(-@author_id:{" + ids + "})=>[KNN " + topK + " @vector $vec AS score]";
             }
             final String searchQuery = baseQuery;
 
