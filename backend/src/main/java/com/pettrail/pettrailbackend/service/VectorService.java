@@ -22,7 +22,6 @@ import redis.clients.jedis.commands.ProtocolCommand;
 import redis.clients.jedis.util.SafeEncoder;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -51,8 +50,6 @@ public class VectorService {
     private final PetMapper petMapper;
     private final PostMapper postMapper;
     private final FollowService followService;
-    private final RedisTemplate<String, Object> redisTemplate;
-
     @Value("${vector.user-index:idx_user_vectors}")
     private String userIndex;
 
@@ -89,7 +86,6 @@ public class VectorService {
         this.petMapper = petMapper;
         this.postMapper = postMapper;
         this.followService = followService;
-        this.redisTemplate = redisTemplate;
     }
 
     @PostConstruct
