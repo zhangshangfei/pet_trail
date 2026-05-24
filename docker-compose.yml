@@ -29,7 +29,7 @@ services:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redis123456} --appendonly yes
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis123456} --appendonly yes --loadmodule /opt/redis-stack/lib/redisearch.so
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis123456}", "ping"]
       interval: 10s
