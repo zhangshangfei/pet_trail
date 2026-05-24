@@ -34,22 +34,35 @@ public class RedisVectorConfig {
     private void createUserIndex() {
         try {
             redisTemplate.execute((connection) -> {
-                byte[] indexName = USER_INDEX.getBytes();
                 try {
-                    connection.execute("FT.INFO", indexName);
+                    connection.execute("FT.INFO", USER_INDEX.getBytes());
                     log.info("用户向量索引已存在: {}", USER_INDEX);
                     return null;
                 } catch (Exception ignored) {
                 }
 
-                String createCmd = String.format(
-                    "FT.CREATE %s ON HASH PREFIX 1 vector:user: SCHEMA " +
-                    "user_id NUMERIC SORTABLE " +
-                    "status NUMERIC FILTERABLE " +
-                    "vector VECTOR FLAT 6 TYPE FLOAT32 DIM %d DISTANCE_METRIC COSINE",
-                    USER_INDEX, DIMENSIONS
+                connection.execute("FT.CREATE",
+                        USER_INDEX.getBytes(),
+                        "ON".getBytes(),
+                        "HASH".getBytes(),
+                        "PREFIX".getBytes(),
+                        "1".getBytes(),
+                        "vector:user:".getBytes(),
+                        "SCHEMA".getBytes(),
+                        "user_id".getBytes(),
+                        "NUMERIC".getBytes(),
+                        "SORTABLE".getBytes(),
+                        "vector".getBytes(),
+                        "VECTOR".getBytes(),
+                        "FLAT".getBytes(),
+                        "6".getBytes(),
+                        "TYPE".getBytes(),
+                        "FLOAT32".getBytes(),
+                        "DIM".getBytes(),
+                        String.valueOf(DIMENSIONS).getBytes(),
+                        "DISTANCE_METRIC".getBytes(),
+                        "COSINE".getBytes()
                 );
-                connection.execute("FT.CREATE", createCmd.getBytes());
                 log.info("用户向量索引创建成功: {}", USER_INDEX);
                 return null;
             }, true);
@@ -61,24 +74,44 @@ public class RedisVectorConfig {
     private void createPostIndex() {
         try {
             redisTemplate.execute((connection) -> {
-                byte[] indexName = POST_INDEX.getBytes();
                 try {
-                    connection.execute("FT.INFO", indexName);
+                    connection.execute("FT.INFO", POST_INDEX.getBytes());
                     log.info("动态向量索引已存在: {}", POST_INDEX);
                     return null;
                 } catch (Exception ignored) {
                 }
 
-                String createCmd = String.format(
-                    "FT.CREATE %s ON HASH PREFIX 1 vector:post: SCHEMA " +
-                    "post_id NUMERIC SORTABLE " +
-                    "author_id NUMERIC FILTERABLE " +
-                    "deleted NUMERIC FILTERABLE " +
-                    "created_at NUMERIC FILTERABLE " +
-                    "vector VECTOR FLAT 6 TYPE FLOAT32 DIM %d DISTANCE_METRIC COSINE",
-                    POST_INDEX, DIMENSIONS
+                connection.execute("FT.CREATE",
+                        POST_INDEX.getBytes(),
+                        "ON".getBytes(),
+                        "HASH".getBytes(),
+                        "PREFIX".getBytes(),
+                        "1".getBytes(),
+                        "vector:post:".getBytes(),
+                        "SCHEMA".getBytes(),
+                        "post_id".getBytes(),
+                        "NUMERIC".getBytes(),
+                        "SORTABLE".getBytes(),
+                        "author_id".getBytes(),
+                        "NUMERIC".getBytes(),
+                        "FILTERABLE".getBytes(),
+                        "deleted".getBytes(),
+                        "NUMERIC".getBytes(),
+                        "FILTERABLE".getBytes(),
+                        "created_at".getBytes(),
+                        "NUMERIC".getBytes(),
+                        "FILTERABLE".getBytes(),
+                        "vector".getBytes(),
+                        "VECTOR".getBytes(),
+                        "FLAT".getBytes(),
+                        "6".getBytes(),
+                        "TYPE".getBytes(),
+                        "FLOAT32".getBytes(),
+                        "DIM".getBytes(),
+                        String.valueOf(DIMENSIONS).getBytes(),
+                        "DISTANCE_METRIC".getBytes(),
+                        "COSINE".getBytes()
                 );
-                connection.execute("FT.CREATE", createCmd.getBytes());
                 log.info("动态向量索引创建成功: {}", POST_INDEX);
                 return null;
             }, true);

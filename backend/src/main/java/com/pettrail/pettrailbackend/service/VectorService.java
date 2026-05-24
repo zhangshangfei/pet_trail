@@ -8,6 +8,7 @@ import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.PetMapper;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -66,7 +67,12 @@ public class VectorService {
         this.postMapper = postMapper;
         this.followService = followService;
         this.redisTemplate = redisTemplate;
-        log.info("VectorService 初始化完成, dimensions={}, topK={}", DIMENSIONS, topK);
+    }
+
+    @PostConstruct
+    public void init() {
+        log.info("VectorService 初始化完成, dimensions={}, topK={}, userIndex={}, postIndex={}",
+                DIMENSIONS, topK, userIndex, postIndex);
     }
 
     public boolean isAvailable() {
@@ -186,7 +192,10 @@ public class VectorService {
                     "FT.SEARCH",
                     userIndex.getBytes(),
                     searchQuery.getBytes(),
-                    ("PARAMS 2 vec " + bytesToHex(vectorBytes)).getBytes(),
+                    "PARAMS".getBytes(),
+                    "2".getBytes(),
+                    "vec".getBytes(),
+                    vectorBytes,
                     "DIALECT".getBytes(),
                     "2".getBytes()
                 );
@@ -219,7 +228,10 @@ public class VectorService {
                     "FT.SEARCH",
                     postIndex.getBytes(),
                     searchQuery.getBytes(),
-                    ("PARAMS 2 vec " + bytesToHex(vectorBytes)).getBytes(),
+                    "PARAMS".getBytes(),
+                    "2".getBytes(),
+                    "vec".getBytes(),
+                    vectorBytes,
                     "DIALECT".getBytes(),
                     "2".getBytes()
                 );
@@ -316,14 +328,6 @@ public class VectorService {
             buffer.putFloat(f);
         }
         return buffer.array();
-    }
-
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
     }
 
     private void handleFailure(Exception e) {
