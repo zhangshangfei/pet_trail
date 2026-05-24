@@ -1,5 +1,7 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.FollowActionVO;
+import com.pettrail.pettrailbackend.dto.FollowUserVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.service.FollowService;
@@ -11,9 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -26,23 +26,23 @@ public class FollowController extends BaseController {
     private final PostService postService;
 
     @PostMapping("/{followeeId}")
-    public Result<Map<String, Object>> toggleFollow(@PathVariable Long followeeId) {
+    public Result<FollowActionVO> toggleFollow(@PathVariable Long followeeId) {
         Long followerId = requireLogin();
         boolean isFollowing = followService.toggleFollow(followerId, followeeId);
-        Map<String, Object> result = new HashMap<>();
-        result.put("following", isFollowing);
-        result.put("followerCount", followService.getFollowerCount(followeeId));
-        return Result.success(result);
+        FollowActionVO vo = new FollowActionVO();
+        vo.setFollowing(isFollowing);
+        vo.setFollowerCount(followService.getFollowerCount(followeeId));
+        return Result.success(vo);
     }
 
     @GetMapping("/check/{followeeId}")
-    public Result<Map<String, Object>> checkFollow(@PathVariable Long followeeId) {
+    public Result<FollowActionVO> checkFollow(@PathVariable Long followeeId) {
         Long followerId = requireLogin();
-        Map<String, Object> result = new HashMap<>();
-        result.put("following", followService.isFollowing(followerId, followeeId));
-        result.put("followerCount", followService.getFollowerCount(followeeId));
-        result.put("followeeCount", followService.getFolloweeCount(followerId));
-        return Result.success(result);
+        FollowActionVO vo = new FollowActionVO();
+        vo.setFollowing(followService.isFollowing(followerId, followeeId));
+        vo.setFollowerCount(followService.getFollowerCount(followeeId));
+        vo.setFolloweeCount(followService.getFolloweeCount(followerId));
+        return Result.success(vo);
     }
 
     @GetMapping("/list")
@@ -52,7 +52,7 @@ public class FollowController extends BaseController {
     }
 
     @GetMapping("/followees")
-    public Result<List<Map<String, Object>>> getFolloweeList(
+    public Result<List<FollowUserVO>> getFolloweeList(
             @RequestParam(required = false) Long userId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -66,7 +66,7 @@ public class FollowController extends BaseController {
     }
 
     @GetMapping("/followers")
-    public Result<List<Map<String, Object>>> getFollowerList(
+    public Result<List<FollowUserVO>> getFollowerList(
             @RequestParam(required = false) Long userId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -79,8 +79,8 @@ public class FollowController extends BaseController {
         return Result.success(buildUserList(followerIds, currentFolloweeIds, page, size));
     }
 
-    private List<Map<String, Object>> buildUserList(List<Long> userIds, List<Long> currentFolloweeIds, int page, int size) {
-        List<Map<String, Object>> result = new ArrayList<>();
+    private List<FollowUserVO> buildUserList(List<Long> userIds, List<Long> currentFolloweeIds, int page, int size) {
+        List<FollowUserVO> result = new ArrayList<>();
         int start = (page - 1) * size;
         int end = Math.min(start + size, userIds.size());
         for (int i = start; i < end; i++) {
@@ -92,15 +92,16 @@ public class FollowController extends BaseController {
                 continue;
             }
             if (user.getStatus() != null && user.getStatus() == 0) continue;
-            Map<String, Object> item = new HashMap<>();
-            item.put("id", user.getId());
-            item.put("nickname", user.getNickname());
-            item.put("avatar", user.getAvatar());
-            item.put("gender", user.getGender());
-            item.put("followerCount", followService.getFollowerCount(user.getId()));
-            item.put("postCount", postService.getUserPostCount(user.getId()));
-            item.put("isFollowing", currentFolloweeIds.contains(user.getId()));
-            result.add(item);
+            FollowUserVO vo = new FollowUserVO();
+            vo.setId(user.getId());
+            vo.setNickname(user.getNickname());
+            vo.setAvatar(user.getAvatar());
+            vo.setGender(user.getGender());
+            vo.setFollowerCount(followService.getFollowerCount(user.getId()));
+            vo.setFolloweeCount(followService.getFolloweeCount(user.getId()));
+            vo.setPostCount(postService.getUserPostCount(user.getId()));
+            vo.setIsFollowing(currentFolloweeIds.contains(user.getId()));
+            result.add(vo);
         }
         return result;
     }

@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.service;
 
+import com.pettrail.pettrailbackend.dto.RecommendUserVO;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.mapper.FollowMapper;
@@ -74,7 +75,7 @@ class RecommendServiceTest {
         );
         when(valueOperations.get("recommend:1")).thenReturn(cachedList);
 
-        List<Map<String, Object>> result = recommendService.recommendUsers(1L, 1, 10);
+        List<RecommendUserVO> result = recommendService.recommendUsers(1L, 1, 10);
 
         assertNotNull(result);
         verify(userMapper, never()).selectList(any());
@@ -89,7 +90,7 @@ class RecommendServiceTest {
 
         when(userMapper.selectList(any())).thenReturn(Arrays.asList(candidateUser));
 
-        List<Map<String, Object>> result = recommendService.recommendUsers(null, 1, 10);
+        List<RecommendUserVO> result = recommendService.recommendUsers(null, 1, 10);
 
         assertNotNull(result);
     }

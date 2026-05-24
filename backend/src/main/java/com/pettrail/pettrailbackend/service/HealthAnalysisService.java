@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.pettrail.pettrailbackend.dto.CacheStatsVO;
 import com.pettrail.pettrailbackend.dto.HealthAnalysisVO;
 import com.pettrail.pettrailbackend.dto.HealthAnalysisVO.*;
 import com.pettrail.pettrailbackend.entity.*;
@@ -63,7 +64,7 @@ public class HealthAnalysisService {
         cacheService.invalidateAll();
     }
 
-    public Map<String, Object> getCacheStats() {
+    public CacheStatsVO getCacheStats() {
         return cacheService.getCacheStats();
     }
 

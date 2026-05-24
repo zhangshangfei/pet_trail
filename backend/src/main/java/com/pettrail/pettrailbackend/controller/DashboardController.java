@@ -1,7 +1,6 @@
 package com.pettrail.pettrailbackend.controller;
 
-import com.pettrail.pettrailbackend.dto.ParasiteReminderVO;
-import com.pettrail.pettrailbackend.dto.Result;
+import com.pettrail.pettrailbackend.dto.*;
 import com.pettrail.pettrailbackend.entity.*;
 import com.pettrail.pettrailbackend.service.*;
 import com.pettrail.pettrailbackend.util.JwtUtil;
@@ -27,15 +26,14 @@ public class DashboardController extends BaseController {
     private final JwtUtil jwtUtil;
 
     @GetMapping("/overview")
-    public Result<Map<String, Object>> getOverview(@RequestHeader("Authorization") String token) {
+    public Result<DashboardOverviewVO> getOverview(@RequestHeader("Authorization") String token) {
         Long userId = getUserIdFromToken(token);
-        List<Pet> pets = petService.listByUserId(userId);
-        Map<String, Object> overview = new HashMap<>();
-        overview.put("petCount", pets.size());
-        overview.put("upcomingVaccineCount", getUpcomingVaccineCount(userId));
-        overview.put("upcomingParasiteCount", getUpcomingParasiteCount(userId));
-        overview.put("weightRecordCount", getWeightRecordCount(userId));
-        return Result.success(overview);
+        DashboardOverviewVO vo = new DashboardOverviewVO();
+        vo.setPetCount(petService.listByUserId(userId).size());
+        vo.setUpcomingVaccineCount(getUpcomingVaccineCount(userId));
+        vo.setUpcomingParasiteCount(getUpcomingParasiteCount(userId));
+        vo.setWeightRecordCount(getWeightRecordCount(userId));
+        return Result.success(vo);
     }
 
     @GetMapping("/health-trend")
@@ -52,70 +50,70 @@ public class DashboardController extends BaseController {
     }
 
     @GetMapping("/upcoming-reminders")
-    public Result<List<Map<String, Object>>> getUpcomingReminders(@RequestHeader("Authorization") String token) {
+    public Result<List<ReminderItemVO>> getUpcomingReminders(@RequestHeader("Authorization") String token) {
         Long userId = getUserIdFromToken(token);
         List<Pet> pets = petService.listByUserId(userId);
-        List<Map<String, Object>> reminders = new ArrayList<>();
+        List<ReminderItemVO> reminders = new ArrayList<>();
 
         for (Pet pet : pets) {
             for (VaccineReminder r : vaccineReminderService.listUpcoming(pet.getId())) {
-                Map<String, Object> item = new HashMap<>();
-                item.put("type", "vaccine");
-                item.put("petId", pet.getId());
-                item.put("petName", pet.getName());
-                item.put("name", r.getVaccineName());
-                item.put("date", r.getNextDate());
-                item.put("daysUntil", getDaysUntil(r.getNextDate()));
+                ReminderItemVO item = new ReminderItemVO();
+                item.setType("vaccine");
+                item.setPetId(pet.getId());
+                item.setPetName(pet.getName());
+                item.setName(r.getVaccineName());
+                item.setDate(r.getNextDate());
+                item.setDaysUntil(getDaysUntil(r.getNextDate()));
                 reminders.add(item);
             }
             for (ParasiteReminderVO r : parasiteReminderService.listUpcoming(pet.getId())) {
-                Map<String, Object> item = new HashMap<>();
-                item.put("type", "parasite");
-                item.put("petId", pet.getId());
-                item.put("petName", pet.getName());
-                item.put("name", r.getTypeName());
-                item.put("date", r.getNextDate());
-                item.put("daysUntil", getDaysUntil(r.getNextDate()));
+                ReminderItemVO item = new ReminderItemVO();
+                item.setType("parasite");
+                item.setPetId(pet.getId());
+                item.setPetName(pet.getName());
+                item.setName(r.getTypeName());
+                item.setDate(r.getNextDate());
+                item.setDaysUntil(getDaysUntil(r.getNextDate()));
                 reminders.add(item);
             }
         }
-        reminders.sort(Comparator.comparing(item -> (LocalDate) item.get("date")));
+        reminders.sort(Comparator.comparing(ReminderItemVO::getDate));
         return Result.success(reminders);
     }
 
     @GetMapping("/weight-stats")
-    public Result<Map<Long, Map<String, Object>>> getWeightStats(
+    public Result<Map<Long, PetWeightStatsVO>> getWeightStats(
             @RequestHeader("Authorization") String token,
             @RequestParam(defaultValue = "30") int days) {
         Long userId = getUserIdFromToken(token);
         List<Pet> pets = petService.listByUserId(userId);
-        Map<Long, Map<String, Object>> stats = new HashMap<>();
+        Map<Long, PetWeightStatsVO> stats = new HashMap<>();
 
         for (Pet pet : pets) {
             List<WeightRecord> records = weightRecordService.getTrend(pet.getId(), days);
             if (!records.isEmpty()) {
-                Map<String, Object> petStats = new HashMap<>();
-                petStats.put("petId", pet.getId());
-                petStats.put("petName", pet.getName());
-                petStats.put("petAvatar", pet.getAvatar());
+                PetWeightStatsVO petStats = new PetWeightStatsVO();
+                petStats.setPetId(pet.getId());
+                petStats.setPetName(pet.getName());
+                petStats.setPetAvatar(pet.getAvatar());
 
                 List<BigDecimal> weights = records.stream()
                         .map(WeightRecord::getWeight)
                         .filter(Objects::nonNull)
                         .toList();
 
-                if (weights != null && !weights.isEmpty()) {
+                if (!weights.isEmpty()) {
                     BigDecimal sum = weights.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
                     BigDecimal avgWeight = sum.divide(BigDecimal.valueOf(weights.size()), 2, RoundingMode.HALF_UP);
                     BigDecimal maxWeight = Collections.max(weights);
                     BigDecimal minWeight = Collections.min(weights);
                     BigDecimal totalWeightChange = weights.get(weights.size() - 1).subtract(weights.get(0));
 
-                    petStats.put("avgWeight", avgWeight);
-                    petStats.put("maxWeight", maxWeight);
-                    petStats.put("minWeight", minWeight);
-                    petStats.put("totalWeightChange", totalWeightChange);
-                    petStats.put("recordCount", weights.size());
+                    petStats.setAvgWeight(avgWeight);
+                    petStats.setMaxWeight(maxWeight);
+                    petStats.setMinWeight(minWeight);
+                    petStats.setTotalWeightChange(totalWeightChange);
+                    petStats.setRecordCount(weights.size());
                 }
                 stats.put(pet.getId(), petStats);
             }

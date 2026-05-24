@@ -176,13 +176,13 @@ public class AdminAiModelController extends BaseAdminController {
     @GetMapping("/cache/stats")
     @Operation(summary = "获取健康分析缓存统计")
     @RequireRole("ADMIN")
-    public Result<Map<String, Object>> getCacheStats() {
-        Map<String, Object> stats = healthAnalysisService.getCacheStats();
+    public Result<CacheStatsVO> getCacheStats() {
+        CacheStatsVO stats = healthAnalysisService.getCacheStats();
         AiModel currentModel = aiModelService.getCurrentModel();
-        stats.put("currentModelId", currentModel != null ? currentModel.getId() : null);
-        stats.put("currentModelName", currentModel != null ? currentModel.getDisplayName() : null);
-        stats.put("modelCount", aiModelService.listAllModels().size());
-        stats.put("lastUpdated", java.time.LocalDateTime.now().toString());
+        stats.setCurrentModelId(currentModel != null ? currentModel.getId() : null);
+        stats.setCurrentModelName(currentModel != null ? currentModel.getDisplayName() : null);
+        stats.setModelCount(aiModelService.listAllModels().size());
+        stats.setLastUpdated(java.time.LocalDateTime.now().toString());
         return Result.success(stats);
     }
 

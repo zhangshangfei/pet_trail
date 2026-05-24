@@ -1,5 +1,6 @@
 package com.pettrail.pettrailbackend.controller;
 
+import com.pettrail.pettrailbackend.dto.MembershipInfoVO;
 import com.pettrail.pettrailbackend.dto.MembershipOrderDTO;
 import com.pettrail.pettrailbackend.dto.OrderVO;
 import com.pettrail.pettrailbackend.dto.Result;
@@ -26,7 +27,7 @@ public class UserMembershipController extends BaseController {
 
     @GetMapping("/info")
     @Operation(summary = "获取会员信息")
-    public Result<Map<String, Object>> getMembershipInfo() {
+    public Result<MembershipInfoVO> getMembershipInfo() {
         Long userId = requireLogin();
         return Result.success(userMembershipService.getMembershipInfo(userId));
     }
@@ -80,8 +81,7 @@ public class UserMembershipController extends BaseController {
     @Operation(summary = "检查是否Pro会员")
     public Result<Map<String, Object>> checkPro() {
         Long userId = requireLogin();
-        Map<String, Object> result = new java.util.HashMap<>();
-        result.put("isPro", userMembershipService.isPro(userId));
+        Map<String, Object> result = Map.of("isPro", userMembershipService.isPro(userId));
         return Result.success(result);
     }
 }

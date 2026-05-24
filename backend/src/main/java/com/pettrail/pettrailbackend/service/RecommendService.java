@@ -1,6 +1,8 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.pettrail.pettrailbackend.dto.RecommendUserVO;
+import com.pettrail.pettrailbackend.dto.VectorSearchResult;
 import com.pettrail.pettrailbackend.entity.Pet;
 import com.pettrail.pettrailbackend.entity.Post;
 import com.pettrail.pettrailbackend.entity.PostLike;
@@ -10,8 +12,9 @@ import com.pettrail.pettrailbackend.mapper.PetMapper;
 import com.pettrail.pettrailbackend.mapper.PostLikeMapper;
 import com.pettrail.pettrailbackend.mapper.PostMapper;
 import com.pettrail.pettrailbackend.mapper.UserMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +26,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class RecommendService {
 
     private final UserMapper userMapper;
@@ -35,6 +37,12 @@ public class RecommendService {
     private final PostService postService;
     private final UserBehaviorService userBehaviorService;
     private final RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired(required = false)
+    private VectorService vectorService;
+
+    @Value("${vector.enabled:false}")
+    private boolean vectorEnabled;
 
     private static final String CACHE_KEY_PREFIX = "recommend:";
     private static final String POST_CACHE_KEY_PREFIX = "recommend:posts:";
@@ -54,8 +62,25 @@ public class RecommendService {
     private static final double PW_FRESH = 0.05;
     private static final double PW_BEHAVIOR = 0.05;
     private static final int CANDIDATE_LIMIT = 500;
+    private static final int VECTOR_TOP_K = 200;
 
-    public List<Map<String, Object>> recommendUsers(Long currentUserId, int page, int size) {
+    public RecommendService(UserMapper userMapper, PetMapper petMapper,
+                            FollowMapper followMapper, PostLikeMapper postLikeMapper,
+                            PostMapper postMapper, FollowService followService,
+                            PostService postService, UserBehaviorService userBehaviorService,
+                            RedisTemplate<String, Object> redisTemplate) {
+        this.userMapper = userMapper;
+        this.petMapper = petMapper;
+        this.followMapper = followMapper;
+        this.postLikeMapper = postLikeMapper;
+        this.postMapper = postMapper;
+        this.followService = followService;
+        this.postService = postService;
+        this.userBehaviorService = userBehaviorService;
+        this.redisTemplate = redisTemplate;
+    }
+
+    public List<RecommendUserVO> recommendUsers(Long currentUserId, int page, int size) {
         if (currentUserId == null) {
             return recommendForAnonymous(page, size);
         }
@@ -64,7 +89,7 @@ public class RecommendService {
         try {
             Object cached = redisTemplate.opsForValue().get(cacheKey);
             if (cached != null) {
-                List<Map<String, Object>> cachedList = (List<Map<String, Object>>) cached;
+                List<RecommendUserVO> cachedList = (List<RecommendUserVO>) cached;
                 int start = (page - 1) * size;
                 int end = Math.min(start + size, cachedList.size());
                 if (start < cachedList.size()) {
@@ -76,7 +101,7 @@ public class RecommendService {
             log.warn("推荐缓存读取异常，重新计算: {}", e.getMessage());
         }
 
-        List<Map<String, Object>> fullList = computeRecommendations(currentUserId);
+        List<RecommendUserVO> fullList = computeRecommendations(currentUserId);
 
         try {
             redisTemplate.opsForValue().set(cacheKey, fullList, CACHE_TTL_HOURS, TimeUnit.HOURS);
@@ -92,7 +117,7 @@ public class RecommendService {
         return Collections.emptyList();
     }
 
-    private List<Map<String, Object>> recommendForAnonymous(int page, int size) {
+    private List<RecommendUserVO> recommendForAnonymous(int page, int size) {
         if (page < 1) page = 1;
         if (size < 1) size = 20;
         if (size > 50) size = 50;
@@ -104,20 +129,22 @@ public class RecommendService {
         List<User> users = userMapper.selectList(wrapper);
 
         return users.stream().map(user -> {
-            Map<String, Object> item = new HashMap<>();
-            item.put("id", user.getId());
-            item.put("nickname", user.getNickname());
-            item.put("avatar", user.getAvatar());
-            item.put("gender", user.getGender());
-            item.put("followerCount", followService.getFollowerCount(user.getId()));
-            item.put("postCount", postService.getUserPostCount(user.getId()));
-            item.put("isFollowing", false);
-            item.put("recommendReason", "new_user");
-            return item;
+            RecommendUserVO vo = new RecommendUserVO();
+            vo.setId(user.getId());
+            vo.setNickname(user.getNickname());
+            vo.setAvatar(user.getAvatar());
+            vo.setGender(user.getGender());
+            vo.setCreatedAt(user.getCreatedAt());
+            vo.setFollowerCount(followService.getFollowerCount(user.getId()));
+            vo.setFolloweeCount(followService.getFolloweeCount(user.getId()));
+            vo.setPostCount(postService.getUserPostCount(user.getId()));
+            vo.setIsFollowing(false);
+            vo.setRecommendReason("new_user");
+            return vo;
         }).collect(Collectors.toList());
     }
 
-    private List<Map<String, Object>> computeRecommendations(Long currentUserId) {
+    private List<RecommendUserVO> computeRecommendations(Long currentUserId) {
         List<Long> myFolloweeIds = followMapper.selectFolloweeIds(currentUserId);
         Set<Long> excludedIds = new HashSet<>(myFolloweeIds);
         excludedIds.add(currentUserId);
@@ -159,10 +186,13 @@ public class RecommendService {
             }
         }
 
-        LambdaQueryWrapper<User> candidateWrapper = new LambdaQueryWrapper<>();
-        candidateWrapper.eq(User::getStatus, 1);
-        candidateWrapper.notIn(User::getId, excludedIds);
-        List<User> candidates = userMapper.selectList(candidateWrapper);
+        List<User> candidates = tryVectorRecallUsers(currentUserId, excludedIds);
+        if (candidates == null) {
+            LambdaQueryWrapper<User> candidateWrapper = new LambdaQueryWrapper<>();
+            candidateWrapper.eq(User::getStatus, 1);
+            candidateWrapper.notIn(User::getId, excludedIds);
+            candidates = userMapper.selectList(candidateWrapper);
+        }
 
         if (candidates.isEmpty()) {
             return Collections.emptyList();
@@ -218,29 +248,64 @@ public class RecommendService {
 
         List<Long> currentFolloweeIds = followMapper.selectFolloweeIds(currentUserId);
 
-        List<Map<String, Object>> result = new ArrayList<>();
+        Map<Long, User> candidateMap = candidates.stream()
+            .collect(Collectors.toMap(User::getId, u -> u));
+
+        List<RecommendUserVO> result = new ArrayList<>();
         for (Long uid : sortedIds) {
-            User user = candidates.stream()
-                .filter(c -> c.getId().equals(uid))
-                .findFirst().orElse(null);
+            User user = candidateMap.get(uid);
             if (user == null) continue;
 
-            Map<String, Object> item = new HashMap<>();
-            item.put("id", user.getId());
-            item.put("nickname", user.getNickname());
-            item.put("avatar", user.getAvatar());
-            item.put("gender", user.getGender());
-            item.put("followerCount", followerCountMap.getOrDefault(user.getId(), 0));
-            item.put("postCount", postCountMap.getOrDefault(user.getId(), 0));
-            item.put("isFollowing", currentFolloweeIds.contains(user.getId()));
-            item.put("recommendScore", Math.round(scoreMap.get(uid) * 1000.0) / 1000.0);
-            item.put("recommendReason", determineReasonFromPets(
+            RecommendUserVO vo = new RecommendUserVO();
+            vo.setId(user.getId());
+            vo.setNickname(user.getNickname());
+            vo.setAvatar(user.getAvatar());
+            vo.setGender(user.getGender());
+            vo.setCreatedAt(user.getCreatedAt());
+            vo.setFollowerCount(followerCountMap.getOrDefault(user.getId(), 0));
+            vo.setFolloweeCount(followService.getFolloweeCount(user.getId()));
+            vo.setPostCount(postCountMap.getOrDefault(user.getId(), 0));
+            vo.setIsFollowing(currentFolloweeIds.contains(user.getId()));
+            vo.setRecommendScore(Math.round(scoreMap.get(uid) * 1000.0) / 1000.0);
+            vo.setRecommendReason(determineReasonFromPets(
                 candidatePetsMap.getOrDefault(uid, Collections.emptyList()),
                 myBreeds, myCategory, twoHopIds, interactUserIds, uid));
-            result.add(item);
+            result.add(vo);
         }
 
         return result;
+    }
+
+    private List<User> tryVectorRecallUsers(Long currentUserId, Set<Long> excludedIds) {
+        if (!vectorEnabled || vectorService == null || !vectorService.isAvailable()) {
+            return null;
+        }
+
+        try {
+            float[] queryVector = vectorService.buildUserVector(currentUserId);
+            List<VectorSearchResult> searchResults = vectorService.searchSimilarUsers(
+                queryVector, VECTOR_TOP_K, excludedIds);
+
+            if (searchResults.isEmpty()) {
+                log.debug("向量召回用户结果为空，降级为全量计算");
+                return null;
+            }
+
+            List<Long> candidateIds = searchResults.stream()
+                .map(VectorSearchResult::getId)
+                .collect(Collectors.toList());
+
+            List<User> candidates = userMapper.selectBatchIds(candidateIds).stream()
+                .filter(u -> u.getStatus() != null && u.getStatus() == 1)
+                .filter(u -> !excludedIds.contains(u.getId()))
+                .collect(Collectors.toList());
+
+            log.debug("向量召回用户: recall={}, afterFilter={}", searchResults.size(), candidates.size());
+            return candidates;
+        } catch (Exception e) {
+            log.warn("向量召回用户异常，降级为全量计算: {}", e.getMessage());
+            return null;
+        }
     }
 
     private double computeBreedScoreFromPets(List<Pet> theirPets, Set<String> myBreeds, int myCategory) {
@@ -347,7 +412,11 @@ public class RecommendService {
     }
 
     private List<Long> computePostRecommendations(Long userId) {
-        List<Post> candidates = postMapper.selectCandidatePosts(CANDIDATE_LIMIT);
+        List<Post> candidates = tryVectorRecallPosts(userId);
+        if (candidates == null) {
+            candidates = postMapper.selectCandidatePosts(CANDIDATE_LIMIT);
+        }
+
         if (candidates.isEmpty()) {
             return Collections.emptyList();
         }
@@ -394,15 +463,17 @@ public class RecommendService {
 
         List<Long> authorIds = candidates.stream()
             .map(Post::getUserId).distinct().collect(Collectors.toList());
-        List<Pet> authorPets = petMapper.selectList(
-            new LambdaQueryWrapper<Pet>().in(Pet::getUserId, authorIds));
-        for (Pet pet : authorPets) {
-            Long aid = pet.getUserId();
-            if (pet.getBreed() != null && !pet.getBreed().trim().isEmpty()) {
-                authorBreedCache.computeIfAbsent(aid, k -> new HashSet<>()).add(pet.getBreed());
+        if (!authorIds.isEmpty()) {
+            List<Pet> authorPets = petMapper.selectList(
+                new LambdaQueryWrapper<Pet>().in(Pet::getUserId, authorIds));
+            for (Pet pet : authorPets) {
+                Long aid = pet.getUserId();
+                if (pet.getBreed() != null && !pet.getBreed().trim().isEmpty()) {
+                    authorBreedCache.computeIfAbsent(aid, k -> new HashSet<>()).add(pet.getBreed());
+                }
+                int cat = pet.getCategory() != null ? pet.getCategory() : 0;
+                authorCategoryCache.merge(aid, cat, Math::max);
             }
-            int cat = pet.getCategory() != null ? pet.getCategory() : 0;
-            authorCategoryCache.merge(aid, cat, Math::max);
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -443,6 +514,39 @@ public class RecommendService {
             .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
             .map(Map.Entry::getKey)
             .collect(Collectors.toList());
+    }
+
+    private List<Post> tryVectorRecallPosts(Long userId) {
+        if (!vectorEnabled || vectorService == null || !vectorService.isAvailable()) {
+            return null;
+        }
+
+        try {
+            float[] queryVector = vectorService.buildUserVector(userId);
+            List<Long> myFolloweeIds = followMapper.selectFolloweeIds(userId);
+            List<VectorSearchResult> searchResults = vectorService.searchSimilarPosts(
+                queryVector, VECTOR_TOP_K, new HashSet<>(myFolloweeIds));
+
+            if (searchResults.isEmpty()) {
+                log.debug("向量召回动态结果为空，降级为全量计算");
+                return null;
+            }
+
+            List<Long> candidateIds = searchResults.stream()
+                .map(VectorSearchResult::getId)
+                .collect(Collectors.toList());
+
+            List<Post> candidates = postMapper.selectBatchIds(candidateIds).stream()
+                .filter(Objects::nonNull)
+                .filter(p -> p.getDeleted() == null || p.getDeleted() == 0)
+                .collect(Collectors.toList());
+
+            log.debug("向量召回动态: recall={}, afterFilter={}", searchResults.size(), candidates.size());
+            return candidates;
+        } catch (Exception e) {
+            log.warn("向量召回动态异常，降级为全量计算: {}", e.getMessage());
+            return null;
+        }
     }
 
     private double computePostInterestScore(Long authorId, Set<String> myBreeds, int myCategory,

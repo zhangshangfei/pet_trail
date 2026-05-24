@@ -1,15 +1,20 @@
 package com.pettrail.pettrailbackend.converter;
 
 import com.alibaba.fastjson2.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.pettrail.pettrailbackend.dto.PostVO;
 import com.pettrail.pettrailbackend.entity.Pet;
 import com.pettrail.pettrailbackend.entity.Post;
+import com.pettrail.pettrailbackend.entity.PostEe;
+import com.pettrail.pettrailbackend.entity.PostLike;
 import com.pettrail.pettrailbackend.entity.User;
-import com.pettrail.pettrailbackend.service.PetService;
-import com.pettrail.pettrailbackend.service.PostService;
-import com.pettrail.pettrailbackend.service.UserService;
+import com.pettrail.pettrailbackend.mapper.PetMapper;
+import com.pettrail.pettrailbackend.mapper.PostEeMapper;
+import com.pettrail.pettrailbackend.mapper.PostLikeMapper;
+import com.pettrail.pettrailbackend.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -22,42 +27,37 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PostConverter {
 
-    private final UserService userService;
-    private final PetService petService;
-    private final PostService postService;
+    private final UserMapper userMapper;
+    private final PetMapper petMapper;
+    private final PostLikeMapper postLikeMapper;
+    private final PostEeMapper postEeMapper;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     public List<PostVO> convertToPostVOList(List<Post> posts, Long currentUserId) {
         if (posts == null || posts.isEmpty()) return Collections.emptyList();
 
-        Map<Long, User> userMap = batchLoadUsers(posts);
-        Map<Long, Pet> petMap = batchLoadPets(posts);
-
-        return posts.stream()
+        List<Post> activePosts = posts.stream()
                 .filter(post -> post.getDeleted() == null || post.getDeleted() == 0)
-                .map(post -> convertToPostVO(post, currentUserId, userMap, petMap))
+                .toList();
+        if (activePosts.isEmpty()) return Collections.emptyList();
+
+        Map<Long, User> userMap = batchLoadUsers(activePosts);
+        Map<Long, Pet> petMap = batchLoadPets(activePosts);
+        Set<Long> likedPostIds = batchLoadLikedPostIds(activePosts, currentUserId);
+        Set<Long> eeLikedPostIds = batchLoadEeLikedPostIds(activePosts, currentUserId);
+
+        return activePosts.stream()
+                .map(post -> convertToPostVO(post, currentUserId, userMap, petMap, likedPostIds, eeLikedPostIds))
                 .collect(Collectors.toList());
     }
 
     public PostVO convertToPostVO(Post post, Long currentUserId) {
-        Map<Long, User> userMap = new HashMap<>();
-        try {
-            User user = userService.getProfile(post.getUserId());
-            if (user != null) userMap.put(post.getUserId(), user);
-        } catch (Exception e) {
-            log.warn("查询用户信息失败: userId={}", post.getUserId());
-        }
+        Map<Long, User> userMap = batchLoadUsers(List.of(post));
+        Map<Long, Pet> petMap = batchLoadPets(List.of(post));
+        Set<Long> likedPostIds = batchLoadLikedPostIds(List.of(post), currentUserId);
+        Set<Long> eeLikedPostIds = batchLoadEeLikedPostIds(List.of(post), currentUserId);
 
-        Map<Long, Pet> petMap = new HashMap<>();
-        if (post.getPetId() != null) {
-            try {
-                Pet pet = petService.getPetById(post.getPetId());
-                if (pet != null) petMap.put(post.getPetId(), pet);
-            } catch (Exception e) {
-                log.warn("查询宠物信息失败: petId={}", post.getPetId());
-            }
-        }
-
-        return convertToPostVO(post, currentUserId, userMap, petMap);
+        return convertToPostVO(post, currentUserId, userMap, petMap, likedPostIds, eeLikedPostIds);
     }
 
     private Map<Long, User> batchLoadUsers(List<Post> posts) {
@@ -65,17 +65,11 @@ public class PostConverter {
                 .map(Post::getUserId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+        if (userIds.isEmpty()) return Map.of();
 
-        Map<Long, User> userMap = new HashMap<>();
-        for (Long uid : userIds) {
-            try {
-                User user = userService.getProfile(uid);
-                if (user != null) userMap.put(uid, user);
-            } catch (Exception e) {
-                log.warn("批量加载用户失败: uid={}", uid);
-            }
-        }
-        return userMap;
+        List<User> users = userMapper.selectBatchIds(userIds);
+        return users.stream()
+                .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
     }
 
     private Map<Long, Pet> batchLoadPets(List<Post> posts) {
@@ -83,20 +77,86 @@ public class PostConverter {
                 .map(Post::getPetId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+        if (petIds.isEmpty()) return Map.of();
 
-        Map<Long, Pet> petMap = new HashMap<>();
-        for (Long pid : petIds) {
-            try {
-                Pet pet = petService.getPetById(pid);
-                if (pet != null) petMap.put(pid, pet);
-            } catch (Exception e) {
-                log.warn("批量加载宠物失败: pid={}", pid);
-            }
-        }
-        return petMap;
+        List<Pet> pets = petMapper.selectBatchIds(petIds);
+        return pets.stream()
+                .collect(Collectors.toMap(Pet::getId, p -> p, (a, b) -> a));
     }
 
-    private PostVO convertToPostVO(Post post, Long userId, Map<Long, User> userMap, Map<Long, Pet> petMap) {
+    private Set<Long> batchLoadLikedPostIds(List<Post> posts, Long currentUserId) {
+        if (currentUserId == null) return Set.of();
+
+        List<Long> postIds = posts.stream()
+                .map(Post::getId)
+                .filter(Objects::nonNull)
+                .toList();
+        if (postIds.isEmpty()) return Set.of();
+
+        Set<Long> likedIds = new HashSet<>();
+        for (Long postId : postIds) {
+            String userLikeKey = "post:user:like:" + postId + ":" + currentUserId;
+            Boolean exists = redisTemplate.hasKey(userLikeKey);
+            if (Boolean.TRUE.equals(exists)) {
+                likedIds.add(postId);
+            }
+        }
+
+        List<Long> missedPostIds = postIds.stream()
+                .filter(id -> !likedIds.contains(id))
+                .toList();
+        if (!missedPostIds.isEmpty()) {
+            LambdaQueryWrapper<PostLike> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(PostLike::getUserId, currentUserId)
+                    .in(PostLike::getPostId, missedPostIds)
+                    .select(PostLike::getPostId);
+            List<PostLike> dbLikes = postLikeMapper.selectList(wrapper);
+            for (PostLike like : dbLikes) {
+                likedIds.add(like.getPostId());
+            }
+        }
+
+        return likedIds;
+    }
+
+    private Set<Long> batchLoadEeLikedPostIds(List<Post> posts, Long currentUserId) {
+        if (currentUserId == null) return Set.of();
+
+        List<Long> postIds = posts.stream()
+                .map(Post::getId)
+                .filter(Objects::nonNull)
+                .toList();
+        if (postIds.isEmpty()) return Set.of();
+
+        Set<Long> eeLikedIds = new HashSet<>();
+        for (Long postId : postIds) {
+            String userEeKey = "post:user:ee:" + postId + ":" + currentUserId;
+            Boolean exists = redisTemplate.hasKey(userEeKey);
+            if (Boolean.TRUE.equals(exists)) {
+                eeLikedIds.add(postId);
+            }
+        }
+
+        List<Long> missedPostIds = postIds.stream()
+                .filter(id -> !eeLikedIds.contains(id))
+                .toList();
+        if (!missedPostIds.isEmpty()) {
+            LambdaQueryWrapper<PostEe> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(PostEe::getUserId, currentUserId)
+                    .in(PostEe::getPostId, missedPostIds)
+                    .select(PostEe::getPostId);
+            List<PostEe> dbEes = postEeMapper.selectList(wrapper);
+            for (PostEe ee : dbEes) {
+                eeLikedIds.add(ee.getPostId());
+            }
+        }
+
+        return eeLikedIds;
+    }
+
+    private PostVO convertToPostVO(Post post, Long userId, Map<Long, User> userMap,
+                                    Map<Long, Pet> petMap, Set<Long> likedPostIds,
+                                    Set<Long> eeLikedPostIds) {
         PostVO vo = new PostVO();
         vo.setId(post.getId());
         vo.setUserId(post.getUserId());
@@ -120,7 +180,7 @@ public class PostConverter {
 
         fillUserInfo(vo, post, userMap);
         fillPetInfo(vo, post, petMap);
-        fillInteractionInfo(vo, post, userId);
+        fillInteractionInfo(vo, post, likedPostIds, eeLikedPostIds);
 
         return vo;
     }
@@ -159,14 +219,10 @@ public class PostConverter {
         }
     }
 
-    private void fillInteractionInfo(PostVO vo, Post post, Long userId) {
-        if (userId != null) {
-            vo.setLiked(postService.isUserLiked(post.getId(), userId));
-            vo.setEeLiked(postService.isUserEeLiked(post.getId(), userId));
-        } else {
-            vo.setLiked(false);
-            vo.setEeLiked(false);
-        }
+    private void fillInteractionInfo(PostVO vo, Post post, Set<Long> likedPostIds,
+                                      Set<Long> eeLikedPostIds) {
+        vo.setLiked(likedPostIds.contains(post.getId()));
+        vo.setEeLiked(eeLikedPostIds.contains(post.getId()));
         vo.setEeCount(post.getEeCount() != null ? post.getEeCount() : 0);
     }
 

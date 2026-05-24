@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.pettrail.pettrailbackend.dto.RecommendUserVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.dto.UserUpdateDTO;
 import com.pettrail.pettrailbackend.dto.WxLoginDTO;
@@ -100,7 +101,7 @@ public class UserController extends BaseController {
     }
 
     @GetMapping("/discover")
-    public Result<List<Map<String, Object>>> discoverUsers(
+    public Result<List<RecommendUserVO>> discoverUsers(
             @RequestParam(defaultValue = "recommend") String type,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -119,24 +120,24 @@ public class UserController extends BaseController {
         }
 
         List<Long> finalFollowedIds = followedIds;
-        List<Map<String, Object>> result = new ArrayList<>();
+        List<RecommendUserVO> result = new ArrayList<>();
         for (User user : users) {
-            Map<String, Object> item = new HashMap<>();
-            item.put("id", user.getId());
-            item.put("nickname", user.getNickname());
-            item.put("avatar", user.getAvatar());
-            item.put("gender", user.getGender());
-            item.put("createdAt", user.getCreatedAt());
-            item.put("isFollowing", finalFollowedIds.contains(user.getId()));
-            item.put("followerCount", followService.getFollowerCount(user.getId()));
-            item.put("followeeCount", followService.getFolloweeCount(user.getId()));
-            item.put("postCount", postService.getUserPostCount(user.getId()));
+            RecommendUserVO vo = new RecommendUserVO();
+            vo.setId(user.getId());
+            vo.setNickname(user.getNickname());
+            vo.setAvatar(user.getAvatar());
+            vo.setGender(user.getGender());
+            vo.setCreatedAt(user.getCreatedAt());
+            vo.setIsFollowing(finalFollowedIds.contains(user.getId()));
+            vo.setFollowerCount(followService.getFollowerCount(user.getId()));
+            vo.setFolloweeCount(followService.getFolloweeCount(user.getId()));
+            vo.setPostCount(postService.getUserPostCount(user.getId()));
             if ("hot".equals(type)) {
-                item.put("recommendReason", "hot");
+                vo.setRecommendReason("hot");
             } else if ("new".equals(type)) {
-                item.put("recommendReason", "new_user");
+                vo.setRecommendReason("new_user");
             }
-            result.add(item);
+            result.add(vo);
         }
         return Result.success(result);
     }

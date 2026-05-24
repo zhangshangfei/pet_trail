@@ -361,10 +361,7 @@ public class PostService {
         redisTemplate.delete(likeKey);
         redisTemplate.delete(eeKey);
 
-        Set<String> recommendKeys = redisTemplate.keys("recommend:posts:*");
-        if (recommendKeys != null && !recommendKeys.isEmpty()) {
-            redisTemplate.delete(recommendKeys);
-        }
+        redisTemplate.delete("recommend:posts:" + userId);
 
         log.info("动态已删除：postId={}, userId={}", postId, userId);
     }

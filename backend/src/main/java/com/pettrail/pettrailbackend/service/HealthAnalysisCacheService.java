@@ -1,14 +1,13 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.pettrail.pettrailbackend.dto.HealthAnalysisVO;
+import com.pettrail.pettrailbackend.dto.CacheStatsVO;
+import com.pettrail.pettrailbackend.util.RedisScanUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -18,6 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class HealthAnalysisCacheService {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisScanUtil redisScanUtil;
 
     private static final String CACHE_PREFIX = "health:analysis:";
     private static final String AI_CACHE_PREFIX = "health:analysis:ai:";
@@ -48,9 +48,9 @@ public class HealthAnalysisCacheService {
                 log.debug("健康分析缓存命中: key={}", cacheKey);
                 return (HealthAnalysisVO) cached;
             }
-            if (cached instanceof Map) {
+            if (cached instanceof java.util.Map) {
                 log.debug("健康分析缓存命中(反序列化为Map，尝试转换): key={}", cacheKey);
-                HealthAnalysisVO vo = convertMapToVO((Map<String, Object>) cached);
+                HealthAnalysisVO vo = convertMapToVO((java.util.Map<String, Object>) cached);
                 if (vo != null) {
                     return vo;
                 }
@@ -73,7 +73,7 @@ public class HealthAnalysisCacheService {
         }
     }
 
-    private HealthAnalysisVO convertMapToVO(Map<String, Object> map) {
+    private HealthAnalysisVO convertMapToVO(java.util.Map<String, Object> map) {
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
@@ -110,16 +110,11 @@ public class HealthAnalysisCacheService {
 
     public void invalidateByPetId(Long petId) {
         try {
-            Set<String> keys = redisTemplate.keys(CACHE_PREFIX + "*:" + petId);
-            int count = 0;
-            if (keys != null && !keys.isEmpty()) {
-                count = keys.size();
-                redisTemplate.delete(keys);
-            }
+            long deleted = redisScanUtil.deleteByPattern(CACHE_PREFIX + "*:" + petId);
             String aiKey = buildAiCacheKey(petId);
             redisTemplate.delete(aiKey);
-            evictCount.addAndGet(count + 1);
-            log.info("健康分析缓存按petId清除: petId={}, clearedKeys={}", petId, count + 1);
+            evictCount.addAndGet(deleted + 1);
+            log.info("健康分析缓存按petId清除: petId={}, clearedKeys={}", petId, deleted + 1);
         } catch (Exception e) {
             log.warn("健康分析缓存按petId清除异常: petId={}, error={}", petId, e.getMessage());
         }
@@ -127,32 +122,22 @@ public class HealthAnalysisCacheService {
 
     public void invalidateAll() {
         try {
-            Set<String> keys = redisTemplate.keys(CACHE_PREFIX + "*");
-            int count = 0;
-            if (keys != null && !keys.isEmpty()) {
-                count = keys.size();
-                redisTemplate.delete(keys);
-            }
-            Set<String> aiKeys = redisTemplate.keys(AI_CACHE_PREFIX + "*");
-            if (aiKeys != null && !aiKeys.isEmpty()) {
-                count += aiKeys.size();
-                redisTemplate.delete(aiKeys);
-            }
-            evictCount.addAndGet(count);
-            log.info("健康分析缓存全量清除: count={}", count);
+            long voDeleted = redisScanUtil.deleteByPattern(CACHE_PREFIX + "*");
+            long aiDeleted = redisScanUtil.deleteByPattern(AI_CACHE_PREFIX + "*");
+            long total = voDeleted + aiDeleted;
+            evictCount.addAndGet(total);
+            log.info("健康分析缓存全量清除: count={}", total);
         } catch (Exception e) {
             log.warn("健康分析缓存全量清除异常: error={}", e.getMessage());
         }
     }
 
-    public Map<String, Object> getCacheStats() {
-        Map<String, Object> stats = new HashMap<>();
+    public CacheStatsVO getCacheStats() {
+        CacheStatsVO stats = new CacheStatsVO();
         try {
-            Set<String> voKeys = redisTemplate.keys(CACHE_PREFIX + "*");
-            Set<String> aiKeys = redisTemplate.keys(AI_CACHE_PREFIX + "*");
-            int voCount = voKeys != null ? voKeys.size() : 0;
-            int aiCount = aiKeys != null ? aiKeys.size() : 0;
-            int totalCount = voCount + aiCount;
+            long voCount = redisScanUtil.countKeys(CACHE_PREFIX + "*");
+            long aiCount = redisScanUtil.countKeys(AI_CACHE_PREFIX + "*");
+            long totalCount = voCount + aiCount;
 
             long hits = hitCount.get();
             long misses = missCount.get();
@@ -161,27 +146,29 @@ public class HealthAnalysisCacheService {
             long totalAccess = hits + misses;
             double hitRate = totalAccess > 0 ? Math.round(hits * 1000.0 / totalAccess) / 10.0 : 0.0;
 
-            stats.put("activeEntries", totalCount);
-            stats.put("voCacheCount", voCount);
-            stats.put("aiCacheCount", aiCount);
-            stats.put("cacheCount", totalCount);
-            stats.put("hitRate", hitRate + "%");
-            stats.put("hitCount", hits);
-            stats.put("missCount", misses);
-            stats.put("putCount", puts);
-            stats.put("evictCount", evicts);
-            stats.put("totalAccess", totalAccess);
-            stats.put("ttlMinutes", CACHE_TTL_HOURS * 60);
-            stats.put("ttlHours", CACHE_TTL_HOURS);
-            stats.put("cachePrefix", CACHE_PREFIX);
-            stats.put("aiCachePrefix", AI_CACHE_PREFIX);
-            if (voKeys != null && !voKeys.isEmpty()) {
-                stats.put("sampleKeys", voKeys.stream().limit(5).toList());
+            stats.setActiveEntries(totalCount);
+            stats.setVoCacheCount(voCount);
+            stats.setAiCacheCount(aiCount);
+            stats.setCacheCount(totalCount);
+            stats.setHitRate(hitRate + "%");
+            stats.setHitCount(hits);
+            stats.setMissCount(misses);
+            stats.setPutCount(puts);
+            stats.setEvictCount(evicts);
+            stats.setTotalAccess(totalAccess);
+            stats.setTtlMinutes(CACHE_TTL_HOURS * 60);
+            stats.setTtlHours(CACHE_TTL_HOURS);
+            stats.setCachePrefix(CACHE_PREFIX);
+            stats.setAiCachePrefix(AI_CACHE_PREFIX);
+
+            java.util.List<String> sampleKeys = redisScanUtil.scanKeysAsList(CACHE_PREFIX + "*", 5);
+            if (!sampleKeys.isEmpty()) {
+                stats.setSampleKeys(sampleKeys);
             }
         } catch (Exception e) {
-            stats.put("activeEntries", -1);
-            stats.put("cacheCount", -1);
-            stats.put("error", e.getMessage());
+            stats.setActiveEntries(-1);
+            stats.setCacheCount(-1);
+            stats.setError(e.getMessage());
         }
         return stats;
     }

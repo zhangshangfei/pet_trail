@@ -39,6 +39,13 @@ spring:
   rabbitmq:
     enabled: ${RABBITMQ_ENABLED:false}
 
+vector:
+  enabled: ${VECTOR_ENABLED:false}
+  user-index: idx_user_vectors
+  post-index: idx_post_vectors
+  dimensions: 64
+  top-k: 200
+
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true

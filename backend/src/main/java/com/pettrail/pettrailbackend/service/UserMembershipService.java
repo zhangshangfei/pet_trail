@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.pettrail.pettrailbackend.dto.MembershipInfoVO;
 import com.pettrail.pettrailbackend.entity.UserMembership;
 import com.pettrail.pettrailbackend.mapper.UserMembershipMapper;
 import lombok.RequiredArgsConstructor;
@@ -10,8 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -24,39 +24,49 @@ public class UserMembershipService {
     private static final BigDecimal MONTHLY_PRICE = new BigDecimal("9.90");
     private static final BigDecimal YEARLY_PRICE = new BigDecimal("99.00");
 
-    public Map<String, Object> getMembershipInfo(Long userId) {
-        Map<String, Object> result = new HashMap<>();
+    public MembershipInfoVO getMembershipInfo(Long userId) {
+        MembershipInfoVO result = new MembershipInfoVO();
 
         UserMembership active = getActiveMembership(userId);
-        result.put("isPro", active != null);
-        result.put("plan", active != null ? active.getPlan() : "free");
-        result.put("expireDate", active != null ? active.getExpireDate() : null);
+        result.setIsPro(active != null);
+        result.setPlan(active != null ? active.getPlan() : "free");
+        result.setExpireDate(active != null ? active.getExpireDate() : null);
 
-        Map<String, Object> plans = new HashMap<>();
-        Map<String, Object> monthly = new HashMap<>();
-        monthly.put("price", MONTHLY_PRICE);
-        monthly.put("label", "月度会员");
-        monthly.put("priceLabel", "¥9.9/月");
-        plans.put("monthly", monthly);
+        MembershipInfoVO.PlansVO plans = new MembershipInfoVO.PlansVO();
 
-        Map<String, Object> yearly = new HashMap<>();
-        yearly.put("price", YEARLY_PRICE);
-        yearly.put("label", "年度会员");
-        yearly.put("priceLabel", "¥99/年");
-        yearly.put("save", "省¥19.8");
-        plans.put("yearly", yearly);
-        result.put("plans", plans);
+        MembershipInfoVO.PlanDetailVO monthly = new MembershipInfoVO.PlanDetailVO();
+        monthly.setPrice(MONTHLY_PRICE);
+        monthly.setLabel("月度会员");
+        monthly.setPriceLabel("¥9.9/月");
+        plans.setMonthly(monthly);
 
-        result.put("features", java.util.Arrays.asList(
-            Map.of("icon", "📸", "title", "无限相册", "desc", "成长相册不限数量"),
-            Map.of("icon", "📊", "title", "高级统计", "desc", "详细健康数据分析"),
-            Map.of("icon", "🎨", "title", "主题定制", "desc", "更多主题皮肤选择"),
-            Map.of("icon", "🔔", "title", "智能提醒", "desc", "AI智能喂食建议"),
-            Map.of("icon", "📋", "title", "数据导出", "desc", "健康数据导出PDF"),
-            Map.of("icon", "🏥", "title", "医院优先", "desc", "宠物医院预约优先")
+        MembershipInfoVO.PlanDetailVO yearly = new MembershipInfoVO.PlanDetailVO();
+        yearly.setPrice(YEARLY_PRICE);
+        yearly.setLabel("年度会员");
+        yearly.setPriceLabel("¥99/年");
+        yearly.setSave("省¥19.8");
+        plans.setYearly(yearly);
+
+        result.setPlans(plans);
+
+        result.setFeatures(List.of(
+            buildFeature("📸", "无限相册", "成长相册不限数量"),
+            buildFeature("📊", "高级统计", "详细健康数据分析"),
+            buildFeature("🎨", "主题定制", "更多主题皮肤选择"),
+            buildFeature("🔔", "智能提醒", "AI智能喂食建议"),
+            buildFeature("📋", "数据导出", "健康数据导出PDF"),
+            buildFeature("🏥", "医院优先", "宠物医院预约优先")
         ));
 
         return result;
+    }
+
+    private MembershipInfoVO.FeatureVO buildFeature(String icon, String title, String desc) {
+        MembershipInfoVO.FeatureVO feature = new MembershipInfoVO.FeatureVO();
+        feature.setIcon(icon);
+        feature.setTitle(title);
+        feature.setDesc(desc);
+        return feature;
     }
 
     public UserMembership getActiveMembership(Long userId) {
