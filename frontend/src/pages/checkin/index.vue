@@ -385,7 +385,7 @@ export default {
       const requests = this.getMonthRequests(3)
       try {
         const responses = await Promise.all(
-          requests.map(item => checkinApi.getCalendar(item.year, item.month, forceRefresh).catch(() => null))
+          requests.map(item => checkinApi.getCalendar(item.year, item.month, this.petId, forceRefresh).catch(() => null))
         )
         const result = []
         for (const res of responses) {
@@ -511,9 +511,22 @@ export default {
       const loggedIn = await checkLogin('请先登录后再打卡')
       if (!loggedIn) return
 
+      const targetIdx = this.visibleItems.findIndex((i) => i.id === item.id)
+      if (targetIdx === -1) return
+      this.visibleItems.splice(targetIdx, 1, {
+        ...this.visibleItems[targetIdx],
+        checked: true,
+        checkTime: this.getTimeText(new Date())
+      })
+
       try {
         const res = await checkinApi.checkin({ petId: this.petId, itemIds: [item.id], date: this.getISODate() })
         if (!res || res.success !== true) {
+          this.visibleItems.splice(targetIdx, 1, {
+            ...this.visibleItems[targetIdx],
+            checked: false,
+            checkTime: ''
+          })
           uni.showToast({ title: (res && res.message) || '打卡失败', icon: 'none' })
           return
         }
@@ -529,9 +542,15 @@ export default {
         }
         this.syncPageState()
 
-        await this.loadCalendarRecords(true)
-        this.syncPageState()
+        this.loadCalendarRecords(true).then(() => {
+          this.syncPageState()
+        })
       } catch (error) {
+        this.visibleItems.splice(targetIdx, 1, {
+          ...this.visibleItems[targetIdx],
+          checked: false,
+          checkTime: ''
+        })
         console.error('打卡失败:', error)
         uni.showToast({ title: (error && error.message) || '打卡失败', icon: 'none' })
       }

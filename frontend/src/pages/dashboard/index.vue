@@ -102,29 +102,11 @@
 
           <view class="dash-card chart-card-inner glass-chart-card">
             <view v-if="weightChartHasData" class="chart-wrap chart-wrap--weight">
-              <view class="y-axis">
-                <text v-for="(t, i) in weightYLabels" :key="'y'+i" class="y-tick">{{ t }}</text>
-              </view>
-              <view class="chart-plot glass-chart-plot">
-                <view class="grid-lines">
-                  <view v-for="n in 5" :key="n" class="grid-line"></view>
-                </view>
-                <view
-                  v-for="(seg, idx) in weightChartSegments"
-                  :key="'s'+idx"
-                  class="line-seg line-seg--weight"
-                  :style="seg"
-                ></view>
-                <view
-                  v-for="(pt, idx) in weightChartPoints"
-                  :key="'p'+idx"
-                  class="line-dot line-dot--hollow glass-chart-dot"
-                  :style="pt"
-                ></view>
-                <view class="x-axis">
-                  <text v-for="d in chartDates" :key="d" class="x-item">{{ d }}</text>
-                </view>
-              </view>
+              <canvas
+                type="2d"
+                id="weightChartCanvas"
+                class="weight-canvas"
+              ></canvas>
             </view>
             <view v-else class="chart-empty glass-chart-empty">
               <text class="chart-empty-text">近{{ chartRange }}天暂无体重记录</text>
@@ -329,74 +311,13 @@ export default {
         { value: 7, label: '7天' },
         { value: 30, label: '30天' }
       ],
-      aiSummary: null
+      aiSummary: null,
+      _chartData: null
     };
   },
   computed: {
     weightChartHasData() {
-      return (this.weightSeriesFilled || []).some((v) => v != null && !Number.isNaN(v));
-    },
-    weightChartPoints() {
-      const values = this.weightSeriesFilled.filter((v) => v != null && !Number.isNaN(v));
-      if (!values.length) return [];
-      const min = Math.min(...values);
-      const max = Math.max(...values);
-      const pad = (max - min) * 0.08 || 0.2;
-      const lo = min - pad;
-      const hi = max + pad;
-      const diff = hi - lo || 1;
-      const leftStart = 8;
-      const n = this.weightSeriesFilled.length;
-      const step = n > 1 ? 520 / (n - 1) : 0;
-      const h = 180;
-      return this.weightSeriesFilled.map((v, i) => {
-        if (v == null || Number.isNaN(v)) return null;
-        const y = 24 + (1 - (v - lo) / diff) * h;
-        const x = leftStart + i * step;
-        return {
-          left: `${x}rpx`,
-          top: `${y}rpx`,
-          borderColor: "#10B981",
-          background: "#fff"
-        };
-      }).filter(Boolean);
-    },
-    weightChartSegments() {
-      const pts = this.weightChartPoints;
-      const list = [];
-      for (let i = 0; i < pts.length - 1; i++) {
-        const x1 = parseFloat(pts[i].left);
-        const y1 = parseFloat(pts[i].top);
-        const x2 = parseFloat(pts[i + 1].left);
-        const y2 = parseFloat(pts[i + 1].top);
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const len = Math.sqrt(dx * dx + dy * dy);
-        const deg = (Math.atan2(dy, dx) * 180) / Math.PI;
-        list.push({
-          left: `${x1}rpx`,
-          top: `${y1 + 4}rpx`,
-          width: `${len}rpx`,
-          transform: `rotate(${deg}deg)`,
-          background: "#10B981"
-        });
-      }
-      return list;
-    },
-    weightYLabels() {
-      const values = this.weightSeriesFilled.filter((v) => v != null && !Number.isNaN(v));
-      if (!values.length) return ["", "", "", "", ""];
-      const min = Math.min(...values);
-      const max = Math.max(...values);
-      const pad = (max - min) * 0.08 || 0.2;
-      const lo = min - pad;
-      const hi = max + pad;
-      const step = (hi - lo) / 4;
-      const labels = [];
-      for (let i = 4; i >= 0; i--) {
-        labels.push((lo + step * i).toFixed(1));
-      }
-      return labels;
+      return (this.weightSeriesRaw || []).some((v) => v != null && !Number.isNaN(v));
     },
     vaccineCards() {
       const petId = this.selectedPet && this.selectedPet.id;
@@ -583,57 +504,22 @@ export default {
         const weightRecords = [...weightRes.data].sort((a, b) => {
           const da = new Date(a.recordDate).getTime();
           const db = new Date(b.recordDate).getTime();
-          return db - da;
+          return da - db;
         });
 
-        const range = this.chartRange;
-        const dates = [];
-        const raw = [];
-        const today = new Date();
-        const maxLabels = range <= 7 ? range : range <= 30 ? 10 : 12;
-        const step = Math.max(1, Math.floor(range / maxLabels));
+        const chartData = weightRecords.map((r) => ({
+          date: this.formatDateYMD(r.recordDate),
+          weight: Number(r.weight),
+          rawDate: r.recordDate
+        }));
 
-        for (let i = range - 1; i >= 0; i--) {
-          const date = new Date(today);
-          date.setDate(date.getDate() - i);
-          const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+        this.weightSeriesRaw = chartData.map((d) => d.weight);
+        this.weightSeriesFilled = this.weightSeriesRaw.slice();
+        this.chartDates = chartData.map((d) => d.date);
 
-          const idx = range - 1 - i;
-          if (range <= 7) {
-            if (i === 0) dates.push("今天");
-            else if (i === 1) dates.push("昨天");
-            else dates.push(`${date.getMonth() + 1}/${date.getDate()}`);
-          } else {
-            if (idx % step === 0 || i === 0) {
-              dates.push(`${date.getMonth() + 1}/${date.getDate()}`);
-            } else {
-              dates.push("");
-            }
-          }
-
-          const record = weightRecords.find((r) => {
-            const recordDate = new Date(r.recordDate);
-            return recordDate.toISOString().split("T")[0] === dateStr;
-          });
-          raw.push(record ? Number(record.weight) : null);
-        }
-
-        let last = null;
-        const filled = raw.map((v) => {
-          if (v != null && !Number.isNaN(v)) {
-            last = v;
-            return v;
-          }
-          return last;
-        });
-
-        this.chartDates = dates;
-        this.weightSeriesRaw = raw;
-        this.weightSeriesFilled = filled;
-
-        const nums = raw.filter((v) => v != null && !Number.isNaN(v));
-        if (weightRecords.length > 0) {
-          const latest = weightRecords[0];
+        const nums = chartData.map((d) => d.weight);
+        if (chartData.length > 0) {
+          const latest = chartData[chartData.length - 1];
           this.weightStats.current = `${latest.weight} kg`;
         } else {
           this.weightStats.current = "--";
@@ -646,9 +532,9 @@ export default {
           this.weightStats.avg = "--";
         }
 
-        if (weightRecords.length > 1) {
-          const latest = Number(weightRecords[0].weight);
-          const prev = Number(weightRecords[1].weight);
+        if (chartData.length > 1) {
+          const latest = chartData[chartData.length - 1].weight;
+          const prev = chartData[chartData.length - 2].weight;
           const d = latest - prev;
           this.weightStats.deltaNum = d;
           this.weightStats.delta = `${d > 0 ? "+" : ""}${d.toFixed(1)} kg`;
@@ -656,6 +542,11 @@ export default {
           this.weightStats.deltaNum = 0;
           this.weightStats.delta = "--";
         }
+
+        this._chartData = chartData;
+        this.$nextTick(() => {
+          setTimeout(() => this.drawWeightChart(), 100);
+        });
       } catch (e) {
         console.error("加载看板数据失败:", e);
       }
@@ -663,6 +554,120 @@ export default {
       if (this.vaccineCardsLimited.length > 0 || this.parasiteCardsLimited.length > 0) {
         loadWxSubscribeTemplates();
       }
+    },
+    drawWeightChart() {
+      const data = this._chartData;
+      if (!data || !data.length) return;
+
+      const query = uni.createSelectorQuery().in(this);
+      query.select('#weightChartCanvas').node().exec((res) => {
+        const canvas = res[0] && res[0].node;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const dpr = uni.getSystemInfoSync().pixelRatio || 2;
+        const canvasW = 650 * dpr;
+        const canvasH = 280 * dpr;
+        canvas.width = canvasW;
+        canvas.height = canvasH;
+
+        const padLeft = 50 * dpr;
+        const padRight = 20 * dpr;
+        const padTop = 24 * dpr;
+        const padBottom = 36 * dpr;
+        const plotW = canvasW - padLeft - padRight;
+        const plotH = canvasH - padTop - padBottom;
+
+        const weights = data.map((d) => d.weight);
+        const minW = Math.min(...weights);
+        const maxW = Math.max(...weights);
+        const range = maxW - minW || 1;
+        const pad = range * 0.15 || 0.5;
+        const lo = minW - pad;
+        const hi = maxW + pad;
+        const diff = hi - lo;
+
+        ctx.clearRect(0, 0, canvasW, canvasH);
+
+        for (let i = 0; i <= 4; i++) {
+          const y = padTop + (plotH / 4) * i;
+          ctx.beginPath();
+          ctx.moveTo(padLeft, y);
+          ctx.lineTo(canvasW - padRight, y);
+          ctx.strokeStyle = 'rgba(209,213,219,0.35)';
+          ctx.lineWidth = 1 * dpr;
+          ctx.stroke();
+
+          const val = hi - (diff / 4) * i;
+          ctx.font = `${10 * dpr}px sans-serif`;
+          ctx.fillStyle = '#9ca3af';
+          ctx.textAlign = 'right';
+          ctx.fillText(val.toFixed(1), padLeft - 8 * dpr, y + 3.5 * dpr);
+        }
+
+        const points = data.map((d, i) => {
+          const x = data.length === 1
+            ? padLeft + plotW / 2
+            : padLeft + (plotW / (data.length - 1)) * i;
+          const y = padTop + (1 - (d.weight - lo) / diff) * plotH;
+          return { x, y, weight: d.weight, date: d.date };
+        });
+
+        if (points.length > 1) {
+          ctx.beginPath();
+          ctx.moveTo(points[0].x, points[0].y);
+          for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+          }
+          ctx.strokeStyle = '#10B981';
+          ctx.lineWidth = 2.5 * dpr;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(points[0].x, points[0].y);
+          for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+          }
+          ctx.lineTo(points[points.length - 1].x, padTop + plotH + 6 * dpr);
+          ctx.lineTo(points[0].x, padTop + plotH + 6 * dpr);
+          ctx.closePath();
+
+          const grad = ctx.createLinearGradient(0, padTop, 0, padTop + plotH);
+          grad.addColorStop(0, 'rgba(16,185,129,0.22)');
+          grad.addColorStop(1, 'rgba(16,185,129,0.02)');
+          ctx.fillStyle = grad;
+          ctx.fill();
+        }
+
+        points.forEach((pt) => {
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 5 * dpr, 0, Math.PI * 2);
+          ctx.fillStyle = '#10B981';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 2.5 * dpr, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+
+          ctx.font = `bold ${11 * dpr}px sans-serif`;
+          ctx.fillStyle = '#059669';
+          ctx.textAlign = 'center';
+          ctx.fillText(String(pt.weight), pt.x, pt.y - 12 * dpr);
+        });
+
+        const maxLabels = data.length <= 7 ? data.length : Math.min(7, data.length);
+        const labelStep = Math.max(1, Math.floor(data.length / maxLabels));
+        ctx.font = `${9 * dpr}px sans-serif`;
+        ctx.fillStyle = '#9ca3af';
+        ctx.textAlign = 'center';
+        for (let i = 0; i < data.length; i++) {
+          if (i === 0 || i === data.length - 1 || i % labelStep === 0) {
+            const label = data[i].date.substring(5);
+            ctx.fillText(label, points[i].x, canvasH - 12 * dpr);
+          }
+        }
+      });
     },
     async onMarkVaccineDone(item) {
       if (!item || item.isCompleted || !this.selectedPet) return;
@@ -1509,92 +1514,13 @@ export default {
 .chart-wrap--weight {
   display: flex;
   flex-direction: row;
-  gap: 14rpx;
+  justify-content: center;
   margin-bottom: 26rpx;
 }
 
-.y-axis {
-  width: 58rpx;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 18rpx 0 40rpx;
-}
-
-.y-tick {
-  font-size: 20rpx;
-  color: var(--pt-muted, #9ca3af);
-  text-align: right;
-  font-weight: 500;
-}
-
-/* 图表绘图区 - 玻璃背景 */
-.glass-chart-plot {
-  position: relative;
-  flex: 1;
+.weight-canvas {
+  width: 650rpx;
   height: 280rpx;
-  border-radius: 16rpx;
-  padding: 18rpx 10rpx 40rpx;
-  overflow: hidden;
-  background: linear-gradient(180deg, rgba(249, 250, 251, 0.5) 0%, rgba(255, 255, 255, 0.3) 100%);
-  backdrop-filter: blur(8px);
-  border: 1rpx solid rgba(209, 213, 219, 0.2);
-}
-
-.grid-lines {
-  position: absolute;
-  left: 10rpx;
-  right: 10rpx;
-  top: 18rpx;
-  bottom: 40rpx;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.grid-line {
-  height: 1rpx;
-  background: linear-gradient(90deg, transparent, rgba(209, 213, 219, 0.5), transparent);
-}
-
-.line-seg {
-  position: absolute;
-  height: 5rpx;
-  border-radius: 5rpx;
-  transform-origin: left center;
-  filter: drop-shadow(0 2rpx 4rpx rgba(16, 185, 129, 0.3));
-}
-
-.line-dot {
-  position: absolute;
-  width: 16rpx;
-  height: 16rpx;
-  border-radius: 50%;
-  transform: translate(-8rpx, -8rpx);
-  box-sizing: border-box;
-  box-shadow: 0 2rpx 8rpx rgba(16, 185, 129, 0.3);
-}
-
-.line-dot--hollow {
-  border-width: 4rpx;
-  border-style: solid;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(4px);
-}
-
-.x-axis {
-  position: absolute;
-  left: 10rpx;
-  right: 10rpx;
-  bottom: 10rpx;
-  display: flex;
-  justify-content: space-between;
-}
-
-.x-item {
-  font-size: 21rpx;
-  color: var(--pt-secondary, #6b7280);
-  font-weight: 500;
 }
 
 /* 空状态 - 玻璃提示 */
@@ -2218,11 +2144,6 @@ page.dark .glass-chart-card {
   box-shadow:
     0 8rpx 32rpx rgba(0, 0, 0, 0.3),
     inset 0 1rpx 0 rgba(255, 255, 255, 0.1);
-}
-
-page.dark .glass-chart-plot {
-  background: linear-gradient(180deg, rgba(60, 60, 75, 0.4) 0%, rgba(50, 50, 65, 0.3) 100%);
-  border-color: rgba(255, 255, 255, 0.08);
 }
 
 page.dark .glass-chart-empty {

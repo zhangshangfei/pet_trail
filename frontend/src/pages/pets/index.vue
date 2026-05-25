@@ -3,7 +3,7 @@
     <!-- 页面标题 -->
     <view class="page-header">
       <text class="page-title">我的宠物</text>
-      <button class="add-btn" type="primary" @click="showAddModal">+ 添加宠物</button>
+      <button class="add-btn" type="primary" @click="goAddPet">+ 添加宠物</button>
     </view>
 
     <!-- 宠物列表 -->
@@ -40,64 +40,33 @@
     <view class="empty-state" v-else>
       <image class="empty-icon" src="/static/images/empty-pets.png" mode="aspectFit"></image>
       <text class="empty-text">还没有宠物哦</text>
-      <button class="add-btn-large" type="primary" @click="showAddModal">添加第一只宠物</button>
+      <button class="add-btn-large" type="primary" @click="goAddPet">添加第一只宠物</button>
     </view>
-
-    <AddPetModal
-      v-if="showModal"
-      :initialForm="form"
-      @close="hideAddModal"
-      @save="submitForm"
-    />
   </view>
 </template>
 
 <script>
-import AddPetModal from "../../components/AddPetModal.vue";
 import { checkLogin } from '@/utils/index'
 import * as petApi from '@/api/pet'
 
 export default {
-  components: {
-    AddPetModal
-  },
   data() {
     return {
-      pets: [],
-      showModal: false,
-      form: {
-        name: '',
-        category: 0,
-        breed: '',
-        gender: 0,
-        sterilized: 0,
-        birthday: '',
-        weight: '',
-        color: '',
-        avatar: ''
-      }
+      pets: []
     };
   },
   onShow() {
-    // 每次显示页面时重新加载宠物列表
     this.loadPets();
   },
   onLoad() {
     this.loadPets();
   },
   methods: {
-    // 加载宠物列表
     async loadPets() {
       try {
         const res = await petApi.getPetList();
-        console.log('[pet-list] 加载宠物列表响应:', res);
         if (res.success) {
           this.pets = res.data || [];
-          console.log('[pet-list] 宠物列表数据:', this.pets);
-          // 检查每个宠物的 avatar 字段
-          this.pets.forEach((pet, index) => {
-            console.log(`[pet-list] 宠物 ${index} - ID: ${pet.id}, 名称: ${pet.name}, avatar:`, pet.avatar);
-          });
         } else {
           uni.showToast({
             title: res.message || '加载失败',
@@ -105,7 +74,6 @@ export default {
           });
         }
       } catch (error) {
-        console.error('[pet-list] 加载宠物列表失败:', error);
         uni.showToast({
           title: '网络错误',
           icon: 'none'
@@ -113,80 +81,18 @@ export default {
       }
     },
 
-    // 显示添加弹窗
-    async showAddModal() {
+    async goAddPet() {
       const loggedIn = await checkLogin('请先登录后再添加宠物')
       if (!loggedIn) return
-
-      this.showModal = true;
-      this.form = {
-        name: '',
-        category: 0,
-        breed: '',
-        gender: 0,
-        sterilized: 0,
-        birthday: '',
-        weight: '',
-        color: '',
-        avatar: ''
-      };
+      uni.navigateTo({ url: '/pages/pet/edit' })
     },
 
-    // 隐藏添加弹窗
-    hideAddModal() {
-      this.showModal = false;
-    },
-
-    // 格式化日期
     formatDate(date) {
       if (!date) return '';
       const d = new Date(date);
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     },
 
-    // 提交表单
-    async submitForm(payload) {
-      const loggedIn = await checkLogin('请先登录后再添加宠物')
-      if (!loggedIn) return
-
-      const data = payload || this.form;
-      console.log('[pet-list] 提交表单数据:', data);
-      this.form = data;
-      if (!data.name) {
-        uni.showToast({
-          title: '请输入宠物名称',
-          icon: 'none'
-        });
-        return;
-      }
-
-      try {
-        const res = await petApi.createPet(data);
-        console.log('[pet-list] 创建宠物响应:', res);
-
-        if (res.success) {
-          uni.showToast({
-            title: '添加成功',
-            icon: 'success'
-          });
-          this.hideAddModal();
-          this.loadPets();
-        } else {
-          uni.showToast({
-            title: res.message || '添加失败',
-            icon: 'none'
-          });
-        }
-      } catch (error) {
-        console.error('[pet-list] 添加宠物失败:', error);
-        uni.showToast({
-          title: '网络错误',
-          icon: 'none'
-        });
-      }
-    },
-
-    // 跳转到宠物详情
     goToDetail(petId) {
       uni.navigateTo({
         url: `/pages/pets/detail?id=${petId}`

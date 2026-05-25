@@ -86,13 +86,6 @@
       </view>
     </scroll-view>
 
-    <AddPetModal
-      v-if="showEditModal"
-      :initialForm="editForm"
-      @close="closeEditModal"
-      @save="submitEdit"
-    />
-
     <view v-if="showDeleteConfirm" class="pd-confirm-mask" @tap="cancelDelete" @touchmove.stop.prevent>
       <view class="pd-confirm-sheet" @tap.stop>
         <view class="pd-confirm-body">
@@ -109,20 +102,16 @@
 </template>
 
 <script>
-import AddPetModal from '@/components/AddPetModal.vue'
 import { checkLogin } from '@/utils/index'
 import * as petApi from '@/api/pet'
 
 export default {
-  components: { AddPetModal },
   data() {
     return {
       petId: null,
       pet: null,
       statusBarHeight: 20,
-      showEditModal: false,
-      showDeleteConfirm: false,
-      editForm: {}
+      showDeleteConfirm: false
     }
   },
   onLoad(options) {
@@ -195,38 +184,7 @@ export default {
       const loggedIn = await checkLogin('请先登录后再编辑')
       if (!loggedIn) return
       if (!this.pet) return
-      this.editForm = {
-        id: this.pet.id,
-        name: this.pet.name || '',
-        breed: this.pet.breed || '',
-        gender: typeof this.pet.gender === 'number' ? this.pet.gender : 0,
-        birthday: this.pet.birthday || '',
-        weight: this.pet.weight || '',
-        color: this.pet.color || '',
-        avatar: this.pet.avatar || '',
-        category: typeof this.pet.category === 'number' ? this.pet.category : 0,
-        sterilized: typeof this.pet.sterilized === 'number' ? this.pet.sterilized : 0
-      }
-      this.showEditModal = true
-    },
-    closeEditModal() {
-      this.showEditModal = false
-    },
-    async submitEdit(payload) {
-      const loggedIn = await checkLogin('请先登录后再编辑')
-      if (!loggedIn) return
-      try {
-        const res = await petApi.updatePet(this.pet.id, payload)
-        if (res && res.success) {
-          uni.showToast({ title: '保存成功', icon: 'success' })
-          this.showEditModal = false
-          this.loadPetDetail(this.pet.id)
-        } else {
-          uni.showToast({ title: (res && res.message) || '保存失败', icon: 'none' })
-        }
-      } catch (e) {
-        uni.showToast({ title: '网络错误', icon: 'none' })
-      }
+      uni.navigateTo({ url: `/pages/pet/edit?id=${this.pet.id}` })
     },
     async confirmDelete() {
       const loggedIn = await checkLogin('请先登录后再删除')

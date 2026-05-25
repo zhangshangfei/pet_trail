@@ -134,20 +134,11 @@
 
       </view>
     </scroll-view>
-
-    <!-- 添加宠物弹窗 -->
-    <AddPetModal
-      v-if="showAddPetModal"
-      :initialForm="addPetForm"
-      @close="closeAddPetModal"
-      @save="submitAddPet"
-    />
   </view>
 </template>
 
 <script>
 import UserTopBar from '@/components/UserTopBar.vue'
-import AddPetModal from '@/components/AddPetModal.vue'
 import AvatarView from '@/components/AvatarView.vue'
 import { checkLogin, getUserAvatar, getPetAvatar, DEFAULT_USER_AVATAR, DEFAULT_PET_AVATAR_URL } from '@/utils/index'
 import * as authApi from '@/api/auth'
@@ -156,7 +147,6 @@ import * as petApi from '@/api/pet'
 export default {
   components: {
     UserTopBar,
-    AddPetModal,
     AvatarView
   },
   data() {
@@ -167,19 +157,7 @@ export default {
       avatarUrl: DEFAULT_USER_AVATAR,
       defaultPetAvatar: DEFAULT_PET_AVATAR_URL,
       userName: "",
-      pets: [],
-      showAddPetModal: false,
-      addPetForm: {
-        name: "",
-        breed: "",
-        gender: 0,
-        birthday: "",
-        weight: "",
-        color: "",
-        avatar: "",
-        category: 0,
-        sterilized: 0
-      }
+      pets: []
     };
   },
   computed: {
@@ -289,39 +267,7 @@ export default {
     async goAddPet() {
       const loggedIn = await checkLogin('请先登录后再添加宠物')
       if (!loggedIn) return
-
-      this.addPetForm = {
-        name: "",
-        breed: "",
-        gender: 0,
-        birthday: "",
-        weight: "",
-        color: "",
-        avatar: "",
-        category: 0,
-        sterilized: 0
-      };
-      this.showAddPetModal = true;
-    },
-    closeAddPetModal() {
-      this.showAddPetModal = false;
-    },
-    async submitAddPet(payload) {
-      const loggedIn = await checkLogin('请先登录后再添加宠物')
-      if (!loggedIn) return
-
-      try {
-        const res = await petApi.createPet(payload);
-        if (res && res.success) {
-          uni.showToast({ title: "添加成功", icon: "success" });
-          this.showAddPetModal = false;
-          this.loadPets();
-        } else {
-          uni.showToast({ title: (res && res.message) || "添加失败", icon: "none" });
-        }
-      } catch (e) {
-        uni.showToast({ title: "网络错误", icon: "none" });
-      }
+      uni.navigateTo({ url: '/pages/pet/edit' })
     },
     goPetDetail(petId) {
       if (!petId) return;

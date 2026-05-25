@@ -1105,7 +1105,7 @@ docker build -t pet-trail-backend:latest .
 3. **数据库读写分离**：MySQL 主从 + ShardingSphere
 4. ~~**CDN 加速**~~：⏸️ 暂缓 — 腾讯云 COS 已有地域加速，当前用户量直连速度够用；CDN 开通免费+每月10GB免费额度，等用户量增长后实施（改动极小，仅 CosService 域名拼接改1处）
 5. ~~**可观测性**~~：❌ 废弃 — 单体应用不需要全链路追踪，日志加 traceId + Actuator 即可；微服务化后再考虑，或直接用腾讯云 CLS + 云监控
-6. **自动化运维**：CI/CD 流水线 + K8s 编排
+6. ~~**自动化运维**~~：❌ 废弃 — 单机 Docker Compose 够用，K8s 对单机是过度设计；CI/CD 后续需要时可单独做，当前手动部署频率低
 
 ---
 

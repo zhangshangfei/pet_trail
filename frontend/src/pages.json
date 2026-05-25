@@ -55,9 +55,16 @@
       }
     },
     {
-      "path": "pages/pets/detail",
+      "path": "pets/detail",
       "style": {
         "navigationBarTitleText": "宠物详情",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pet/edit",
+      "style": {
+        "navigationBarTitleText": "",
         "navigationStyle": "custom"
       }
     },

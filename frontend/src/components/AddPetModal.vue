@@ -1,7 +1,7 @@
 <template>
-  <view class="apm-modal" @tap="emitClose" @touchmove.stop.prevent>
+  <view class="apm-modal" @tap="emitClose">
     <!-- 遮罩层 -->
-    <view class="apm-overlay"></view>
+    <view class="apm-overlay" @touchmove.stop.prevent></view>
 
     <!-- 主面板 -->
     <view class="apm-panel" @tap.stop>
@@ -17,7 +17,7 @@
       </view>
 
       <!-- 滚动内容 -->
-      <scroll-view class="apm-content" scroll-y @tap.stop>
+      <scroll-view class="apm-content" scroll-y :style="{ height: scrollContentHeight + 'px' }" @tap.stop>
         <!-- 头像上传区 -->
         <view class="apm-avatar-section">
           <view class="apm-avatar-container" @tap="openCameraModal">
@@ -174,13 +174,15 @@
         </view>
 
         <!-- 按钮组 -->
-        <view class="apm-actions">
-          <button class="apm-btn apm-btn-cancel" @tap="emitClose">取消</button>
-          <button class="apm-btn apm-btn-primary" @tap="emitSave">
-            <text class="apm-btn-text">保存</text>
-          </button>
-        </view>
       </scroll-view>
+
+      <!-- 底部按钮 - 固定在面板底部 -->
+      <view class="apm-actions">
+        <button class="apm-btn apm-btn-cancel" @tap="emitClose">取消</button>
+        <button class="apm-btn apm-btn-primary" @tap="emitSave">
+          <text class="apm-btn-text">保存</text>
+        </button>
+      </view>
     </view>
 
     <!-- 相机选择弹窗 -->
@@ -256,7 +258,16 @@ export default {
       uploading: false,
       showCropper: false,
       cropperImageSrc: '',
-      localForm: this.normalizeForm(this.initialForm)
+      localForm: this.normalizeForm(this.initialForm),
+      scrollContentHeight: 400
+    }
+  },
+  mounted() {
+    this.calcScrollHeight()
+  },
+  watch: {
+    'initialForm.id'() {
+      this.$nextTick(() => this.calcScrollHeight())
     }
   },
   computed: {
@@ -305,6 +316,22 @@ export default {
     }
   },
   methods: {
+    calcScrollHeight() {
+      const query = uni.createSelectorQuery().in(this)
+      query.select('.apm-panel').boundingClientRect((panelRect) => {
+        if (!panelRect) return
+        const headerQ = uni.createSelectorQuery().in(this)
+        headerQ.select('.apm-header').boundingClientRect((headerRect) => {
+          const actionsQ = uni.createSelectorQuery().in(this)
+          actionsQ.select('.apm-actions').boundingClientRect((actionsRect) => {
+            const panelH = panelRect.height
+            const headerH = headerRect ? headerRect.height : 80
+            const actionsH = actionsRect ? actionsRect.height : 100
+            this.scrollContentHeight = Math.max(200, panelH - headerH - actionsH)
+          }).exec()
+        }).exec()
+      }).exec()
+    },
     emitClose() {
       this.$emit("close")
     },
@@ -541,8 +568,7 @@ $radius-lg: 28rpx;
 /* ========== 内容滚动区 ========== */
 .apm-content {
   flex: 1;
-  overflow-y: auto;
-  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  height: 0;
 }
 
 /* ========== 头像区域 ========== */
@@ -790,11 +816,14 @@ $radius-lg: 28rpx;
   flex-shrink: 0;
 }
 
-/* ========== 按钮组 ========== */
+/* ========== 按钮组 - 固定底部 ========== */
 .apm-actions {
   display: flex;
   gap: 20rpx;
-  padding: 32rpx 28rpx 0;
+  padding: 24rpx 28rpx calc(32rpx + env(safe-area-inset-bottom));
+  background: $white;
+  border-top: 1rpx solid $gray-100;
+  flex-shrink: 0;
 }
 
 .apm-btn {
