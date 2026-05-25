@@ -111,7 +111,8 @@ export default {
       petId: null,
       pet: null,
       statusBarHeight: 20,
-      showDeleteConfirm: false
+      showDeleteConfirm: false,
+      editForm: {}
     }
   },
   onLoad(options) {
@@ -184,7 +185,21 @@ export default {
       const loggedIn = await checkLogin('请先登录后再编辑')
       if (!loggedIn) return
       if (!this.pet) return
-      uni.navigateTo({ url: `/pages/pet/edit?id=${this.pet.id}` })
+      const formData = JSON.stringify({
+        id: this.pet.id,
+        name: this.pet.name || '',
+        breed: this.pet.breed || '',
+        gender: typeof this.pet.gender === 'number' ? this.pet.gender : 0,
+        birthday: this.pet.birthday || '',
+        weight: this.pet.weight || '',
+        color: this.pet.color || '',
+        avatar: this.pet.avatar || '',
+        category: typeof this.pet.category === 'number' ? this.pet.category : 0,
+        sterilized: typeof this.pet.sterilized === 'number' ? this.pet.sterilized : 0
+      })
+      uni.navigateTo({
+        url: `/pages/pets/edit?id=${this.pet.id}&data=${encodeURIComponent(formData)}`
+      })
     },
     async confirmDelete() {
       const loggedIn = await checkLogin('请先登录后再删除')

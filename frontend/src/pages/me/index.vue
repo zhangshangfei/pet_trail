@@ -267,7 +267,7 @@ export default {
     async goAddPet() {
       const loggedIn = await checkLogin('请先登录后再添加宠物')
       if (!loggedIn) return
-      uni.navigateTo({ url: '/pages/pet/edit' })
+      uni.navigateTo({ url: '/pages/pets/edit' })
     },
     goPetDetail(petId) {
       if (!petId) return;

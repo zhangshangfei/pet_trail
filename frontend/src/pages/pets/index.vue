@@ -3,7 +3,7 @@
     <!-- 页面标题 -->
     <view class="page-header">
       <text class="page-title">我的宠物</text>
-      <button class="add-btn" type="primary" @click="goAddPet">+ 添加宠物</button>
+      <button class="add-btn" type="primary" @click="showAddModal">+ 添加宠物</button>
     </view>
 
     <!-- 宠物列表 -->
@@ -40,8 +40,15 @@
     <view class="empty-state" v-else>
       <image class="empty-icon" src="/static/images/empty-pets.png" mode="aspectFit"></image>
       <text class="empty-text">还没有宠物哦</text>
-      <button class="add-btn-large" type="primary" @click="goAddPet">添加第一只宠物</button>
+      <button class="add-btn-large" type="primary" @click="showAddModal">添加第一只宠物</button>
     </view>
+
+    <AddPetModal
+      v-if="showModal"
+      :initialForm="form"
+      @close="hideAddModal"
+      @save="submitForm"
+    />
   </view>
 </template>
 
@@ -56,17 +63,25 @@ export default {
     };
   },
   onShow() {
+    // 每次显示页面时重新加载宠物列表
     this.loadPets();
   },
   onLoad() {
     this.loadPets();
   },
   methods: {
+    // 加载宠物列表
     async loadPets() {
       try {
         const res = await petApi.getPetList();
+        console.log('[pet-list] 加载宠物列表响应:', res);
         if (res.success) {
           this.pets = res.data || [];
+          console.log('[pet-list] 宠物列表数据:', this.pets);
+          // 检查每个宠物的 avatar 字段
+          this.pets.forEach((pet, index) => {
+            console.log(`[pet-list] 宠物 ${index} - ID: ${pet.id}, 名称: ${pet.name}, avatar:`, pet.avatar);
+          });
         } else {
           uni.showToast({
             title: res.message || '加载失败',
@@ -74,6 +89,7 @@ export default {
           });
         }
       } catch (error) {
+        console.error('[pet-list] 加载宠物列表失败:', error);
         uni.showToast({
           title: '网络错误',
           icon: 'none'
@@ -81,10 +97,11 @@ export default {
       }
     },
 
-    async goAddPet() {
+    // 显示添加弹窗
+    async showAddModal() {
       const loggedIn = await checkLogin('请先登录后再添加宠物')
       if (!loggedIn) return
-      uni.navigateTo({ url: '/pages/pet/edit' })
+      uni.navigateTo({ url: '/pages/pets/edit' })
     },
 
     formatDate(date) {
@@ -93,6 +110,7 @@ export default {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     },
 
+    // 跳转到宠物详情
     goToDetail(petId) {
       uni.navigateTo({
         url: `/pages/pets/detail?id=${petId}`
