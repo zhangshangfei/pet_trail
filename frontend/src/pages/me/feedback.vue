@@ -47,7 +47,7 @@
             <textarea
               class="feedback-textarea"
               v-model="form.content"
-              placeholder="请详细描述您遇到的问题或者建议，至少10字哦～我们会认真对待每一条反馈💕"
+              placeholder="请详细描述您遇到的问题或者建议，至少5字哦～我们会认真对待每一条反馈💕"
               maxlength="500"
               :auto-height="false"
             />
@@ -103,8 +103,8 @@
           <text class="submit-btn-text">提交反馈</text>
         </button>
 
-        <text v-if="form.content && form.content.trim().length > 0 && form.content.trim().length < 10" class="submit-hint">
-          还需输入{{ 10 - form.content.trim().length }}个字才能提交哦～
+        <text v-if="form.content && form.content.trim().length > 0 && form.content.trim().length < 5" class="submit-hint">
+          还需输入{{ 5 - form.content.trim().length }}个字才能提交哦～
         </text>
 
         <!-- 查看历史记录 -->
@@ -154,7 +154,7 @@ export default {
   },
   computed: {
     canSubmit() {
-      return this.form.content.trim().length >= 10 && !this.submitting
+      return this.form.content.trim().length >= 5 && !this.submitting
     }
   },
   onLoad() {
@@ -196,8 +196,8 @@ export default {
         uni.showToast({ title: '请输入反馈内容', icon: 'none' })
         return
       }
-      if (this.form.content.trim().length < 10) {
-        uni.showToast({ title: '反馈内容至少10个字', icon: 'none' })
+      if (this.form.content.trim().length < 5) {
+        uni.showToast({ title: '反馈内容至少5个字', icon: 'none' })
         return
       }
       if (this.submitting) return

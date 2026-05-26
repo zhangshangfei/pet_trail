@@ -175,6 +175,13 @@
       }
     },
     {
+      "path": "pages/me/report-list",
+      "style": {
+        "navigationBarTitleText": "举报记录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/me/settings",
       "style": {
         "navigationBarTitleText": "设置",

@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -40,5 +41,11 @@ public class ReportController extends BaseController {
         result.put("id", report.getId());
         result.put("status", report.getStatus());
         return Result.success(result);
+    }
+
+    @GetMapping("/my")
+    public Result<List<Report>> getMyReportList() {
+        Long userId = requireLogin();
+        return Result.success(reportService.getMyReportList(userId));
     }
 }

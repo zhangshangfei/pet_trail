@@ -175,6 +175,7 @@ export default {
       return [
         { name: '关于我们', icon: 'ℹ️', hint: '', action: this.goToAbout },
         { name: '意见反馈', icon: '💬', hint: '', action: this.goToFeedback },
+        { name: '举报记录', icon: '🛡️', hint: '', action: this.goToReportList },
         { name: '系统设置', icon: '⚙️', hint: '', action: this.goToSettings }
       ]
     }
@@ -317,6 +318,9 @@ export default {
     },
     goToFeedback() {
       uni.navigateTo({ url: '/pages/me/feedback' });
+    },
+    goToReportList() {
+      uni.navigateTo({ url: '/pages/me/report-list' });
     },
     goToSettings() {
       uni.navigateTo({ url: '/pages/me/settings' });

@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -43,6 +45,13 @@ public class ReportService {
         if (targetType != null && !targetType.isEmpty()) wrapper.eq(Report::getTargetType, targetType);
         wrapper.orderByDesc(Report::getCreatedAt);
         return reportMapper.selectPage(pageParam, wrapper);
+    }
+
+    public List<Report> getMyReportList(Long reporterId) {
+        LambdaQueryWrapper<Report> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Report::getReporterId, reporterId);
+        wrapper.orderByDesc(Report::getCreatedAt);
+        return reportMapper.selectList(wrapper);
     }
 
     @Transactional(rollbackFor = Exception.class)
