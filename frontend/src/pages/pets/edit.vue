@@ -1,6 +1,11 @@
 <template>
   <view class="pet-edit-page">
     <view class="pe-header">
+      <view class="header-bg">
+        <view class="orb orb-1"></view>
+        <view class="orb orb-2"></view>
+        <view class="orb orb-3"></view>
+      </view>
       <view class="pe-header-bar" :style="{ paddingTop: statusBarHeight + 'px' }">
         <view class="pe-back" @tap="goBack">
           <view class="pe-back-arrow"></view>
@@ -8,107 +13,147 @@
         <text class="pe-title">{{ isEdit ? '编辑宠物' : '添加宠物' }}</text>
         <view class="pe-header-right"></view>
       </view>
+
+      <view class="pe-avatar-section" @tap="onPickAvatar">
+        <view class="avatar-glow"></view>
+        <image v-if="localForm.avatar" class="pe-avatar" :src="localForm.avatar" mode="aspectFill" />
+        <view v-else class="pe-avatar-empty">
+          <text class="pe-avatar-letter">{{ localForm.name ? localForm.name[0] : '宠' }}</text>
+        </view>
+        <view class="pe-avatar-badge">
+          <text class="pe-badge-icon">✎</text>
+        </view>
+      </view>
+
+      <view class="wave-decoration">
+        <svg viewBox="0 0 1440 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path class="wave-path wave-path-1" d="M0,64 C288,120 576,20 864,64 C1152,108 1344,40 1440,64 L1440,120 L0,120 Z" fill="rgba(255,107,107,0.12)"/>
+          <path class="wave-path wave-path-2" d="M0,80 C360,130 720,30 1080,80 C1260,105 1380,60 1440,80 L1440,120 L0,120 Z" fill="rgba(255,160,122,0.08)"/>
+          <path class="wave-path wave-path-3" d="M0,50 C240,90 480,10 720,50 C960,90 1200,30 1440,50 L1440,100 L0,100Z" fill="rgba(255,220,180,0.06)"/>
+        </svg>
+      </view>
     </view>
 
-    <scroll-view scroll-y class="pe-scroll" :style="{ paddingTop: (statusBarHeight + 46) + 'px' }">
+    <scroll-view scroll-y class="pe-scroll" :style="{ paddingTop: (statusBarHeight + 200) + 'px' }">
       <view class="pe-content">
-        <view class="pe-avatar-section" @tap="onPickAvatar">
-          <image v-if="localForm.avatar" class="pe-avatar" :src="localForm.avatar" mode="aspectFill" />
-          <view v-else class="pe-avatar-empty">
-            <text class="pe-avatar-letter">{{ localForm.name ? localForm.name[0] : '宠' }}</text>
-          </view>
-          <view class="pe-avatar-badge">
-            <text class="pe-avatar-icon">📷</text>
-          </view>
-          <text class="pe-avatar-tip">点击更换头像</text>
-        </view>
-
-        <view class="pe-form-card">
-          <view class="pe-section-title">
-            <text class="pe-section-text">基本信息</text>
-            <view class="pe-section-line"></view>
+        <view class="glass-form-card">
+          <view class="gfc-section">
+            <view class="gfc-icon-wrap gfc-icon--info">
+              <text class="gfc-icon">📋</text>
+            </view>
+            <text class="gfc-title">基本信息</text>
+            <view class="gfc-line"></view>
           </view>
 
-          <view class="pe-field">
-            <text class="pe-label"><text class="pe-required">*</text>昵称</text>
-            <input class="pe-input" v-model="localForm.name" placeholder="请输入宠物昵称" maxlength="20" />
+          <view class="gfc-field" hover-class="gfc-field--hover">
+            <view class="gfc-label-row">
+              <text class="gfc-label">昵称</text>
+              <text class="gfc-required">*</text>
+            </view>
+            <input class="gfc-input" v-model="localForm.name" placeholder="请输入宠物昵称" maxlength="20" />
           </view>
 
-          <view class="pe-field">
-            <text class="pe-label">品种</text>
-            <input class="pe-input" v-model="localForm.breed" placeholder="如：泰迪、英短、布偶猫" maxlength="30" />
+          <view class="gfc-field" hover-class="gfc-field--hover">
+            <view class="gfc-label-row">
+              <text class="gfc-label">品种</text>
+            </view>
+            <input class="gfc-input" v-model="localForm.breed" placeholder="如：泰迪、英短、布偶猫" maxlength="30" />
           </view>
 
-          <view class="pe-field">
-            <text class="pe-label">类别</text>
+          <view class="gfc-field" hover-class="gfc-field--hover">
+            <view class="gfc-label-row">
+              <text class="gfc-label">类别</text>
+            </view>
             <picker :range="categoryLabels" :value="categoryIndex" @change="onCategoryChange">
-              <view class="pe-select-wrap">
-                <text :class="['pe-select-text', categoryIndex === 0 && !localForm.category && 'pe-select-placeholder']">{{ categoryLabels[categoryIndex] }}</text>
-                <text class="pe-arrow">›</text>
+              <view class="gfc-picker">
+                <text :class="['gfc-value', categoryIndex === 0 && !localForm.category && 'gfc-placeholder']">{{ categoryLabels[categoryIndex] }}</text>
+                <view class="gfc-chevron"></view>
               </view>
             </picker>
           </view>
 
-          <view class="pe-field">
-            <text class="pe-label">性别</text>
+          <view class="gfc-field" hover-class="gfc-field--hover">
+            <view class="gfc-label-row">
+              <text class="gfc-label">性别</text>
+            </view>
             <picker :range="genderLabels" :value="genderIndex" @change="onGenderChange">
-              <view class="pe-select-wrap">
-                <text :class="['pe-select-text', genderIndex === 0 && !localForm.gender && 'pe-select-placeholder']">{{ genderLabels[genderIndex] }}</text>
-                <text class="pe-arrow">›</text>
+              <view class="gfc-picker">
+                <text :class="['gfc-value', genderIndex === 0 && !localForm.gender && 'gfc-placeholder']">{{ genderLabels[genderIndex] }}</text>
+                <view class="gfc-chevron"></view>
               </view>
             </picker>
           </view>
 
-          <view class="pe-field">
-            <text class="pe-label">生日</text>
+          <view class="gfc-field" hover-class="gfc-field--hover">
+            <view class="gfc-label-row">
+              <text class="gfc-label">生日</text>
+            </view>
             <picker mode="date" :value="localForm.birthday || ''" :start="'1970-01-01'" :end="todayStr" @change="onBirthdayChange">
-              <view class="pe-select-wrap">
-                <text :class="['pe-select-text', !localForm.birthday && 'pe-select-placeholder']">{{ localForm.birthday || '请选择日期' }}</text>
-                <text class="pe-arrow">›</text>
-              </view>
-            </picker>
-          </view>
-
-          <view class="pe-divider"></view>
-
-          <view class="pe-section-title">
-            <text class="pe-section-text">外貌特征</text>
-            <view class="pe-section-line"></view>
-          </view>
-
-          <view class="pe-field">
-            <text class="pe-label">毛色</text>
-            <input class="pe-input" v-model="localForm.color" placeholder="如：白色、棕色、花色" maxlength="20" />
-          </view>
-
-          <view class="pe-field">
-            <text class="pe-label">体重(kg)</text>
-            <input class="pe-input" v-model="localForm.weight" type="digit" placeholder="请输入体重" maxlength="6" />
-          </view>
-
-          <view class="pe-divider"></view>
-
-          <view class="pe-section-title">
-            <text class="pe-section-text">健康状态</text>
-            <view class="pe-section-line"></view>
-          </view>
-
-          <view class="pe-field pe-field--last">
-            <text class="pe-label">绝育状态</text>
-            <picker :range="sterilizedLabels" :value="sterilizedIndex" @change="onSterilizedChange">
-              <view class="pe-select-wrap">
-                <text :class="['pe-select-text', sterilizedIndex === 0 && !localForm.sterilized && 'pe-select-placeholder']">{{ sterilizedLabels[sterilizedIndex] }}</text>
-                <text class="pe-arrow">›</text>
+              <view class="gfc-picker">
+                <text :class="['gfc-value', !localForm.birthday && 'gfc-placeholder']">{{ localForm.birthday || '请选择日期' }}</text>
+                <view class="gfc-chevron"></view>
               </view>
             </picker>
           </view>
         </view>
+
+        <view class="glass-form-card">
+          <view class="gfc-section">
+            <view class="gfc-icon-wrap gfc-icon--look">
+              <text class="gfc-icon">🎨</text>
+            </view>
+            <text class="gfc-title">外貌特征</text>
+            <view class="gfc-line"></view>
+          </view>
+
+          <view class="gfc-field" hover-class="gfc-field--hover">
+            <view class="gfc-label-row">
+              <text class="gfc-label">毛色</text>
+            </view>
+            <input class="gfc-input" v-model="localForm.color" placeholder="如：白色、棕色、花色" maxlength="20" />
+          </view>
+
+          <view class="gfc-field gfc-field--last" hover-class="gfc-field--hover">
+            <view class="gfc-label-row">
+              <text class="gfc-label">体重</text>
+            </view>
+            <view class="gfc-input-with-unit">
+              <input class="gfc-input" v-model="localForm.weight" type="digit" placeholder="请输入体重" maxlength="6" />
+              <text class="gfc-unit">kg</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="glass-form-card">
+          <view class="gfc-section">
+            <view class="gfc-icon-wrap gfc-icon--health">
+              <text class="gfc-icon">💊</text>
+            </view>
+            <text class="gfc-title">健康状态</text>
+            <view class="gfc-line"></view>
+          </view>
+
+          <view class="gfc-field gfc-field--last" hover-class="gfc-field--hover">
+            <view class="gfc-label-row">
+              <text class="gfc-label">绝育状态</text>
+            </view>
+            <picker :range="sterilizedLabels" :value="sterilizedIndex" @change="onSterilizedChange">
+              <view class="gfc-picker">
+                <text :class="['gfc-value', sterilizedIndex === 0 && !localForm.sterilized && 'gfc-placeholder']">{{ sterilizedLabels[sterilizedIndex] }}</text>
+                <view class="gfc-chevron"></view>
+              </view>
+            </picker>
+          </view>
+        </view>
+
+        <view class="bottom-spacer"></view>
       </view>
     </scroll-view>
 
     <view class="pe-bottom-bar">
       <view class="pe-save-btn" :class="{ 'pe-save-btn--disabled': saving }" @tap="onSave">
-        <text class="pe-save-btn-text">{{ saving ? '保存中...' : '保存' }}</text>
+        <view class="btn-shine"></view>
+        <text class="pe-save-btn-text">{{ saving ? '保存中...' : '保存修改' }}</text>
       </view>
     </view>
 
@@ -306,8 +351,7 @@ export default {
         }
 
         if (this.isEdit && this.localForm.id) {
-          payload.id = this.localForm.id
-          res = await petApi.updatePet(payload)
+          res = await petApi.updatePet(this.localForm.id, payload)
         } else {
           res = await petApi.createPet(payload)
         }
@@ -344,16 +388,77 @@ export default {
   background: #f5f7fa;
 }
 
+/* ========== 玻璃拟态头部 ========== */
 .pe-header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  background: linear-gradient(135deg, #ff7a3d 0%, #ff5a3d 50%, #ff4d4f 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 122, 61, 1) 0%,
+    rgba(255, 90, 61, 0.95) 20%,
+    rgba(255, 77, 79, 0.85) 50%,
+    rgba(255, 107, 107, 0.7) 80%,
+    rgba(255, 160, 122, 0.6) 100%
+  );
+  overflow: visible;
+}
+
+.header-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40rpx);
+  opacity: 0.6;
+  animation: floatOrb 8s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 300rpx;
+  height: 300rpx;
+  background: rgba(255, 255, 255, 0.3);
+  top: -100rpx;
+  right: 100rpx;
+}
+
+.orb-2 {
+  width: 200rpx;
+  height: 200rpx;
+  background: rgba(255, 220, 180, 0.4);
+  bottom: 100rpx;
+  left: -60rpx;
+  animation-delay: -3s;
+}
+
+.orb-3 {
+  width: 150rpx;
+  height: 150rpx;
+  background: rgba(255, 255, 255, 0.2);
+  top: 45%;
+  left: 55%;
+  animation-delay: -5s;
+}
+
+@keyframes floatOrb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-30rpx, 25rpx) scale(1.05); }
+  66% { transform: translate(25rpx, -15rpx) scale(0.95); }
 }
 
 .pe-header-bar {
+  position: relative;
+  z-index: 10;
   height: 92rpx;
   display: flex;
   align-items: center;
@@ -362,22 +467,25 @@ export default {
 }
 
 .pe-back {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 32rpx;
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 34rpx;
   background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
-  transition: all 0.2s ease;
+  box-shadow:
+    0 6rpx 24rpx rgba(0, 0, 0, 0.12),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.4);
+  border: 1rpx solid rgba(255, 255, 255, 0.35);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .pe-back:active {
   background: rgba(255, 255, 255, 0.38);
-  transform: scale(0.92);
+  transform: scale(0.9);
 }
 
 .pe-back-arrow {
@@ -391,67 +499,88 @@ export default {
 .pe-title {
   color: #fff;
   font-size: 34rpx;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 2rpx;
+  text-shadow: 0 2rpx 8rpx rgba(180, 30, 10, 0.3);
 }
 
 .pe-header-right {
-  width: 64rpx;
+  width: 68rpx;
 }
 
-.pe-scroll {
-  height: 100vh;
-  box-sizing: border-box;
-  padding-bottom: 160rpx;
-}
-
-.pe-content {
-  padding: 24rpx 28rpx;
-}
-
+/* ========== 头像区域（在头部内） ========== */
 .pe-avatar-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 36rpx;
-  padding-top: 16rpx;
   position: relative;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 48rpx;
+  margin-top: 24rpx;
+}
+
+.avatar-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 220rpx;
+  height: 220rpx;
+  transform: translate(-50%, -55%);
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(255, 106, 61, 0.35) 0%, rgba(255, 106, 61, 0.08) 60%, transparent 70%);
+  filter: blur(15rpx);
+  animation: pulseGlow 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: translate(-50%, -55%) scale(1); opacity: 0.7; }
+  50% { transform: translate(-50%, -55%) scale(1.15); opacity: 1; }
 }
 
 .pe-avatar {
-  width: 180rpx;
-  height: 180rpx;
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
   border-radius: 50%;
-  border: 6rpx solid #fff;
+  border: 6rpx solid rgba(255, 255, 255, 0.95);
   box-shadow:
-    0 8rpx 32rpx rgba(255, 106, 61, 0.25),
-    0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+    0 12rpx 40rpx rgba(180, 40, 10, 0.3),
+    0 4rpx 12rpx rgba(0, 0, 0, 0.1),
+    inset 0 2rpx 4rpx rgba(255, 255, 255, 0.6);
   background: linear-gradient(135deg, #fef3ec 0%, #fce7db 100%);
+  z-index: 2;
 }
 
 .pe-avatar-empty {
-  width: 180rpx;
-  height: 180rpx;
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff7a3d 0%, #ff9a5d 100%);
+  background: linear-gradient(135deg, #ff8a50 0%, #ff6a3d 50%, #ff5722 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 6rpx solid #fff;
-  box-shadow: 0 8rpx 32rpx rgba(255, 106, 61, 0.25), 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  border: 6rpx solid rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 12rpx 40rpx rgba(180, 40, 10, 0.35),
+    0 4rpx 12rpx rgba(0, 0, 0, 0.1),
+    inset 0 2rpx 4rpx rgba(255, 255, 255, 0.3);
+  z-index: 2;
 }
 
 .pe-avatar-letter {
-  font-size: 72rpx;
+  font-size: 64rpx;
   font-weight: 800;
   color: #fff;
-  text-shadow: 0 2rpx 8rpx rgba(180, 40, 10, 0.3);
+  text-shadow: 0 2rpx 8rpx rgba(180, 40, 10, 0.4);
 }
 
+/* 头像编辑徽章 - 右上角 */
 .pe-avatar-badge {
   position: absolute;
-  right: calc(50% - 100rpx);
-  bottom: 8rpx;
+  top: 0;
+  right: calc(50% - 80rpx);
   width: 52rpx;
   height: 52rpx;
   border-radius: 50%;
@@ -459,109 +588,268 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 3rpx solid #fff;
-  box-shadow: 0 4rpx 16rpx rgba(255, 77, 79, 0.45);
+  border: 4rpx solid rgba(255, 255, 255, 0.98);
+  box-shadow:
+    0 6rpx 24rpx rgba(255, 77, 79, 0.5),
+    0 2rpx 8rpx rgba(255, 77, 79, 0.25);
+  z-index: 10;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.pe-avatar-icon {
-  font-size: 24rpx;
+.pe-avatar-section:active .pe-avatar-badge {
+  transform: scale(1.15);
+  box-shadow:
+    0 10rpx 32rpx rgba(255, 77, 79, 0.6),
+    0 4rpx 12rpx rgba(255, 77, 79, 0.35);
 }
 
-.pe-avatar-tip {
-  margin-top: 14rpx;
-  font-size: 24rpx;
-  color: #9ca3af;
+.pe-badge-icon {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #fff;
 }
 
-.pe-form-card {
-  background: #fff;
-  border-radius: 24rpx;
+/* ========== 波浪装饰 ========== */
+.wave-decoration {
+  position: absolute;
+  bottom: -2rpx;
+  left: 0;
+  width: 100%;
+  height: 120rpx;
   overflow: hidden;
-  box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.04);
+  line-height: 0;
+  z-index: 3;
+  pointer-events: none;
 }
 
-.pe-section-title {
+.wave-path {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+}
+
+.wave-path-1 {
+  height: 120rpx;
+  animation: waveMove1 12s ease-in-out infinite;
+}
+
+.wave-path-2 {
+  height: 110rpx;
+  animation: waveMove2 10s ease-in-out infinite reverse;
+  opacity: 0.75;
+}
+
+.wave-path-3 {
+  height: 95rpx;
+  animation: waveMove3 14s ease-in-out infinite;
+  opacity: 0.5;
+}
+
+@keyframes waveMove1 {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-30rpx); }
+}
+
+@keyframes waveMove2 {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(25rpx); }
+}
+
+@keyframes waveMove3 {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-20rpx); }
+}
+
+/* ========== 滚动区域 ========== */
+.pe-scroll {
+  height: 100vh;
+  box-sizing: border-box;
+  padding-bottom: 200rpx;
+}
+
+.pe-content {
+  padding: 0 28rpx;
+}
+
+/* ========== 玻璃拟态表单卡片 ========== */
+.glass-form-card {
+  margin-bottom: 24rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow:
+    0 8rpx 32rpx rgba(31, 38, 135, 0.12),
+    0 2rpx 8rpx rgba(0, 0, 0, 0.04),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1rpx 0 rgba(0, 0, 0, 0.04);
+  border: 1rpx solid rgba(255, 255, 255, 0.65);
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1rpx;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 1), transparent);
+    pointer-events: none;
+  }
+
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:active {
+    transform: translateY(-2rpx) scale(1.005);
+    box-shadow:
+      0 16rpx 48rpx rgba(31, 38, 135, 0.18),
+      0 4rpx 16rpx rgba(0, 0, 0, 0.06),
+      inset 0 1rpx 0 rgba(255, 255, 255, 1),
+      inset 0 -1rpx 0 rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* 分组标题 */
+.gfc-section {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: 14rpx;
   padding: 28rpx 32rpx 16rpx;
+  position: relative;
 }
 
-.pe-section-text {
+.gfc-icon-wrap {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gfc-icon--info {
+  background: linear-gradient(135deg, rgba(255, 106, 61, 0.12), rgba(255, 154, 93, 0.08));
+}
+
+.gfc-icon--look {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(167, 139, 250, 0.08));
+}
+
+.gfc-icon--health {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(52, 211, 153, 0.08));
+}
+
+.gfc-icon {
   font-size: 26rpx;
+}
+
+.gfc-title {
+  font-size: 27rpx;
   font-weight: 700;
-  color: #374151;
+  color: var(--pt-text, #111827);
   letter-spacing: 1rpx;
 }
 
-.pe-section-line {
+.gfc-line {
   flex: 1;
   height: 1rpx;
-  background: linear-gradient(90deg, #e5e7eb, transparent);
+  background: linear-gradient(90deg, rgba(209, 213, 219, 0.5), transparent);
 }
 
-.pe-field {
+/* 表单字段 */
+.gfc-field {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 28rpx 32rpx;
-  border-bottom: 1rpx solid #f3f4f6;
+  flex-direction: column;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid rgba(243, 244, 246, 0.8);
   min-height: 56rpx;
+  transition: all 0.2s ease;
 }
 
-.pe-field--last {
+.gfc-field--last {
   border-bottom: none;
 }
 
-.pe-required {
-  color: #ef4444;
-  margin-right: 4rpx;
-  font-weight: 600;
+.gfc-field--hover {
+  background: rgba(255, 106, 61, 0.03);
 }
 
-.pe-label {
-  font-size: 29rpx;
-  color: #374151;
-  font-weight: 600;
-  flex-shrink: 0;
-  width: 160rpx;
-}
-
-.pe-input {
-  flex: 1;
-  text-align: right;
-  font-size: 29rpx;
-  color: #111827;
-}
-
-.pe-select-wrap {
-  flex: 1;
+.gfc-label-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8rpx;
+  gap: 6rpx;
+  margin-bottom: 10rpx;
 }
 
-.pe-select-text {
-  font-size: 29rpx;
-  color: #111827;
+.gfc-label {
+  font-size: 25rpx;
+  color: #6b7280;
+  font-weight: 600;
 }
 
-.pe-select-placeholder {
-  color: #9ca3af;
+.gfc-required {
+  color: #ef4444;
+  font-weight: 800;
+  font-size: 26rpx;
 }
 
-.pe-arrow {
+.gfc-input {
   font-size: 30rpx;
+  color: #111827;
+  font-weight: 500;
+  padding-top: 4rpx;
+}
+
+.gfc-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4rpx;
+}
+
+.gfc-value {
+  font-size: 30rpx;
+  color: #111827;
+  font-weight: 500;
+}
+
+.gfc-placeholder {
   color: #9ca3af;
-  font-weight: 300;
+  font-weight: 400;
 }
 
-.pe-divider {
+.gfc-chevron {
+  width: 16rpx;
   height: 16rpx;
-  background: #f5f7fa;
+  border-right: 3rpx solid #9ca3af;
+  border-bottom: 3rpx solid #9ca3af;
+  transform: rotate(-45deg);
+  margin-left: 8rpx;
+  opacity: 0.6;
 }
 
+.gfc-input-with-unit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4rpx;
+}
+
+.gfc-unit {
+  font-size: 27rpx;
+  color: #9ca3af;
+  font-weight: 500;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+}
+
+.bottom-spacer {
+  height: 40rpx;
+}
+
+/* ========== 底部保存栏 ========== */
 .pe-bottom-bar {
   position: fixed;
   bottom: 0;
@@ -569,38 +857,72 @@ export default {
   right: 0;
   z-index: 100;
   padding: 20rpx 32rpx;
-  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  background: #fff;
-  box-shadow: 0 -4rpx 24rpx rgba(0, 0, 0, 0.06);
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 -4rpx 32rpx rgba(0, 0, 0, 0.06),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.8);
+  border-top: 1rpx solid rgba(255, 255, 255, 0.5);
 }
 
 .pe-save-btn {
+  position: relative;
+  overflow: hidden;
   height: 96rpx;
   border-radius: 48rpx;
-  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff5a3d 40%, #ff4d4f 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow:
-    0 8rpx 24rpx rgba(255, 77, 79, 0.35),
-    0 2rpx 8rpx rgba(255, 77, 79, 0.15);
-  transition: all 0.25s ease;
+    0 12rpx 40rpx rgba(255, 90, 61, 0.45),
+    0 4rpx 16rpx rgba(255, 90, 61, 0.25),
+    0 0 0 4rpx rgba(255, 122, 61, 0.12),
+    inset 0 2rpx 0 rgba(255, 255, 255, 0.3),
+    inset 0 -2rpx 0 rgba(180, 50, 20, 0.15);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  transition: left 0.6s ease;
 }
 
 .pe-save-btn:active {
-  transform: scale(0.97);
-  opacity: 0.88;
+  transform: translateY(-1rpx) scale(0.97);
+  box-shadow:
+    0 6rpx 20rpx rgba(255, 90, 61, 0.45),
+    0 2rpx 8rpx rgba(255, 90, 61, 0.3),
+    inset 0 4rpx 12rpx rgba(140, 30, 10, 0.25);
+}
+
+.pe-save-btn:active .btn-shine {
+  left: 100%;
 }
 
 .pe-save-btn--disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   pointer-events: none;
 }
 
 .pe-save-btn-text {
+  position: relative;
   color: #fff;
   font-size: 33rpx;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 4rpx;
+  text-shadow: 0 2rpx 8rpx rgba(180, 30, 10, 0.35);
 }
 </style>

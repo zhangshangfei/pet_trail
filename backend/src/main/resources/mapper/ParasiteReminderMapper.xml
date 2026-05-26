@@ -7,6 +7,7 @@
         <result column="pet_id" property="petId"/>
         <result column="user_id" property="userId"/>
         <result column="type" property="type"/>
+        <result column="custom_name" property="customName"/>
         <result column="product_name" property="productName"/>
         <result column="next_date" property="nextDate"/>
         <result column="interval_days" property="intervalDays"/>

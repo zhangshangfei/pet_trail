@@ -335,7 +335,7 @@ export default {
                 uni.showToast({ title: (result && result.message) || '删除失败', icon: 'none' })
               }
             } catch (e) {
-              uni.showToast({ title: '网络错误', icon: 'none' })
+              uni.showToast({ title: '网络不给力，请稍后重试', icon: 'none' })
             }
           }
         }
@@ -413,7 +413,7 @@ export default {
           uni.showToast({ title: (res && res.message) || '记录失败', icon: 'none' });
         }
       } catch (error) {
-        uni.showToast({ title: (error && error.message) || '网络错误', icon: 'none' });
+        uni.showToast({ title: (error && error.message) || '网络不给力，请稍后重试', icon: 'none' });
       }
     },
     async updateRecord(recordId) {

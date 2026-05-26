@@ -24,7 +24,7 @@
       <view class="user-card glass-card-effect">
         <!-- 头像区域 -->
         <view class="avatar-section">
-          <view class="avatar-wrap" @tap="isSelf && goEditProfile()">
+          <view class="avatar-wrap" @tap="onAvatarTap">
             <view class="avatar-glow"></view>
             <AvatarView :src="getUserAvatar(userId, userInfo.avatar)" :name="userInfo.nickname || '萌宠主人'" :id="userId" :size="140" />
             <view v-if="isSelf" class="avatar-edit-badge">
@@ -538,6 +538,19 @@ export default {
     },
     goEditProfile() {
       uni.navigateTo({ url: '/pages/user/edit' })
+    },
+    onAvatarTap() {
+      if (this.isSelf) {
+        this.goEditProfile()
+        return
+      }
+      const avatarUrl = this.getUserAvatar(this.userId, this.userInfo.avatar)
+      if (avatarUrl) {
+        uni.previewImage({
+          urls: [avatarUrl],
+          current: 0
+        })
+      }
     }
   }
 }

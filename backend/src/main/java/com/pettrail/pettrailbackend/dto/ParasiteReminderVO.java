@@ -14,6 +14,8 @@ public class ParasiteReminderVO {
 
     private Integer type;
 
+    private String customName;
+
     private String typeName;
 
     private String productName;

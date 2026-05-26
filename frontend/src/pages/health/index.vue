@@ -168,6 +168,14 @@
               </picker>
             </view>
 
+            <view v-if="dewormForm.typeIndex === dewormTypes.length - 1" class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">✏️</text>
+                <text class="label-text">自定义驱虫名称</text>
+              </view>
+              <input class="form-input glass-input" type="text" v-model="dewormForm.customName" placeholder="请输入自定义驱虫名称" maxlength="30" />
+            </view>
+
             <view class="form-group">
               <view class="form-label">
                 <text class="label-emoji">📅</text>
@@ -220,6 +228,14 @@
               </picker>
             </view>
 
+            <view v-if="vaccineForm.typeIndex === vaccineTypes.length - 1" class="form-group">
+              <view class="form-label">
+                <text class="label-emoji">✏️</text>
+                <text class="label-text">自定义疫苗名称</text>
+              </view>
+              <input class="form-input glass-input" type="text" v-model="vaccineForm.customName" placeholder="请输入自定义疫苗名称" maxlength="30" />
+            </view>
+
             <view class="form-group">
               <view class="form-label">
                 <text class="label-emoji">📅</text>
@@ -262,8 +278,8 @@
       <button class="btn-back glass-btn-secondary" hover-class="btn-back-hover" @tap="goBackToBoard">
         <text class="btn-back-text">返回</text>
       </button>
-      <button class="btn-submit glass-btn-primary" hover-class="btn-submit-hover" @tap="onSubmitCurrent">
-        <text class="btn-submit-text">{{ submitButtonText }}</text>
+      <button class="btn-submit glass-btn-primary" :disabled="submitting" hover-class="btn-submit-hover" @tap="onSubmitCurrent">
+        <text class="btn-submit-text">{{ submitting ? "提交中..." : submitButtonText }}</text>
       </button>
     </view>
   </view>
@@ -308,21 +324,24 @@ export default {
         remark: ""
       },
       lastWeightRecord: null,
-      vaccineTypes: ["狂犬疫苗", "猫三联", "犬五联", "犬八联", "猫瘟疫苗", "犬瘟热疫苗"],
+      vaccineTypes: ["狂犬疫苗", "猫三联", "犬五联", "犬八联", "猫瘟疫苗", "犬瘟热疫苗", "自定义"],
       vaccineForm: {
         typeIndex: 0,
+        customName: "",
         date: todayStr(),
         hospital: "",
         remark: ""
       },
-      dewormTypes: ["体内驱虫", "体外驱虫", "内外同驱"],
+      dewormTypes: ["体内驱虫", "体外驱虫", "内外同驱", "自定义"],
       dewormForm: {
         typeIndex: 0,
+        customName: "",
         date: todayStr(),
         medicine: "",
         remark: ""
       },
-      healthScore: 0
+      healthScore: 0,
+      submitting: false
     };
   },
   computed: {
@@ -552,6 +571,7 @@ export default {
       uni.showToast({ title: "未实现", icon: "none" });
     },
     onSubmitCurrent() {
+      if (this.submitting) return;
       if (this.currentTab === 0) return this.submitWeight();
       if (this.currentTab === 1) return this.submitDeworm();
       return this.submitVaccine();
@@ -572,6 +592,7 @@ export default {
         uni.showToast({ title: "请输入有效体重", icon: "none" });
         return;
       }
+      this.submitting = true;
       try {
         const res = await healthApi.createWeightRecord(this.currentPet.id, this.weightForm.weight, this.weightForm.date);
         if (res && res.success) {
@@ -583,7 +604,9 @@ export default {
           uni.showToast({ title: (res && res.message) || "保存失败", icon: "none" });
         }
       } catch (e) {
-        uni.showToast({ title: "网络错误", icon: "none" });
+        uni.showToast({ title: "网络不给力，请稍后重试", icon: "none" });
+      } finally {
+        this.submitting = false;
       }
     },
     async submitVaccine() {
@@ -594,7 +617,13 @@ export default {
       requestWxSubscribe(['vaccine']);
       const loggedIn = await checkLogin('请先登录后再保存记录')
       if (!loggedIn) return
-      const vaccineName = this.vaccineTypes[this.vaccineForm.typeIndex];
+      const isCustom = this.vaccineForm.typeIndex === this.vaccineTypes.length - 1;
+      const vaccineName = isCustom ? this.vaccineForm.customName.trim() : this.vaccineTypes[this.vaccineForm.typeIndex];
+      if (!vaccineName) {
+        uni.showToast({ title: isCustom ? "请输入自定义疫苗名称" : "请选择疫苗名称", icon: "none" });
+        return;
+      }
+      this.submitting = true;
       try {
         const res = await petApi.createVaccineReminder(this.currentPet.id, {
           vaccineName,
@@ -604,6 +633,7 @@ export default {
         if (res && res.success) {
           uni.showToast({ title: "保存成功", icon: "success" });
           this.vaccineForm.typeIndex = 0;
+          this.vaccineForm.customName = "";
           this.vaccineForm.hospital = "";
           this.vaccineForm.remark = "";
           this.vaccineForm.date = todayStr();
@@ -612,7 +642,9 @@ export default {
           uni.showToast({ title: (res && res.message) || "保存失败", icon: "none" });
         }
       } catch (e) {
-        uni.showToast({ title: "网络错误", icon: "none" });
+        uni.showToast({ title: "网络不给力，请稍后重试", icon: "none" });
+      } finally {
+        this.submitting = false;
       }
     },
     dewormTypeToApiType(index) {
@@ -628,10 +660,18 @@ export default {
       requestWxSubscribe(['parasite']);
       const loggedIn = await checkLogin('请先登录后再保存记录')
       if (!loggedIn) return
-      const type = this.dewormTypeToApiType(this.dewormForm.typeIndex);
+      const isCustom = this.dewormForm.typeIndex === this.dewormTypes.length - 1;
+      const customName = isCustom ? this.dewormForm.customName.trim() : "";
+      if (isCustom && !customName) {
+        uni.showToast({ title: "请输入自定义驱虫名称", icon: "none" });
+        return;
+      }
+      const type = isCustom ? 0 : this.dewormTypeToApiType(this.dewormForm.typeIndex);
+      this.submitting = true;
       try {
         const res = await petApi.createParasiteReminder(this.currentPet.id, {
           type,
+          customName: customName || null,
           nextDate: this.dewormForm.date,
           productName: this.dewormForm.medicine || null,
           note: this.dewormForm.remark || null
@@ -639,6 +679,7 @@ export default {
         if (res && res.success) {
           uni.showToast({ title: "保存成功", icon: "success" });
           this.dewormForm.typeIndex = 0;
+          this.dewormForm.customName = "";
           this.dewormForm.medicine = "";
           this.dewormForm.remark = "";
           this.dewormForm.date = todayStr();
@@ -647,7 +688,9 @@ export default {
           uni.showToast({ title: (res && res.message) || "保存失败", icon: "none" });
         }
       } catch (e) {
-        uni.showToast({ title: "网络错误", icon: "none" });
+        uni.showToast({ title: "网络不给力，请稍后重试", icon: "none" });
+      } finally {
+        this.submitting = false;
       }
     }
   }
@@ -1368,6 +1411,12 @@ export default {
 
 .glass-btn-primary::after {
   border: none;
+}
+
+.glass-btn-primary[disabled] {
+  opacity: 0.6;
+  transform: none;
+  box-shadow: 0 4rpx 12rpx rgba(255, 90, 61, 0.2);
 }
 
 .btn-submit-text {

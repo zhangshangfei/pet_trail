@@ -47,11 +47,12 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public ParasiteReminder createReminder(Long petId, Long userId, Integer type, LocalDate nextDate, String productName, String note) {
+    public ParasiteReminder createReminder(Long petId, Long userId, Integer type, LocalDate nextDate, String productName, String customName, String note) {
         ParasiteReminder reminder = new ParasiteReminder();
         reminder.setPetId(petId);
         reminder.setUserId(userId);
         reminder.setType(type);
+        reminder.setCustomName(customName);
         reminder.setProductName(productName);
         reminder.setNextDate(nextDate);
         reminder.setNote(note);
@@ -60,7 +61,7 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
         reminder.setUpdatedAt(LocalDateTime.now());
 
         this.save(reminder);
-        log.info("创建寄生虫提醒成功: id={}, petId={}, userId={}, type={}, productName={}, note={}", reminder.getId(), petId, userId, type, productName, note);
+        log.info("创建寄生虫提醒成功: id={}, petId={}, userId={}, type={}, customName={}, productName={}, note={}", reminder.getId(), petId, userId, type, customName, productName, note);
         return reminder;
     }
 
@@ -73,7 +74,7 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public ParasiteReminder updateReminder(Long reminderId, Integer type, LocalDate nextDate, String note) {
+    public ParasiteReminder updateReminder(Long reminderId, Integer type, LocalDate nextDate, String customName, String note) {
         ParasiteReminder reminder = this.getById(reminderId);
         if (reminder == null) {
             throw new BusinessException(404, "提醒不存在");
@@ -84,12 +85,15 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
         if (nextDate != null) {
             reminder.setNextDate(nextDate);
         }
+        if (customName != null) {
+            reminder.setCustomName(customName);
+        }
         if (note != null) {
             reminder.setNote(note);
         }
         reminder.setUpdatedAt(LocalDateTime.now());
         this.updateById(reminder);
-        log.info("更新提醒信息成功: reminderId={}, type={}, nextDate={}, note={}", reminderId, type, nextDate, note);
+        log.info("更新提醒信息成功: reminderId={}, type={}, nextDate={}, customName={}, note={}", reminderId, type, nextDate, customName, note);
         return reminder;
     }
 
@@ -140,7 +144,11 @@ public class ParasiteReminderService extends ServiceImpl<ParasiteReminderMapper,
         vo.setId(reminder.getId());
         vo.setPetId(reminder.getPetId());
         vo.setType(reminder.getType());
-        vo.setTypeName(TYPE_NAME_MAP.getOrDefault(reminder.getType(), "驱虫"));
+        vo.setCustomName(reminder.getCustomName());
+        // 自定义类型(type=0)使用customName，否则使用预设类型名
+        vo.setTypeName(reminder.getType() != null && reminder.getType() == 0
+                ? (reminder.getCustomName() != null ? reminder.getCustomName() : "自定义驱虫")
+                : TYPE_NAME_MAP.getOrDefault(reminder.getType(), "驱虫"));
         vo.setProductName(reminder.getProductName());
         vo.setNextDate(reminder.getNextDate());
         vo.setIntervalDays(reminder.getIntervalDays());

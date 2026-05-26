@@ -35,7 +35,7 @@
             <view class="reminder-item" v-for="reminder in upcomingReminders" :key="reminder.id">
               <view class="reminder-icon-wrap"><text class="reminder-emoji">🦠</text></view>
               <view class="reminder-content">
-                <text class="reminder-name">{{ reminder.type }}</text>
+                <text class="reminder-name">{{ reminder.typeName || reminder.type }}</text>
                 <text class="reminder-date">{{ formatDate(reminder.nextDate) }}</text>
                 <text class="reminder-days">{{ reminder.daysUntil }} 天后</text>
               </view>
@@ -115,7 +115,27 @@
                 <view class="radio-dot" :class="{ checked: form.type === '体外' }"></view>
                 <text class="radio-text">体外驱虫</text>
               </view>
+              <view
+                class="radio-item"
+                :class="{ active: form.type === '自定义' }"
+                @click="form.type = '自定义'"
+              >
+                <view class="radio-dot" :class="{ checked: form.type === '自定义' }"></view>
+                <text class="radio-text">自定义</text>
+              </view>
             </view>
+          </view>
+          <view v-if="form.type === '自定义'" class="form-group">
+            <view class="form-label">
+              <text class="label-emoji">✏️</text>
+              <text class="label-text">自定义驱虫名称 *</text>
+            </view>
+            <input
+              class="form-input"
+              v-model="form.customName"
+              placeholder="请输入自定义驱虫名称"
+              maxlength="30"
+            />
           </view>
           <view class="form-group">
             <view class="form-label">
@@ -196,6 +216,7 @@ export default {
       tempStatus: 0,
       form: {
         type: '体内',
+        customName: '',
         nextDate: ''
       }
     };
@@ -269,6 +290,7 @@ export default {
       this.isEditing = false;
       this.form = {
         type: '体内',
+        customName: '',
         nextDate: ''
       };
     },
@@ -276,8 +298,11 @@ export default {
       this.showModal = true;
       this.isEditing = true;
       this.currentReminder = reminder;
+      const typeStr = reminder.typeName || '';
+      const isCustomType = !['体内驱虫', '体外驱虫', '体内外驱虫', '体内', '体外'].includes(typeStr) || reminder.customName;
       this.form = {
-        type: reminder.type,
+        type: isCustomType ? '自定义' : (typeStr.includes('体内') && !typeStr.includes('外') ? '体内' : '体外'),
+        customName: isCustomType ? (reminder.customName || typeStr) : '',
         nextDate: reminder.nextDate
       };
     },
@@ -306,8 +331,15 @@ export default {
         return;
       }
 
+      if (this.form.type === '自定义' && !this.form.customName.trim()) {
+        uni.showToast({ title: '请输入自定义驱虫名称', icon: 'none' });
+        return;
+      }
+
       try {
-        const data = this.form;
+        const submitType = this.form.type === '自定义' ? this.form.customName.trim() : this.form.type;
+        const data = { ...this.form, type: submitType };
+        delete data.customName;
         let res;
         if (this.isEditing) {
           res = await petApi.updateParasiteReminder(this.petId, this.currentReminder.id, data);
@@ -324,7 +356,7 @@ export default {
         }
       } catch (error) {
         console.error('操作失败:', error);
-        uni.showToast({ title: '网络错误', icon: 'none' });
+        uni.showToast({ title: '网络不给力，请稍后重试', icon: 'none' });
       }
     },
     async updateStatus() {
@@ -343,7 +375,7 @@ export default {
         }
       } catch (error) {
         console.error('修改状态失败:', error);
-        uni.showToast({ title: '网络错误', icon: 'none' });
+        uni.showToast({ title: '网络不给力，请稍后重试', icon: 'none' });
       }
     }
   }

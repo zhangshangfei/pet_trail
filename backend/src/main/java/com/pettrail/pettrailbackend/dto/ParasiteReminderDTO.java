@@ -6,6 +6,7 @@ import lombok.Data;
 public class ParasiteReminderDTO {
     private Long petId;
     private Integer type;
+    private String customName;
     private String productName;
     private String nextDate;
     private Integer intervalDays;

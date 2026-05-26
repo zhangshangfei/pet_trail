@@ -24,6 +24,8 @@ public class ParasiteReminder {
 
     private Integer type;
 
+    private String customName;
+
     private String productName;
 
     private LocalDate nextDate;

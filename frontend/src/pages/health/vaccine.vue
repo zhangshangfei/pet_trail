@@ -307,7 +307,7 @@ export default {
         }
       } catch (error) {
         console.error('操作失败:', error);
-        uni.showToast({ title: '网络错误', icon: 'none' });
+        uni.showToast({ title: '网络不给力，请稍后重试', icon: 'none' });
       }
     },
     async updateStatus() {
@@ -326,7 +326,7 @@ export default {
         }
       } catch (error) {
         console.error('修改状态失败:', error);
-        uni.showToast({ title: '网络错误', icon: 'none' });
+        uni.showToast({ title: '网络不给力，请稍后重试', icon: 'none' });
       }
     }
   }

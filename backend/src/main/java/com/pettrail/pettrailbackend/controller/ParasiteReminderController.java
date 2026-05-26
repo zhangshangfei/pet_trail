@@ -41,8 +41,9 @@ public class ParasiteReminderController extends BaseController {
         String nextDateStr = dto.getNextDate();
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
         String productName = dto.getProductName();
+        String customName = dto.getCustomName();
         String note = dto.getNote();
-        return Result.success(parasiteReminderService.createReminder(petId, userId, type, nextDate, productName, note));
+        return Result.success(parasiteReminderService.createReminder(petId, userId, type, nextDate, productName, customName, note));
     }
 
     @GetMapping("/{id}")
@@ -57,8 +58,9 @@ public class ParasiteReminderController extends BaseController {
         Integer type = dto.getType();
         String nextDateStr = dto.getNextDate();
         LocalDate nextDate = nextDateStr != null ? LocalDate.parse(nextDateStr) : null;
+        String customName = dto.getCustomName();
         String note = dto.getNote();
-        return Result.success(parasiteReminderService.updateReminder(id, type, nextDate, note));
+        return Result.success(parasiteReminderService.updateReminder(id, type, nextDate, customName, note));
     }
 
     @PutMapping("/{id}/status")

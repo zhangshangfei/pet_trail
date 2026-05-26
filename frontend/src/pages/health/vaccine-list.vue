@@ -258,7 +258,7 @@ export default {
         }
       } catch (e) {
         console.error('修改疫苗提醒失败:', e)
-        uni.showToast({ title: '网络错误', icon: 'none' })
+        uni.showToast({ title: '网络不给力，请稍后重试', icon: 'none' })
       }
     },
     onDelete(item) {
@@ -279,7 +279,7 @@ export default {
               }
             } catch (e) {
               console.error('删除疫苗提醒失败:', e)
-              uni.showToast({ title: '网络错误', icon: 'none' })
+              uni.showToast({ title: '网络不给力，请稍后重试', icon: 'none' })
             }
           }
         }

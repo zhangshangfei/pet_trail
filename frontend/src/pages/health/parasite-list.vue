@@ -104,6 +104,10 @@
               </view>
             </picker>
           </view>
+          <view v-if="editForm.typeIndex === typeNames.length - 1" class="form-group">
+            <text class="form-label">自定义驱虫名称</text>
+            <input class="form-input" v-model="editForm.customName" placeholder="请输入自定义驱虫名称" maxlength="30" />
+          </view>
           <view class="form-group">
             <text class="form-label">计划日期</text>
             <picker mode="date" :value="editForm.nextDate" @change="onEditDateChange">
@@ -137,13 +141,14 @@ export default {
       statusBarHeight: 20,
       petId: null,
       records: [],
-      typeNames: ['体内驱虫', '体外驱虫', '内外同驱'],
+      typeNames: ['体内驱虫', '体外驱虫', '内外同驱', '自定义'],
       typeMap: { 1: '体内驱虫', 2: '体外驱虫', 3: '内外同驱' },
       typeValueMap: { 0: 1, 1: 2, 2: 3 },
       showEditModal: false,
       editingItem: null,
       editForm: {
         typeIndex: 0,
+        customName: '',
         nextDate: '',
         note: ''
       }
@@ -185,7 +190,8 @@ export default {
             const done = Number(r.status) === 1
             return {
               id: r.id,
-              name: this.typeMap[r.type] || "驱虫",
+              name: r.typeName || this.typeMap[r.type] || "驱虫",
+              customName: r.customName || "",
               date: this.formatDateYMD(r.nextDate),
               daysLeft: Math.max(0, rawDays),
               progressPercent: done ? 100 : 0,
@@ -234,8 +240,10 @@ export default {
       this.editingItem = item
       const typeKeys = Object.keys(this.typeMap)
       const typeIdx = typeKeys.findIndex(k => this.typeMap[k] === item.name)
+      const isCustomType = typeIdx < 0 || item.customName
       this.editForm = {
-        typeIndex: typeIdx >= 0 ? typeIdx : 0,
+        typeIndex: isCustomType ? this.typeNames.length - 1 : typeIdx,
+        customName: isCustomType ? (item.customName || item.name) : '',
         nextDate: item.date || '',
         note: item.note || ''
       }
@@ -252,13 +260,22 @@ export default {
       this.editForm.nextDate = e.detail.value
     },
     async submitEdit() {
+      const isCustom = this.editForm.typeIndex === this.typeNames.length - 1
+      if (isCustom && !this.editForm.customName.trim()) {
+        uni.showToast({ title: '请输入自定义驱虫名称', icon: 'none' })
+        return
+      }
       try {
-        const typeValue = this.typeValueMap[this.editForm.typeIndex] || 1
-        const res = await petApi.updateParasiteReminder(this.petId, this.editingItem.id, {
-            type: typeValue,
-            nextDate: this.editForm.nextDate,
-            note: this.editForm.note
-          })
+        const typeValue = isCustom ? 0 : (this.typeValueMap[this.editForm.typeIndex] || 1)
+        const submitData = {
+          type: typeValue,
+          nextDate: this.editForm.nextDate,
+          note: this.editForm.note
+        }
+        if (isCustom) {
+          submitData.customName = this.editForm.customName.trim()
+        }
+        const res = await petApi.updateParasiteReminder(this.petId, this.editingItem.id, submitData)
         if (res && res.success) {
           uni.showToast({ title: '修改成功', icon: 'success' })
           this.hideEditModal()
@@ -268,7 +285,7 @@ export default {
         }
       } catch (e) {
         console.error('修改驱虫提醒失败:', e)
-        uni.showToast({ title: '网络错误', icon: 'none' })
+        uni.showToast({ title: '网络不给力，请稍后重试', icon: 'none' })
       }
     },
     onDelete(item) {
@@ -289,7 +306,7 @@ export default {
               }
             } catch (e) {
               console.error('删除驱虫提醒失败:', e)
-              uni.showToast({ title: '网络错误', icon: 'none' })
+              uni.showToast({ title: '网络不给力，请稍后重试', icon: 'none' })
             }
           }
         }
