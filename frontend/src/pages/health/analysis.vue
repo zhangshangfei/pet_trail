@@ -8,6 +8,9 @@
       :show-bell="false"
       @userTap="goBack"
     />
+    <view class="back-btn" :style="{ top: (statusBarHeight + 12) + 'px' }" @tap="goBack">
+      <text class="back-btn-icon">‹</text>
+    </view>
 
     <scroll-view scroll-y class="analysis-scroll" :style="{ paddingTop: (statusBarHeight + 54) + 'px' }">
       <view class="analysis-content">
@@ -305,7 +308,12 @@ const getRingStyle = (score) => {
 }
 
 const goBack = () => {
-  uni.navigateBack()
+  const pages = getCurrentPages()
+  if (pages.length > 1) {
+    uni.navigateBack()
+  } else {
+    uni.switchTab({ url: '/pages/dashboard/index' })
+  }
 }
 
 const runAnalysis = async () => {
@@ -393,6 +401,34 @@ onUnmounted(() => {
 .analysis-page {
   min-height: 100vh;
   background: transparent;
+}
+
+.back-btn {
+  position: fixed;
+  left: 24rpx;
+  z-index: 40;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.back-btn:active {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(0.92);
+}
+
+.back-btn-icon {
+  font-size: 44rpx;
+  color: #fff;
+  font-weight: 300;
+  line-height: 1;
 }
 
 /* ====== 滚动区域 ====== */

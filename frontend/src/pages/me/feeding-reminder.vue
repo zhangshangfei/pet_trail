@@ -155,6 +155,8 @@
 
 <script>
 import { DEFAULT_PET_AVATAR_URL, requestWxSubscribe } from '@/utils/index'
+import * as feedingApi from '@/api/feeding'
+import * as petApi from '@/api/pet'
 
 const MEAL_OPTIONS = [
   { value: 'breakfast', label: '早餐', emoji: '🌅' },
