@@ -78,8 +78,8 @@
           </button>
         </view>
 
-        <view v-if="!isSelf" class="report-link" @tap="onReportUser">
-          <text class="report-link-text">举报该用户</text>
+        <view v-if="!isSelf" class="report-link" :class="{ 'report-link--done': hasReported }" @tap="onReportUser">
+          <text class="report-link-text">{{ hasReported ? '已举报该用户' : '举报该用户' }}</text>
         </view>
       </view>
 
@@ -136,7 +136,7 @@
               <view class="post-pet-info" v-if="post.petName">
                 <text class="pet-icon">{{ getPetIcon(post.petType) }}</text>
                 <text class="pet-name">{{ post.petName }}</text>
-                <text class="pet-age" v-if="post.petAge"> | {{ post.petAge }}岁</text>
+                <text class="pet-age" v-if="post.petAge"> | {{ post.petAge }}</text>
               </view>
             </view>
             <text class="post-time">{{ post.relativeTime || post.time }}</text>
@@ -266,6 +266,7 @@ export default {
       hasMore: true,
       followLoading: false,
       expandedPosts: {},
+      hasReported: false,
     }
   },
   computed: {
@@ -312,6 +313,10 @@ export default {
       uni.navigateBack({ delta: 1 })
     },
     onReportUser() {
+      if (this.hasReported) {
+        uni.showToast({ title: '您已举报过该用户', icon: 'none' })
+        return
+      }
       uni.showActionSheet({
         itemList: ['垃圾广告', '色情低俗', '虚假信息', '违法违规', '人身攻击', '其他'],
         success: async (res) => {
@@ -324,6 +329,7 @@ export default {
               reason: reason
             })
             if (result.success) {
+              this.hasReported = true
               uni.showToast({ title: '举报已提交', icon: 'success' })
             } else {
               uni.showToast({ title: result.message || '举报失败', icon: 'none' })
@@ -346,6 +352,19 @@ export default {
       }
       if (!this.isSelf) {
         this.checkFollowStatus()
+        this.checkReportStatus()
+      }
+    },
+    async checkReportStatus() {
+      try {
+        const token = uni.getStorageSync('token')
+        if (!token) return
+        const res = await reportApi.checkReported(this.userId, 'user')
+        if (res && res.success && res.data) {
+          this.hasReported = res.data.reported
+        }
+      } catch (e) {
+        this.hasReported = false
       }
     },
     async checkFollowStatus() {
@@ -1012,6 +1031,11 @@ export default {
   text-underline-offset: 4rpx;
   text-decoration-style: dashed;
   transition: all 0.25s ease;
+}
+
+.report-link--done .report-link-text {
+  color: #d1d5db;
+  text-decoration: none;
 }
 
 .wave-decoration {

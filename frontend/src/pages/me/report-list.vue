@@ -32,6 +32,10 @@
                 <text class="report-reason-label">举报原因：</text>
                 <text class="report-reason">{{ getReasonLabel(item.reason) }}</text>
               </view>
+              <view v-if="item.targetNickname" class="report-target-row">
+                <text class="report-target-label">被举报用户：</text>
+                <text class="report-target-name">{{ item.targetNickname }}</text>
+              </view>
               <text v-if="item.description" class="report-desc">{{ item.description }}</text>
             </view>
 
@@ -139,7 +143,7 @@ export default {
     },
 
     getStatusLabel(status) {
-      const map = { 0: '待处理', 1: '处理中', 2: '已处理', 3: '已驳回' }
+      const map = { 0: '待处理', 1: '已处理', 2: '已驳回' }
       return map[status] || '待处理'
     },
 
@@ -204,17 +208,18 @@ $text-light: #999999;
 
 .report-status { padding: 6rpx 18rpx; border-radius: 20rpx; }
 .status-0 { background: #fff4e6; }
-.status-1 { background: #dbeafe; }
-.status-2 { background: #d1fae5; }
-.status-3 { background: #f3f4f6; }
+.status-1 { background: #d1fae5; }
+.status-2 { background: #f3f4f6; }
 .status-text { font-size: 22rpx; font-weight: 500; }
 .status-0 .status-text { color: #ff7a3d; }
-.status-1 .status-text { color: #2563eb; }
-.status-2 .status-text { color: #047857; }
-.status-3 .status-text { color: #6b7280; }
+.status-1 .status-text { color: #047857; }
+.status-2 .status-text { color: #6b7280; }
 
 .report-body { margin-bottom: 12rpx; }
 .report-reason-row { display: flex; flex-direction: row; align-items: center; margin-bottom: 8rpx; }
+.report-target-row { display: flex; flex-direction: row; align-items: center; margin-bottom: 8rpx; }
+.report-target-label { font-size: 26rpx; color: $text-light; }
+.report-target-name { font-size: 28rpx; color: $primary; font-weight: 600; }
 .report-reason-label { font-size: 26rpx; color: $text-light; }
 .report-reason { font-size: 28rpx; color: $text-primary; font-weight: 600; }
 .report-desc { font-size: 26rpx; color: $text-secondary; line-height: 1.6; }

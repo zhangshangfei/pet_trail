@@ -2,15 +2,19 @@ package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pettrail.pettrailbackend.dto.ReportVO;
 import com.pettrail.pettrailbackend.entity.Report;
+import com.pettrail.pettrailbackend.entity.User;
 import com.pettrail.pettrailbackend.exception.BusinessException;
 import com.pettrail.pettrailbackend.mapper.ReportMapper;
+import com.pettrail.pettrailbackend.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -18,6 +22,7 @@ import java.util.List;
 public class ReportService {
 
     private final ReportMapper reportMapper;
+    private final UserMapper userMapper;
 
     public Report createReport(Long reporterId, Long targetId, String targetType, String reason, String description) {
         int existing = reportMapper.countByReporterAndTarget(reporterId, targetId, targetType);
@@ -47,11 +52,41 @@ public class ReportService {
         return reportMapper.selectPage(pageParam, wrapper);
     }
 
-    public List<Report> getMyReportList(Long reporterId) {
+    public List<ReportVO> getMyReportList(Long reporterId) {
         LambdaQueryWrapper<Report> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Report::getReporterId, reporterId);
         wrapper.orderByDesc(Report::getCreatedAt);
-        return reportMapper.selectList(wrapper);
+        List<Report> reports = reportMapper.selectList(wrapper);
+        return reports.stream().map(this::toVO).collect(Collectors.toList());
+    }
+
+    private ReportVO toVO(Report report) {
+        ReportVO vo = new ReportVO();
+        vo.setId(report.getId());
+        vo.setReporterId(report.getReporterId());
+        vo.setTargetId(report.getTargetId());
+        vo.setTargetType(report.getTargetType());
+        vo.setReason(report.getReason());
+        vo.setDescription(report.getDescription());
+        vo.setStatus(report.getStatus());
+        vo.setResult(report.getResult());
+        vo.setCreatedAt(report.getCreatedAt());
+        // 填充被举报用户昵称
+        if ("user".equals(report.getTargetType()) && report.getTargetId() != null) {
+            try {
+                User targetUser = userMapper.selectById(report.getTargetId());
+                if (targetUser != null) {
+                    vo.setTargetNickname(targetUser.getNickname());
+                }
+            } catch (Exception e) {
+                log.warn("查询被举报用户昵称失败: targetId={}", report.getTargetId());
+            }
+        }
+        return vo;
+    }
+
+    public boolean hasReported(Long reporterId, Long targetId, String targetType) {
+        return reportMapper.countByReporterAndTarget(reporterId, targetId, targetType) > 0;
     }
 
     @Transactional(rollbackFor = Exception.class)

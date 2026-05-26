@@ -7,3 +7,7 @@ export const createReport = (data) => {
 export const getMyReports = () => {
   return request.get('/api/reports/my')
 }
+
+export const checkReported = (targetId, targetType) => {
+  return request.get('/api/reports/check', { targetId, targetType })
+}

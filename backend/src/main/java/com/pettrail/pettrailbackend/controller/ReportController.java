@@ -1,6 +1,7 @@
 package com.pettrail.pettrailbackend.controller;
 
 import com.pettrail.pettrailbackend.dto.ReportCreateDTO;
+import com.pettrail.pettrailbackend.dto.ReportVO;
 import com.pettrail.pettrailbackend.dto.Result;
 import com.pettrail.pettrailbackend.entity.Report;
 import com.pettrail.pettrailbackend.service.ReportService;
@@ -44,8 +45,17 @@ public class ReportController extends BaseController {
     }
 
     @GetMapping("/my")
-    public Result<List<Report>> getMyReportList() {
+    public Result<List<ReportVO>> getMyReportList() {
         Long userId = requireLogin();
         return Result.success(reportService.getMyReportList(userId));
+    }
+
+    @GetMapping("/check")
+    public Result<Map<String, Object>> checkReported(@RequestParam Long targetId, @RequestParam String targetType) {
+        Long userId = requireLogin();
+        boolean reported = reportService.hasReported(userId, targetId, targetType);
+        Map<String, Object> result = new HashMap<>();
+        result.put("reported", reported);
+        return Result.success(result);
     }
 }
