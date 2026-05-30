@@ -58,7 +58,7 @@ const silentLogin = () => {
       success: async (res) => {
         if (res.code) {
           try {
-            const { default: authApi } = await import('@/api/auth')
+            const authApi = await import('@/api/auth')
             const loginRes = await authApi.loginByCode(res.code)
             uni.hideLoading()
             if (loginRes && loginRes.success && loginRes.data) {
