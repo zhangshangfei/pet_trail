@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -55,9 +57,11 @@ public class TagService {
         postTagMapper.delete(deleteWrapper);
 
         List<Tag> result = new ArrayList<>();
+        Set<String> seen = new LinkedHashSet<>();
         for (String name : tagNames) {
             String trimmed = name.trim().replaceAll("^#+", "");
             if (trimmed.isEmpty()) continue;
+            if (!seen.add(trimmed)) continue;
 
             Tag tag = tagMapper.selectByName(trimmed);
             if (tag == null) {
