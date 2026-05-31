@@ -80,9 +80,8 @@
           <view class="section-header">
             <view class="section-label glass-section-title">
               <text class="section-label-icon">📊</text>
-              <text class="section-label-text">最近记录</text>
+              <text class="section-label-text">体重记录</text>
             </view>
-            <text class="section-link glass-link-btn" @click="viewAllRecords">查看全部 ›</text>
           </view>
           <view class="record-list">
             <view
@@ -107,6 +106,13 @@
                 <text class="op-link op-danger glass-op-delete" @click="onDeleteRecord(record)">删除</text>
               </view>
             </view>
+          </view>
+
+          <view v-if="hasMoreRecords" class="load-more-area" @tap="loadMoreRecords">
+            <text class="load-more-text">{{ recordsLoading ? '加载中...' : '加载更多' }}</text>
+          </view>
+          <view v-if="!hasMoreRecords && records.length > 0" class="no-more-area">
+            <text class="no-more-text">没有更多记录了</text>
           </view>
         </view>
 
@@ -195,6 +201,10 @@ export default {
       pet: null,
       records: [],
       currentWeight: null,
+      currentPage: 1,
+      pageSize: 10,
+      hasMoreRecords: false,
+      recordsLoading: false,
       showModal: false,
       showPetSelector: false,
       editingRecord: null,
@@ -277,14 +287,38 @@ export default {
     },
     async loadRecords() {
       if (!this.petId) return;
+      this.currentPage = 1;
+      this.recordsLoading = false;
       try {
-        const res = await healthApi.getWeightRecords(this.petId);
+        const res = await healthApi.getWeightRecords(this.petId, 1, this.pageSize);
         if (res.success) {
-          this.records = res.data;
+          const pageData = res.data;
+          this.records = pageData.records || [];
+          this.hasMoreRecords = pageData.current < pageData.pages;
           this.calculateChanges();
         }
       } catch (error) {
         console.error('加载记录失败:', error);
+      }
+    },
+    async loadMoreRecords() {
+      if (!this.petId || this.recordsLoading || !this.hasMoreRecords) return;
+      this.recordsLoading = true;
+      this.currentPage += 1;
+      try {
+        const res = await healthApi.getWeightRecords(this.petId, this.currentPage, this.pageSize);
+        if (res.success) {
+          const pageData = res.data;
+          const newRecords = pageData.records || [];
+          this.records = [...this.records, ...newRecords];
+          this.hasMoreRecords = pageData.current < pageData.pages;
+          this.calculateChanges();
+        }
+      } catch (error) {
+        console.error('加载更多记录失败:', error);
+        this.currentPage -= 1;
+      } finally {
+        this.recordsLoading = false;
       }
     },
     calculateChanges() {
@@ -431,11 +465,6 @@ export default {
       } catch (error) {
         uni.showToast({ title: (error && error.message) || '修改失败', icon: 'none' });
       }
-    },
-    viewAllRecords() {
-      uni.switchTab({
-        url: `/pages/health/record-all?petId=${this.petId}`
-      });
     }
   }
 };
@@ -846,6 +875,31 @@ export default {
     background: rgba(255, 122, 61, 0.15);
     transform: scale(0.96);
   }
+}
+
+.load-more-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28rpx 0 8rpx;
+}
+
+.load-more-text {
+  font-size: 26rpx;
+  color: var(--pt-primary, #ff7a3d);
+  font-weight: 600;
+}
+
+.no-more-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0 4rpx;
+}
+
+.no-more-text {
+  font-size: 24rpx;
+  color: var(--pt-muted, #9ca3af);
 }
 
 /* ====== 记录列表项 ====== */

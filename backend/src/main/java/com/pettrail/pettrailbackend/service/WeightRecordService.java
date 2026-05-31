@@ -1,6 +1,8 @@
 package com.pettrail.pettrailbackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pettrail.pettrailbackend.entity.WeightRecord;
 import com.pettrail.pettrailbackend.enums.ErrorCodeEnum;
@@ -33,6 +35,13 @@ public class WeightRecordService extends ServiceImpl<WeightRecordMapper, WeightR
         queryWrapper.eq(WeightRecord::getPetId, petId);
         queryWrapper.orderByDesc(WeightRecord::getRecordDate);
         return this.list(queryWrapper);
+    }
+
+    public IPage<WeightRecord> listByPetIdPaged(Long petId, int page, int size) {
+        LambdaQueryWrapper<WeightRecord> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(WeightRecord::getPetId, petId);
+        queryWrapper.orderByDesc(WeightRecord::getRecordDate);
+        return this.page(new Page<>(page, size), queryWrapper);
     }
 
     /**

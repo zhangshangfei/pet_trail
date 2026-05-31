@@ -8,6 +8,7 @@ import com.pettrail.pettrailbackend.exception.ForbiddenException;
 import com.pettrail.pettrailbackend.exception.NotFoundException;
 import com.pettrail.pettrailbackend.service.PetService;
 import com.pettrail.pettrailbackend.service.WeightRecordService;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -27,9 +28,12 @@ public class WeightRecordController extends BaseController {
     private final WeightRecordService weightRecordService;
 
     @GetMapping
-    public Result<List<WeightRecord>> listRecords(@PathVariable Long petId) {
+    public Result<IPage<WeightRecord>> listRecords(
+            @PathVariable Long petId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
         validatePetOwnership(petId);
-        return Result.success(weightRecordService.listByPetId(petId));
+        return Result.success(weightRecordService.listByPetIdPaged(petId, page, size));
     }
 
     @GetMapping("/range")

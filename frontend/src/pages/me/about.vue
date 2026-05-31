@@ -37,13 +37,13 @@
           </view>
 
           <view class="contact-list">
-            <view class="contact-item" @tap="copyText('pettrail@openclaw.com')">
+            <view class="contact-item" @tap="copyText('zhangshangfei1007@163.com')">
               <view class="contact-icon-wrap contact-email">
                 <text class="contact-icon">📧</text>
               </view>
               <view class="contact-info">
                 <text class="contact-label">联系邮箱</text>
-                <text class="contact-value">pettrail@openclaw.com</text>
+                <text class="contact-value">zhangshangfei1007@163.com</text>
               </view>
               <view class="contact-action">
                 <text class="action-text">复制</text>

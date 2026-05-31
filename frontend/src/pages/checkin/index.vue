@@ -499,6 +499,7 @@ export default {
       return streak
     },
     async onCheckIn(item) {
+      if (this.showSuccessAnimation) return
       if (!this.petId) {
         uni.showToast({ title: '请先选择宠物', icon: 'none' })
         return
@@ -1718,7 +1719,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
+  pointer-events: auto;
   opacity: 0;
   z-index: 200;
   transition: opacity 0.35s ease;

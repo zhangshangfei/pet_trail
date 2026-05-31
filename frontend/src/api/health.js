@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 
-export const getWeightRecords = (petId) => {
-  return request.get(`/api/pets/${petId}/weight-records`)
+export const getWeightRecords = (petId, page = 1, size = 10) => {
+  return request.get(`/api/pets/${petId}/weight-records`, { page, size })
 }
 
 export const getWeightRecordsByRange = (petId, startDate, endDate) => {
