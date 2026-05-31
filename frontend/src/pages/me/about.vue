@@ -50,13 +50,13 @@
               </view>
             </view>
 
-            <view class="contact-item" @tap="copyText('https://pettrail.openclaw.com')">
+            <view class="contact-item" @tap="copyText('https://aipetfamily.cn/')">
               <view class="contact-icon-wrap contact-web">
                 <text class="contact-icon">🌐</text>
               </view>
               <view class="contact-info">
                 <text class="contact-label">官方网站</text>
-                <text class="contact-value">pettrail.openclaw.com</text>
+                <text class="contact-value">aipetfamily.cn</text>
               </view>
               <view class="contact-action">
                 <text class="action-text">复制</text>
