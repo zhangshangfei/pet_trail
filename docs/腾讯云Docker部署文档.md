@@ -9,17 +9,21 @@
 | 操作系统           | CentOS        |
 | Docker         | 已安装           |
 | Docker Compose | 已安装           |
-| 域名             | 审批中，暂用 IP 访问  |
+| 域名             | aipetfamily.cn（已配置 HTTPS） |
 
 ## 二、部署架构
 
 ```
 腾讯云服务器 (124.222.51.71)
-├── pet-trail-nginx (80) ← 对外暴露
-│   └── 反向代理 → pet-trail-backend (8080)
-│       ├── pet-trail-mysql (3306)
-│       ├── pet-trail-redis (6379)
-│       └── pet-trail-rabbitmq (5672/15672)
+├── pet-trail-nginx (80/443) ← 对外暴露，域名 aipetfamily.cn
+│   ├── /          → 官网静态文件（website/）
+│   ├── /admin/    → 管理后台静态文件（admin/dist/）
+│   ├── /api/      → 反向代理 → pet-trail-backend (8080)
+│   └── /health    → 反向代理 → pet-trail-backend (8080)
+├── pet-trail-backend (8080)
+│   ├── pet-trail-mysql (3306)
+│   ├── pet-trail-redis (6379)
+│   └── pet-trail-rabbitmq (5672/15672)
 ```
 
 ## 三、项目目录结构
@@ -37,7 +41,12 @@
 │       └── init.sql        # 数据库初始化脚本
 ├── nginx/
 │   ├── nginx.conf          # Nginx 配置
-│   └── ssl/                # SSL 证书目录（待配置）
+│   └── ssl/                # SSL 证书目录（已配置）
+├── website/
+│   ├── index.html          # 官网首页
+│   ├── style.css           # 官网样式
+│   ├── style-theme-*.css   # 官网主题样式
+│   └── script.js           # 官网脚本
 └── rabbitmq/
     └── Dockerfile          # RabbitMQ 自定义镜像（含延迟消息插件）
 ```
@@ -132,26 +141,26 @@ curl http://localhost/health
 
 ## 五、访问方式
 
-### 5.1 当前（HTTP + IP 访问）
+### 5.1 当前（HTTPS + 域名访问）
+
+| 用途            | 地址                                  |
+| ------------- | ----------------------------------- |
+| 官网首页          | <https://aipetfamily.cn/>           |
+| 健康检查          | <https://aipetfamily.cn/health>     |
+| 后端 API        | <https://aipetfamily.cn/api/xxx>    |
+| 管理后台          | <https://aipetfamily.cn/admin/>     |
+| 直连后端（调试用）     | <http://124.222.51.71:8080/api/xxx> |
+| RabbitMQ 管理后台 | <http://124.222.51.71:15672>        |
+
+### 5.2 HTTP + IP 访问（备用）
 
 | 用途            | 地址                                  |
 | ------------- | ----------------------------------- |
 | 健康检查          | <http://124.222.51.71/health>       |
 | 后端 API        | <http://124.222.51.71/api/xxx>      |
 | 管理后台          | <http://124.222.51.71/admin/>       |
-| 直连后端（调试用）     | <http://124.222.51.71:8080/api/xxx> |
-| RabbitMQ 管理后台 | <http://124.222.51.71:15672>        |
 
-### 5.2 域名审批后（HTTPS + 域名访问）
-
-| 用途            | 地址                                |
-| ------------- | --------------------------------- |
-| 健康检查          | <https://你的域名/health>             |
-| 后端 API        | <https://你的域名/api/xxx>            |
-| 管理后台          | <https://你的域名/admin/>             |
-| RabbitMQ 管理后台 | <http://124.222.51.71:15672（不对外）> |
-
-## 六、切换 HTTPS 步骤（域名审批后执行）
+## 六、切换 HTTPS 步骤（✅ 已完成）
 
 ### 6.1 申请 SSL 证书
 
@@ -240,6 +249,10 @@ docker-compose up -d --build backend
 
 # 管理后台前端更新后重新构建
 cd /opt/pet_trail/admin && npm run build && cd /opt/pet_trail
+docker-compose restart nginx
+
+# 官网更新后重启 nginx（官网为纯静态文件，git pull 后重启即可）
+git pull
 docker-compose restart nginx
 
 # 只启动部分服务（不用 nginx）

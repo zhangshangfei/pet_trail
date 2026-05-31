@@ -1719,15 +1719,14 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: auto;
+  pointer-events: none;
   opacity: 0;
   z-index: 200;
   transition: opacity 0.35s ease;
-  background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(6px);
 
   &.show {
     opacity: 1;
+    pointer-events: auto;
   }
 }
 
