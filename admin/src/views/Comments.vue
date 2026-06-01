@@ -1,255 +1,170 @@
 <template>
   <div class="comments-page">
-    <!-- 顶部统计卡片 -->
-    <el-row :gutter="16" class="stats-row">
-      <el-col :xs="12" :sm="6" v-for="item in overviewCards" :key="item.key">
-        <el-card shadow="hover" class="overview-card" :body-style="{ padding: '16px 20px' }">
-          <div class="overview-content">
-            <div class="overview-icon" :style="{ background: item.bg, color: item.color }">
-              <el-icon :size="20"><component :is="item.icon" /></el-icon>
-            </div>
-            <div class="overview-info">
-              <div class="overview-value">{{ item.value }}</div>
-              <div class="overview-label">{{ item.label }}</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- 筛选栏 -->
-    <el-card shadow="hover" class="filter-card" :body-style="{ padding: '16px 20px' }">
-      <div class="filter-bar">
-        <div class="filter-left">
-          <span class="card-title">评论列表</span>
-          <el-tag size="small" type="info">共 {{ total }} 条</el-tag>
+    <!-- 顶部统计 -->
+    <div class="stats-bar">
+      <div v-for="item in overviewCards" :key="item.key" class="stat-chip" :style="{ background: item.bg }">
+        <div class="stat-chip-icon" :style="{ color: item.color }">
+          <el-icon :size="16"><component :is="item.icon" /></el-icon>
         </div>
-        <div class="filter-right">
-          <el-input v-model="keyword" placeholder="搜索评论内容" clearable style="width: 200px" @clear="loadData" @keyup.enter="loadData">
-            <template #prefix><el-icon><Search /></el-icon></template>
-          </el-input>
-          <el-input v-model="postId" placeholder="动态ID" clearable style="width: 120px" @clear="loadData" @keyup.enter="loadData" />
-          <el-select v-model="deleted" placeholder="全部状态" clearable style="width: 110px" @change="loadData">
-            <el-option label="正常" :value="0" />
-            <el-option label="已删除" :value="1" />
-          </el-select>
-          <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
-          <el-button type="success" :icon="Download" @click="handleExport" v-if="canExport">导出</el-button>
+        <div>
+          <div class="stat-chip-value">{{ item.value }}</div>
+          <div class="stat-chip-label">{{ item.label }}</div>
         </div>
       </div>
-    </el-card>
+    </div>
 
-    <!-- 层级化评论列表 -->
-    <div class="comment-tree-list" v-loading="loading">
+    <!-- 筛选栏 -->
+    <div class="filter-bar">
+      <div class="filter-title">评论列表<em>{{ total }}</em></div>
+      <div class="filter-controls">
+        <el-input v-model="keyword" placeholder="搜索内容..." clearable prefix-icon="Search" style="width: 180px; --el-input-height: 32px;" @clear="loadData" @keyup.enter="loadData" />
+        <el-input v-model="postId" placeholder="动态ID" clearable style="width: 110px; --el-input-height: 32px;" @clear="loadData" @keyup.enter="loadData" />
+        <el-select v-model="deleted" placeholder="状态" clearable style="width: 100px" @change="loadData">
+          <el-option label="正常" :value="0" />
+          <el-option label="已删除" :value="1" />
+        </el-select>
+        <el-button type="primary" size="default" @click="loadData">查询</el-button>
+        <el-button size="default" @click="handleExport" v-if="canExport">导出</el-button>
+      </div>
+    </div>
+
+    <!-- 评论列表 -->
+    <div class="comment-list" v-loading="loading">
       <template v-if="treeList.length > 0">
-        <div v-for="(item, index) in treeList" :key="'root-' + index" class="comment-thread">
+        <div v-for="(thread, idx) in treeList" :key="'t-' + idx" class="comment-thread">
           <!-- 一级评论 -->
-          <div class="comment-card comment-card--level1" :class="{ 'is-deleted': item.status === 0 }">
-            <div class="cc-left">
-              <el-avatar :size="40" :src="item.userAvatar" icon="UserFilled" class="cc-avatar" />
-              <div class="cc-level-badge">主评</div>
-            </div>
-            <div class="cc-body">
-              <div class="cc-header">
-                <span class="cc-name">{{ item.userNickname || '未知用户' }}</span>
-                <el-tag size="small" type="info" effect="plain" class="cc-id-tag">ID: {{ item.id }}</el-tag>
-                <el-tag size="small" type="info" effect="plain" class="cc-post-tag">
-                  <span class="post-tag-link" @click="viewPost(item)">动态: {{ item.postId }}</span>
-                </el-tag>
-                <el-tag :type="item.status === 0 ? 'danger' : 'success'" size="small" effect="light">
-                  {{ item.status === 0 ? '已删除' : '正常' }}
-                </el-tag>
+          <div class="c-item c-item--main" :class="{ 'c-item--deleted': thread.status === 0 }">
+            <!-- 头像区 -->
+            <div class="c-avatar-col">
+              <div v-if="thread.userAvatar" class="c-avatar-img">
+                <img :src="thread.userAvatar" alt="" />
               </div>
-              <div class="cc-content">{{ item.content }}</div>
-              <div class="cc-meta">
-                <span class="meta-item">
-                  <el-icon :size="13"><Star /></el-icon> {{ item.likeCount || 0 }}
-                </span>
-                <span class="meta-item">
-                  <el-icon :size="13"><Clock /></el-icon> {{ item.createdAt }}
-                </span>
+              <div v-else class="c-avatar-fallback" :style="{ background: avatarColor(thread.userNickname) }">
+                {{ (thread.userNickname || '未')[0] }}
               </div>
             </div>
-            <div class="cc-actions">
-              <el-button size="small" text type="primary" :icon="View" @click="viewDetail(item)">详情</el-button>
-              <el-button size="small" text type="warning" @click="viewPost(item)">查看动态</el-button>
-              <el-button v-if="item.status !== 0" size="small" text type="danger" :icon="Delete" @click="handleDelete(item)">删除</el-button>
-              <el-button v-if="item.status === 0" size="small" text type="success" :icon="CircleCheck" @click="handleRestore(item)">恢复</el-button>
+
+            <!-- 内容区 -->
+            <div class="c-body-col">
+              <div class="c-row-top">
+                <span class="c-author">{{ thread.userNickname || '未知用户' }}</span>
+                <span class="c-meta-inline">
+                  <span class="c-meta-tag" @click="viewPost(thread)">动态 #{{ thread.postId }}</span>
+                  <el-tag :type="thread.status === 0 ? 'danger' : 'success'" size="small" round effect="light">{{ thread.status === 0 ? '已删除' : '正常' }}</el-tag>
+                  <span class="c-time"><Clock :size="12" />{{ thread.createdAt }}</span>
+                </span>
+              </div>
+              <div class="c-text">{{ thread.content }}</div>
+              <div class="c-row-bottom">
+                <span class="c-like"><Star :size="13" />{{ thread.likeCount || 0 }}</span>
+                <div class="c-actions-main">
+                  <button class="c-btn c-btn--link" @click="viewDetail(thread)">详情</button>
+                  <button class="c-btn c-btn--warn" @click="viewPost(thread)">查看动态</button>
+                  <button v-if="thread.status !== 0" class="c-btn c-btn--danger" @click="handleDelete(thread)">删除</button>
+                  <button v-if="thread.status === 0" class="c-btn c-btn--ok" @click="handleRestore(thread)">恢复</button>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- 二级评论（回复） -->
-          <template v-if="item.replies && item.replies.length > 0">
-            <div class="replies-container">
-              <div class="reply-connector"></div>
-              <div class="replies-list">
-                <div v-for="reply in item.replies" :key="'reply-' + reply.id"
-                     class="comment-card comment-card--level2" :class="{ 'is-deleted': reply.status === 0 }">
-                  <div class="cc-left">
-                    <el-avatar :size="32" :src="reply.userAvatar" icon="UserFilled" class="cc-avatar cc-avatar--sm" />
-                    <div class="cc-level-badge cc-level-badge--reply">回复</div>
+          <!-- 二级回复 -->
+          <div v-if="thread.replies && thread.replies.length" class="c-replies">
+            <div class="c-reply-line"></div>
+            <div class="c-replies-inner">
+              <div v-for="r in thread.replies" :key="'r-' + r.id" class="c-item c-item--reply" :class="{ 'c-item--deleted': r.status === 0 }">
+                <div class="c-avatar-col c-avatar-col--sm">
+                  <div v-if="r.userAvatar" class="c-avatar-img c-avatar-img--sm">
+                    <img :src="r.userAvatar" alt="" />
                   </div>
-                  <div class="cc-body">
-                    <div class="cc-header">
-                      <span class="cc-name cc-name--reply">{{ reply.userNickname || '未知用户' }}</span>
-                      <el-tag size="small" type="info" effect="plain" class="cc-id-tag">ID: {{ reply.id }}</el-tag>
-                      <el-tag v-if="reply.parentId" size="small" type="warning" effect="plain" class="cc-reply-to">
-                        回复 #{{ reply.parentId }}
-                      </el-tag>
-                      <el-tag :type="reply.status === 0 ? 'danger' : 'success'" size="small" effect="light">
-                        {{ reply.status === 0 ? '已删除' : '正常' }}
-                      </el-tag>
-                    </div>
-                    <div class="cc-content cc-content--reply">{{ reply.content }}</div>
-                    <div class="cc-meta">
-                      <span class="meta-item">
-                        <el-icon :size="13"><Star /></el-icon> {{ reply.likeCount || 0 }}
-                      </span>
-                      <span class="meta-item">
-                        <el-icon :size="13"><Clock /></el-icon> {{ reply.createdAt }}
-                      </span>
-                    </div>
+                  <div v-else class="c-avatar-fallback c-avatar-fallback--sm" :style="{ background: avatarColor(r.userNickname) }">
+                    {{ (r.userNickname || '未')[0] }}
                   </div>
-                  <div class="cc-actions cc-actions--compact">
-                    <el-button size="small" text type="primary" :icon="View" @click="viewDetail(reply)">详情</el-button>
-                    <el-button size="small" text type="warning" @click="viewPost(reply)">查看动态</el-button>
-                    <el-button v-if="reply.status !== 0" size="small" text type="danger" :icon="Delete" @click="handleDelete(reply)">删除</el-button>
-                    <el-button v-if="reply.status === 0" size="small" text type="success" :icon="CircleCheck" @click="handleRestore(reply)">恢复</el-button>
+                </div>
+                <div class="c-body-col">
+                  <div class="c-row-top c-row-top--sm">
+                    <span class="c-author c-author--sm">{{ r.userNickname || '未知用户' }}</span>
+                    <span class="c-meta-inline">
+                      <span class="c-meta-tag c-meta-tag--warn">回复 #{{ r.parentId }}</span>
+                      <el-tag :type="r.status === 0 ? 'danger' : 'success'" size="small" round effect="light">{{ r.status === 0 ? '已删除' : '正常' }}</el-tag>
+                      <span class="c-time"><Clock :size="12" />{{ r.createdAt }}</span>
+                    </span>
+                  </div>
+                  <div class="c-text c-text--sm">{{ r.content }}</div>
+                  <div class="c-row-bottom c-row-bottom--sm">
+                    <span class="c-like"><Star :size="12" />{{ r.likeCount || 0 }}</span>
+                    <div class="c-actions-main c-actions-main--compact">
+                      <button class="c-btn c-btn--link" @click="viewDetail(r)">详情</button>
+                      <button class="c-btn c-btn--warn" @click="viewPost(r)">查看动态</button>
+                      <button v-if="r.status !== 0" class="c-btn c-btn--danger" @click="handleDelete(r)">删</button>
+                      <button v-if="r.status === 0" class="c-btn c-btn--ok" @click="handleRestore(r)">恢复</button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </template>
+          </div>
         </div>
       </template>
-
-      <!-- 空状态 -->
-      <el-empty v-else description="暂无评论数据" :image-size="120" />
+      <el-empty v-else description="暂无评论数据" :image-size="100" />
     </div>
 
     <!-- 分页 -->
-    <div class="pagination-wrap" v-if="total > 0">
-      <el-pagination
-        v-model:current-page="page"
-        v-model:page-size="size"
-        :total="total"
-        :page-sizes="[10, 20, 50]"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="loadData"
-        @current-change="loadData"
-      />
+    <div class="page-footer" v-if="total > 0">
+      <el-pagination v-model:current-page="page" v-model:page-size="size" :total="total" :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next" small @change="loadData" />
     </div>
 
     <!-- 评论详情弹窗 -->
-    <el-dialog v-model="showDetail" title="评论详情" width="640px" destroy-on-close class="comment-detail-dialog">
-      <div v-if="detail" class="cd-header">
-        <div class="cd-avatar">
-          <el-avatar :size="56" :src="detail.userAvatar" icon="UserFilled" />
-        </div>
-        <div class="cd-header-info">
-          <div class="cd-name">{{ detail.userNickname || '未知用户' }}</div>
-          <div class="cd-tags">
-            <el-tag :type="detail.status === 0 ? 'danger' : 'success'" size="small" effect="light" round>
-              {{ detail.status === 0 ? '已删除' : '正常' }}
-            </el-tag>
-            <el-tag v-if="detail.parentId" size="small" type="warning" effect="light" round>
-              回复评论 #{{ detail.parentId }}
-            </el-tag>
-            <span class="cd-tag-item">
-              <el-icon :size="12"><Clock /></el-icon>
-              {{ detail.createdAt }}
-            </span>
+    <el-dialog v-model="showDetail" title="评论详情" width="560px" destroy-on-close>
+      <div v-if="detail" class="dd-wrap">
+        <div class="dd-head">
+          <div v-if="detail.userAvatar" class="dd-avatar-img"><img :src="detail.userAvatar" /></div>
+          <div v-else class="dd-avatar-fb" :style="{ background: avatarColor(detail.userNickname) }">{{ (detail.userNickname || '未')[0] }}</div>
+          <div class="dd-head-info">
+            <div class="dd-name">{{ detail.userNickname || '未知用户' }}</div>
+            <div class="dd-tags">
+              <el-tag :type="detail.status === 0 ? 'danger' : 'success'" size="small" round effect="light">{{ detail.status === 0 ? '已删除' : '正常' }}</el-tag>
+              <span v-if="detail.parentId" class="dd-tag-sub">回复 #{{ detail.parentId }}</span>
+              <span class="dd-time">{{ detail.createdAt }}</span>
+            </div>
           </div>
         </div>
-      </div>
-
-      <div class="cd-body">
-        <div class="cd-section">
-          <div class="cd-section-title">评论内容</div>
-          <div class="cd-content">{{ detail.content }}</div>
+        <div class="dd-section">
+          <div class="dd-label">评论内容</div>
+          <div class="dd-content">{{ detail.content }}</div>
         </div>
-
-        <div class="cd-section">
-          <div class="cd-section-title">数据概览</div>
-          <div class="cd-grid">
-            <div class="cd-cell">
-              <span class="cd-cell-label">评论ID</span>
-              <span class="cd-cell-value">{{ detail.id }}</span>
-            </div>
-            <div class="cd-cell">
-              <span class="cd-cell-label">动态ID</span>
-              <span class="cd-cell-value">{{ detail.postId }}</span>
-            </div>
-            <div class="cd-cell">
-              <span class="cd-cell-label">用户ID</span>
-              <span class="cd-cell-value">{{ detail.userId }}</span>
-            </div>
-            <div class="cd-cell">
-              <span class="cd-cell-label">点赞数</span>
-              <span class="cd-cell-value">{{ detail.likeCount || 0 }}</span>
-            </div>
-            <div class="cd-cell">
-              <span class="cd-cell-label">父评论ID</span>
-              <span class="cd-cell-value">{{ detail.parentId || '-' }}</span>
-            </div>
-            <div class="cd-cell">
-              <span class="cd-cell-label">回复目标ID</span>
-              <span class="cd-cell-value">{{ detail.replyToId || '-' }}</span>
-            </div>
-            <div class="cd-cell">
-              <span class="cd-cell-label">创建时间</span>
-              <span class="cd-cell-value">{{ detail.createdAt }}</span>
-            </div>
-            <div class="cd-cell">
-              <span class="cd-cell-label">更新时间</span>
-              <span class="cd-cell-value">{{ detail.updatedAt || '-' }}</span>
-            </div>
+        <div class="dd-grid">
+          <div class="dd-cell" v-for="cell in detailCells(detail)" :key="cell.label">
+            <span class="dd-clabel">{{ cell.label }}</span>
+            <span class="dd-cval">{{ cell.value }}</span>
           </div>
         </div>
       </div>
     </el-dialog>
 
-    <!-- 动态内容弹窗 -->
-    <el-dialog v-model="showPost" title="关联动态" width="640px" destroy-on-close class="post-preview-dialog">
-      <div v-if="postDetail" v-loading="postLoading">
-        <div class="pp-header">
-          <el-avatar :size="44" :src="postDetail.userAvatar" icon="UserFilled" />
-          <div class="pp-header-info">
+    <!-- 动态预览弹窗 -->
+    <el-dialog v-model="showPost" title="关联动态" width="560px" destroy-on-close>
+      <div v-if="postDetail" v-loading="postLoading" class="pp-wrap">
+        <div class="pp-head">
+          <el-avatar :size="40" :src="postDetail.userAvatar" />
+          <div class="pp-head-info">
             <div class="pp-name">{{ postDetail.userNickname || '未知用户' }}</div>
-            <div class="pp-time">
-              <el-icon :size="12"><Clock /></el-icon>
-              {{ postDetail.createdAt }}
-            </div>
+            <span class="pp-time">{{ postDetail.createdAt }}</span>
           </div>
-          <el-tag :type="postDetail.auditStatus === 1 ? 'success' : postDetail.auditStatus === 2 ? 'danger' : 'warning'" size="small" effect="light">
+          <el-tag :type="postDetail.auditStatus === 1 ? 'success' : postDetail.auditStatus === 2 ? 'danger' : 'warning'" size="small" round effect="light">
             {{ postDetail.auditStatus === 1 ? '已通过' : postDetail.auditStatus === 2 ? '已拒绝' : '待审核' }}
           </el-tag>
         </div>
-
-        <div class="pp-body">
-          <div class="pp-content">{{ postDetail.content }}</div>
-          <div class="pp-images" v-if="postDetail.images">
-            <el-image v-for="(img, i) in parsePostImages(postDetail.images)" :key="i"
-              :src="img" style="width: 100px; height: 100px; border-radius: 8px;" fit="cover"
-              :preview-src-list="parsePostImages(postDetail.images)" preview-teleported />
-          </div>
+        <div class="pp-content">{{ postDetail.content }}</div>
+        <div class="pp-images" v-if="postDetail.images">
+          <el-image v-for="(img, i) in parsePostImages(postDetail.images)" :key="i" :src="img" fit="cover" style="width:80px;height:80px;border-radius:6px;margin-right:8px;margin-bottom:4px;" :preview-src-list="parsePostImages(postDetail.images)" preview-teleported />
         </div>
-
-        <div class="pp-footer">
-          <div class="pp-stat">
-            <el-icon :size="14"><Star /></el-icon>
-            <span>{{ postDetail.likeCount || 0 }} 点赞</span>
-          </div>
-          <div class="pp-stat">
-            <el-icon :size="14"><ChatDotRound /></el-icon>
-            <span>{{ postDetail.commentCount || 0 }} 评论</span>
-          </div>
-          <div class="pp-stat">
-            <span class="pp-id">动态ID: {{ postDetail.id }}</span>
-          </div>
+        <div class="pp-foot">
+          <span><Star :size="13" />{{ postDetail.likeCount || 0 }}</span>
+          <span><ChatDotRound :size="13" />{{ postDetail.commentCount || 0 }}</span>
+          <span class="pp-id">ID: {{ postDetail.id }}</span>
         </div>
       </div>
-      <el-empty v-else-if="!postLoading" description="动态不存在或已删除" :image-size="80" />
+      <el-empty v-else-if="!postLoading" description="动态不存在或已删除" :image-size="70" />
     </el-dialog>
   </div>
 </template>
@@ -278,32 +193,29 @@ const postLoading = ref(false)
 const adminStore = useAdminStore()
 const canExport = computed(() => adminStore.hasButton('export'))
 
+const avatarColors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#fee140', '#30cfd0', '#a18cd1']
+const avatarColor = (name) => {
+  if (!name) return avatarColors[0]
+  const idx = name.charCodeAt(0) % avatarColors.length
+  return avatarColors[idx]
+}
+
 const overviewCards = computed(() => [
   { key: 'total', label: '总评论数', value: total.value, icon: 'ChatDotRound', color: '#409eff', bg: '#ecf5ff' },
-  { key: 'normal', label: '正常评论', value: list.value.filter(c => c.status !== 0).length, icon: 'CircleCheck', color: '#67c23a', bg: '#f0f9eb' },
+  { key: 'normal', label: '正常', value: list.value.filter(c => c.status !== 0).length, icon: 'CircleCheck', color: '#67c23a', bg: '#f0f9eb' },
   { key: 'deleted', label: '已删除', value: list.value.filter(c => c.status === 0).length, icon: 'Delete', color: '#f56c6c', bg: '#fef0f0' },
-  { key: 'likes', label: '总点赞数', value: list.value.reduce((sum, c) => sum + (c.likeCount || 0), 0), icon: 'Star', color: '#e6a23c', bg: '#fdf6ec' }
+  { key: 'likes', label: '总点赞', value: list.value.reduce((s, c) => s + (c.likeCount || 0), 0), icon: 'Star', color: '#e6a23c', bg: '#fdf6ec' }
 ])
 
 const treeList = computed(() => {
-  const rootComments = []
-  const childMap = new Map()
+  const roots = []
+  const map = new Map()
   for (const item of list.value) {
-    if (!item.parentId) {
-      rootComments.push({ ...item, replies: [] })
-    } else {
-      if (!childMap.has(item.parentId)) {
-        childMap.set(item.parentId, [])
-      }
-      childMap.get(item.parentId).push(item)
-    }
+    if (!item.parentId) { roots.push({ ...item, replies: [] }) }
+    else { if (!map.has(item.parentId)) map.set(item.parentId, []); map.get(item.parentId).push(item) }
   }
-  for (const root of rootComments) {
-    if (childMap.has(root.id)) {
-      root.replies = childMap.get(root.id)
-    }
-  }
-  return rootComments
+  for (const r of roots) { if (map.has(r.id)) r.replies = map.get(r.id) }
+  return roots
 })
 
 const loadData = async () => {
@@ -320,412 +232,181 @@ const loadData = async () => {
   loading.value = false
 }
 
-const viewDetail = (row) => {
-  detail.value = { ...row }
-  showDetail.value = true
-}
+const viewDetail = (row) => { detail.value = { ...row }; showDetail.value = true }
 
 const viewPost = async (row) => {
-  showPost.value = true
-  postDetail.value = null
-  postLoading.value = true
-  try {
-    const res = await getPostDetail(row.postId)
-    postDetail.value = res.data
-  } catch (e) {
-    postDetail.value = null
-  } finally {
-    postLoading.value = false
-  }
+  showPost.value = true; postDetail.value = null; postLoading.value = true
+  try { const res = await getPostDetail(row.postId); postDetail.value = res.data }
+  catch (e) { postDetail.value = null }
+  finally { postLoading.value = false }
 }
 
-const parsePostImages = (images) => {
-  try { return JSON.parse(images) || [] } catch (e) { return [] }
-}
+const parsePostImages = (images) => { try { return JSON.parse(images) || [] } catch (e) { return [] } }
+
+const detailCells = (row) => [
+  { label: '评论ID', value: row.id }, { label: '动态ID', value: row.postId },
+  { label: '用户ID', value: row.userId }, { label: '点赞', value: row.likeCount || 0 },
+  { label: '父评论', value: row.parentId || '-' }, { label: '回复目标', value: row.replyToId || '-' },
+  { label: '创建时间', value: row.createdAt }, { label: '更新时间', value: row.updatedAt || '-' }
+]
 
 const handleDelete = async (row) => {
-  try {
-    await ElMessageBox.confirm('确定删除该评论？', '确认删除', { type: 'warning' })
-    await deleteComment(row.id)
-    ElMessage.success('删除成功')
-    loadData()
-  } catch (e) {}
+  try { await ElMessageBox.confirm('确定删除该评论？', '提示', { type: 'warning' }); await deleteComment(row.id); ElMessage.success('删除成功'); loadData() } catch (e) {}
 }
-
 const handleRestore = async (row) => {
-  try {
-    await ElMessageBox.confirm('确定恢复该评论？', '确认恢复')
-    await restoreComment(row.id)
-    ElMessage.success('恢复成功')
-    loadData()
-  } catch (e) {}
+  try { await ElMessageBox.confirm('确定恢复该评论？'); await restoreComment(row.id); ElMessage.success('恢复成功'); loadData() } catch (e) {}
 }
-
-const handleExport = async () => {
-  if (!canExport.value) { ElMessage.warning('无导出权限'); return }
-  try {
-    ElMessage.info('导出功能开发中')
-  } catch (e) {}
-}
+const handleExport = async () => { if (!canExport.value) { ElMessage.warning('无导出权限'); return }; ElMessage.info('导出功能开发中') }
 
 onMounted(() => loadData())
 </script>
 
 <style scoped>
-.comments-page { padding: 0; }
+/* ====== 页面框架 ====== */
+.comments-page { padding: 0; display: flex; flex-direction: column; gap: 14px; min-height: calc(100vh - 84px); }
 
-/* 顶部统计卡片 */
-.stats-row { margin-bottom: 16px; }
-.overview-card { transition: transform 0.2s; }
-.overview-card:hover { transform: translateY(-2px); }
-.overview-content { display: flex; align-items: center; gap: 14px; }
-.overview-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+/* ====== 统计条 ====== */
+.stats-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+.stat-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-radius: 10px; flex: 1; min-width: 120px;
+  transition: transform .15s;
 }
-.overview-info { flex: 1; min-width: 0; }
-.overview-value { font-size: 22px; font-weight: 700; color: #303133; line-height: 1.2; }
-.overview-label { font-size: 12px; color: #909399; margin-top: 2px; }
+.stat-chip:hover { transform: translateY(-1px); }
+.stat-chip-icon { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.7); border-radius: 7px; }
+.stat-chip-value { font-size: 20px; font-weight: 700; color: #303133; line-height: 1; }
+.stat-chip-label { font-size: 11px; color: #909399; margin-top: 1px; }
 
-/* 筛选栏 */
-.filter-card { margin-bottom: 16px; }
-.filter-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-.filter-left { display: flex; align-items: center; gap: 8px; }
-.card-title { font-weight: 600; font-size: 15px; color: #303133; }
-.filter-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+/* ====== 筛选栏 ====== */
+.filter-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px; background: #fff; border-radius: 10px;
+  border: 1px solid #ebeef5; flex-wrap: wrap; gap: 12px;
+}
+.filter-title { font-size: 15px; font-weight: 600; color: #303133; white-space: nowrap; }
+.filter-title em { font-style: normal; font-weight: 400; color: #909399; margin-left: 4px; font-size: 13px; }
+.filter-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-/* ========== 层级化评论列表 ========== */
-.comment-tree-list { min-height: 300px; }
+/* ====== 评论列表 ====== */
+.comment-list { flex: 1; }
 
 .comment-thread {
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid #ebeef5;
-  overflow: hidden;
-  margin-bottom: 14px;
-  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+  background: #fff; border-radius: 10px; border: 1px solid #ebeef5;
+  overflow: hidden; margin-bottom: 10px;
+  transition: box-shadow .2s, border-color .2s;
 }
-.comment-thread:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border-color: #d9d9d9;
-}
-.comment-thread.is-deleted { opacity: 0.65; }
+.comment-thread:hover { box-shadow: 0 2px 12px rgba(0,0,0,.06); border-color: #dcdfe6; }
 
-/* 一级评论卡片 */
-.comment-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 18px 20px;
-  position: relative;
-}
-.comment-card--level1 {
-  background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);
-  border-bottom: 1px solid #f0f0f0;
-}
-.comment-card--level1:last-child { border-bottom: none; }
-.comment-card.is-deleted .cc-content { text-decoration: line-through; color: #c0c4cc; }
+/* ---- 评论项 ---- */
+.c-item { display: flex; gap: 12px; padding: 14px 18px; position: relative; }
+.c-item--main { border-bottom: 1px solid #f5f7fa; }
+.c-item--main:last-child { border-bottom: none; }
+.c-item--reply { background: #fafcff; border-bottom: 1px dashed #eee; padding: 10px 18px 10px 14px; }
+.c-item--reply:last-child { border-bottom: none; }
+.c-item--reply:hover { background: #f5f8ff; }
+.c-item--deleted { opacity: .55; }
+.c-item--deleted .c-text { text-decoration: line-through; color: #c0c4cc; }
 
-.cc-left {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  padding-top: 2px;
+/* 头像 */
+.c-avatar-col { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.c-avatar-col--sm { gap: 2px; }
+.c-avatar-img {
+  width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+  border: 2px solid #ecf5ff; flex-shrink: 0;
 }
-.cc-avatar {
-  border: 2px solid #ecf5ff;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.12);
+.c-avatar-img--sm { width: 30px; height: 30px; border-width: 1.5px; }
+.c-avatar-img img { width: 100%; height: 100%; object-fit: cover; }
+.c-avatar-fallback {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 16px; font-weight: 600; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
 }
-.cc-avatar--sm {
-  border-width: 1.5px;
-  box-shadow: 0 1px 4px rgba(64, 158, 255, 0.08);
+.c-avatar-fallback--sm { width: 30px; height: 30px; font-size: 12px; }
+
+/* 内容列 */
+.c-body-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+
+/* 顶部行 */
+.c-row-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+.c-row-top--sm { align-items: baseline; }
+.c-author { font-size: 14px; font-weight: 600; color: #303133; }
+.c-author--sm { font-size: 13px; font-weight: 500; }
+.c-meta-inline { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.c-meta-tag {
+  font-size: 11px; color: #409eff; cursor: pointer; padding: 1px 6px;
+  border-radius: 4px; background: #ecf5ff; transition: background .15s;
 }
-.cc-level-badge {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 1px 8px;
-  border-radius: 8px;
-  line-height: 1.6;
-  letter-spacing: 0.5px;
+.c-meta-tag:hover { background: #d9ecff; }
+.c-meta-tag--warn { color: #e6a23c; background: #fdf6ec; }
+.c-meta-tag--warn:hover { background: #faecd8; }
+.c-time { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; color: #c0c4cc; }
+
+/* 内容文字 */
+.c-text {
+  font-size: 13px; color: #4a4a4a; line-height: 1.65;
+  word-break: break-all; padding: 8px 12px;
+  background: #f8f9fb; border-radius: 6px; border-left: 3px solid #409eff;
+}
+.c-text--sm { font-size: 12px; padding: 6px 10px; border-left-width: 2px; }
+
+/* 底部操作行 */
+.c-row-bottom { display: flex; align-items: center; justify-content: space-between; }
+.c-row-bottom--sm { margin-top: 2px; }
+.c-like { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; color: #909399; }
+
+.c-actions-main { display: flex; gap: 2px; }
+.c-actions-main--compact { gap: 1px; }
+.c-btn {
+  font-size: 12px; padding: 3px 8px; border: none; border-radius: 4px;
+  cursor: pointer; transition: all .15s; background: transparent; line-height: 1.6;
   white-space: nowrap;
-  background: linear-gradient(135deg, #409eff, #66b1ff);
-  color: #fff;
 }
-.cc-level-badge--reply {
-  background: linear-gradient(135deg, #e6a23c, #ebb563);
-}
+.c-btn:hover { opacity: .75; }
+.c-btn--link { color: #409eff; }
+.c-btn--warn { color: #e6a23c; }
+.c-btn--danger { color: #f56c6c; }
+.c-btn--ok { color: #67c23a; }
 
-.cc-body { flex: 1; min-width: 0; }
+/* ---- 回复区域 ---- */
+.c-replies { display: flex; background: #fbfcff; }
+.c-reply-line {
+  width: 22px; flex-shrink: 0; position: relative;
+  border-left: 2px dashed #dce4ec; margin-left: 19px;
+  margin-top: 8px; margin-bottom: 8px;
+}
+.c-replies-inner { flex: 1; min-width: 0; }
 
-.cc-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-}
-.cc-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: #303133;
-}
-.cc-name--reply { font-size: 13px; font-weight: 500; }
-.cc-id-tag { font-size: 11px; transform: scale(0.9); transform-origin: left center; }
-.cc-post-tag { font-size: 11px; transform: scale(0.9); transform-origin: left center; }
-.cc-reply-to { font-size: 11px; transform: scale(0.9); transform-origin: left center; }
+/* ====== 分页 ====== */
+.page-footer { display: flex; justify-content: flex-end; padding: 8px 0; }
 
-.cc-content {
-  font-size: 14px;
-  color: #303133;
-  line-height: 1.7;
-  word-break: break-all;
-  padding: 10px 14px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 3px solid #409eff;
-  margin-bottom: 8px;
-}
-.cc-content--reply {
-  font-size: 13px;
-  padding: 8px 12px;
-  background: #fefefe;
-  border-left-color: #e6a23c;
-}
+/* ====== 详情弹窗 ====== */
+.dd-wrap { padding: 4px 0; }
+.dd-head { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: linear-gradient(135deg,#f5f7fa,#fff); border-radius: 10px 10px 0 0; }
+.dd-avatar-img { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.dd-avatar-img img { width: 100%; height: 100%; object-fit: cover; }
+.dd-avatar-fb { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; font-weight: 600; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.dd-head-info { flex: 1; }
+.dd-name { font-size: 16px; font-weight: 600; color: #303133; }
+.dd-tags { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.dd-tag-sub { font-size: 11px; color: #e6a23c; background: #fdf6ec; padding: 1px 8px; border-radius: 4px; }
+.dd-time { font-size: 11px; color: #909399; }
+.dd-section { padding: 16px 20px 0; }
+.dd-label { font-size: 12px; font-weight: 600; color: #909399; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+.dd-content { font-size: 14px; color: #303133; line-height: 1.7; padding: 10px 14px; background: #fafbfc; border-radius: 6px; }
+.dd-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; padding: 0 20px 16px; }
+.dd-cell { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: #fafbfc; border-radius: 6px; }
+.dd-clabel { font-size: 10px; color: #909399; text-transform: uppercase; letter-spacing: .3px; }
+.dd-cval { font-size: 13px; color: #303133; font-weight: 500; }
 
-.cc-meta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 12px;
-  color: #909399;
-}
-
-.cc-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex-shrink: 0;
-  padding-top: 2px;
-}
-.cc-actions--compact {
-  flex-direction: row;
-  gap: 2px;
-}
-
-/* ========== 回复区域 ========== */
-.replies-container {
-  display: flex;
-  background: #fcfcfd;
-  position: relative;
-}
-.reply-connector {
-  width: 24px;
-  flex-shrink: 0;
-  position: relative;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent,
-    transparent 10px,
-    #dce4ec 10px,
-    #dce4ec 11px
-  );
-}
-.reply-connector::before {
-  content: '';
-  position: absolute;
-  top: 22px;
-  left: 50%;
-  width: 12px;
-  height: 1px;
-  background: #dce4ec;
-}
-.reply-connector::after {
-  content: '';
-  position: absolute;
-  top: 19px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 5px solid #dce4ec;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-}
-
-.replies-list {
-  flex: 1;
-  min-width: 0;
-}
-
-.comment-card--level2 {
-  padding: 12px 16px;
-  border-bottom: 1px dashed #eee;
-  background: #fefefe;
-}
-.comment-card--level2:last-child { border-bottom: none; }
-.comment-card--level2:hover { background: #fbfbfc; }
-
-/* 分页 */
-.pagination-wrap { display: flex; justify-content: flex-end; margin-top: 16px; }
-
-/* ========== 详情弹窗 ========== */
-.comment-detail-dialog :deep(.el-dialog__body) { padding: 0; }
-.comment-detail-dialog :deep(.el-dialog__header) { padding-bottom: 16px; border-bottom: 1px solid #f0f0f0; margin-right: 0; }
-
-.cd-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
-}
-.cd-avatar :deep(.el-avatar) {
-  border: 3px solid #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-.cd-header-info { flex: 1; }
-.cd-name { font-size: 18px; font-weight: 600; color: #303133; margin-bottom: 8px; }
-.cd-tags {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.cd-tag-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: #606266;
-  background: #f5f7fa;
-  padding: 3px 10px;
-  border-radius: 12px;
-}
-
-.cd-body { padding: 20px 24px; }
-
-.cd-section { margin-bottom: 24px; }
-.cd-section:last-child { margin-bottom: 0; }
-
-.cd-section-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 14px;
-  padding-left: 10px;
-  border-left: 3px solid #409eff;
-}
-
-.cd-content {
-  font-size: 14px;
-  color: #303133;
-  line-height: 1.8;
-  padding: 12px;
-  background: #fafbfc;
-  border-radius: 8px;
-}
-
-.cd-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px 16px;
-}
-.cd-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
-  background: #fafbfc;
-  border-radius: 8px;
-}
-.cd-cell-label {
-  font-size: 11px;
-  color: #909399;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.cd-cell-value {
-  font-size: 14px;
-  color: #303133;
-  font-weight: 500;
-}
-
-/* 动态标签可点击 */
-.post-tag-link {
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.post-tag-link:hover {
-  color: #409eff;
-}
-
-/* ========== 动态预览弹窗 ========== */
-.post-preview-dialog :deep(.el-dialog__body) { padding: 0; }
-
-.pp-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px 24px;
-  background: linear-gradient(135deg, #f0f9eb 0%, #ffffff 100%);
-  border-bottom: 1px solid #f0f0f0;
-}
-.pp-header-info { flex: 1; }
-.pp-name { font-size: 15px; font-weight: 600; color: #303133; }
-.pp-time {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
-}
-
-.pp-body { padding: 18px 24px; }
-.pp-content {
-  font-size: 14px;
-  color: #303133;
-  line-height: 1.8;
-  word-break: break-all;
-  margin-bottom: 12px;
-}
-.pp-images {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.pp-footer {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 12px 24px;
-  background: #fafbfc;
-  border-top: 1px solid #f0f0f0;
-}
-.pp-stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: #606266;
-}
-.pp-id {
-  font-size: 12px;
-  color: #909399;
-  margin-left: auto;
-}
+/* ====== 动态预览弹窗 ====== */
+.pp-wrap { padding: 4px 0; }
+.pp-head { display: flex; align-items: center; gap: 12px; padding: 14px 20px; background: linear-gradient(135deg,#f0f9eb,#fff); border-radius: 10px 10px 0 0; }
+.pp-head-info { flex: 1; }
+.pp-name { font-size: 14px; font-weight: 600; color: #303133; }
+.pp-time { font-size: 11px; color: #909399; margin-top: 2px; }
+.pp-content { padding: 14px 20px; font-size: 14px; color: #303133; line-height: 1.7; word-break: break-all; }
+.pp-images { padding: 0 20px; display: flex; flex-wrap: wrap; }
+.pp-foot { display: flex; align-items: center; gap: 16px; padding: 10px 20px; background: #fafbfc; border-radius: 0 0 10px 10px; font-size: 12px; color: #606266; }
+.pp-id { margin-left: auto; color: #909399; }
 </style>
