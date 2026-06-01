@@ -247,13 +247,17 @@ public class CommentService {
                 .filter(uid -> uid != null)
                 .collect(Collectors.toSet());
         if (userIds.isEmpty()) return;
-        Map<Long, String> nicknameMap = userMapper.selectBatchIds(userIds).stream()
-                .collect(Collectors.toMap(User::getId,
-                        u -> u.getNickname() != null ? u.getNickname() : "用户" + u.getId(),
-                        (a, b) -> a));
+        Map<Long, User> userMap = userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
         for (PostComment comment : result.getRecords()) {
             if (comment.getUserId() != null) {
-                comment.setUserNickname(nicknameMap.getOrDefault(comment.getUserId(), "未知用户"));
+                User user = userMap.get(comment.getUserId());
+                if (user != null) {
+                    comment.setUserNickname(user.getNickname() != null ? user.getNickname() : "用户" + user.getId());
+                    comment.setUserAvatar(user.getAvatar());
+                } else {
+                    comment.setUserNickname("未知用户");
+                }
             }
         }
     }

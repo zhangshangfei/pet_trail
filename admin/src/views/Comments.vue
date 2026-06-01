@@ -53,7 +53,9 @@
               <div class="cc-header">
                 <span class="cc-name">{{ item.userNickname || '未知用户' }}</span>
                 <el-tag size="small" type="info" effect="plain" class="cc-id-tag">ID: {{ item.id }}</el-tag>
-                <el-tag size="small" type="info" effect="plain" class="cc-post-tag">动态: {{ item.postId }}</el-tag>
+                <el-tag size="small" type="info" effect="plain" class="cc-post-tag">
+                  <span class="post-tag-link" @click="viewPost(item)">动态: {{ item.postId }}</span>
+                </el-tag>
                 <el-tag :type="item.status === 0 ? 'danger' : 'success'" size="small" effect="light">
                   {{ item.status === 0 ? '已删除' : '正常' }}
                 </el-tag>
@@ -70,6 +72,7 @@
             </div>
             <div class="cc-actions">
               <el-button size="small" text type="primary" :icon="View" @click="viewDetail(item)">详情</el-button>
+              <el-button size="small" text type="warning" @click="viewPost(item)">查看动态</el-button>
               <el-button v-if="item.status !== 0" size="small" text type="danger" :icon="Delete" @click="handleDelete(item)">删除</el-button>
               <el-button v-if="item.status === 0" size="small" text type="success" :icon="CircleCheck" @click="handleRestore(item)">恢复</el-button>
             </div>
@@ -109,6 +112,7 @@
                   </div>
                   <div class="cc-actions cc-actions--compact">
                     <el-button size="small" text type="primary" :icon="View" @click="viewDetail(reply)">详情</el-button>
+                    <el-button size="small" text type="warning" @click="viewPost(reply)">查看动态</el-button>
                     <el-button v-if="reply.status !== 0" size="small" text type="danger" :icon="Delete" @click="handleDelete(reply)">删除</el-button>
                     <el-button v-if="reply.status === 0" size="small" text type="success" :icon="CircleCheck" @click="handleRestore(reply)">恢复</el-button>
                   </div>
@@ -204,15 +208,58 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- 动态内容弹窗 -->
+    <el-dialog v-model="showPost" title="关联动态" width="640px" destroy-on-close class="post-preview-dialog">
+      <div v-if="postDetail" v-loading="postLoading">
+        <div class="pp-header">
+          <el-avatar :size="44" :src="postDetail.userAvatar" icon="UserFilled" />
+          <div class="pp-header-info">
+            <div class="pp-name">{{ postDetail.userNickname || '未知用户' }}</div>
+            <div class="pp-time">
+              <el-icon :size="12"><Clock /></el-icon>
+              {{ postDetail.createdAt }}
+            </div>
+          </div>
+          <el-tag :type="postDetail.auditStatus === 1 ? 'success' : postDetail.auditStatus === 2 ? 'danger' : 'warning'" size="small" effect="light">
+            {{ postDetail.auditStatus === 1 ? '已通过' : postDetail.auditStatus === 2 ? '已拒绝' : '待审核' }}
+          </el-tag>
+        </div>
+
+        <div class="pp-body">
+          <div class="pp-content">{{ postDetail.content }}</div>
+          <div class="pp-images" v-if="postDetail.images">
+            <el-image v-for="(img, i) in parsePostImages(postDetail.images)" :key="i"
+              :src="img" style="width: 100px; height: 100px; border-radius: 8px;" fit="cover"
+              :preview-src-list="parsePostImages(postDetail.images)" preview-teleported />
+          </div>
+        </div>
+
+        <div class="pp-footer">
+          <div class="pp-stat">
+            <el-icon :size="14"><Star /></el-icon>
+            <span>{{ postDetail.likeCount || 0 }} 点赞</span>
+          </div>
+          <div class="pp-stat">
+            <el-icon :size="14"><ChatDotRound /></el-icon>
+            <span>{{ postDetail.commentCount || 0 }} 评论</span>
+          </div>
+          <div class="pp-stat">
+            <span class="pp-id">动态ID: {{ postDetail.id }}</span>
+          </div>
+        </div>
+      </div>
+      <el-empty v-else-if="!postLoading" description="动态不存在或已删除" :image-size="80" />
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getCommentList, deleteComment, restoreComment } from '../api/admin'
+import { getCommentList, deleteComment, restoreComment, getPostDetail } from '../api/admin'
 import { useAdminStore } from '@/store/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Download, View, Clock, Star, CircleCheck, Delete } from '@element-plus/icons-vue'
+import { Search, Download, View, Clock, Star, CircleCheck, Delete, ChatDotRound } from '@element-plus/icons-vue'
 
 const loading = ref(false)
 const list = ref([])
@@ -224,6 +271,9 @@ const postId = ref('')
 const deleted = ref(null)
 const showDetail = ref(false)
 const detail = ref(null)
+const showPost = ref(false)
+const postDetail = ref(null)
+const postLoading = ref(false)
 
 const adminStore = useAdminStore()
 const canExport = computed(() => adminStore.hasButton('export'))
@@ -273,6 +323,24 @@ const loadData = async () => {
 const viewDetail = (row) => {
   detail.value = { ...row }
   showDetail.value = true
+}
+
+const viewPost = async (row) => {
+  showPost.value = true
+  postDetail.value = null
+  postLoading.value = true
+  try {
+    const res = await getPostDetail(row.postId)
+    postDetail.value = res.data
+  } catch (e) {
+    postDetail.value = null
+  } finally {
+    postLoading.value = false
+  }
+}
+
+const parsePostImages = (images) => {
+  try { return JSON.parse(images) || [] } catch (e) { return [] }
 }
 
 const handleDelete = async (row) => {
@@ -592,5 +660,72 @@ onMounted(() => loadData())
   font-size: 14px;
   color: #303133;
   font-weight: 500;
+}
+
+/* 动态标签可点击 */
+.post-tag-link {
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.post-tag-link:hover {
+  color: #409eff;
+}
+
+/* ========== 动态预览弹窗 ========== */
+.post-preview-dialog :deep(.el-dialog__body) { padding: 0; }
+
+.pp-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #f0f9eb 0%, #ffffff 100%);
+  border-bottom: 1px solid #f0f0f0;
+}
+.pp-header-info { flex: 1; }
+.pp-name { font-size: 15px; font-weight: 600; color: #303133; }
+.pp-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.pp-body { padding: 18px 24px; }
+.pp-content {
+  font-size: 14px;
+  color: #303133;
+  line-height: 1.8;
+  word-break: break-all;
+  margin-bottom: 12px;
+}
+.pp-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pp-footer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 24px;
+  background: #fafbfc;
+  border-top: 1px solid #f0f0f0;
+}
+.pp-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #606266;
+}
+.pp-id {
+  font-size: 12px;
+  color: #909399;
+  margin-left: auto;
 }
 </style>

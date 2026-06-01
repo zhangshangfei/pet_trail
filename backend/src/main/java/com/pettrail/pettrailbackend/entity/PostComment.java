@@ -27,4 +27,7 @@ public class PostComment {
 
     @TableField(exist = false)
     private String userNickname;
+
+    @TableField(exist = false)
+    private String userAvatar;
 }
