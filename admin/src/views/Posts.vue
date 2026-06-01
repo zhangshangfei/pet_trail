@@ -34,7 +34,7 @@
             </el-select>
             <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
             <el-button type="success" :icon="Download" @click="handleExport" v-if="canExport">导出</el-button>
-            <el-button type="warning" :icon="Delete" @click="loadDeleted" v-if="canManage">回收站</el-button>
+            <el-button type="warning" :icon="Delete" @click="loadDeleted">回收站</el-button>
           </div>
         </div>
       </template>
@@ -91,7 +91,7 @@
               <el-button size="small" text type="primary" :icon="View" @click="viewDetail(row)">详情</el-button>
               <el-button v-if="row.auditStatus !== 1" size="small" text type="success" :icon="CircleCheck" @click="openAudit(row, 1)">通过</el-button>
               <el-button v-if="row.auditStatus !== 2" size="small" text type="danger" :icon="CircleClose" @click="openAudit(row, 2)">拒绝</el-button>
-              <el-button v-if="canManage" size="small" text type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
+              <el-button size="small" text type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
             </div>
           </template>
         </el-table-column>
@@ -226,7 +226,6 @@ const deletedList = ref([])
 const deletedLoading = ref(false)
 
 const adminStore = useAdminStore()
-const canManage = computed(() => adminStore.hasButton('post:manage'))
 const canExport = computed(() => adminStore.hasButton('export'))
 
 // 顶部概览数据

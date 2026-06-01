@@ -281,10 +281,10 @@ const loadData = async () => {
   loading.value = true
   try {
     const params = { page: currentPage.value, size: pageSize.value }
-    if (statusFilter.value !== null && statusFilter.value !== '') params.status = statusFilter.value
+    if (statusFilter.value !== null && statusFilter.value !== undefined && statusFilter.value !== '') params.status = statusFilter.value
     if (typeFilter.value) params.type = typeFilter.value
     const res = await getFeedbackList(params)
-    if (res.data) {
+    if (res && res.data) {
       feedbackList.value = res.data.records || []
       total.value = res.data.total || 0
     }

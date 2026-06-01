@@ -118,7 +118,12 @@
               :key="comment.id"
               class="comment-item"
             >
-              <image class="comment-avatar" :src="getUserAvatar(comment.userId, comment.userAvatar)" mode="aspectFill" />
+              <view class="comment-avatar-wrap">
+                <image v-if="getUserAvatar(comment.userId, comment.userAvatar)" class="comment-avatar" :src="getUserAvatar(comment.userId, comment.userAvatar)" mode="aspectFill" />
+                <view v-else class="comment-avatar-default">
+                  <text class="default-avatar-text">{{ (comment.userName || '匿')[0] }}</text>
+                </view>
+              </view>
               <view class="comment-info">
                 <view class="comment-main">
                   <text class="comment-username">{{ comment.userName }}：</text>
@@ -1056,13 +1061,33 @@ export default {
   padding-bottom: 0;
 }
 
+.comment-avatar-wrap {
+  width: 64rpx;
+  height: 64rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+
 .comment-avatar {
   width: 64rpx;
   height: 64rpx;
   border-radius: 50%;
-  margin-right: 16rpx;
-  background: #e5e7eb;
-  flex-shrink: 0;
+}
+
+.comment-avatar-default {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff7a3d 0%, #ff4d4f 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.default-avatar-text {
+  font-size: 26rpx;
+  color: #fff;
+  font-weight: 700;
 }
 
 .comment-info {

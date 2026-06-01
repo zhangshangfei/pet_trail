@@ -43,13 +43,16 @@ public class ReportService {
         return report;
     }
 
-    public Page<Report> adminListReports(int page, int size, Integer status, String targetType) {
+    public Page<ReportVO> adminListReports(int page, int size, Integer status, String targetType) {
         Page<Report> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Report> wrapper = new LambdaQueryWrapper<>();
         if (status != null) wrapper.eq(Report::getStatus, status);
         if (targetType != null && !targetType.isEmpty()) wrapper.eq(Report::getTargetType, targetType);
         wrapper.orderByDesc(Report::getCreatedAt);
-        return reportMapper.selectPage(pageParam, wrapper);
+        Page<Report> reportPage = reportMapper.selectPage(pageParam, wrapper);
+        Page<ReportVO> voPage = new Page<>(reportPage.getCurrent(), reportPage.getSize(), reportPage.getTotal());
+        voPage.setRecords(reportPage.getRecords().stream().map(this::toVO).collect(Collectors.toList()));
+        return voPage;
     }
 
     public List<ReportVO> getMyReportList(Long reporterId) {
@@ -71,12 +74,21 @@ public class ReportService {
         vo.setStatus(report.getStatus());
         vo.setResult(report.getResult());
         vo.setCreatedAt(report.getCreatedAt());
-        // 填充被举报用户昵称
+        try {
+            User reporter = userMapper.selectById(report.getReporterId());
+            if (reporter != null) {
+                vo.setReporterNickname(reporter.getNickname());
+                vo.setReporterAvatar(reporter.getAvatar());
+            }
+        } catch (Exception e) {
+            log.warn("查询举报人信息失败: reporterId={}", report.getReporterId());
+        }
         if ("user".equals(report.getTargetType()) && report.getTargetId() != null) {
             try {
                 User targetUser = userMapper.selectById(report.getTargetId());
                 if (targetUser != null) {
                     vo.setTargetNickname(targetUser.getNickname());
+                    vo.setTargetAvatar(targetUser.getAvatar());
                 }
             } catch (Exception e) {
                 log.warn("查询被举报用户昵称失败: targetId={}", report.getTargetId());

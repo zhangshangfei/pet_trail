@@ -11,11 +11,17 @@ public class ReportVO {
 
     private Long reporterId;
 
+    private String reporterNickname;
+
+    private String reporterAvatar;
+
     private Long targetId;
 
     private String targetType;
 
     private String targetNickname;
+
+    private String targetAvatar;
 
     private String reason;
 

@@ -2,8 +2,8 @@ package com.pettrail.pettrailbackend.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.dto.ReportHandleDTO;
+import com.pettrail.pettrailbackend.dto.ReportVO;
 import com.pettrail.pettrailbackend.dto.Result;
-import com.pettrail.pettrailbackend.entity.Report;
 import com.pettrail.pettrailbackend.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,7 +20,7 @@ public class AdminReportController extends BaseAdminController {
 
     @GetMapping
     @Operation(summary = "分页查询举报列表")
-    public Result<Page<Report>> list(
+    public Result<Page<ReportVO>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Integer status,

@@ -155,17 +155,17 @@
           </view>
 
           <view
-            v-if="post.imageList && post.imageList.length"
+            v-if="post.images && post.images.length"
             class="post-image-wrap"
           >
             <image
-              v-for="(img, idx) in post.imageList"
+              v-for="(img, idx) in post.images"
               :key="idx"
               class="post-image"
-              :class="getImageClass(post.imageList.length)"
+              :class="getImageClass(post.images.length)"
               :src="img"
               mode="aspectFill"
-              @click="previewImage(post.imageList, idx)"
+              @click="previewImage(post.images, idx)"
             />
           </view>
 
@@ -394,6 +394,7 @@ export default {
             ...post,
             avatar: getUserAvatar(post.userId, post.userAvatar),
             userName: post.userName || '萌宠主人',
+            images: post.imageList || [],
             likes: post.likeCount || 0,
             comments: post.commentCount || 0,
             time: this.formatTime(post.createdAt),
@@ -1295,7 +1296,6 @@ export default {
 .post-image-wrap {
   display: flex;
   flex-wrap: wrap;
-  gap: 10rpx;
   margin-bottom: 20rpx;
   position: relative;
   z-index: 5;
@@ -1305,6 +1305,7 @@ export default {
   border-radius: 16rpx;
   overflow: hidden;
   transition: transform 0.3s ease;
+  margin: 0 8rpx 8rpx 0;
 }
 
 .post-image:active {
@@ -1314,16 +1315,25 @@ export default {
 .post-image--single {
   width: 100%;
   height: 400rpx;
+  margin-right: 0;
 }
 
 .post-image--double {
-  width: calc(50% - 5rpx);
+  width: calc(50% - 6rpx);
   height: 280rpx;
 }
 
+.post-image--double:nth-child(2) {
+  margin-right: 0;
+}
+
 .post-image--grid {
-  width: calc(33.33% - 7rpx);
+  width: calc(33.33% - 8rpx);
   height: 220rpx;
+}
+
+.post-image--grid:nth-child(3n) {
+  margin-right: 0;
 }
 
 .post-video-wrap {

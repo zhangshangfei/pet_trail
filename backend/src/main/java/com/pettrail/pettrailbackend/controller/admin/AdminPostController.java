@@ -2,7 +2,6 @@ package com.pettrail.pettrailbackend.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pettrail.pettrailbackend.annotation.OperationLog;
-import com.pettrail.pettrailbackend.annotation.RequireRole;
 import com.pettrail.pettrailbackend.dto.PostAuditDTO;
 import com.pettrail.pettrailbackend.dto.PostBatchAuditDTO;
 import com.pettrail.pettrailbackend.dto.Result;
@@ -47,7 +46,6 @@ public class AdminPostController extends BaseAdminController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除动态")
-    @RequireRole("SUPER_ADMIN")
     @OperationLog(module = "post", action = "delete", detail = "删除动态")
     public Result<Void> delete(@PathVariable Long id) {
         postService.adminDeletePost(id);
@@ -72,7 +70,6 @@ public class AdminPostController extends BaseAdminController {
 
     @PutMapping("/{id}/restore")
     @Operation(summary = "恢复已删除动态")
-    @RequireRole("SUPER_ADMIN")
     @OperationLog(module = "post", action = "restore", detail = "恢复动态")
     public Result<Void> restore(@PathVariable Long id) {
         postService.adminRestorePost(id);

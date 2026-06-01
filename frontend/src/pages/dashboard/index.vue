@@ -138,7 +138,7 @@
         <view class="dash-section">
           <view class="section-header">
             <text class="section-title">💊 驱虫提醒</text>
-            <view v-if="parasiteCards.length > parasiteCardsLimited.length" class="view-all-btn glass-view-all-btn" @tap="goParasiteList">
+            <view v-if="parasiteCards.length > 0" class="view-all-btn glass-view-all-btn" @tap="goParasiteList">
               <text class="view-all-text">查看全部</text>
               <text class="view-all-arrow">›</text>
             </view>
@@ -192,7 +192,7 @@
         <view class="dash-section">
           <view class="section-header">
             <text class="section-title">💉 疫苗提醒</text>
-            <view v-if="vaccineCards.length > vaccineCardsLimited.length" class="view-all-btn glass-view-all-btn" @tap="goVaccineList">
+            <view v-if="vaccineCards.length > 0" class="view-all-btn glass-view-all-btn" @tap="goVaccineList">
               <text class="view-all-text">查看全部</text>
               <text class="view-all-arrow">›</text>
             </view>

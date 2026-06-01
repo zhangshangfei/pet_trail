@@ -65,7 +65,20 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="targetId" label="目标ID" width="80" align="center" />
+        <el-table-column label="目标昵称" min-width="140">
+          <template #default="{ row }">
+            <div class="user-cell" v-if="row.targetNickname">
+              <el-avatar :size="28" :src="row.targetAvatar" icon="UserFilled" />
+              <div class="user-info">
+                <div class="user-name">{{ row.targetNickname }}</div>
+                <div class="user-meta">
+                  <span class="user-id">ID: {{ row.targetId }}</span>
+                </div>
+              </div>
+            </div>
+            <span v-else style="color: #c0c4cc">ID: {{ row.targetId }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="reason" label="举报原因" min-width="180" show-overflow-tooltip />
         <el-table-column label="状态" width="90" align="center">
           <template #default="{ row }">
@@ -147,6 +160,10 @@
             <div class="rd-cell">
               <span class="rd-cell-label">目标类型</span>
               <span class="rd-cell-value">{{ { post: '动态', comment: '评论', user: '用户' }[detailReport.targetType] || detailReport.targetType }}</span>
+            </div>
+            <div class="rd-cell">
+              <span class="rd-cell-label">目标昵称</span>
+              <span class="rd-cell-value">{{ detailReport.targetNickname || '-' }}</span>
             </div>
             <div class="rd-cell">
               <span class="rd-cell-label">目标ID</span>

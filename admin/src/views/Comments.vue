@@ -91,8 +91,8 @@
           <template #default="{ row }">
             <div class="action-btns">
               <el-button size="small" text type="primary" :icon="View" @click="viewDetail(row)">详情</el-button>
-              <el-button v-if="row.status !== 0 && canManage" size="small" text type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
-              <el-button v-if="row.status === 0 && canManage" size="small" text type="success" :icon="CircleCheck" @click="handleRestore(row)">恢复</el-button>
+              <el-button v-if="row.status !== 0" size="small" text type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
+              <el-button v-if="row.status === 0" size="small" text type="success" :icon="CircleCheck" @click="handleRestore(row)">恢复</el-button>
             </div>
           </template>
         </el-table-column>
@@ -198,7 +198,6 @@ const showDetail = ref(false)
 const detail = ref(null)
 
 const adminStore = useAdminStore()
-const canManage = computed(() => adminStore.hasButton('comment:manage'))
 const canExport = computed(() => adminStore.hasButton('export'))
 
 // 顶部概览数据
