@@ -289,6 +289,7 @@ const loadData = async () => {
       total.value = res.data.total || 0
     }
   } catch (e) {
+    if (e && e.__cached) return
     console.error('加载反馈列表失败:', e)
   } finally {
     loading.value = false

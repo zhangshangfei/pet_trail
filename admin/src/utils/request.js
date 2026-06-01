@@ -25,8 +25,9 @@ function generateRequestKey(config) {
 function addPendingRequest(config) {
   const key = generateRequestKey(config)
   if (pendingRequests.has(key)) {
-    config.__retryCount = config.__retryCount || 0
-    return
+    const cancel = pendingRequests.get(key)
+    cancel(key)
+    pendingRequests.delete(key)
   }
   config.cancelToken = config.cancelToken || new axios.CancelToken(cancel => {
     pendingRequests.set(key, cancel)
@@ -87,7 +88,7 @@ request.interceptors.request.use(config => {
     config.headers.Authorization = `Bearer ${adminStore.token}`
   }
 
-  if (config.method === 'get' && config.cache !== false) {
+  if (config.method === 'get' && config.cache === true) {
     const cached = getCache(config)
     if (cached) {
       config.__fromCache = true
@@ -105,7 +106,7 @@ request.interceptors.response.use(
   response => {
     removePendingRequest(response.config)
 
-    if (response.config.method === 'get' && response.config.cache !== false) {
+    if (response.config.method === 'get' && response.config.cache === true) {
       setCache(response.config, response)
     }
 
