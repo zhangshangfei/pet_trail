@@ -22,20 +22,25 @@ const showLoginModal = () => {
         content: '请先登录后再操作',
         showCancel: true,
         confirmText: '去登录',
-        success: async (res) => {
+        success: (res) => {
           if (res.confirm) {
-            try {
-              const loginResult = await silentLogin()
-              isShowingLoginModal = false
-              const results = loginWaitingQueue.splice(0)
-              results.forEach(cb => cb(loginResult))
-              resolve(loginResult)
-            } catch (e) {
-              isShowingLoginModal = false
-              const results = loginWaitingQueue.splice(0)
-              results.forEach(cb => cb(false))
-              resolve(false)
-            }
+            // 延迟执行，等待 showModal 关闭动画完成后再调用 showLoading
+            // 避免两个原生弹窗冲突导致登录失败
+            setTimeout(async () => {
+              try {
+                const { wechatLogin } = await import('@/utils/index')
+                const loginResult = await wechatLogin()
+                isShowingLoginModal = false
+                const results = loginWaitingQueue.splice(0)
+                results.forEach(cb => cb(loginResult))
+                resolve(loginResult)
+              } catch (e) {
+                isShowingLoginModal = false
+                const results = loginWaitingQueue.splice(0)
+                results.forEach(cb => cb(false))
+                resolve(false)
+              }
+            }, 300)
           } else {
             isShowingLoginModal = false
             const results = loginWaitingQueue.splice(0)
@@ -47,49 +52,6 @@ const showLoginModal = () => {
     } else {
       loginWaitingQueue.push(resolve)
     }
-  })
-}
-
-const silentLogin = () => {
-  return new Promise((resolve, reject) => {
-    uni.showLoading({ title: '登录中...', mask: true })
-    uni.login({
-      provider: 'weixin',
-      success: async (res) => {
-        if (res.code) {
-          try {
-            const authApi = await import('@/api/auth')
-            const loginRes = await authApi.loginByCode(res.code)
-            uni.hideLoading()
-            if (loginRes && loginRes.success && loginRes.data) {
-              uni.setStorageSync('token', loginRes.data.token)
-              uni.setStorageSync('tokenExpireTime', Date.now() + 7 * 24 * 60 * 60 * 1000)
-              uni.setStorageSync('userInfo', loginRes.data.user || {})
-              uni.showToast({ title: '登录成功', icon: 'success' })
-              uni.$emit('loginSuccess')
-              resolve(true)
-            } else {
-              uni.showToast({ title: (loginRes && loginRes.message) || '登录失败', icon: 'none' })
-              resolve(false)
-            }
-          } catch (err) {
-            uni.hideLoading()
-            console.error('静默登录失败:', err)
-            uni.showToast({ title: '登录失败，请重试', icon: 'none' })
-            resolve(false)
-          }
-        } else {
-          uni.hideLoading()
-          uni.showToast({ title: '获取登录凭证失败', icon: 'none' })
-          resolve(false)
-        }
-      },
-      fail: () => {
-        uni.hideLoading()
-        uni.showToast({ title: '登录失败，请重试', icon: 'none' })
-        resolve(false)
-      }
-    })
   })
 }
 
